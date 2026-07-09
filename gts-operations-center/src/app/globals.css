@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 30% 8%;
+    --foreground: 210 40% 95%;
+    --card: 220 25% 11%;
+    --card-foreground: 210 40% 95%;
+    --popover: 220 25% 11%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 217 91% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 220 20% 16%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 220 20% 18%;
+    --accent-foreground: 210 40% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 217 91% 55%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+  
+  }
+
+  body {
+    @apply bg-[#0B1120] text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse at top, rgba(37, 99, 235, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(16, 185, 129, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#6B7280]/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#6B7280]/50;
+  }
+}
+
+@layer components {
+  .gts-card {
+    @apply bg-[#111827] border border-white/5 rounded-xl p-4 shadow-lg;
+  }
+
+  .gts-card-alert {
+    @apply bg-[#111827] border border-red-500/40 rounded-xl p-4 shadow-lg shadow-red-500/5;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-online {
+    @apply bg-[#10B981] animate-pulse;
+  }
+
+  .status-dot-offline {
+    @apply bg-[#6B7280];
+  }
+
+  .status-dot-alert {
+    @apply bg-[#EF4444] animate-pulse;
+  }
+
+  .skeleton {
+    @apply bg-white/5 rounded animate-pulse;
+  }
+
+  .gts-input {
+    @apply bg-[#0B1120] border border-white/10 rounded-lg px-3 py-2 text-sm text-white
+           placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#2563EB]
+           focus:border-[#2563EB] transition-colors;
+  }
+
+  .gts-btn-primary {
+    @apply bg-[#2563EB] hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg
+           transition-all duration-200 flex items-center gap-2 text-sm
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .gts-btn-secondary {
+    @apply bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-medium
+           px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2
+           text-sm border border-white/10 active:scale-95;
+  }
+
+  .gts-btn-danger {
+    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300
+           font-medium px-4 py-2 rounded-lg transition-all duration-200
+           flex items-center gap-2 text-sm border border-red-500/20 active:scale-95;
+  }
+
+  .gts-table {
+    @apply w-full text-sm;
+  }
+
+  .gts-table th {
+    @apply text-left text-xs font-medium text-gray-400 uppercase tracking-wider
+           pb-3 border-b border-white/5;
+  }
+
+  .gts-table td {
+    @apply py-3 border-b border-white/5 text-gray-300;
+  }
+
+  .gts-table tr:hover td {
+    @apply bg-white/[0.02];
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-[#2563EB] to-emerald-400 bg-clip-text text-transparent;
+  }
+}
+
+.leaflet-container {
+  background: #0B1120 !important;
+}
+
+.leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+.leaflet-popup-content-wrapper {
+  background: #111827 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+  color: white !important;
+}
+
+.leaflet-popup-tip {
+  background: #111827 !important;
+}
+
+.leaflet-control-zoom a {
+  background: #111827 !important;
+  color: white !important;
+}
+
+@keyframes velocityAlert {
+  0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); }
+}
+
+.velocity-alert {
+  animation: velocityAlert 1s ease-in-out infinite;
+}

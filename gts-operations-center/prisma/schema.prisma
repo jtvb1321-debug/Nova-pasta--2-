@@ -1,0 +1,414 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  GESTOR
+  OPERADOR
+  TECNICO
+  VENDEDOR
+  COMERCIAL
+}
+
+enum StatusEquipe {
+  AGUARDANDO
+  DESLOCAMENTO
+  ATIVIDADE
+  FINALIZADO
+}
+
+enum CategoriaEstoque {
+  GTSNET
+  EACE
+  FERRAMENTAS
+  LIMPEZA
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  TRANSFERENCIA
+  RESERVA
+  DEVOLUCAO
+}
+
+enum TipoChamado {
+  INSTALACAO
+  MANUTENCAO
+  RETIRADA
+  SUPORTE
+}
+
+enum StatusChamado {
+  ABERTO
+  EM_ANDAMENTO
+  FINALIZADO
+  CANCELADO
+}
+
+enum StatusVenda {
+  PENDENTE
+  APROVADO
+  REPROVADO
+}
+
+enum StatusInstalacao {
+  AGUARDANDO
+  AGENDADA
+  INSTALADA
+  CANCELADA
+}
+
+enum StatusPosVenda {
+  PENDENTE
+  CONCLUIDO
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  APROVADO
+  REPROVADO
+  PAGO
+  CANCELADO
+}
+
+enum CentroCusto {
+  PROVEDOR
+  EACE
+  ADMINISTRATIVO
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  role      UserRole @default(OPERADOR)
+  ativo     Boolean  @default(true)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendas       Venda[]
+  logs         Log[]
+  funcionario  Funcionario?
+  solicitacoes SolicitacaoPagamento[] @relation("solicitacoes")
+  aprovacoes   SolicitacaoPagamento[] @relation("aprovacoes")
+
+  @@map("usuarios")
+}
+
+model Equipe {
+  id          String       @id @default(cuid())
+  nome        String
+  status      StatusEquipe @default(AGUARDANDO)
+  horaInicio  DateTime?
+  localizacao String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  funcionarios Funcionario[]
+  chamados     Chamado[]
+  veiculo      Veiculo?
+
+  @@map("equipes")
+}
+
+model Funcionario {
+  id        String   @id @default(cuid())
+  nome      String
+  cargo     String?
+  telefone  String?
+  avatar    String?
+  ativo     Boolean  @default(true)
+  equipeId  String
+  usuarioId String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  equipe   Equipe                 @relation(fields: [equipeId], references: [id])
+  usuario  Usuario?               @relation(fields: [usuarioId], references: [id])
+  despesas SolicitacaoPagamento[]
+
+  @@map("funcionarios")
+}
+
+model Veiculo {
+  id           String   @id @default(cuid())
+  placa        String   @unique
+  modelo       String
+  cor          String?
+  ano          Int?
+  equipeId     String?  @unique
+  rastreadorId String?
+  foto         String?
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  equipe Equipe? @relation(fields: [equipeId], references: [id])
+
+  @@map("veiculos")
+}
+
+model ItemEstoque {
+  id               String           @id @default(cuid())
+  codigo           String           @unique
+  descricao        String
+  categoria        CategoriaEstoque
+  unidade          String           @default("UN")
+  quantidadeAtual  Float            @default(0)
+  quantidadeMinima Float            @default(0)
+  fornecedor       String?
+  valorUnitario    Float            @default(0)
+  observacao       String?
+  dataEntrada      DateTime         @default(now())
+  ultimaMovimento  DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  movimentacoes       Movimentacao[]
+  materiaisUtilizados MaterialUtilizado[]
+  materiaisDevolvidos MaterialDevolvido[]
+  materiaisReservados MaterialReservado[]
+
+  @@map("estoques")
+}
+
+model Movimentacao {
+  id         String           @id @default(cuid())
+  itemId     String
+  tipo       TipoMovimentacao
+  quantidade Float
+  valorUnit  Float?
+  motivo     String?
+  chamadoId  String?
+  operadorId String?
+  createdAt  DateTime         @default(now())
+
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+  chamado Chamado?    @relation(fields: [chamadoId], references: [id])
+
+  @@map("movimentacoes")
+}
+
+model Chamado {
+  id           String        @id @default(cuid())
+  cliente      String
+  endereco     String
+  cidade       String
+  telefone     String?
+  tipo         TipoChamado
+  observacao   String?
+  relato       String?
+  fotos        String?
+  equipeId     String?
+  status       StatusChamado @default(ABERTO)
+  dataAbertura DateTime      @default(now())
+  dataACaminho DateTime?
+  dataInicio   DateTime?
+  dataFim      DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  equipe              Equipe?             @relation(fields: [equipeId], references: [id])
+  movimentacoes       Movimentacao[]
+  materiaisUtilizados MaterialUtilizado[]
+  materiaisDevolvidos MaterialDevolvido[]
+  materiaisReservados MaterialReservado[]
+
+  @@map("chamados")
+}
+
+model MaterialReservado {
+  id         String   @id @default(cuid())
+  chamadoId  String
+  itemId     String
+  quantidade Float
+  createdAt  DateTime @default(now())
+
+  chamado Chamado     @relation(fields: [chamadoId], references: [id])
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@map("materiais_reservados")
+}
+
+model MaterialUtilizado {
+  id         String   @id @default(cuid())
+  chamadoId  String
+  itemId     String
+  quantidade Float
+  observacao String?
+  createdAt  DateTime @default(now())
+
+  chamado Chamado     @relation(fields: [chamadoId], references: [id])
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@map("materiais_utilizados")
+}
+
+model MaterialDevolvido {
+  id          String    @id @default(cuid())
+  chamadoId   String
+  itemId      String
+  quantidade  Float
+  observacao  String?
+  aprovado    Boolean   @default(false)
+  aprovadoPor String?
+  aprovadoEm  DateTime?
+  createdAt   DateTime  @default(now())
+
+  chamado Chamado     @relation(fields: [chamadoId], references: [id])
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@map("materiais_devolvidos")
+}
+
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  telefone  String?
+  cidade    String?
+  email     String?
+  endereco  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendas Venda[]
+
+  @@map("clientes")
+}
+
+model Venda {
+  id               String           @id @default(cuid())
+  clienteId        String?
+  clienteNome      String
+  clienteCpfCnpj   String?
+  telefone         String?
+  endereco         String?
+  cidade           String?
+  bairro           String?
+  planoVendido     String
+  valor            Float
+  data             DateTime         @default(now())
+  dataInstalacao   DateTime?
+  statusInstalacao StatusInstalacao @default(AGUARDANDO)
+  statusPosVenda   StatusPosVenda   @default(PENDENTE)
+  posVendaData     DateTime?
+  posVendaResp     String?
+  posVendaObs      String?
+  posVendaImagem   String?
+  observacoes      String?
+  status           StatusVenda      @default(PENDENTE)
+  vendedorId       String
+  aprovadoPor      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  vendedor Usuario  @relation(fields: [vendedorId], references: [id])
+  cliente  Cliente? @relation(fields: [clienteId], references: [id])
+  comissao Comissao?
+
+  @@map("vendas")
+}
+
+model Comissao {
+  id        String    @id @default(cuid())
+  vendaId   String    @unique
+  valor     Float     @default(25.00)
+  pago      Boolean   @default(false)
+  dataPago  DateTime?
+  createdAt DateTime  @default(now())
+
+  venda Venda @relation(fields: [vendaId], references: [id])
+
+  @@map("comissoes")
+}
+
+model Configuracao {
+  id        String   @id @default(cuid())
+  chave     String   @unique
+  valor     String
+  descricao String?
+  updatedAt DateTime @updatedAt
+
+  @@map("configuracoes")
+}
+
+model Log {
+  id         String   @id @default(cuid())
+  usuarioId  String?
+  acao       String
+  entidade   String?
+  entidadeId String?
+  detalhes   String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@map("logs")
+}
+
+model SolicitacaoPagamento {
+  id             String            @id @default(cuid())
+  titulo         String
+  descricao      String?
+  centroCusto    CentroCusto
+  subcategoria   String
+  valor          Float
+  valorPago      Float?
+  fornecedor     String?
+  tecnicoId      String?
+  responsavelId  String
+  aprovadorId    String?
+  status         StatusSolicitacao @default(PENDENTE)
+  dataVencimento DateTime?
+  dataPagamento  DateTime?
+  notaFiscal     String?
+  anexos         String?
+  observacoes    String?
+  parcelas       Int               @default(1)
+  parcelaAtual   Int               @default(1)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  responsavel Usuario              @relation("solicitacoes", fields: [responsavelId], references: [id])
+  aprovador   Usuario?             @relation("aprovacoes",   fields: [aprovadorId],  references: [id])
+  tecnico     Funcionario?         @relation(fields: [tecnicoId], references: [id])
+  historico   HistoricoFinanceiro[]
+
+  @@map("solicitacoes_pagamento")
+}
+
+model HistoricoFinanceiro {
+  id            String   @id @default(cuid())
+  solicitacaoId String
+  usuarioId     String?
+  acao          String
+  descricao     String?
+  createdAt     DateTime @default(now())
+
+  solicitacao SolicitacaoPagamento @relation(fields: [solicitacaoId], references: [id])
+
+  @@map("historico_financeiro")
+}
+
+model OrcamentoFinanceiro {
+  id          String      @id @default(cuid())
+  centroCusto CentroCusto
+  mes         Int
+  ano         Int
+  valorTotal  Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([centroCusto, mes, ano])
+  @@map("orcamentos_financeiros")
+}
