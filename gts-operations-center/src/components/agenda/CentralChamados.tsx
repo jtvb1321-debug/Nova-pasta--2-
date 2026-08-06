@@ -18,7 +18,7 @@ import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
 
-type Aba = 'despacho' | 'ativos' | 'historico' | 'calendario'
+type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'historico' | 'calendario'
 
 const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
@@ -68,6 +68,13 @@ async function fetchHistorico(filtroStatus: string, busca: string, page: number)
   const q = new URLSearchParams({ limit: '20', page: String(page) })
   if (filtroStatus) q.set('status', filtroStatus)
   if (busca) q.set('search', busca)
+  const res = await fetch(`/api/tickets?${q}`)
+  if (!res.ok) return { data: [], total: 0, totalPages: 1 }
+  return res.json()
+}
+
+async function fetchReincidentes(page: number) {
+  const q = new URLSearchParams({ limit: '20', page: String(page), reincidente: 'true' })
   const res = await fetch(`/api/tickets?${q}`)
   if (!res.ok) return { data: [], total: 0, totalPages: 1 }
   return res.json()
@@ -420,6 +427,13 @@ export function CentralChamados({ session }: { session: Session }) {
     enabled: aba === 'historico',
   })
 
+  const paginaReincidentes = aba === 'reincidentes' ? page : 1
+  const { data: reincidentesData, isLoading: loadingReincidentes } = useQuery({
+    queryKey: ['chamados-reincidentes', paginaReincidentes],
+    queryFn: () => fetchReincidentes(paginaReincidentes),
+    refetchInterval: 60000,
+  })
+
   const iniciarMutation = useMutation({
     mutationFn: async (chamadoId: string) => {
       const res = await fetch(`/api/tickets/${chamadoId}`, {
@@ -499,6 +513,9 @@ export function CentralChamados({ session }: { session: Session }) {
   const historico = historicoData?.data ?? []
   const totalPages = historicoData?.totalPages ?? 1
   const totalHistorico = historicoData?.total ?? 0
+  const reincidentes = reincidentesData?.data ?? []
+  const reincidentesTotalPages = reincidentesData?.totalPages ?? 1
+  const totalReincidentes = reincidentesData?.total ?? 0
 
   function filtrar(lista: any[]) {
     return lista.filter(c => {
@@ -520,14 +537,16 @@ export function CentralChamados({ session }: { session: Session }) {
     { label: 'Na Fila',       value: totalAbertos,  cor: 'text-blue-400',    bg: 'bg-blue-500/10',    icon: Clock },
     { label: 'Em Andamento',  value: totalAtivos,   cor: 'text-yellow-400',  bg: 'bg-yellow-500/10',  icon: Zap },
     { label: 'Criticos',      value: totalCriticos, cor: 'text-red-400',     bg: 'bg-red-500/10',     icon: AlertTriangle },
+    { label: 'Reincidentes',  value: totalReincidentes, cor: 'text-orange-400', bg: 'bg-orange-500/10', icon: Repeat },
     { label: 'Finalizados Hoje', value: historicoData?.totalHoje ?? 0, cor: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle },
   ]
 
   const abas = [
-    { id: 'despacho'   as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
-    { id: 'ativos'     as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
-    { id: 'historico'  as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
-    { id: 'calendario' as Aba, label: 'Calendario',    badge: 0, badgeCor: '' },
+    { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
+    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
+    { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes, badgeCor: 'bg-orange-500' },
+    { id: 'historico'    as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
+    { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0, badgeCor: '' },
   ]
   return (
     <div className="space-y-5 animate-fade-in">
@@ -698,6 +717,71 @@ export function CentralChamados({ session }: { session: Session }) {
               />
             ))
           }
+        </div>
+      )}
+
+      {/* REINCIDENTES */}
+      {aba === 'reincidentes' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+            <Repeat className="w-4 h-4 text-orange-400 flex-shrink-0" />
+            <p className="text-sm text-orange-300">
+              Chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente.
+            </p>
+          </div>
+
+          {totalReincidentes > 0 && (
+            <p className="text-xs text-gray-500">{totalReincidentes} chamado(s) reincidente(s) encontrado(s)</p>
+          )}
+
+          {loadingReincidentes
+            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            : filtrar(reincidentes).length === 0
+            ? (
+              <div className="gts-card text-center py-16">
+                <CheckCircle className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
+                <p className="text-gray-400 font-medium">Nenhum chamado reincidente</p>
+                <p className="text-gray-600 text-sm mt-1">Nenhum cliente reabriu chamado dentro da janela de 7 dias</p>
+              </div>
+            )
+            : filtrar(reincidentes).map((c: any) => (
+              <CardChamado
+                key={c.id}
+                chamado={c}
+                isAdmin={isAdmin}
+                mostrarFinalizar={c.status !== 'FINALIZADO' && c.status !== 'CANCELADO'}
+                expandido={expandido === c.id}
+                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onFinalizar={setChamadoFinalizar}
+                onIniciar={id => iniciarMutation.mutate(id)}
+                onEncerrarAdmin={handleEncerrarAdmin}
+                isOperador={isOperador}
+                onAlterarTipo={handleAlterarTipo}
+              />
+            ))
+          }
+
+          {reincidentesTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-gray-500">Pagina {page} de {reincidentesTotalPages}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(reincidentesTotalPages, p + 1))}
+                  disabled={page === reincidentesTotalPages}
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
+                >
+                  Proxima
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
