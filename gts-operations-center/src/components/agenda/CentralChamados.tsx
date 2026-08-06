@@ -84,6 +84,7 @@ function CardChamado({
   chamado,
   isAdmin = false,
   mostrarFinalizar = false,
+  acaoRapidaEncerrar = false,
   expandido = false,
   onToggle,
   onFinalizar,
@@ -95,6 +96,7 @@ function CardChamado({
   chamado: any
   isAdmin?: boolean
   mostrarFinalizar?: boolean
+  acaoRapidaEncerrar?: boolean
   expandido?: boolean
   onToggle?: () => void
   onFinalizar?: (c: any) => void
@@ -226,6 +228,17 @@ function CardChamado({
               </span>
             )}
           </div>
+
+          {acaoRapidaEncerrar && isAdmin && podeEncerrarAdmin && onEncerrarAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEncerrarAdmin(chamado.id) }}
+              className="flex items-center gap-1.5 mt-3 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-bold text-red-400 transition-colors"
+              title="Encerra o chamado direto, sem passar por atendimento. Nao notifica Telegram nem entra em relatorios."
+            >
+              <Ban className="w-3.5 h-3.5" />
+              Encerrar Chamado
+            </button>
+          )}
         </div>
       </div>
 
@@ -750,6 +763,7 @@ export function CentralChamados({ session }: { session: Session }) {
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar={c.status !== 'FINALIZADO' && c.status !== 'CANCELADO'}
+                acaoRapidaEncerrar
                 expandido={expandido === c.id}
                 onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
                 onFinalizar={setChamadoFinalizar}
