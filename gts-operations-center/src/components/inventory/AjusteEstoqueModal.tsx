@@ -79,7 +79,7 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
               <p className="text-xs text-gray-500">{item.descricao}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>

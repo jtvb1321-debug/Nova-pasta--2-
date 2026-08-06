@@ -83,7 +83,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
             </div>
             <h2 className="text-lg font-semibold text-white">Novo Item / Entrada de Estoque</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
