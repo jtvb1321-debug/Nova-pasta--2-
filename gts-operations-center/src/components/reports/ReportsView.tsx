@@ -4,19 +4,20 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3, FileText, Download, Calendar,
-  Users, Package, ClipboardList, TrendingUp,
-  Loader2, CheckCircle
+  Users, Package, ClipboardList, TrendingUp, ShieldCheck,
+  Loader2, CheckCircle, CalendarDays
 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 
-type TipoRelatorio = 'chamados' | 'estoque' | 'comercial' | 'produtividade'
+type TipoRelatorio = 'chamados' | 'estoque' | 'comercial' | 'qualidade' | 'diario'
 
 const RELATORIOS = [
   { id: 'chamados'      as TipoRelatorio, title: 'Chamados',      description: 'Historico de atendimentos e status',          icon: ClipboardList, cor: 'text-blue-400 bg-blue-500/10' },
   { id: 'estoque'       as TipoRelatorio, title: 'Estoque',       description: 'Inventario completo e itens criticos',         icon: Package,       cor: 'text-yellow-400 bg-yellow-500/10' },
   { id: 'comercial'     as TipoRelatorio, title: 'Comercial',     description: 'Vendas, comissoes e ranking de vendedores',    icon: TrendingUp,    cor: 'text-emerald-400 bg-emerald-500/10' },
-  { id: 'produtividade' as TipoRelatorio, title: 'Produtividade', description: 'Desempenho das equipes de campo',              icon: Users,         cor: 'text-purple-400 bg-purple-500/10' },
+  { id: 'qualidade'     as TipoRelatorio, title: 'Qualidade / SLA', description: 'Reincidencia de clientes e conformidade de SLA no mes', icon: ShieldCheck, cor: 'text-purple-400 bg-purple-500/10' },
+  { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-400 bg-orange-500/10' },
 ]
 
 async function fetchEquipes() {
@@ -25,12 +26,17 @@ async function fetchEquipes() {
   return res.json()
 }
 
+function hojeISO() {
+  return new Date().toLocaleDateString('en-CA')
+}
+
 export function ReportsView() {
   const [tipo, setTipo] = useState<TipoRelatorio>('chamados')
   const [periodo, setPeriodo] = useState('mensal')
   const [equipeId, setEquipeId] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [dataDiario, setDataDiario] = useState(hojeISO())
   const [gerando, setGerando] = useState(false)
 
   const { data: equipes = [] } = useQuery({ queryKey: ['equipes-report'], queryFn: fetchEquipes })
@@ -54,6 +60,7 @@ export function ReportsView() {
         ...(equipeId ? { equipeId } : {}),
       })
 
+      q.set('excluirFechadoAdmin', 'true')
       const periodoLabel = periodo === 'diario' ? 'Hoje' :
                            periodo === 'semanal' ? 'Esta semana' :
                            periodo === 'mensal' ? 'Este mes' :
@@ -78,14 +85,19 @@ export function ReportsView() {
         const ranking = await rankingRes.json()
         pdfUtils.gerarPDFComercial(vendas.data || [], ranking || [], periodoLabel)
 
-      } else if (tipo === 'produtividade') {
-        const [teamsRes, prodRes] = await Promise.all([
-          fetch('/api/teams'),
-          fetch(`/api/productivity?periodo=${periodo}`),
-        ])
-        const teams = await teamsRes.json()
-        const prod = await prodRes.json()
-        pdfUtils.gerarPDFProdutividade(prod.equipes || teams, periodoLabel)
+      } else if (tipo === 'qualidade') {
+        const mesRef = periodo === 'personalizado' && dataInicio ? dataInicio.slice(0, 7) : undefined
+        const q2 = mesRef ? `?mes=${mesRef}` : ''
+        const res = await fetch(`/api/reports/mensal-qualidade${q2}`)
+        const dados = await res.json()
+        const mesLabel = new Date(dados.periodo.inicio).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+        pdfUtils.gerarPDFQualidade(dados, mesLabel)
+
+      } else if (tipo === 'diario') {
+        const res = await fetch(`/api/reports/diario?data=${dataDiario}`)
+        const dados = await res.json()
+        const dataLabel = new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+        pdfUtils.gerarPDFDiario(dados, dataLabel)
       }
 
       toast({ title: 'PDF gerado com sucesso!', variant: 'success' })
@@ -148,30 +160,40 @@ export function ReportsView() {
               Parametros
             </h2>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Periodo</label>
-              <select value={periodo} onChange={e => setPeriodo(e.target.value)} className="w-full gts-input">
-                <option value="diario">Hoje</option>
-                <option value="semanal">Esta semana</option>
-                <option value="mensal">Este mes</option>
-                <option value="personalizado">Personalizado</option>
-              </select>
-            </div>
-
-            {periodo === 'personalizado' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Inicio</label>
-                  <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full gts-input" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Fim</label>
-                  <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full gts-input" />
-                </div>
+            {tipo === 'diario' ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Data</label>
+                <input type="date" value={dataDiario} onChange={e => setDataDiario(e.target.value)} max={hojeISO()} className="w-full gts-input" />
+                <p className="text-xs text-gray-500 mt-1.5">O relatorio diario ja separa chamados, instalacoes, vendas e ponto por equipe automaticamente.</p>
               </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Periodo</label>
+                  <select value={periodo} onChange={e => setPeriodo(e.target.value)} className="w-full gts-input">
+                    <option value="diario">Hoje</option>
+                    <option value="semanal">Esta semana</option>
+                    <option value="mensal">Este mes</option>
+                    <option value="personalizado">Personalizado</option>
+                  </select>
+                </div>
+
+                {periodo === 'personalizado' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Inicio</label>
+                      <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full gts-input" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Fim</label>
+                      <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full gts-input" />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
-            {tipo !== 'comercial' && tipo !== 'estoque' && (
+            {tipo !== 'comercial' && tipo !== 'estoque' && tipo !== 'qualidade' && tipo !== 'diario' && (
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Equipe</label>
                 <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="w-full gts-input">
@@ -217,7 +239,7 @@ export function ReportsView() {
                   <div className="w-1 h-10 bg-blue-500 rounded" />
                   <div>
                     <p className="text-white font-bold text-sm">GTS Operations Center</p>
-                    <p className="text-gray-400 text-xs">GTSNet — Sistema de Gestao Operacional</p>
+                    <p className="text-gray-400 text-xs">GTSNet - Sistema de Gestao Operacional</p>
                     <p className="text-white text-xs font-medium mt-1">{relatorioAtual.title}</p>
                   </div>
                 </div>
@@ -225,6 +247,7 @@ export function ReportsView() {
                   <p className="text-gray-400 text-xs">Emitido em:</p>
                   <p className="text-white text-xs">{new Date().toLocaleDateString('pt-BR')}</p>
                   <p className="text-gray-400 text-xs mt-1">Periodo: {
+                    tipo === 'diario' ? new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR') :
                     periodo === 'diario' ? 'Hoje' :
                     periodo === 'semanal' ? 'Esta semana' :
                     periodo === 'mensal' ? 'Este mes' : 'Personalizado'
@@ -235,10 +258,10 @@ export function ReportsView() {
               {/* KPIs simulados */}
               <div className="grid grid-cols-4 gap-3 p-4 bg-gray-50">
                 {[
-                  { label: 'Total', value: '—' },
-                  { label: 'Periodo', value: '—' },
-                  { label: 'Valor', value: '—' },
-                  { label: 'Status', value: '—' },
+                  { label: 'Total', value: '---' },
+                  { label: 'Periodo', value: '---' },
+                  { label: 'Valor', value: '---' },
+                  { label: 'Status', value: '---' },
                 ].map((k, i) => (
                   <div key={i} className="bg-white border-l-2 border-blue-500 rounded p-2 shadow-sm">
                     <p className="text-xs text-gray-500">{k.label}</p>
@@ -265,7 +288,7 @@ export function ReportsView() {
 
               {/* Rodape simulado */}
               <div className="bg-gray-100 px-6 py-2 flex items-center justify-between">
-                <p className="text-xs text-gray-500">GTSNet © {new Date().getFullYear()} — GTS Operations Center</p>
+                <p className="text-xs text-gray-500">GTSNet (c) {new Date().getFullYear()} - GTS Operations Center</p>
                 <p className="text-xs text-gray-500">Pagina 1 / 1</p>
               </div>
             </div>

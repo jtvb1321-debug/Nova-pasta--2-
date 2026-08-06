@@ -684,6 +684,78 @@ export function gerarPDFRelatorioGeralHorasExtras(
 }
 
 // =============================================
+// RELATORIO DIARIO (chamados, instalacoes, vendas, atendimento e ponto por equipe)
+// =============================================
+
+export function gerarPDFDiario(dados: any, dataLabel: string) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  const width = doc.internal.pageSize.getWidth()
+
+  let y = cabecalho(doc, 'Relatorio Diario Operacional', dataLabel)
+
+  const boxW = (width - 24 - 9) / 4
+  kpiBox(doc, 'Chamados no dia', String(dados.totalChamados), 12, y, boxW, CORES.azul)
+  kpiBox(doc, 'Instalacoes', String(dados.totalInstalacoes), 12 + boxW + 3, y, boxW, CORES.verde)
+  kpiBox(doc, 'Vendas', String(dados.totalVendas), 12 + (boxW + 3) * 2, y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Equipes com ponto', String(dados.pontoPorEquipe.length), 12 + (boxW + 3) * 3, y, boxW, CORES.cinza)
+  y += 28
+
+  y = secao(doc, 'Atendimentos Finalizados por Equipe', y)
+  if (dados.atendimentosPorEquipe.length === 0) {
+    doc.setFontSize(9)
+    doc.setTextColor(...CORES.cinza)
+    doc.text('Nenhuma equipe cadastrada.', 12, y + 4)
+    y += 14
+  } else {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['Equipe', 'Chamados Finalizados no Dia']],
+      body: dados.atendimentosPorEquipe.map((e: any) => [e.equipeNome, e.quantidade]),
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      alternateRowStyles: { fillColor: CORES.fundo },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  if (dados.pontoPorEquipe.length === 0) {
+    if (y > 260) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Ponto das Equipes', y)
+    doc.setFontSize(9)
+    doc.setTextColor(...CORES.cinza)
+    doc.text('Nenhum registro de ponto encontrado para o dia.', 12, y + 4)
+  } else {
+    for (const equipe of dados.pontoPorEquipe) {
+      if (y > 250) { doc.addPage(); y = 20 }
+      y = secao(doc, `Ponto - ${equipe.equipeNome}`, y)
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Funcionario', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Horas', 'Extras', 'Status']],
+        body: equipe.registros.map((r: any) => [
+          r.funcionarioNome,
+          r.entrada ? new Date(r.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+          r.saidaAlmoco ? new Date(r.saidaAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+          r.retornoAlmoco ? new Date(r.retornoAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+          r.saida ? new Date(r.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+          r.horasTrabalhadas ?? '-',
+          r.horasExtras ?? '-',
+          r.statusHorasExtras,
+        ]),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  rodape(doc)
+  doc.save(`relatorio-diario-${dados.data}.pdf`)
+}
+
+// =============================================
 // RELATORIO MENSAL DE QUALIDADE (SLA / REINCIDENCIA)
 // =============================================
 
