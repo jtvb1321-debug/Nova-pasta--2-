@@ -60,7 +60,7 @@ export function TVNetworkAlternator() {
       <div className={cn('flex-1 min-h-0 transition-opacity duration-300', transicionando ? 'opacity-0' : 'opacity-100')}>
         {visao === 'mapa' ? (
           <div className="h-full">
-            <NetworkMapInner />
+            <NetworkMapInner modoTv />
           </div>
         ) : (
           <div className="h-full p-5">

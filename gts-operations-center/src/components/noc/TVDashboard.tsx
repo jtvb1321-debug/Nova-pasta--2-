@@ -512,15 +512,11 @@ export function TVDashboard() {
           >
             <div className="bg-[#111827] rounded-xl border border-white/5 p-6 flex flex-col">
               <h2 className="font-bold text-white text-xl mb-4 flex items-center gap-2"><Radio className="w-6 h-6 text-blue-400" /> Network At-a-Glance</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col justify-center">
-                  <p className="text-gray-400 text-base">Online</p>
-                  <p className="text-4xl font-black text-emerald-400">{smartolt?.status?.online ?? 0}</p>
-                </div>
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 flex flex-col justify-center">
-                  <p className="text-gray-400 text-base">Offline</p>
-                  <p className="text-4xl font-black text-red-400">{smartolt?.status?.offline ?? 0}</p>
-                </div>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col justify-center">
+                <p className="text-gray-400 text-base">Clientes Online</p>
+                <p className="text-4xl font-black text-emerald-400">{smartolt?.status?.online ?? 0}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 flex flex-col justify-center">
                   <p className="text-gray-400 text-base">LOS Alarms</p>
                   <p className="text-4xl font-black text-red-400">{smartolt?.status?.los ?? 0}</p>
@@ -538,9 +534,8 @@ export function TVDashboard() {
                     {(STATUS_GERAL_CFG[rede?.statusGeral] ?? STATUS_GERAL_CFG.OPERACIONAL).label}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 bg-white/[0.02] rounded-xl py-3">
-                  <RadialGauge valor={rede?.percentualOnline ?? null} cor="#34D399" label="% Online" tamanho={120} />
-                  <RadialGauge valor={rede?.percentualOffline ?? null} cor="#F87171" label="% Offline" tamanho={120} />
+                <div className="flex items-center justify-center bg-white/[0.02] rounded-xl py-3">
+                  <RadialGauge valor={rede?.percentualOnline ?? null} cor="#34D399" label="% Clientes Online" tamanho={150} />
                 </div>
                 <div className="flex items-center gap-2 bg-white/5 rounded-xl p-3">
                   <PlugZap className="w-5 h-5 text-gray-500 flex-shrink-0" />
