@@ -7,7 +7,7 @@ import {
   CheckCircle, Package, FileText, ChevronRight,
   Loader2, Camera, Trash2, AlertTriangle, ImageIcon
 } from 'lucide-react'
-import { cn, timeAgo } from '@/lib/utils'
+import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 
@@ -31,7 +31,7 @@ function detectarPrioridade(obs: string) {
 }
 
 function limparObservacao(obs: string) {
-  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?—?\s?/g, '').replace(/Bairro:[^—]*—?\s?/g, '').trim() || ''
+  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
 }
 
 export function ModalAtendimento({ chamado, onClose }: Props) {
@@ -130,7 +130,24 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
       [itemId]: { ...prev[itemId], quantidade },
     }))
   }
+async function marcarClienteAusente() {
+    const confirmar = window.confirm('Confirma que o cliente nao estava presente? O chamado sera reagendado para amanha.')
+    if (!confirmar) return
 
+    const amanha = new Date()
+    amanha.setDate(amanha.getDate() + 1)
+
+    const ok = await atualizarStatus('ABERTO', {
+      clienteAusente: true,
+      dataAgendada: amanha.toISOString(),
+      relato: relato.trim() || 'Cliente ausente no momento do atendimento',
+    })
+
+    if (ok) {
+      toast({ title: 'Chamado marcado como cliente ausente e devolvido a agenda.', variant: 'default' })
+      onClose()
+    }
+  }
   async function finalizarAtendimento() {
     if (!relato.trim()) {
       toast({ title: 'Preencha o relato do atendimento', variant: 'destructive' })
@@ -186,7 +203,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
               </span>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-2.5 -m-1 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -204,7 +221,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
             </div>
             <p className="text-sm text-gray-300 flex items-start gap-2">
               <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-              {chamado.endereco}, {chamado.cidade}
+              {formatarEnderecoCompleto(chamado)}
             </p>
             {chamado.telefone && (
               <a href={`tel:${chamado.telefone}`} className="text-sm text-blue-400 flex items-center gap-2">
@@ -231,7 +248,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
             ))}
           </div>
 
-          {/* ETAPA 1 — A Caminho */}
+          {/* ETAPA 1 - A Caminho */}
           {status === 'ABERTO' && !chamado.dataACaminho && (
             <button
               onClick={iniciarCaminho}
@@ -242,8 +259,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
               Estou a Caminho
             </button>
           )}
-
-          {/* ETAPA 2 — Iniciar */}
+          {/* ETAPA 2 - Iniciar */}
           {status === 'ABERTO' && chamado.dataACaminho && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
@@ -258,17 +274,35 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
                 Iniciar Atendimento
               </button>
+              <button
+                onClick={marcarClienteAusente}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-orange-500/10 border border-orange-500/20 text-orange-400 font-medium rounded-xl transition-colors disabled:opacity-50"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Cliente Ausente - Devolver a Agenda
+              </button>
             </div>
           )}
 
-          {/* ETAPA 3 — Em atendimento */}
+          {/* ETAPA 3 - Em atendimento */}
           {status === 'EM_ANDAMENTO' && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                 <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
                 <p className="text-sm text-yellow-400 font-medium">Atendimento em andamento</p>
               </div>
+{/* Cliente ausente */}
+              <button
+                onClick={marcarClienteAusente}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-orange-500/10 border border-orange-500/20 text-orange-400 font-medium rounded-xl transition-colors disabled:opacity-50"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Cliente Ausente - Devolver a Agenda
+              </button>
 
+            
               {/* Relato */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
@@ -284,7 +318,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
                 />
               </div>
 
-              {/* Fotos — OBRIGATORIO */}
+              {/* Fotos OBRIGATORIO */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-300 flex items-center gap-1.5">
@@ -341,7 +375,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
                   type="file"
                   accept="image/*"
                   multiple
-                  capture="environment"
+                 
                   onChange={handleFotos}
                   className="hidden"
                 />

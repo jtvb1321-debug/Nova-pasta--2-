@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { signOut } from 'next-auth/react'
 import {
-  ClipboardList, MapPin, Phone, Clock, LogOut,
+  ClipboardList, MapPin, Phone, Clock, LogOut, Map,
   AlertTriangle, CheckCircle, Zap, Truck,
   RefreshCw, User, Calendar, ChevronRight
 } from 'lucide-react'
-import { cn, timeAgo } from '@/lib/utils'
+import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import type { Session } from 'next-auth'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { ModalAtendimento } from './ModalAtendimento'
+import Link from 'next/link'
 
 const PRIORIDADE_CFG: Record<string, { label: string; cor: string; bg: string }> = {
   CRITICO: { label: 'Critico', cor: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/30' },
@@ -31,12 +32,17 @@ function detectarPrioridade(obs: string) {
 }
 
 function limparObservacao(obs: string) {
-  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?—?\s?/g, '').replace(/Bairro:[^—]*—?\s?/g, '').trim() || ''
+  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
 }
 
 async function fetchMeusChamados() {
   const res = await fetch('/api/tickets?limit=50')
   if (!res.ok) return { data: [] }
+  return res.json()
+}
+async function fetchAvisoPlantao() {
+  const res = await fetch('/api/escala/aviso-plantao')
+  if (!res.ok) return { mostrar: false }
   return res.json()
 }
 
@@ -65,6 +71,10 @@ export function PainelTecnico({ session }: Props) {
     queryFn: fetchMeusChamados,
     refetchInterval: 15000,
   })
+  const { data: avisoPlantao } = useQuery({
+    queryKey: ['aviso-plantao'],
+    queryFn: fetchAvisoPlantao,
+  })
 
   const chamados = (data?.data ?? []).filter((c: any) =>
     c.status === 'ABERTO' || c.status === 'EM_ANDAMENTO'
@@ -77,26 +87,70 @@ export function PainelTecnico({ session }: Props) {
     <div className="min-h-screen bg-[#0B1120]">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-[#111827] border-b border-white/5 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0B1120] p-1 flex-shrink-0">
               <img src="/images/icon.png" alt="GTSNet" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <p className="text-white font-bold text-sm">
+            <div className="min-w-0">
+              <p className="text-white font-bold text-sm truncate">
                 Ola, {session.user?.name?.split(' ')[0]}!
               </p>
-              <p className="text-gray-500 text-xs">{agora}</p>
+             <p className="text-gray-500 text-xs">{agora}</p>
             </div>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Link
+              href="/meu-carro"
+              className="flex items-center gap-1.5 p-3.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-blue-500/10 rounded-lg text-gray-400 hover:text-blue-400 transition-colors"
+              title="Meu Carro"
+            >
+              <Truck className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-medium">Meu Carro</span>
+            </Link>
+            <Link
+              href="/mapa-inmap"
+              className="flex items-center gap-1.5 p-3.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-cyan-500/10 rounded-lg text-gray-400 hover:text-cyan-400 transition-colors"
+              title="Mapa"
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-medium">Mapa</span>
+            </Link>
+            <Link
+              href="/ponto"
+              className="flex items-center gap-1.5 p-3.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-emerald-500/10 rounded-lg text-gray-400 hover:text-emerald-400 transition-colors"
+              title="Ponto"
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-medium">Ponto</span>
+            </Link>
+            <Link
+              href="/escala"
+              className="flex items-center gap-1.5 p-3.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-purple-500/10 rounded-lg text-gray-400 hover:text-purple-400 transition-colors"
+              title="Calendario"
+            >
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-medium">Calendario</span>
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="flex items-center gap-1.5 p-3.5 sm:px-3 sm:py-2 bg-white/5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
+      {avisoPlantao?.mostrar && (
+        <div className="mx-4 mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-yellow-200">
+            <span className="font-bold">Atencao:</span> Voce esta escalado para o plantao do proximo sabado, dia{' '}
+            {new Date(avisoPlantao.dataSabado).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}.
+          </p>
+        </div>
+      )}
 
       {/* Conteudo */}
       <main className="p-4 space-y-5 max-w-2xl mx-auto">
@@ -183,7 +237,7 @@ export function PainelTecnico({ session }: Props) {
                     <div className="space-y-1">
                       <p className="text-sm text-gray-300 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                        {chamado.endereco}, {chamado.cidade}
+                        {formatarEnderecoCompleto(chamado)}
                       </p>
                       {chamado.telefone && (
                         <p className="text-sm text-gray-400 flex items-center gap-1.5">
@@ -197,6 +251,11 @@ export function PainelTecnico({ session }: Props) {
                       <span className="text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-400">
                         {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
                       </span>
+                      {chamado.subCategoria && (
+                        <span className="text-xs px-2 py-0.5 bg-orange-500/15 border border-orange-500/30 rounded-full text-orange-400 font-medium">
+                          {chamado.subCategoria}
+                        </span>
+                      )}
                       {chamado.materiaisReservados?.length > 0 && (
                         <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full">
                           {chamado.materiaisReservados.length} material(is)
