@@ -100,7 +100,7 @@ export function FinanceiroView({ session }: Props) {
   return (
     <div className="space-y-5 animate-fade-in">
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard Financeiro</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -144,7 +144,7 @@ export function FinanceiroView({ session }: Props) {
         })}
       </div>
 
-      <div className="flex items-center gap-1 border-b border-white/5">
+      <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto -mx-1 px-1">
         {abas.filter(a => !a.adminOnly || isAdmin).map(a => {
           const Icon = a.icon
           return (
@@ -152,7 +152,7 @@ export function FinanceiroView({ session }: Props) {
               key={a.id}
               onClick={() => setAba(a.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
                 aba === a.id ? 'border-orange-400 text-orange-400' : 'border-transparent text-gray-400 hover:text-white'
               )}
             >
@@ -278,8 +278,8 @@ export function FinanceiroView({ session }: Props) {
             <div className="flex items-center justify-between pt-2">
               <p className="text-xs text-gray-500">Pagina {page} de {totalPages}</p>
               <div className="flex gap-2">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-1 px-2 disabled:opacity-30"><ChevronLeft className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="gts-btn-secondary py-1 px-2 disabled:opacity-30"><ChevronRight className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="gts-btn-secondary py-2 px-3 disabled:opacity-30"><ChevronRight className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           )}
@@ -297,7 +297,7 @@ export function FinanceiroView({ session }: Props) {
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
             return (
               <div key={s.id} className="bg-[#111827] border border-yellow-500/20 rounded-xl p-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-bold mb-1">{s.titulo}</h3>
                     <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-2">
@@ -315,16 +315,16 @@ export function FinanceiroView({ session }: Props) {
                       </a>
                     )}
                   </div>
-                  <div className="flex-shrink-0 text-right">
+                  <div className="flex-shrink-0 sm:text-right">
                     <p className="text-emerald-400 font-bold text-xl mb-3">{formatCurrency(s.valor)}</p>
-                    <div className="flex gap-2 flex-wrap justify-end">
-                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'REPROVADO' })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-400 transition-colors">
+                    <div className="flex gap-2 flex-wrap sm:justify-end">
+                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'REPROVADO' })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-400 transition-colors">
                         <ThumbsDown className="w-3.5 h-3.5" />Reprovar
                       </button>
-                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'APROVADO' })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs text-emerald-400 transition-colors">
+                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'APROVADO' })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs text-emerald-400 transition-colors">
                         <ThumbsUp className="w-3.5 h-3.5" />Aprovar
                       </button>
-                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'PAGO', valorPago: s.valor })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs text-blue-400 transition-colors">
+                      <button onClick={() => aprovacaoMutation.mutate({ id: s.id, status: 'PAGO', valorPago: s.valor })} disabled={aprovacaoMutation.isPending} className="flex items-center gap-1 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs text-blue-400 transition-colors">
                         <CreditCard className="w-3.5 h-3.5" />Marcar Pago
                       </button>
                     </div>

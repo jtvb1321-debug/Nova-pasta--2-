@@ -146,7 +146,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
             </div>
             <h2 className="text-lg font-semibold text-white">Nova Solicitacao de Pagamento</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -167,7 +167,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
           {/* Centro de Custo */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Centro de Custo *</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {CENTROS.map(c => (
                 <button
                   key={c.value}
