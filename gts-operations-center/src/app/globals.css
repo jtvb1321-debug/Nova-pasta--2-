@@ -63,11 +63,11 @@
 
 @layer components {
   .gts-card {
-    @apply bg-[#111827] border border-white/5 rounded-xl p-4 shadow-lg;
+    @apply bg-[#111827]/90 backdrop-blur-md border border-white/5 rounded-2xl p-4 shadow-lg;
   }
 
   .gts-card-alert {
-    @apply bg-[#111827] border border-red-500/40 rounded-xl p-4 shadow-lg shadow-red-500/5;
+    @apply bg-[#111827]/90 backdrop-blur-md border border-red-500/40 rounded-2xl p-4 shadow-lg shadow-red-500/5;
   }
 
   .status-badge {
@@ -171,4 +171,13 @@
 
 .velocity-alert {
   animation: velocityAlert 1s ease-in-out infinite;
+}
+
+@keyframes pulsoCritico {
+  0%, 100% { stroke-opacity: 1; filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.8)); }
+  50% { stroke-opacity: 0.4; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 1)); }
+}
+
+.gts-pulso-critico path {
+  animation: pulsoCritico 1.4s ease-in-out infinite;
 }
