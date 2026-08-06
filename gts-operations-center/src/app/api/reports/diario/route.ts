@@ -13,8 +13,7 @@ export async function GET(request: NextRequest) {
   const inicioDia = new Date(diaBase.getFullYear(), diaBase.getMonth(), diaBase.getDate())
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000)
 
-  const [totalChamados, totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes] = await Promise.all([
-    prisma.chamado.count({ where: { dataAbertura: { gte: inicioDia, lt: fimDia } } }),
+  const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes] = await Promise.all([
     prisma.venda.count({ where: { dataInstalacao: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.venda.count({ where: { data: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.chamado.findMany({
@@ -63,12 +62,18 @@ export async function GET(request: NextRequest) {
     .filter(e => e.registros.length > 0)
     .map(e => ({ ...e, registros: e.registros.sort((a, b) => a.funcionarioNome.localeCompare(b.funcionarioNome)) }))
 
+  const atendimentosPorEquipe = Array.from(atendimentosPorEquipeMap.values())
+  // Total de chamados do dia = soma do que cada equipe finalizou no dia
+  // (nao a contagem de chamados abertos, que pode incluir os ainda em
+  // aberto/agendados e nao representa o que as equipes efetivamente fizeram).
+  const totalChamados = atendimentosPorEquipe.reduce((soma, e) => soma + e.quantidade, 0)
+
   return NextResponse.json({
     data: inicioDia.toISOString().split('T')[0],
     totalChamados,
     totalInstalacoes,
     totalVendas,
-    atendimentosPorEquipe: Array.from(atendimentosPorEquipeMap.values()),
+    atendimentosPorEquipe,
     pontoPorEquipe,
   })
 }
