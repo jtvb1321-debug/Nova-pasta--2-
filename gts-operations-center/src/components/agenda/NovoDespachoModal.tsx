@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,7 +8,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   X, Loader2, Package, Trash2, FileText,
   CheckCircle, MapPin, Phone, AlertTriangle,
-  Clock, Users, Zap
+  Clock, Users, Zap, Search, WifiOff
 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { TIPO_CHAMADO_LABELS } from '@/types'
@@ -17,12 +17,20 @@ import { cn } from '@/lib/utils'
 const schema = z.object({
   cliente: z.string().min(1, 'Obrigatorio'),
   telefone: z.string().optional(),
+  cep: z.string().min(1, 'Obrigatorio'),
   endereco: z.string().min(1, 'Obrigatorio'),
+  numero: z.string().min(1, 'Obrigatorio'),
+  complemento: z.string().optional(),
+  condominio: z.string().optional(),
+  bloco: z.string().optional(),
+  apartamento: z.string().optional(),
+  bairro: z.string().min(1, 'Obrigatorio'),
   cidade: z.string().min(1, 'Obrigatorio'),
-  bairro: z.string().optional(),
+  uf: z.string().optional(),
   tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
   prioridade: z.enum(['NORMAL', 'URGENTE', 'CRITICO']),
   equipeId: z.string().min(1, 'Selecione uma equipe'),
+  subCategoria: z.string().optional(),
   dataAgendada: z.string().optional(),
   horaAgendada: z.string().optional(),
   observacao: z.string().optional(),
@@ -40,6 +48,7 @@ interface Material {
 interface Props {
   onClose: () => void
   onSuccess: () => void
+  initialData?: Partial<FormData>
 }
 
 const PRIORIDADE_CONFIG = {
@@ -48,16 +57,60 @@ const PRIORIDADE_CONFIG = {
   CRITICO: { label: 'Critico', cor: 'text-red-400 border-red-500/30 bg-red-500/10' },
 }
 
-export function NovoDespachoModal({ onClose, onSuccess }: Props) {
+export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   const [materiais, setMateriais] = useState<Material[]>([])
   const [arquivoPDF, setArquivoPDF] = useState<File | null>(null)
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false)
+  const [clienteVinculado, setClienteVinculado] = useState(!!initialData?.cliente)
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'INSTALACAO', prioridade: 'NORMAL' },
+    defaultValues: { tipo: 'INSTALACAO', prioridade: 'NORMAL', ...initialData },
   })
 
   const prioridade = watch('prioridade')
+  const clienteDigitado = watch('cliente')
+  const [buscaCliente, setBuscaCliente] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => setBuscaCliente((clienteDigitado || '').trim()), 350)
+    return () => clearTimeout(t)
+  }, [clienteDigitado])
+
+  const {
+    data: sugestoesClientes = [],
+    isFetching: buscandoClientes,
+    isError: erroBuscaClientes,
+  } = useQuery({
+    queryKey: ['clientes-autocomplete-despacho', buscaCliente],
+    queryFn: async () => {
+      const res = await fetch(`/api/clientes?search=${encodeURIComponent(buscaCliente)}`)
+      if (!res.ok) throw new Error('Erro ao buscar clientes no IXC')
+      const json = await res.json()
+      return (json.data ?? []) as any[]
+    },
+    enabled: mostrarSugestoes && buscaCliente.length >= 3 && !clienteVinculado,
+    retry: false,
+    staleTime: 30000,
+  })
+
+  const clienteRegister = register('cliente')
+
+  function selecionarClienteIxc(c: any) {
+    setValue('cliente', c.nome, { shouldValidate: true })
+    if (c.telefone) setValue('telefone', c.telefone)
+    if (c.cep) setValue('cep', c.cep, { shouldValidate: true })
+    if (c.endereco) setValue('endereco', c.endereco, { shouldValidate: true })
+    if (c.numero) setValue('numero', c.numero, { shouldValidate: true })
+    if (c.complemento) setValue('complemento', c.complemento)
+    if (c.bloco) setValue('bloco', c.bloco)
+    if (c.apartamento) setValue('apartamento', c.apartamento)
+    if (c.bairro) setValue('bairro', c.bairro, { shouldValidate: true })
+    if (c.cidade) setValue('cidade', c.cidade, { shouldValidate: true })
+    if (c.uf) setValue('uf', c.uf)
+    setClienteVinculado(true)
+    setMostrarSugestoes(false)
+  }
 
   const { data: equipes = [] } = useQuery({
     queryKey: ['teams-despacho'],
@@ -129,7 +182,7 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
               <p className="text-xs text-gray-500">O chamado sera enviado diretamente para a equipe</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-2 -m-2 rounded-lg hover:bg-white/5 flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -172,16 +225,94 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
               ))}
             </div>
           </div>
+          {(watch('tipo') === 'MANUTENCAO' || watch('tipo') === 'SUPORTE') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Detalhe da Solicitacao</label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {(watch('tipo') === 'MANUTENCAO'
+                  ? ['Lentidao', 'Oscilacao', 'Problemas de conexao']
+                  : ['LOSS - Perda de Sinal', 'Equipamento com defeito']
+                ).map((opcao) => (
+                  <label key={opcao} className="cursor-pointer">
+                    <input {...register('subCategoria')} type="radio" value={opcao} className="sr-only peer" />
+                    <div className="px-3 py-2 text-xs text-center font-medium border border-white/10 rounded-lg
+                                    peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-400
+                                    text-gray-400 hover:border-white/20 transition-colors">
+                      {opcao}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Cliente */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
                 <Phone className="w-3.5 h-3.5 inline mr-1" />
                 Cliente *
               </label>
-              <input {...register('cliente')} placeholder="Nome do cliente" className="w-full gts-input" />
+              <div className="relative">
+                <input
+                  {...clienteRegister}
+                  onChange={(e) => {
+                    clienteRegister.onChange(e)
+                    setClienteVinculado(false)
+                    setMostrarSugestoes(true)
+                  }}
+                  onFocus={() => setMostrarSugestoes(true)}
+                  onBlur={(e) => {
+                    clienteRegister.onBlur(e)
+                    setTimeout(() => setMostrarSugestoes(false), 150)
+                  }}
+                  placeholder="Nome, CPF/CNPJ ou telefone do cliente"
+                  autoComplete="off"
+                  className="w-full gts-input pr-8"
+                />
+                {buscandoClientes && (
+                  <Loader2 className="w-3.5 h-3.5 text-gray-500 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                )}
+                {!buscandoClientes && clienteVinculado && (
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                )}
+              </div>
               {errors.cliente && <p className="text-xs text-red-400 mt-1">{errors.cliente.message}</p>}
+
+              {clienteVinculado && !errors.cliente && (
+                <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Dados preenchidos a partir do cadastro do cliente
+                </p>
+              )}
+              {mostrarSugestoes && !clienteVinculado && erroBuscaClientes && (
+                <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
+                  <WifiOff className="w-3 h-3" /> Nao foi possivel buscar o cliente agora. Preencha os dados manualmente.
+                </p>
+              )}
+
+              {mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
+                <div
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-[#1a2333] border border-white/10 rounded-lg shadow-xl"
+                >
+                  {sugestoesClientes.slice(0, 8).map((c: any) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => selecionarClienteIxc(c)}
+                      className="w-full text-left px-3 py-2 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-2"
+                    >
+                      <Search className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm text-white truncate">{c.nome}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {[c.cpfCnpj, c.telefone, c.cidade].filter(Boolean).join(' - ') || 'Sem dados adicionais'}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Telefone</label>
@@ -189,28 +320,71 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          {/* Endereco */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Condominio / Bloco / Apartamento */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Condominio</label>
+              <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Bloco</label>
+              <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Apartamento</label>
+              <input {...register('apartamento')} placeholder="Apartamento" className="w-full gts-input" />
+            </div>
+          </div>
+
+          {/* CEP / Endereco / Numero */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">CEP *</label>
+              <input {...register('cep')} placeholder="00000-000" className="w-full gts-input" />
+              {errors.cep && <p className="text-xs text-red-400 mt-1">{errors.cep.message}</p>}
+            </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
                 <MapPin className="w-3.5 h-3.5 inline mr-1" />
                 Endereco *
               </label>
-              <input {...register('endereco')} placeholder="Rua, numero, complemento" className="w-full gts-input" />
+              <input {...register('endereco')} placeholder="Rua, avenida..." className="w-full gts-input" />
               {errors.endereco && <p className="text-xs text-red-400 mt-1">{errors.endereco.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Bairro</label>
-              <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Numero *</label>
+              <input {...register('numero')} placeholder="Numero" className="w-full gts-input" />
+              {errors.numero && <p className="text-xs text-red-400 mt-1">{errors.numero.message}</p>}
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          {/* Complemento / Bairro */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Complemento</label>
+              <input {...register('complemento')} placeholder="Complemento" className="w-full gts-input" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Bairro *</label>
+              <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
+              {errors.bairro && <p className="text-xs text-red-400 mt-1">{errors.bairro.message}</p>}
+            </div>
+          </div>
+
+          {/* Cidade / UF */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Cidade *</label>
               <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
               {errors.cidade && <p className="text-xs text-red-400 mt-1">{errors.cidade.message}</p>}
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">UF</label>
+              <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
                 <Clock className="w-3.5 h-3.5 inline mr-1" />
@@ -236,7 +410,7 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
                 <optgroup label="Disponiveis">
                   {equipesDisponiveis.map((e: any) => (
                     <option key={e.id} value={e.id}>
-                      {e.nome} — {e.funcionarios?.map((f: any) => f.nome).join(', ')}
+                      {e.nome} - {e.funcionarios?.map((f: any) => f.nome).join(', ')}
                     </option>
                   ))}
                 </optgroup>
@@ -245,7 +419,7 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
                 <optgroup label="Em Atividade (podem receber chamado)">
                   {equipesOcupadas.map((e: any) => (
                     <option key={e.id} value={e.id}>
-                      {e.nome} — {e.status}
+                      {e.nome} - {e.status}
                     </option>
                   ))}
                 </optgroup>
@@ -349,7 +523,7 @@ export function NovoDespachoModal({ onClose, onSuccess }: Props) {
                 <option value="">+ Adicionar material</option>
                 {estoque?.data?.map((item: any) => (
                   <option key={item.id} value={item.id}>
-                    [{item.codigo}] {item.descricao} — {item.quantidadeAtual} {item.unidade}
+                    [{item.codigo}] {item.descricao} - {item.quantidadeAtual} {item.unidade}
                   </option>
                 ))}
               </select>

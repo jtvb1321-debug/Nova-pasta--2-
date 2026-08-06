@@ -120,7 +120,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
               <p className="text-xs text-gray-500">A equipe voltara automaticamente para Disponivel</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -179,7 +179,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada - 1)}
-                                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 text-white text-xs transition-colors"
+                                className="w-8 h-8 rounded bg-white/10 hover:bg-white/20 text-white text-sm transition-colors flex-shrink-0"
                               >
                                 -
                               </button>
@@ -189,11 +189,11 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                                 onChange={e => setQtdUtilizada(m.itemId, Number(e.target.value))}
                                 min={0}
                                 max={m.quantidade}
-                                className="w-14 gts-input py-1 text-center text-sm"
+                                className="w-14 gts-input py-1.5 text-center text-sm"
                               />
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada + 1)}
-                                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 text-white text-xs transition-colors"
+                                className="w-8 h-8 rounded bg-white/10 hover:bg-white/20 text-white text-sm transition-colors flex-shrink-0"
                               >
                                 +
                               </button>

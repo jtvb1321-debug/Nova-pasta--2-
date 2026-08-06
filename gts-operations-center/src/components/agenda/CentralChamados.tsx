@@ -7,15 +7,18 @@ import {
   XCircle, MapPin, Phone, User, Package, AlertTriangle,
   RefreshCw, StopCircle, Search, Calendar,
   FileText, Filter, Eye, ChevronDown, ChevronUp,
-  MessageCircle, Navigation, Timer, TrendingUp
+  MessageCircle, Navigation, Timer, TrendingUp, Ban, Repeat
 } from 'lucide-react'
-import { cn, timeAgo, formatDateTime } from '@/lib/utils'
+import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
 import { NovoDespachoModal } from './NovoDespachoModal'
+import { TrocarEquipeModal } from './TrocarEquipeModal'
+import { CalendarioAgenda } from './CalendarioAgenda'
 import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
+import type { Session } from 'next-auth'
 
-type Aba = 'despacho' | 'ativos' | 'historico'
+type Aba = 'despacho' | 'ativos' | 'historico' | 'calendario'
 
 const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
@@ -24,6 +27,7 @@ const PRIORIDADE_COR: Record<string, string> = {
 }
 
 const STATUS_CONFIG: Record<StatusChamado, { label: string; icon: React.ElementType; cls: string }> = {
+  AGENDADO:     { label: 'Agendado', icon: Calendar,      cls: 'text-purple-400 bg-purple-500/10' },
   ABERTO:       { label: 'Aguardando', icon: Clock,         cls: 'text-blue-400 bg-blue-500/10' },
   EM_ANDAMENTO: { label: 'Em Andamento', icon: Zap,         cls: 'text-yellow-400 bg-yellow-500/10' },
   FINALIZADO:   { label: 'Finalizado', icon: CheckCircle,   cls: 'text-emerald-400 bg-emerald-500/10' },
@@ -35,6 +39,7 @@ const TIPO_COR: Record<TipoChamado, string> = {
   MANUTENCAO: 'text-yellow-400',
   RETIRADA:   'text-red-400',
   SUPORTE:    'text-purple-400',
+  ROMPIMENTO_MASSIVO: 'text-red-500',
 }
 
 function detectarPrioridade(obs: string) {
@@ -44,7 +49,7 @@ function detectarPrioridade(obs: string) {
 }
 
 function limparObservacao(obs: string) {
-  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?—?\s?/g, '').replace(/Bairro:[^—]*/g, '').trim() || ''
+  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:[^-]*/g, '').trim() || ''
 }
 
 async function fetchAgenda() {
@@ -70,18 +75,26 @@ async function fetchHistorico(filtroStatus: string, busca: string, page: number)
 
 function CardChamado({
   chamado,
+  isAdmin = false,
   mostrarFinalizar = false,
   expandido = false,
   onToggle,
   onFinalizar,
   onIniciar,
+  onEncerrarAdmin,
+  isOperador = false,
+  onAlterarTipo,
 }: {
   chamado: any
+  isAdmin?: boolean
   mostrarFinalizar?: boolean
   expandido?: boolean
   onToggle?: () => void
   onFinalizar?: (c: any) => void
   onIniciar?: (id: string) => void
+  onEncerrarAdmin?: (id: string) => void
+  isOperador?: boolean
+  onAlterarTipo?: (id: string, tipo: string) => void
 }) {
   const prioridade = detectarPrioridade(chamado.observacao)
   const pCor = PRIORIDADE_COR[prioridade]
@@ -91,6 +104,27 @@ function CardChamado({
   const obs = limparObservacao(chamado.observacao)
   const emDeslocamento = chamado.status === 'ABERTO' && chamado.equipe?.status === 'DESLOCAMENTO'
   const emAtividade = chamado.status === 'EM_ANDAMENTO'
+  const podeEncerrarAdmin = chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO'
+  const [showTrocarEquipe, setShowTrocarEquipe] = useState(false)
+
+  const queryClientCardChamado = useQueryClient()
+  const enviarFeedbackMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/tickets/${chamado.id}/feedback`, { method: 'POST' })
+      if (!res.ok) {
+        const erro = await res.json().catch(() => null)
+        throw new Error(erro?.error || 'Erro ao enviar feedback')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      toast({ title: 'Mensagem de feedback enviada por WhatsApp!', variant: 'success' })
+      queryClientCardChamado.invalidateQueries({ queryKey: ['chamados-historico'] })
+    },
+    onError: (err: any) => {
+      toast({ title: err.message || 'Erro ao enviar feedback', variant: 'destructive' })
+    },
+  })
 
   return (
     <div className={cn(
@@ -117,6 +151,15 @@ function CardChamado({
               {prioridade !== 'NORMAL' && (
                 <span className={cn('text-xs px-2 py-0.5 rounded-full border font-bold', pCor)}>
                   {prioridade}
+                </span>
+              )}
+              {chamado.reincidente && (
+                <span
+                  className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 font-bold"
+                  title="Este cliente abriu outro chamado recentemente"
+                >
+                  <Repeat className="w-3 h-3" />
+                  Reincidente
                 </span>
               )}
               <span className={cn('status-badge text-xs', sCfg.cls)}>
@@ -148,6 +191,27 @@ function CardChamado({
                 {chamado.equipe.nome}
               </span>
             )}
+            {isAdmin && chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTrocarEquipe(true) }}
+                className="flex items-center gap-1 text-purple-400 hover:text-purple-300 underline decoration-dotted"
+              >
+                Trocar equipe
+              </button>
+            )}
+            {isOperador && chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO' && onAlterarTipo && (
+              <select
+                value={chamado.tipo}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => { e.stopPropagation(); onAlterarTipo(chamado.id, e.target.value) }}
+                className="bg-white/5 border border-orange-500/20 text-orange-400 text-xs rounded px-1.5 py-0.5 focus:outline-none"
+                title="Alterar tipo do chamado (Operador)"
+              >
+                {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
+                  <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
+                ))}
+              </select>
+            )}
             {materiaisCount > 0 && (
               <span className="flex items-center gap-1 text-blue-400">
                 <Package className="w-3 h-3" />
@@ -164,8 +228,7 @@ function CardChamado({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <p className="text-xs text-gray-500 mb-1">Endereco completo</p>
-              <p className="text-sm text-white">{chamado.endereco}</p>
-              <p className="text-xs text-gray-400">{chamado.cidade}</p>
+              <p className="text-sm text-white">{formatarEnderecoCompleto(chamado)}</p>
             </div>
             {chamado.telefone && (
               <div>
@@ -238,15 +301,15 @@ function CardChamado({
               {chamado.telefone && (
                 <button
                   onClick={() => window.open(`https://wa.me/55${chamado.telefone.replace(/\D/g, '')}`, '_blank')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-medium text-green-400 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-medium text-green-400 transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   WhatsApp
                 </button>
               )}
               <button
-                onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(chamado.endereco + ', ' + chamado.cidade)}`, '_blank')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-medium text-blue-400 transition-colors"
+                onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(formatarEnderecoCompleto(chamado))}`, '_blank')}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-medium text-blue-400 transition-colors"
               >
                 <Navigation className="w-3.5 h-3.5" />
                 Abrir no Mapa
@@ -254,7 +317,7 @@ function CardChamado({
               {emDeslocamento && onIniciar && (
                 <button
                   onClick={() => onIniciar(chamado.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 rounded-lg text-xs font-bold text-black transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg text-xs font-bold text-black transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   Iniciar Atividade
@@ -263,16 +326,55 @@ function CardChamado({
               {emAtividade && onFinalizar && (
                 <button
                   onClick={() => onFinalizar(chamado)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-xs font-bold text-white transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-xs font-bold text-white transition-colors"
                 >
                   <StopCircle className="w-3.5 h-3.5" />
                   Finalizar Chamado
+                </button>
+              )}
+              {isAdmin && podeEncerrarAdmin && onEncerrarAdmin && (
+                <button
+                  onClick={() => onEncerrarAdmin(chamado.id)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-bold text-red-400 transition-colors"
+                  title="Encerra o chamado direto, sem passar por atendimento. Nao notifica Telegram nem entra em relatorios."
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                  Encerrar (Admin)
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Feedback pos-atendimento */}
+          {chamado.status === 'FINALIZADO' && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {chamado.feedbackEnviado ? (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Feedback enviado {chamado.feedbackEnviadoEm ? `em ${formatDateTime(chamado.feedbackEnviadoEm)}` : ''}
+                </span>
+              ) : (
+                <button
+                  onClick={() => enviarFeedbackMutation.mutate()}
+                  disabled={enviarFeedbackMutation.isPending || !chamado.telefone}
+                  title={!chamado.telefone ? 'Chamado sem telefone cadastrado' : undefined}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-medium text-green-400 transition-colors disabled:opacity-40"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {enviarFeedbackMutation.isPending ? 'Enviando...' : 'Enviar Mensagem de Feedback'}
                 </button>
               )}
             </div>
           )}
         </div>
       )}
+      {showTrocarEquipe && (
+        <TrocarEquipeModal
+          chamado={chamado}
+          onClose={() => setShowTrocarEquipe(false)}
+        />
+      )}
+
     </div>
   )
 }
@@ -286,7 +388,9 @@ function Wrench(props: any) {
   )
 }
 
-export function CentralChamados() {
+export function CentralChamados({ session }: { session: Session }) {
+  const isAdmin = (session.user as any)?.role === 'ADMIN'
+  const isOperador = (session.user as any)?.role === 'OPERADOR'
   const queryClient = useQueryClient()
   const [aba, setAba] = useState<Aba>('despacho')
   const [showDespacho, setShowDespacho] = useState(false)
@@ -335,6 +439,61 @@ export function CentralChamados() {
     },
   })
 
+  const encerrarAdminMutation = useMutation({
+    mutationFn: async (chamadoId: string) => {
+      const res = await fetch(`/api/tickets/${chamadoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'FINALIZADO',
+          fechadoAdmin: true,
+          relato: 'Encerrado administrativamente',
+        }),
+      })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agenda'] })
+      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
+      queryClient.invalidateQueries({ queryKey: ['chamados-historico'] })
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      toast({ title: 'Chamado encerrado administrativamente.', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao encerrar chamado', variant: 'destructive' }),
+  })
+
+  const alterarTipoMutation = useMutation({
+    mutationFn: async ({ id, tipo }: { id: string; tipo: string }) => {
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo }),
+      })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agenda'] })
+      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
+      queryClient.invalidateQueries({ queryKey: ['chamados-historico'] })
+      toast({ title: 'Tipo do chamado alterado!', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao alterar tipo', variant: 'destructive' }),
+  })
+
+  function handleAlterarTipo(id: string, tipo: string) {
+    alterarTipoMutation.mutate({ id, tipo })
+  }
+
+  function handleEncerrarAdmin(chamadoId: string) {
+    const confirmar = window.confirm(
+      'Confirma encerrar este chamado diretamente?\n\nEle sera fechado sem passar por atendimento, sem notificar o Telegram e nao aparecera nos relatorios.'
+    )
+    if (confirmar) encerrarAdminMutation.mutate(chamadoId)
+  }
+
   const agenda = agendaData
   const ativos = ativosData?.data ?? []
   const historico = historicoData?.data ?? []
@@ -365,22 +524,22 @@ export function CentralChamados() {
   ]
 
   const abas = [
-    { id: 'despacho'  as Aba, label: 'Despacho NOC',  badge: totalAbertos,  badgeCor: 'bg-blue-500' },
-    { id: 'ativos'    as Aba, label: 'Em Andamento',  badge: totalAtivos,   badgeCor: 'bg-yellow-500' },
-    { id: 'historico' as Aba, label: 'Historico',     badge: 0,             badgeCor: '' },
+    { id: 'despacho'   as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
+    { id: 'ativos'     as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
+    { id: 'historico'  as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
+    { id: 'calendario' as Aba, label: 'Calendario',    badge: 0, badgeCor: '' },
   ]
-
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Central de Chamados</h1>
           <p className="text-gray-500 text-sm mt-1">
             Despacho, monitoramento e historico unificados
             {totalCriticos > 0 && (
               <span className="ml-2 text-red-400 font-medium animate-pulse">
-                · {totalCriticos} critico(s)
+                - {totalCriticos} critico(s)
               </span>
             )}
           </p>
@@ -413,13 +572,13 @@ export function CentralChamados() {
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-white/5">
+      <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto -mx-1 px-1">
         {abas.map(a => (
           <button
             key={a.id}
             onClick={() => { setAba(a.id); setPage(1) }}
             className={cn(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
               aba === a.id
                 ? 'border-orange-400 text-orange-400'
                 : 'border-transparent text-gray-400 hover:text-white'
@@ -496,11 +655,15 @@ export function CentralChamados() {
               <CardChamado
                 key={c.id}
                 chamado={c}
+                isAdmin={isAdmin}
                 mostrarFinalizar
                 expandido={expandido === c.id}
                 onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
+                onEncerrarAdmin={handleEncerrarAdmin}
+                isOperador={isOperador}
+                onAlterarTipo={handleAlterarTipo}
               />
             ))
           }
@@ -523,11 +686,15 @@ export function CentralChamados() {
               <CardChamado
                 key={c.id}
                 chamado={c}
+                isAdmin={isAdmin}
                 mostrarFinalizar
                 expandido={expandido === c.id}
                 onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
+                onEncerrarAdmin={handleEncerrarAdmin}
+                isOperador={isOperador}
+                onAlterarTipo={handleAlterarTipo}
               />
             ))
           }
@@ -555,6 +722,7 @@ export function CentralChamados() {
               <CardChamado
                 key={c.id}
                 chamado={c}
+                isAdmin={isAdmin}
                 mostrarFinalizar={false}
                 expandido={expandido === c.id}
                 onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
@@ -570,14 +738,14 @@ export function CentralChamados() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="gts-btn-secondary py-1 px-3 text-xs disabled:opacity-30"
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
                 >
                   Anterior
                 </button>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="gts-btn-secondary py-1 px-3 text-xs disabled:opacity-30"
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
                 >
                   Proxima
                 </button>
@@ -585,6 +753,11 @@ export function CentralChamados() {
             </div>
           )}
         </div>
+      )}
+
+      {/* CALENDARIO */}
+      {aba === 'calendario' && (
+        <CalendarioAgenda />
       )}
 
       {/* Modal despacho */}
