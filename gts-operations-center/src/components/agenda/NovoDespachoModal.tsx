@@ -69,6 +69,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   })
 
   const prioridade = watch('prioridade')
+  const ehPlantaoPosHorario = new Date().getHours() >= 18
   const clienteDigitado = watch('cliente')
   const [buscaCliente, setBuscaCliente] = useState('')
 
@@ -397,6 +398,15 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               <input {...register('horaAgendada')} type="time" className="w-full gts-input" />
             </div>
           </div>
+
+          {ehPlantaoPosHorario && !watch('dataAgendada') && (
+            <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+              <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
+              <p className="text-xs text-orange-300">
+                Ja passou das 18h: se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para amanha as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.
+              </p>
+            </div>
+          )}
 
           {/* Equipe */}
           <div>

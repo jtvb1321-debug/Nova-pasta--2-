@@ -1,3 +1,7 @@
+import { readFile } from 'fs/promises'
+import { join } from 'path'
+import { formatarEnderecoCompleto } from './utils'
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
 
@@ -21,19 +25,26 @@ async function enviarMensagem(chatId: string, texto: string) {
 async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
   if (!BOT_TOKEN || !chatId) return
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://10.10.86.240:3000'
-    const urlCompleta = fotoUrl.startsWith('http') ? fotoUrl : `${baseUrl}${fotoUrl}`
+    const caminhoRelativo = fotoUrl.startsWith('/') ? fotoUrl.slice(1) : fotoUrl
+    const caminhoArquivo = join(process.cwd(), 'public', caminhoRelativo)
+    const buffer = await readFile(caminhoArquivo)
+    const nomeArquivo = caminhoArquivo.split(/[\\/]/).pop() || 'foto.jpg'
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+    const formData = new FormData()
+    formData.append('chat_id', chatId)
+    if (legenda) formData.append('caption', legenda)
+    formData.append('parse_mode', 'HTML')
+    formData.append('photo', new Blob([buffer]), nomeArquivo)
+
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        photo: urlCompleta,
-        caption: legenda || '',
-        parse_mode: 'HTML',
-      }),
+      body: formData,
     })
+
+    if (!res.ok) {
+      const erro = await res.text()
+      console.error('Telegram sendPhoto falhou:', res.status, erro)
+    }
   } catch (error) {
     console.error('Erro ao enviar foto Telegram:', error)
   }
@@ -42,21 +53,29 @@ async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
 export async function notificarNovoChamado(chamado: {
   cliente: string
   endereco: string
+  numero?: string | null
+  complemento?: string | null
+  condominio?: string | null
+  bloco?: string | null
+  apartamento?: string | null
+  bairro?: string | null
   cidade: string
+  uf?: string | null
+  cep?: string | null
   tipo: string
   equipe?: string
   prioridade?: string
 }) {
   const tipo = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }[chamado.tipo] || chamado.tipo
   const prioridade = chamado.prioridade === 'CRITICO' ? '🔴 CRITICO' : chamado.prioridade === 'URGENTE' ? '🟡 URGENTE' : ''
+  const enderecoCompleto = formatarEnderecoCompleto(chamado)
 
   const texto = [
     `📲 <b>NOVO CHAMADO DISPONIVEL</b>`,
     ``,
     `👥 <b>Equipe:</b> ${chamado.equipe || 'A definir'}`,
     `👤 <b>Cliente:</b> ${chamado.cliente}`,
-    `📍 <b>Endereco:</b> ${chamado.endereco}`,
-    `🏙️ <b>Cidade:</b> ${chamado.cidade}`,
+    `📍 <b>Endereco:</b> ${enderecoCompleto}`,
     `🔧 <b>Tipo:</b> ${tipo}`,
     prioridade ? `⚠️ <b>Prioridade:</b> ${prioridade}` : '',
     ``,
@@ -65,6 +84,55 @@ export async function notificarNovoChamado(chamado: {
   ].filter(Boolean).join('\n')
 
   await enviarMensagem(GROUP_OS!, texto)
+}
+
+export async function notificarAgendaDoDia(
+  chamados: Array<{
+    cliente: string
+    endereco: string
+    numero?: string | null
+    complemento?: string | null
+    condominio?: string | null
+    bloco?: string | null
+    apartamento?: string | null
+    bairro?: string | null
+    cidade: string
+    uf?: string | null
+    cep?: string | null
+    tipo: string
+    equipe?: string | null
+    horaAgendada?: string | null
+  }>,
+  dataLabel: string
+) {
+  const tipoLabel: Record<string, string> = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }
+
+  const linhas = [
+    `🌅 <b>AGENDA DE AMANHA - ${dataLabel}</b>`,
+    ``,
+    `📋 <i>Chamados recebidos pelo plantao apos as 18h, agendados automaticamente para inicio 07:30.</i>`,
+    ``,
+  ]
+
+  if (chamados.length === 0) {
+    linhas.push(`✅ <b>Nenhum chamado agendado para amanha.</b>`)
+  } else {
+    chamados.forEach((c, i) => {
+      const enderecoCompleto = formatarEnderecoCompleto(c)
+      linhas.push(
+        `<b>${i + 1}. ${c.cliente}</b>`,
+        `   👥 Equipe: ${c.equipe || 'A definir'}`,
+        `   🔧 Tipo: ${tipoLabel[c.tipo] || c.tipo}`,
+        `   📍 ${enderecoCompleto}`,
+        `   🕐 Inicio: ${c.horaAgendada || '07:30'}`,
+        ``
+      )
+    })
+  }
+
+  linhas.push(`🔗 http://10.10.86.240:3000`)
+
+  await enviarMensagem(GROUP_OS!, linhas.filter(Boolean).join('\n'))
 }
 
 export async function notificarACaminho(chamado: {
