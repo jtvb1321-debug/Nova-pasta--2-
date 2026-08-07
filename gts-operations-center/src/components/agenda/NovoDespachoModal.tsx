@@ -69,7 +69,9 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   })
 
   const prioridade = watch('prioridade')
-  const ehPlantaoPosHorario = new Date().getHours() >= 18
+  const horaAtual = new Date().getHours()
+  const ehPlantaoPosHorario = horaAtual >= 18
+  const ehPlantaoAlmoco = horaAtual >= 12 && horaAtual < 14
   const clienteDigitado = watch('cliente')
   const [buscaCliente, setBuscaCliente] = useState('')
 
@@ -404,6 +406,15 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
               <p className="text-xs text-orange-300">
                 Ja passou das 18h: se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para amanha as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.
+              </p>
+            </div>
+          )}
+
+          {ehPlantaoAlmoco && !watch('dataAgendada') && (
+            <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+              <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
+              <p className="text-xs text-orange-300">
+                Plantao do almoco (12h-14h): se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para hoje as 14h</strong>, quando a equipe volta do almoco.
               </p>
             </div>
           )}

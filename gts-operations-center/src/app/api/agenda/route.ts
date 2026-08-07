@@ -69,10 +69,12 @@ export async function POST(request: NextRequest) {
 
   const agora = new Date()
   const HORA_LIMITE_PLANTAO = 18 // apos esse horario, solicitacao vira agenda automatica
+  const INICIO_PLANTAO_ALMOCO = 12 // plantao do almoco: 12h as 14h
+  const FIM_PLANTAO_ALMOCO = 14
 
   // Verifica se e um agendamento para data futura
   let dataAgendadaCompleta: Date | null = null
-  let agendamentoAutomaticoPlantao = false
+  let origemAgendamentoAutomatico: 'apos18h' | 'almoco' | null = null
 
   if (dataAgendada) {
     const horario = horaAgendada || '08:00'
@@ -98,7 +100,13 @@ export async function POST(request: NextRequest) {
     const amanha = new Date(agora)
     amanha.setDate(amanha.getDate() + 1)
     dataAgendadaCompleta = new Date(amanha.getFullYear(), amanha.getMonth(), amanha.getDate(), 7, 30, 0)
-    agendamentoAutomaticoPlantao = true
+    origemAgendamentoAutomatico = 'apos18h'
+  } else if (agora.getHours() >= INICIO_PLANTAO_ALMOCO && agora.getHours() < FIM_PLANTAO_ALMOCO) {
+    // Plantao do almoco (12h as 14h): a equipe titular esta em horario de
+    // almoco, entao o chamado aberto sem data explicita fica retido e cai
+    // automaticamente para o dia corrente as 14h, quando a equipe volta.
+    dataAgendadaCompleta = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), FIM_PLANTAO_ALMOCO, 0, 0)
+    origemAgendamentoAutomatico = 'almoco'
   }
 
   const observacaoFinal = [
@@ -139,7 +147,9 @@ export async function POST(request: NextRequest) {
           dataAbertura,
           dataAgendada: dataAgendadaCompleta ?? undefined,
           agendadoPor:  ehAgendamentoFuturo
-            ? (agendamentoAutomaticoPlantao ? 'Plantao (automatico apos 18h)' : ((session.user as any)?.name || usuarioEmail))
+            ? (origemAgendamentoAutomatico === 'apos18h' ? 'Plantao (automatico apos 18h)'
+              : origemAgendamentoAutomatico === 'almoco' ? 'Plantao (automatico 12h-14h)'
+              : ((session.user as any)?.name || usuarioEmail))
             : undefined,
           reincidente,
           chamadoOrigemReincidenciaId,
