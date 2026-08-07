@@ -786,6 +786,79 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
     }
   }
 
+  if (dados.estoque) {
+    if (y > 250) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Movimentacao de Estoque', y)
+
+    const porTipoMap: Record<string, number> = {}
+    for (const t of dados.estoque.porTipo) porTipoMap[t.tipo] = t.quantidadeMovimentos
+
+    const boxWEst = (width - 24 - 9) / 4
+    kpiBox(doc, 'Movimentacoes no dia', String(dados.estoque.totalMovimentacoes), 12, y, boxWEst, CORES.azul)
+    kpiBox(doc, 'Saidas', String(porTipoMap.SAIDA ?? 0), 12 + boxWEst + 3, y, boxWEst, CORES.vermelho)
+    kpiBox(doc, 'Devolucoes', String(porTipoMap.DEVOLUCAO ?? 0), 12 + (boxWEst + 3) * 2, y, boxWEst, CORES.verde)
+    kpiBox(doc, 'Entradas', String(porTipoMap.ENTRADA ?? 0), 12 + (boxWEst + 3) * 3, y, boxWEst, CORES.amarelo)
+    y += 28
+
+    const linhaMovimento = (m: any) => [
+      m.item,
+      `${m.quantidade} ${m.unidade}`.trim(),
+      m.motivo,
+      m.cliente || '-',
+      m.em ? new Date(m.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+    ]
+
+    if (y > 260) { doc.addPage(); y = 20 }
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...CORES.dark)
+    doc.text('Saidas do dia', 12, y + 4)
+    y += 8
+    if (dados.estoque.saidas.length === 0) {
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhuma saida de estoque registrada no dia.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Item', 'Quantidade', 'Motivo', 'Chamado', 'Hora']],
+        body: dados.estoque.saidas.map(linhaMovimento),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+
+    if (y > 260) { doc.addPage(); y = 20 }
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...CORES.dark)
+    doc.text('Devolucoes do dia', 12, y + 4)
+    y += 8
+    if (dados.estoque.devolucoes.length === 0) {
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhuma devolucao de estoque registrada no dia.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Item', 'Quantidade', 'Motivo', 'Chamado', 'Hora']],
+        body: dados.estoque.devolucoes.map(linhaMovimento),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
   rodape(doc)
   doc.save(`relatorio-diario-${dados.data}.pdf`)
 }
