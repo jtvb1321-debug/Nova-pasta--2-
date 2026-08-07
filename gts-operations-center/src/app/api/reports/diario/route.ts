@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const inicioDia = new Date(diaBase.getFullYear(), diaBase.getMonth(), diaBase.getDate())
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000)
 
-  const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes] = await Promise.all([
+  const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes, feedbacksEnviados, feedbacksRespondidos, feedbacksConfirmados] = await Promise.all([
     prisma.venda.count({ where: { dataInstalacao: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.venda.count({ where: { data: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.chamado.findMany({
@@ -25,6 +25,15 @@ export async function GET(request: NextRequest) {
       include: { funcionario: { select: { nome: true, equipeId: true, equipe: { select: { nome: true } } } } },
     }),
     prisma.equipe.findMany({ select: { id: true, nome: true }, orderBy: { nome: 'asc' } }),
+    prisma.chamado.count({ where: { feedbackEnviadoEm: { gte: inicioDia, lt: fimDia } } }),
+    prisma.chamado.findMany({
+      where: { feedbackRespostaEm: { gte: inicioDia, lt: fimDia } },
+      select: { cliente: true, feedbackResposta: true, feedbackRespostaEm: true },
+    }),
+    prisma.chamado.findMany({
+      where: { feedbackConfirmadoEm: { gte: inicioDia, lt: fimDia } },
+      select: { cliente: true, feedbackConfirmadoPor: true, feedbackConfirmadoEm: true },
+    }),
   ])
 
   const atendimentosPorEquipeMap = new Map<string, { equipeId: string; equipeNome: string; quantidade: number }>()
@@ -75,5 +84,15 @@ export async function GET(request: NextRequest) {
     totalVendas,
     atendimentosPorEquipe,
     pontoPorEquipe,
+    feedback: {
+      enviados: feedbacksEnviados,
+      respondidos: feedbacksRespondidos.length,
+      confirmados: feedbacksConfirmados.length,
+      respostas: feedbacksRespondidos.map(f => ({
+        cliente: f.cliente,
+        resposta: f.feedbackResposta,
+        em: f.feedbackRespostaEm,
+      })),
+    },
   })
 }

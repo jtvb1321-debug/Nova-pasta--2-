@@ -18,7 +18,7 @@ import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
 
-type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'historico' | 'calendario'
+type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'feedback' | 'historico' | 'calendario'
 
 const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
@@ -75,6 +75,13 @@ async function fetchHistorico(filtroStatus: string, busca: string, page: number)
 
 async function fetchReincidentes(page: number) {
   const q = new URLSearchParams({ limit: '20', page: String(page), reincidente: 'true' })
+  const res = await fetch(`/api/tickets?${q}`)
+  if (!res.ok) return { data: [], total: 0, totalPages: 1 }
+  return res.json()
+}
+
+async function fetchFeedbacks(page: number) {
+  const q = new URLSearchParams({ limit: '20', page: String(page), feedbackEnviado: 'true' })
   const res = await fetch(`/api/tickets?${q}`)
   if (!res.ok) return { data: [], total: 0, totalPages: 1 }
   return res.json()
@@ -447,6 +454,13 @@ export function CentralChamados({ session }: { session: Session }) {
     refetchInterval: 60000,
   })
 
+  const paginaFeedbacks = aba === 'feedback' ? page : 1
+  const { data: feedbacksData, isLoading: loadingFeedbacks } = useQuery({
+    queryKey: ['chamados-feedback', paginaFeedbacks],
+    queryFn: () => fetchFeedbacks(paginaFeedbacks),
+    refetchInterval: 30000,
+  })
+
   const iniciarMutation = useMutation({
     mutationFn: async (chamadoId: string) => {
       const res = await fetch(`/api/tickets/${chamadoId}`, {
@@ -510,6 +524,19 @@ export function CentralChamados({ session }: { session: Session }) {
     onError: () => toast({ title: 'Erro ao alterar tipo', variant: 'destructive' }),
   })
 
+  const confirmarFeedbackMutation = useMutation({
+    mutationFn: async (chamadoId: string) => {
+      const res = await fetch(`/api/tickets/${chamadoId}/feedback`, { method: 'PATCH' })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chamados-feedback'] })
+      toast({ title: 'Feedback confirmado!', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao confirmar feedback', variant: 'destructive' }),
+  })
+
   function handleAlterarTipo(id: string, tipo: string) {
     alterarTipoMutation.mutate({ id, tipo })
   }
@@ -529,6 +556,9 @@ export function CentralChamados({ session }: { session: Session }) {
   const reincidentes = reincidentesData?.data ?? []
   const reincidentesTotalPages = reincidentesData?.totalPages ?? 1
   const totalReincidentes = reincidentesData?.total ?? 0
+  const feedbacks = feedbacksData?.data ?? []
+  const feedbacksTotalPages = feedbacksData?.totalPages ?? 1
+  const totalFeedbacks = feedbacksData?.total ?? 0
 
   function filtrar(lista: any[]) {
     return lista.filter(c => {
@@ -558,6 +588,7 @@ export function CentralChamados({ session }: { session: Session }) {
     { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
     { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
     { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes, badgeCor: 'bg-orange-500' },
+    { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks, badgeCor: 'bg-purple-500' },
     { id: 'historico'    as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
     { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0, badgeCor: '' },
   ]
@@ -789,6 +820,108 @@ export function CentralChamados({ session }: { session: Session }) {
                 <button
                   onClick={() => setPage(p => Math.min(reincidentesTotalPages, p + 1))}
                   disabled={page === reincidentesTotalPages}
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
+                >
+                  Proxima
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FEEDBACK */}
+      {aba === 'feedback' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+            <MessageCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <p className="text-sm text-purple-300">
+              Chamados finalizados com pedido de feedback enviado ao cliente via WhatsApp. Confirme apos ler a resposta.
+            </p>
+          </div>
+
+          {totalFeedbacks > 0 && (
+            <p className="text-xs text-gray-500">{totalFeedbacks} pedido(s) de feedback encontrado(s)</p>
+          )}
+
+          {loadingFeedbacks
+            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)
+            : feedbacks.length === 0
+            ? (
+              <div className="gts-card text-center py-16">
+                <MessageCircle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 font-medium">Nenhum pedido de feedback enviado ainda</p>
+              </div>
+            )
+            : feedbacks.map((c: any) => (
+              <div key={c.id} className="gts-card space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-white">{c.cliente}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {TIPO_CHAMADO_LABELS[c.tipo as TipoChamado] || c.tipo} - {c.cidade}
+                    </p>
+                    {c.telefone && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3" /> {c.telefone}
+                      </p>
+                    )}
+                  </div>
+                  {c.feedbackConfirmado ? (
+                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium flex-shrink-0">
+                      Confirmado
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 font-medium flex-shrink-0">
+                      Aguardando
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-black/20 rounded-lg p-3 border border-white/5">
+                  <p className="text-[11px] text-gray-500 mb-1">
+                    Pedido enviado {c.feedbackEnviadoEm ? timeAgo(c.feedbackEnviadoEm) : ''}
+                  </p>
+                  {c.feedbackResposta ? (
+                    <p className="text-sm text-gray-200 whitespace-pre-line">{c.feedbackResposta}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">Aguardando resposta do cliente...</p>
+                  )}
+                </div>
+
+                {!c.feedbackConfirmado && (
+                  <button
+                    onClick={() => confirmarFeedbackMutation.mutate(c.id)}
+                    disabled={confirmarFeedbackMutation.isPending}
+                    className="gts-btn-primary text-xs py-2 px-3 disabled:opacity-50"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Confirmar e encerrar acompanhamento
+                  </button>
+                )}
+                {c.feedbackConfirmado && c.feedbackConfirmadoPor && (
+                  <p className="text-[11px] text-gray-600">
+                    Confirmado por {c.feedbackConfirmadoPor}{c.feedbackConfirmadoEm ? ` em ${formatDateTime(c.feedbackConfirmadoEm)}` : ''}
+                  </p>
+                )}
+              </div>
+            ))
+          }
+
+          {feedbacksTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-gray-500">Pagina {page} de {feedbacksTotalPages}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(feedbacksTotalPages, p + 1))}
+                  disabled={page === feedbacksTotalPages}
                   className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
                 >
                   Proxima

@@ -27,9 +27,10 @@ export async function GET(request: NextRequest) {
 
   await ativarChamadosAgendados()
   const { searchParams } = new URL(request.url)
-  const status      = searchParams.get('status')      || undefined
-  const equipeId    = searchParams.get('equipeId')    || undefined
-  const reincidente = searchParams.get('reincidente') || undefined
+  const status         = searchParams.get('status')         || undefined
+  const equipeId       = searchParams.get('equipeId')       || undefined
+  const reincidente    = searchParams.get('reincidente')    || undefined
+  const feedbackEnviado = searchParams.get('feedbackEnviado') || undefined
   const page     = parseInt(searchParams.get('page')  || '1')
   const limit    = parseInt(searchParams.get('limit') || '20')
   const skip     = (page - 1) * limit
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
   if (status)      where.status      = status
   if (equipeId)     where.equipeId     = equipeId
   if (reincidente === 'true') where.reincidente = true
+  if (feedbackEnviado === 'true') where.feedbackEnviado = true
 
   if (searchParams.get('excluirFechadoAdmin') === 'true') where.fechadoAdmin = { not: true }
   // TECNICO - filtrar apenas chamados da sua equipe

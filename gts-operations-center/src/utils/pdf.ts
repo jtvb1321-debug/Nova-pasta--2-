@@ -725,6 +725,7 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
     doc.setFontSize(9)
     doc.setTextColor(...CORES.cinza)
     doc.text('Nenhum registro de ponto encontrado para o dia.', 12, y + 4)
+    y += 14
   } else {
     for (const equipe of dados.pontoPorEquipe) {
       if (y > 250) { doc.addPage(); y = 20 }
@@ -746,6 +747,40 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
         headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
         bodyStyles: { fontSize: 7, textColor: CORES.dark },
         alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  if (dados.feedback) {
+    if (y > 250) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Feedback de Clientes (WhatsApp)', y)
+
+    const boxWFb = (width - 24 - 6) / 3
+    kpiBox(doc, 'Pedidos enviados', String(dados.feedback.enviados), 12, y, boxWFb, CORES.azul)
+    kpiBox(doc, 'Respondidos', String(dados.feedback.respondidos), 12 + boxWFb + 3, y, boxWFb, CORES.amarelo)
+    kpiBox(doc, 'Confirmados', String(dados.feedback.confirmados), 12 + (boxWFb + 3) * 2, y, boxWFb, CORES.verde)
+    y += 28
+
+    if (dados.feedback.respostas.length === 0) {
+      doc.setFontSize(9)
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhuma resposta de cliente recebida no dia.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Cliente', 'Resposta', 'Recebido em']],
+        body: dados.feedback.respostas.map((f: any) => [
+          f.cliente,
+          f.resposta || '-',
+          f.em ? new Date(f.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        ]),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+        columnStyles: { 1: { cellWidth: 100 } },
       })
       y = (doc as any).lastAutoTable.finalY + 8
     }

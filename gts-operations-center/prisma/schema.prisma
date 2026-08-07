@@ -28,6 +28,7 @@ enum CategoriaEstoque {
   EACE
   FERRAMENTAS
   LIMPEZA
+  MANINFO
 }
 
 enum TipoMovimentacao {
@@ -42,10 +43,12 @@ enum TipoChamado {
   INSTALACAO
   MANUTENCAO
   RETIRADA
+  ROMPIMENTO_MASSIVO
   SUPORTE
 }
 
 enum StatusChamado {
+  AGENDADO
   ABERTO
   EM_ANDAMENTO
   FINALIZADO
@@ -100,6 +103,8 @@ model Usuario {
   funcionario  Funcionario?
   solicitacoes SolicitacaoPagamento[] @relation("solicitacoes")
   aprovacoes   SolicitacaoPagamento[] @relation("aprovacoes")
+  baixasRealizadas ContaReceber[]
+  clientes     Cliente[]
 
   @@map("usuarios")
 }
@@ -113,10 +118,13 @@ model Equipe {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  funcionarios Funcionario[]
+ funcionarios Funcionario[]
   chamados     Chamado[]
   veiculo      Veiculo?
-
+  estoque      EstoqueEquipe[]
+  usosMaterial UsoMaterial[]
+  solicitacoesMaterial SolicitacaoMaterial[]
+  escalas EscalaTrabalho[]
   @@map("equipes")
 }
 
@@ -135,6 +143,7 @@ model Funcionario {
   equipe   Equipe                 @relation(fields: [equipeId], references: [id])
   usuario  Usuario?               @relation(fields: [usuarioId], references: [id])
   despesas SolicitacaoPagamento[]
+  registrosPonto RegistroPonto[]
 
   @@map("funcionarios")
 }
@@ -152,8 +161,11 @@ model Veiculo {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  equipe Equipe? @relation(fields: [equipeId], references: [id])
-
+ equipe Equipe? @relation(fields: [equipeId], references: [id])
+  abastecimentos Abastecimento[]
+  registrosKm    RegistroKm[]
+  manutencoes    SolicitacaoManutencao[]
+  despesas       DespesaViagem[]
   @@map("veiculos")
 }
 
@@ -177,10 +189,14 @@ model ItemEstoque {
   materiaisUtilizados MaterialUtilizado[]
   materiaisDevolvidos MaterialDevolvido[]
   materiaisReservados MaterialReservado[]
-
+  estoqueEquipes      EstoqueEquipe[]
+  usosMaterial   UsoMaterial[]
+  reversas       ReversaEstoque[]
+  solicitacoesMaterial SolicitacaoMaterial[]
+  entradasDefeito EntradaDefeito[]
+  saldosLocais    EstoqueLocalCentral[]
   @@map("estoques")
 }
-
 model Movimentacao {
   id         String           @id @default(cuid())
   itemId     String
@@ -202,7 +218,15 @@ model Chamado {
   id           String        @id @default(cuid())
   cliente      String
   endereco     String
+  numero       String?
+  complemento  String?
+  bairro       String?
+  condominio   String?
+  bloco        String?
+  apartamento  String?
+  cep          String?
   cidade       String
+  uf           String?
   telefone     String?
   tipo         TipoChamado
   observacao   String?
@@ -210,10 +234,35 @@ model Chamado {
   fotos        String?
   equipeId     String?
   status       StatusChamado @default(ABERTO)
-  dataAbertura DateTime      @default(now())
+ dataAbertura DateTime      @default(now())
+  dataAgendada DateTime?
+  agendadoPor  String?
   dataACaminho DateTime?
   dataInicio   DateTime?
   dataFim      DateTime?
+  clienteAusente    Boolean   @default(false)
+  horarioRedisparo  DateTime?
+  fechadoAdmin      Boolean   @default(false)
+  feedbackEnviado   Boolean   @default(false)
+  feedbackEnviadoEm DateTime?
+  feedbackResposta     String?
+  feedbackRespostaEm   DateTime?
+  feedbackConfirmado   Boolean   @default(false)
+  feedbackConfirmadoEm DateTime?
+  feedbackConfirmadoPor String?
+  aguardandoAprovacao Boolean   @default(false)
+  aprovadoPor          String?
+  aprovadoEm           DateTime?
+  origemAutomatica     String?
+  clientesAfetados     Int?
+  subCategoria         String?
+  idOnuSmartOlt        String?
+  slaRespostaMinutos    Int?
+  slaResolucaoMinutos   Int?
+  dentroSlaResposta     Boolean?
+  dentroSlaResolucao    Boolean?
+  reincidente           Boolean   @default(false)
+  chamadoOrigemReincidenciaId String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -222,6 +271,7 @@ model Chamado {
   materiaisUtilizados MaterialUtilizado[]
   materiaisDevolvidos MaterialDevolvido[]
   materiaisReservados MaterialReservado[]
+  usosMaterial        UsoMaterial[]
 
   @@map("chamados")
 }
@@ -271,18 +321,87 @@ model MaterialDevolvido {
 }
 
 model Cliente {
-  id        String   @id @default(cuid())
-  nome      String
-  telefone  String?
-  cidade    String?
-  email     String?
-  endereco  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String        @id @default(cuid())
+  codigoIxc         String?       @unique
+  nome              String
+  cpfCnpj           String?
+  telefone          String?
+  cidade            String?
+  uf                String?
+  bairro            String?
+  email             String?
+  endereco          String?
+  numero            String?
+  complemento       String?
+  bloco             String?
+  apartamento       String?
+  cep               String?
+  plano             String?
+  valorMensalidade  Float?
+  vendedorId        String?
+  dataAtivacao      DateTime?
+  status            StatusCliente @default(ATIVO)
+  materialRecolhido Boolean       @default(false)
+  setorCobranca     Boolean       @default(false)
+  observacao        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  vendas Venda[]
+  vendas        Venda[]
+  vendedor      Usuario?       @relation(fields: [vendedorId], references: [id])
+  contasReceber ContaReceber[]
 
   @@map("clientes")
+}
+
+enum StatusCliente {
+  ATIVO
+  INATIVO
+  CANCELADO
+}
+
+enum StatusContaReceber {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+enum FormaPagamentoCliente {
+  PIX
+  DINHEIRO
+  BOLETO
+  CARTAO
+}
+
+model ContaReceber {
+  id             String                 @id @default(cuid())
+  clienteId      String
+  competencia    DateTime
+  valor          Float
+  status         StatusContaReceber     @default(PENDENTE)
+  formaPagamento FormaPagamentoCliente?
+  banco          String?
+  valorRecebido  Float?
+  troco          Float?
+  dataPagamento  DateTime?
+  recebidoPor    String?
+  observacao     String?
+  idTituloIxc    String?                @unique
+  origemBaixa    String?                @default("MANUAL")
+  dataVencimento DateTime?
+  valorJuros     Float?
+  valorDesconto  Float?
+  statusIxc      String?
+  dataBaixaIxc   DateTime?
+  usuarioIdBaixa String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  usuarioBaixa Usuario? @relation(fields: [usuarioIdBaixa], references: [id])
+
+  @@unique([clienteId, competencia])
+  @@map("contas_receber")
 }
 
 model Venda {
@@ -331,6 +450,22 @@ model Comissao {
   @@map("comissoes")
 }
 
+// Dados de monitoramento de clientes de Link Dedicado que nao vem disponiveis
+// via IXC/SmartOLT e precisam ser preenchidos manualmente (IP e potencia optica).
+model MonitoramentoLinkDedicado {
+  id               String    @id @default(cuid())
+  codigoIxc        String    @unique
+  ipManual         String?
+  potenciaRxManual Float?
+  potenciaTxManual Float?
+  observacao       String?
+  atualizadoPor    String?
+  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime  @default(now())
+
+  @@map("monitoramento_link_dedicado")
+}
+
 model Configuracao {
   id        String   @id @default(cuid())
   chave     String   @unique
@@ -339,6 +474,24 @@ model Configuracao {
   updatedAt DateTime @updatedAt
 
   @@map("configuracoes")
+}
+
+// Snapshot periodico (a cada 15min) de metricas operacionais - alimenta os
+// sparklines e o comparativo "vs ontem" do Dashboard com dados reais que se
+// acumulam com o tempo (nao ha historico anterior a criacao desse model).
+model SnapshotMetricaDashboard {
+  id                     String   @id @default(cuid())
+  timestamp              DateTime @default(now())
+  clientesOnline         Int
+  clientesOffline        Int
+  onusTotal              Int
+  oltsTotal              Int
+  chamadosAbertos        Int
+  chamadosAndamento      Int
+  tecnicosOnline         Int
+  slaResolucaoPercentual Float?
+
+  @@map("snapshots_metricas_dashboard")
 }
 
 model Log {
@@ -411,4 +564,265 @@ model OrcamentoFinanceiro {
 
   @@unique([centroCusto, mes, ano])
   @@map("orcamentos_financeiros")
+}
+enum StatusManutencao {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+model EstoqueEquipe {
+  id                String   @id @default(cuid())
+  equipeId          String
+  itemId            String
+  quantidade        Float    @default(0)
+  quantidadeMinima  Float    @default(0)
+  updatedAt         DateTime @updatedAt
+
+  equipe Equipe      @relation(fields: [equipeId], references: [id])
+  item   ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@unique([equipeId, itemId])
+  @@map("estoque_equipes")
+}
+
+model Abastecimento {
+  id             String   @id @default(cuid())
+  veiculoId      String
+  data           DateTime @default(now())
+  litros         Float
+  valor          Float
+  fotoComprovante String
+  registradoPor  String
+  createdAt      DateTime @default(now())
+
+  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
+
+  @@map("abastecimentos")
+}
+
+
+enum TipoDespesaViagem {
+  ALIMENTACAO
+  HOSPEDAGEM
+  ALUGUEL_VEICULO
+  OUTRAS
+}
+
+enum StatusDespesaViagem {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+model DespesaViagem {
+  id                String              @id @default(cuid())
+  veiculoId         String
+  tipo              TipoDespesaViagem
+  data              DateTime            @default(now())
+  valor             Float?
+  fotoComprovante   String
+  registradoPor     String
+  status            StatusDespesaViagem @default(PENDENTE)
+  revisadoPor       String?
+  revisadoEm        DateTime?
+  observacaoRevisao String?
+  createdAt         DateTime            @default(now())
+
+  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
+
+  @@map("despesas_viagem")
+}
+
+model UsoMaterial {
+  id            String   @id @default(cuid())
+  equipeId      String
+  itemId        String
+  quantidade    Float
+  fotoMac       String
+  chamadoId     String?
+  clienteNome   String?
+  registradoPor String
+  createdAt     DateTime @default(now())
+
+  equipe  Equipe      @relation(fields: [equipeId], references: [id])
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+  chamado Chamado?    @relation(fields: [chamadoId], references: [id])
+
+  @@map("usos_material")
+}
+
+model ReversaEstoque {
+  id            String   @id @default(cuid())
+  itemId        String
+  quantidade    Float
+  data          DateTime @default(now())
+  observacao    String?
+  registradoPor String
+  createdAt     DateTime @default(now())
+
+  item ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@map("reversas_estoque")
+}
+enum OrigemEntradaDefeito {
+  TECNICO
+  CLIENTE
+  DIRETA
+}
+
+enum StatusEntradaDefeito {
+  PENDENTE_ACEITE
+  ACEITO
+}
+
+model EntradaDefeito {
+  id            String               @id @default(cuid())
+  itemId        String
+  quantidade    Float
+  numeroSerie   String?
+  defeito       String
+  origem        OrigemEntradaDefeito
+  tecnicoNome   String?
+  status        StatusEntradaDefeito @default(PENDENTE_ACEITE)
+  registradoPor String
+  aceitoPor     String?
+  aceitoEm      DateTime?
+  createdAt     DateTime             @default(now())
+
+  item ItemEstoque @relation(fields: [itemId], references: [id])
+  @@map("entradas_defeito")
+}
+
+
+model LocalEstoque {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  saldos EstoqueLocalCentral[]
+
+  @@map("locais_estoque")
+}
+
+model EstoqueLocalCentral {
+  id         String   @id @default(cuid())
+  localId    String
+  itemId     String
+  quantidade Float    @default(0)
+  updatedAt  DateTime @updatedAt
+
+  local LocalEstoque @relation(fields: [localId], references: [id])
+  item  ItemEstoque  @relation(fields: [itemId], references: [id])
+
+  @@unique([localId, itemId])
+  @@map("estoque_local_central")
+}
+
+model RegistroKm {
+  id            String    @id @default(cuid())
+  veiculoId     String
+  data          DateTime  @default(now())
+  kmInicial     Float?
+  kmFinal       Float?
+  registradoPor String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
+
+  @@map("registros_km")
+}
+
+model SolicitacaoManutencao {
+  id            String            @id @default(cuid())
+  veiculoId     String
+  descricao     String
+  status        StatusManutencao  @default(PENDENTE)
+  solicitadoPor String
+  resolvidoEm   DateTime?
+  observacao    String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  veiculo Veiculo @relation(fields: [veiculoId], references: [id])
+
+  @@map("solicitacoes_manutencao")
+}
+
+enum StatusSolicitacaoMaterial {
+  PENDENTE
+  APROVADA
+  REJEITADA
+}
+
+model SolicitacaoMaterial {
+  id            String                    @id @default(cuid())
+  equipeId      String
+  itemId        String
+  quantidade    Float
+  observacao    String?
+  status        StatusSolicitacaoMaterial @default(PENDENTE)
+  solicitadoPor String
+  resolvidoPor  String?
+  resolvidoEm   DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  equipe Equipe      @relation(fields: [equipeId], references: [id])
+  item   ItemEstoque @relation(fields: [itemId], references: [id])
+
+  @@map("solicitacoes_material")
+}
+enum StatusHorasExtras {
+  PENDENTE
+  APROVADA
+  REJEITADA
+  SEM_EXTRA
+}
+
+model RegistroPonto {
+  id                String            @id @default(cuid())
+  funcionarioId     String
+  data              DateTime          @default(now())
+  entrada           DateTime?
+  saidaAlmoco       DateTime?
+  retornoAlmoco     DateTime?
+  saida             DateTime?
+  horasTrabalhadas  Float?
+  horasExtras       Float?
+  statusHorasExtras StatusHorasExtras @default(SEM_EXTRA)
+  aprovadoPor       String?
+  aprovadoEm        DateTime?
+  observacao        String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  funcionario Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  @@unique([funcionarioId, data])
+  @@map("registros_ponto")
+}
+enum TipoEscala {
+  TRABALHO
+  FOLGA
+  PLANTAO_SABADO
+}
+
+model EscalaTrabalho {
+  id         String     @id @default(cuid())
+  equipeId   String
+  data       DateTime
+  tipo       TipoEscala
+  observacao String?
+  criadoPor  String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  equipe Equipe @relation(fields: [equipeId], references: [id])
+
+  @@unique([equipeId, data])
+  @@map("escalas_trabalho")
 }
