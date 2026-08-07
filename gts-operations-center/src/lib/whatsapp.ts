@@ -22,8 +22,13 @@ function getClient() {
 
   client = new Client({
     authStrategy: new LocalAuth({ dataPath: '.wwebjs_auth' }),
+    // 'local' usa o cache padrao da biblioteca: guarda em .wwebjs_cache a
+    // versao do WhatsApp Web que funcionou na ultima conexao e reusa nos
+    // proximos starts, em vez de sempre buscar a versao mais recente ao
+    // vivo (que pode ser incompativel com esta versao do whatsapp-web.js
+    // e deixar o cliente travado entre "authenticated" e "ready").
     webVersionCache: {
-      type: 'none',
+      type: 'local',
     },
     puppeteer: {
       executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -46,9 +51,14 @@ function getClient() {
     logWhats('Autenticado com sucesso! Aguardando ficar pronto...')
     setTimeout(() => {
       if (!pronto) {
-        logWhats('AVISO: Passaram-se 45s desde a autenticacao e o cliente ainda nao ficou pronto. Pode ser necessario reiniciar o servidor ou apagar a pasta .wwebjs_auth e escanear o QR Code novamente.')
+        logWhats('AVISO: Passaram-se 45s desde a autenticacao e o cliente ainda nao ficou pronto. Isso costuma ser so o WhatsApp sincronizando o historico apos reconectar - normalmente resolve sozinho em alguns minutos, sem precisar reiniciar.')
       }
     }, 45000)
+    setTimeout(() => {
+      if (!pronto) {
+        logWhats('AVISO: Passaram-se 3 minutos e o cliente ainda nao ficou pronto. Se continuar assim, reinicie o servidor; se persistir apos reiniciar, apague a pasta .wwebjs_auth e escaneie o QR Code novamente.')
+      }
+    }, 180000)
   })
 
   client.on('change_state', (state: string) => {
