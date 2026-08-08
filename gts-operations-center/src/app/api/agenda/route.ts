@@ -97,9 +97,12 @@ export async function POST(request: NextRequest) {
     // permissao de agendamento manual (regra do sistema, nao escolha do
     // usuario). A equipe ja definida no despacho recebe o chamado nesse
     // horario, e o resumo do dia e enviado ao Telegram as 21h.
-    const amanha = new Date(agora)
-    amanha.setDate(amanha.getDate() + 1)
-    dataAgendadaCompleta = new Date(amanha.getFullYear(), amanha.getMonth(), amanha.getDate(), 7, 30, 0)
+    // Excecao: nao ha expediente aos domingos, entao se o "dia seguinte"
+    // cair num domingo (ex: sabado apos as 18h), acumula para segunda-feira.
+    const proximoDiaUtil = new Date(agora)
+    proximoDiaUtil.setDate(proximoDiaUtil.getDate() + 1)
+    if (proximoDiaUtil.getDay() === 0) proximoDiaUtil.setDate(proximoDiaUtil.getDate() + 1)
+    dataAgendadaCompleta = new Date(proximoDiaUtil.getFullYear(), proximoDiaUtil.getMonth(), proximoDiaUtil.getDate(), 7, 30, 0)
     origemAgendamentoAutomatico = 'apos18h'
   } else if (agora.getHours() >= INICIO_PLANTAO_ALMOCO && agora.getHours() < FIM_PLANTAO_ALMOCO) {
     // Plantao do almoco (12h as 14h): a equipe titular esta em horario de

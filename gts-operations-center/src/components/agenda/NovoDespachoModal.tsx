@@ -69,9 +69,14 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   })
 
   const prioridade = watch('prioridade')
-  const horaAtual = new Date().getHours()
+  const agora = new Date()
+  const horaAtual = agora.getHours()
   const ehPlantaoPosHorario = horaAtual >= 18
   const ehPlantaoAlmoco = horaAtual >= 12 && horaAtual < 14
+  // Nao ha expediente aos domingos: se "amanha" cair num domingo (hoje e
+  // sabado), o chamado acumula para segunda-feira em vez de domingo.
+  const proximoDiaUtilEhSegunda = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1).getDay() === 0
+  const textoProximoDiaUtil = proximoDiaUtilEhSegunda ? 'segunda-feira' : 'amanha'
   const clienteDigitado = watch('cliente')
   const [buscaCliente, setBuscaCliente] = useState('')
 
@@ -405,7 +410,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
             <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
               <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
               <p className="text-xs text-orange-300">
-                Ja passou das 18h: se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para amanha as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.
+                Ja passou das 18h: se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para {textoProximoDiaUtil} as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.
               </p>
             </div>
           )}
