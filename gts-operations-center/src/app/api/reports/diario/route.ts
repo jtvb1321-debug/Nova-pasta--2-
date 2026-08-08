@@ -14,10 +14,13 @@ export async function GET(request: NextRequest) {
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000)
 
   const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes, feedbacksEnviados, feedbacksRespondidos, feedbacksConfirmados, movimentacoesDoDia, estoqueEquipes] = await Promise.all([
-    prisma.venda.count({ where: { dataInstalacao: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
+    prisma.venda.count({ where: { dataInstalacao: { gte: inicioDia, lt: fimDia }, statusInstalacao: 'INSTALADA' } }),
     prisma.venda.count({ where: { data: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.chamado.findMany({
-      where: { status: 'FINALIZADO', dataFim: { gte: inicioDia, lt: fimDia } },
+      // fechadoAdmin exclui chamados encerrados administrativamente (sem
+      // passar por atendimento) - o relatorio deve contar so o que as
+      // equipes/tecnicos efetivamente finalizaram no dia.
+      where: { status: 'FINALIZADO', dataFim: { gte: inicioDia, lt: fimDia }, fechadoAdmin: false },
       select: { equipeId: true, equipe: { select: { nome: true } } },
     }),
     prisma.registroPonto.findMany({

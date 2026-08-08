@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { META_SLA_RESPOSTA_MINUTOS } from '@/lib/sla'
 
 export async function GET() {
   const session = await auth()
@@ -25,10 +26,14 @@ export async function GET() {
     materiaisHoje,
     equipesCampo,
     devolucoesPendentes,
-    instalacaoHoje,
+   instalacaoHoje,
+    clientesAtendidosTotal,
     chamadosPorDia,
     chamadosPorTipo,
     vendasPorMes,
+    reincidenciasMes,
+    slaResolucaoMes,
+    chamadosSlaRespostaEstourado,
   ] = await Promise.all([
     // Veiculos
     prisma.veiculo.count({ where: { ativo: true } }),
@@ -71,9 +76,11 @@ export async function GET() {
 
     // Instalacoes hoje
     prisma.venda.count({
-      where: { dataInstalacao: { gte: inicioHoje }, status: 'APROVADO' },
+      where: { dataInstalacao: { gte: inicioHoje }, statusInstalacao: 'INSTALADA' },
     }),
 
+    // Total de clientes atendidos (historico completo, numero vitrine)
+    prisma.chamado.count({ where: { status: 'FINALIZADO' } }),
     // Chamados por dia nos ultimos 7 dias
     prisma.$queryRaw<any[]>`
       SELECT
@@ -108,6 +115,25 @@ export async function GET() {
       GROUP BY DATE_TRUNC('month', data)
       ORDER BY mes ASC
     `,
+
+    // Reincidencias abertas neste mes
+    prisma.chamado.count({ where: { reincidente: true, dataAbertura: { gte: inicioMes } } }),
+
+    // Conformidade de SLA de resolucao no mes (entre os chamados ja finalizados com SLA calculado)
+    prisma.chamado.groupBy({
+      by: ['dentroSlaResolucao'],
+      where: { dataAbertura: { gte: inicioMes }, dentroSlaResolucao: { not: null } },
+      _count: true,
+    }),
+
+    // Chamados abertos ha mais tempo que a meta de resposta e ainda nao iniciados - risco de SLA agora
+    prisma.chamado.count({
+      where: {
+        status: 'ABERTO',
+        dataInicio: null,
+        dataAbertura: { lte: new Date(agora.getTime() - META_SLA_RESPOSTA_MINUTOS * 60 * 1000) },
+      },
+    }),
   ])
 
   // Estoque baixo real
@@ -145,6 +171,10 @@ export async function GET() {
     faturamento: Number(v.faturamento ?? 0),
   }))
 
+  const slaDentro = slaResolucaoMes.find((s: any) => s.dentroSlaResolucao === true)?._count ?? 0
+  const slaFora   = slaResolucaoMes.find((s: any) => s.dentroSlaResolucao === false)?._count ?? 0
+  const slaResolucaoPercentualMes = (slaDentro + slaFora) > 0 ? Math.round((slaDentro / (slaDentro + slaFora)) * 1000) / 10 : null
+
   return NextResponse.json({
     // KPIs
     veiculosTotal,
@@ -161,6 +191,10 @@ export async function GET() {
     equipesCampo,
     devolucoesPendentes,
     instalacaoHoje,
+    clientesAtendidosTotal,
+    reincidenciasMes,
+    slaResolucaoPercentualMes,
+    chamadosSlaRespostaEstourado,
 
     // Graficos
     chamadosPorDia:  chamadosPorDiaFormatado,
