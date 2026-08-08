@@ -36,3 +36,14 @@ next-env.d.ts
 # prisma
 prisma/dev.db
 prisma/dev.db-journal
+
+# whatsapp
+.wwebjs_auth/
+.wwebjs_cache/
+whatsapp-debug.log
+
+# cloudflare tunnel
+cloudflared.log
+
+# dados sensiveis de clientes (importacao)
+scripts/clientes_importar.json
