@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const inicioDia = new Date(diaBase.getFullYear(), diaBase.getMonth(), diaBase.getDate())
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000)
 
-  const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes, feedbacksEnviados, feedbacksRespondidos, feedbacksConfirmados, movimentacoesDoDia] = await Promise.all([
+  const [totalInstalacoes, totalVendas, chamadosFinalizados, registrosPonto, equipes, feedbacksEnviados, feedbacksRespondidos, feedbacksConfirmados, movimentacoesDoDia, estoqueEquipes] = await Promise.all([
     prisma.venda.count({ where: { dataInstalacao: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.venda.count({ where: { data: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.chamado.findMany({
@@ -41,6 +41,13 @@ export async function GET(request: NextRequest) {
         chamado: { select: { cliente: true } },
       },
       orderBy: { createdAt: 'asc' },
+    }),
+    prisma.estoqueEquipe.findMany({
+      where: { quantidade: { gt: 0 } },
+      include: {
+        equipe: { select: { nome: true, veiculo: { select: { placa: true, modelo: true } } } },
+        item: { select: { codigo: true, descricao: true, unidade: true } },
+      },
     }),
   ])
 
@@ -105,6 +112,44 @@ export async function GET(request: NextRequest) {
   const saidas = movimentacoesDoDia.filter(m => m.tipo === 'SAIDA').map(mapearMovimento)
   const devolucoes = movimentacoesDoDia.filter(m => m.tipo === 'DEVOLUCAO').map(mapearMovimento)
 
+  // Carregar veiculo (Central -> equipe) e registrado como TRANSFERENCIA, nao
+  // SAIDA - mas para quem opera isso e uma saida do estoque central, entao
+  // entra no relatorio como uma lista separada. O motivo guarda o id da
+  // equipe destino ("Transferencia: Central -> equipe <id>"); resolvemos o
+  // nome aqui porque Movimentacao nao tem uma coluna equipeId propria.
+  const transferenciasBrutas = movimentacoesDoDia.filter(m => m.tipo === 'TRANSFERENCIA')
+  const idsEquipesDestino = Array.from(new Set(
+    transferenciasBrutas
+      .map(m => m.motivo?.match(/equipe\s+(\S+)\s*$/i)?.[1])
+      .filter((id): id is string => Boolean(id))
+  ))
+  const equipesDestino = idsEquipesDestino.length > 0
+    ? await prisma.equipe.findMany({ where: { id: { in: idsEquipesDestino } }, select: { id: true, nome: true } })
+    : []
+  const nomeEquipeDestinoMap = new Map(equipesDestino.map(e => [e.id, e.nome]))
+
+  const transferencias = transferenciasBrutas.map(m => {
+    const idDestino = m.motivo?.match(/equipe\s+(\S+)\s*$/i)?.[1]
+    return {
+      item: m.item?.descricao || m.item?.codigo || '-',
+      quantidade: m.quantidade,
+      unidade: m.item?.unidade || '',
+      equipeDestino: idDestino ? (nomeEquipeDestinoMap.get(idDestino) || 'Equipe desconhecida') : '-',
+      em: m.createdAt,
+    }
+  })
+
+  const estoquePorVeiculo = estoqueEquipes
+    .map(e => ({
+      equipeNome: e.equipe?.nome || 'Sem equipe',
+      veiculoPlaca: e.equipe?.veiculo?.placa || null,
+      veiculoModelo: e.equipe?.veiculo?.modelo || null,
+      item: e.item?.descricao || e.item?.codigo || '-',
+      quantidade: e.quantidade,
+      unidade: e.item?.unidade || '',
+    }))
+    .sort((a, b) => a.equipeNome.localeCompare(b.equipeNome) || a.item.localeCompare(b.item))
+
   return NextResponse.json({
     data: inicioDia.toISOString().split('T')[0],
     totalChamados,
@@ -127,6 +172,8 @@ export async function GET(request: NextRequest) {
       porTipo: Array.from(porTipoMap.values()),
       saidas,
       devolucoes,
+      transferencias,
     },
+    estoquePorVeiculo,
   })
 }

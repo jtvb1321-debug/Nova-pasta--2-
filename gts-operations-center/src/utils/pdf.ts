@@ -793,11 +793,12 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
     const porTipoMap: Record<string, number> = {}
     for (const t of dados.estoque.porTipo) porTipoMap[t.tipo] = t.quantidadeMovimentos
 
-    const boxWEst = (width - 24 - 9) / 4
-    kpiBox(doc, 'Movimentacoes no dia', String(dados.estoque.totalMovimentacoes), 12, y, boxWEst, CORES.azul)
+    const boxWEst = (width - 24 - 12) / 5
+    kpiBox(doc, 'Movimentacoes', String(dados.estoque.totalMovimentacoes), 12, y, boxWEst, CORES.azul)
     kpiBox(doc, 'Saidas', String(porTipoMap.SAIDA ?? 0), 12 + boxWEst + 3, y, boxWEst, CORES.vermelho)
     kpiBox(doc, 'Devolucoes', String(porTipoMap.DEVOLUCAO ?? 0), 12 + (boxWEst + 3) * 2, y, boxWEst, CORES.verde)
-    kpiBox(doc, 'Entradas', String(porTipoMap.ENTRADA ?? 0), 12 + (boxWEst + 3) * 3, y, boxWEst, CORES.amarelo)
+    kpiBox(doc, 'Transf. p/ equipe', String(porTipoMap.TRANSFERENCIA ?? 0), 12 + (boxWEst + 3) * 3, y, boxWEst, CORES.amarelo)
+    kpiBox(doc, 'Entradas', String(porTipoMap.ENTRADA ?? 0), 12 + (boxWEst + 3) * 4, y, boxWEst, CORES.cinza)
     y += 28
 
     const linhaMovimento = (m: any) => [
@@ -851,6 +852,64 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
         margin: { left: 12, right: 12 },
         head: [['Item', 'Quantidade', 'Motivo', 'Chamado', 'Hora']],
         body: dados.estoque.devolucoes.map(linhaMovimento),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+
+    if (y > 260) { doc.addPage(); y = 20 }
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...CORES.dark)
+    doc.text('Transferencias Central -> Equipe (carregamento de veiculo)', 12, y + 4)
+    y += 8
+    if (dados.estoque.transferencias.length === 0) {
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhuma transferencia para equipe registrada no dia.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Item', 'Quantidade', 'Equipe destino', 'Hora']],
+        body: dados.estoque.transferencias.map((m: any) => [
+          m.item,
+          `${m.quantidade} ${m.unidade}`.trim(),
+          m.equipeDestino,
+          m.em ? new Date(m.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        ]),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  if (dados.estoquePorVeiculo) {
+    if (y > 250) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Estoque Atual por Veiculo/Equipe', y)
+
+    if (dados.estoquePorVeiculo.length === 0) {
+      doc.setFontSize(9)
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhum item carregado em veiculo de equipe no momento.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Equipe', 'Veiculo', 'Item', 'Quantidade']],
+        body: dados.estoquePorVeiculo.map((e: any) => [
+          e.equipeNome,
+          e.veiculoPlaca ? `${e.veiculoPlaca}${e.veiculoModelo ? ' - ' + e.veiculoModelo : ''}` : 'Sem veiculo',
+          e.item,
+          `${e.quantidade} ${e.unidade}`.trim(),
+        ]),
         headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
         bodyStyles: { fontSize: 7, textColor: CORES.dark },
         alternateRowStyles: { fillColor: CORES.fundo },
