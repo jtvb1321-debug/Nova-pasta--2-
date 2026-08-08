@@ -123,25 +123,6 @@ function CardChamado({
   const podeEncerrarAdmin = chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO'
   const [showTrocarEquipe, setShowTrocarEquipe] = useState(false)
 
-  const queryClientCardChamado = useQueryClient()
-  const enviarFeedbackMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/tickets/${chamado.id}/feedback`, { method: 'POST' })
-      if (!res.ok) {
-        const erro = await res.json().catch(() => null)
-        throw new Error(erro?.error || 'Erro ao enviar feedback')
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      toast({ title: 'Mensagem de feedback enviada por WhatsApp!', variant: 'success' })
-      queryClientCardChamado.invalidateQueries({ queryKey: ['chamados-historico'] })
-    },
-    onError: (err: any) => {
-      toast({ title: err.message || 'Erro ao enviar feedback', variant: 'destructive' })
-    },
-  })
-
   return (
     <div className={cn(
       'bg-[#111827] border rounded-xl transition-all',
@@ -372,7 +353,7 @@ function CardChamado({
             </div>
           )}
 
-          {/* Feedback pos-atendimento */}
+          {/* Feedback pos-atendimento - envio e automatico (1h apos o encerramento) */}
           {chamado.status === 'FINALIZADO' && (
             <div className="flex flex-wrap gap-2 pt-1">
               {chamado.feedbackEnviado ? (
@@ -380,16 +361,16 @@ function CardChamado({
                   <CheckCircle className="w-3.5 h-3.5" />
                   Feedback enviado {chamado.feedbackEnviadoEm ? `em ${formatDateTime(chamado.feedbackEnviadoEm)}` : ''}
                 </span>
-              ) : (
-                <button
-                  onClick={() => enviarFeedbackMutation.mutate()}
-                  disabled={enviarFeedbackMutation.isPending || !chamado.telefone}
-                  title={!chamado.telefone ? 'Chamado sem telefone cadastrado' : undefined}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-medium text-green-400 transition-colors disabled:opacity-40"
-                >
+              ) : !chamado.telefone ? (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
                   <MessageCircle className="w-3.5 h-3.5" />
-                  {enviarFeedbackMutation.isPending ? 'Enviando...' : 'Enviar Mensagem de Feedback'}
-                </button>
+                  Sem telefone cadastrado - feedback nao sera enviado
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Feedback sera enviado automaticamente 1h apos o encerramento
+                </span>
               )}
             </div>
           )}

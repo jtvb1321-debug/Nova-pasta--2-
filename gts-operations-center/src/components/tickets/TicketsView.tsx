@@ -6,7 +6,7 @@ import {
   ClipboardList, Plus, Search,
   MapPin, Phone, User, Clock, CheckCircle,
   AlertCircle, XCircle, ChevronLeft,
-  ChevronRight, Eye, Edit2, StopCircle
+  ChevronRight, Eye, Edit2, StopCircle, Calendar
 } from 'lucide-react'
 import { cn, timeAgo, truncate } from '@/lib/utils'
 import {
@@ -21,6 +21,7 @@ const STATUS_STYLE: Record<StatusChamado, { icon: React.ElementType; cls: string
   EM_ANDAMENTO: { icon: Clock,        cls: 'text-yellow-400 bg-yellow-500/10' },
   FINALIZADO:   { icon: CheckCircle,  cls: 'text-emerald-400 bg-emerald-500/10' },
   CANCELADO:    { icon: XCircle,      cls: 'text-gray-400 bg-gray-500/10' },
+  AGENDADO:     { icon: Calendar,     cls: 'text-purple-400 bg-purple-500/10' },
 }
 
 const TIPO_COR: Record<TipoChamado, string> = {
@@ -28,6 +29,7 @@ const TIPO_COR: Record<TipoChamado, string> = {
   MANUTENCAO: 'text-yellow-400',
   RETIRADA:   'text-red-400',
   SUPORTE:    'text-purple-400',
+  ROMPIMENTO_MASSIVO: 'text-red-500',
 }
 
 async function fetchTickets(params: { status: string; page: number }) {
@@ -110,7 +112,7 @@ export function TicketsView() {
             <div className="gts-card text-center py-16">
               <ClipboardList className="w-10 h-10 text-gray-600 mx-auto mb-3" />
               <p className="text-gray-400 font-medium">Nenhum chamado encontrado</p>
-              <p className="text-gray-600 text-sm mt-1">Crie um novo chamado para começar</p>
+              <p className="text-gray-600 text-sm mt-1">Crie um novo chamado para comecar</p>
             </div>
           )
           : chamados.map((chamado: any) => {
@@ -169,7 +171,7 @@ export function TicketsView() {
                         <div className="flex-shrink-0 text-right">
                           <p className="text-xs text-gray-600">{timeAgo(chamado.dataAbertura)}</p>
                           <div className="flex items-center gap-1 mt-2">
-                            {/* Botão Finalizar — só aparece em chamados abertos ou em andamento */}
+                            {/* Botao Finalizar - so aparece em chamados abertos ou em andamento */}
                             {(chamado.status === 'ABERTO' || chamado.status === 'EM_ANDAMENTO') && (
                               <button
                                 onClick={() => setChamadoFinalizar(chamado)}
@@ -193,7 +195,7 @@ export function TicketsView() {
             })}
       </div>
 
-      {/* Paginação */}
+      {/* Paginacao */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <button
@@ -204,7 +206,7 @@ export function TicketsView() {
             <ChevronLeft className="w-4 h-4" />
           </button>
           <span className="text-sm text-gray-400">
-            Página {page} de {totalPages}
+            Pagina {page} de {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}

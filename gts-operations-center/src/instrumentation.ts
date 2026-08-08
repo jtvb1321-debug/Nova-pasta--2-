@@ -10,5 +10,8 @@ export async function register() {
 
     const { iniciarAgendaDiaria } = await import('./lib/agendaDiariaJob')
     iniciarAgendaDiaria()
+
+    const { iniciarFeedbackAutomatico } = await import('./lib/feedbackAutomaticoJob')
+    iniciarFeedbackAutomatico()
   }
 }
