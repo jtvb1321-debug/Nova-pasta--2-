@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3, FileText, Download, Calendar,
   Users, Package, ClipboardList, TrendingUp, ShieldCheck,
-  Loader2, CheckCircle, CalendarDays
+  Loader2, CheckCircle, CalendarDays, RefreshCw
 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -38,8 +38,33 @@ export function ReportsView() {
   const [dataFim, setDataFim] = useState('')
   const [dataDiario, setDataDiario] = useState(hojeISO())
   const [gerando, setGerando] = useState(false)
+  const [dadosDiario, setDadosDiario] = useState<any>(null)
+  const [carregandoDiario, setCarregandoDiario] = useState(false)
 
   const { data: equipes = [] } = useQuery({ queryKey: ['equipes-report'], queryFn: fetchEquipes })
+
+  async function carregarDiario() {
+    setCarregandoDiario(true)
+    try {
+      const res = await fetch(`/api/reports/diario?data=${dataDiario}`)
+      if (!res.ok) throw new Error('Erro ao carregar dados do dia')
+      const dados = await res.json()
+      setDadosDiario(dados)
+    } catch (err) {
+      console.error(err)
+      toast({ title: 'Erro ao carregar dados do dia', variant: 'destructive' })
+    } finally {
+      setCarregandoDiario(false)
+    }
+  }
+
+  function atualizarQuantidadeEquipe(index: number, quantidade: number) {
+    setDadosDiario((d: any) => {
+      const lista = [...d.atendimentosPorEquipe]
+      lista[index] = { ...lista[index], quantidade }
+      return { ...d, atendimentosPorEquipe: lista }
+    })
+  }
 
   async function gerarPDF() {
     setGerando(true)
@@ -94,8 +119,13 @@ export function ReportsView() {
         pdfUtils.gerarPDFQualidade(dados, mesLabel)
 
       } else if (tipo === 'diario') {
-        const res = await fetch(`/api/reports/diario?data=${dataDiario}`)
-        const dados = await res.json()
+        // Usa os dados ja carregados (e possivelmente editados) na tela de
+        // revisao - so busca de novo se o usuario nao clicou em "Carregar".
+        let dados = dadosDiario
+        if (!dados) {
+          const res = await fetch(`/api/reports/diario?data=${dataDiario}`)
+          dados = await res.json()
+        }
         const dataLabel = new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
         pdfUtils.gerarPDFDiario(dados, dataLabel)
       }
@@ -163,8 +193,14 @@ export function ReportsView() {
             {tipo === 'diario' ? (
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Data</label>
-                <input type="date" value={dataDiario} onChange={e => setDataDiario(e.target.value)} max={hojeISO()} className="w-full gts-input" />
-                <p className="text-xs text-gray-500 mt-1.5">O relatorio diario ja separa chamados, instalacoes, vendas e ponto por equipe automaticamente.</p>
+                <input
+                  type="date"
+                  value={dataDiario}
+                  onChange={e => { setDataDiario(e.target.value); setDadosDiario(null) }}
+                  max={hojeISO()}
+                  className="w-full gts-input"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">Carregue os dados do dia para revisar e corrigir os numeros antes de gerar o PDF.</p>
               </div>
             ) : (
               <>
@@ -205,16 +241,42 @@ export function ReportsView() {
               </div>
             )}
 
-            <button
-              onClick={gerarPDF}
-              disabled={gerando}
-              className="w-full gts-btn-primary justify-center py-3"
-            >
-              {gerando
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando PDF...</>
-                : <><Download className="w-4 h-4" /> Gerar e Baixar PDF</>
-              }
-            </button>
+            {tipo === 'diario' ? (
+              <div className="space-y-2">
+                <button
+                  onClick={carregarDiario}
+                  disabled={carregandoDiario}
+                  className="w-full gts-btn-secondary justify-center py-3"
+                >
+                  {carregandoDiario
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</>
+                    : <><RefreshCw className="w-4 h-4" /> {dadosDiario ? 'Recarregar Dados do Dia' : 'Carregar Dados do Dia'}</>
+                  }
+                </button>
+                <button
+                  onClick={gerarPDF}
+                  disabled={gerando || !dadosDiario}
+                  title={!dadosDiario ? 'Carregue os dados do dia primeiro' : undefined}
+                  className="w-full gts-btn-primary justify-center py-3 disabled:opacity-40"
+                >
+                  {gerando
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando PDF...</>
+                    : <><Download className="w-4 h-4" /> Gerar e Baixar PDF</>
+                  }
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={gerarPDF}
+                disabled={gerando}
+                className="w-full gts-btn-primary justify-center py-3"
+              >
+                {gerando
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando PDF...</>
+                  : <><Download className="w-4 h-4" /> Gerar e Baixar PDF</>
+                }
+              </button>
+            )}
           </div>
         </div>
 
@@ -231,7 +293,77 @@ export function ReportsView() {
               </div>
             </div>
 
-            {/* Preview do PDF */}
+            {tipo === 'diario' ? (
+              dadosDiario ? (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">Revisar dados antes de gerar o PDF</p>
+                    <span className="text-xs text-gray-500">{new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Chamados no dia</label>
+                      <input
+                        type="number"
+                        value={dadosDiario.totalChamados}
+                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalChamados: Number(e.target.value) }))}
+                        className="w-full gts-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Instalacoes</label>
+                      <input
+                        type="number"
+                        value={dadosDiario.totalInstalacoes}
+                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalInstalacoes: Number(e.target.value) }))}
+                        className="w-full gts-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Vendas</label>
+                      <input
+                        type="number"
+                        value={dadosDiario.totalVendas}
+                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalVendas: Number(e.target.value) }))}
+                        className="w-full gts-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 mb-2">Atendimentos finalizados por equipe</p>
+                    {dadosDiario.atendimentosPorEquipe.length === 0 ? (
+                      <p className="text-xs text-gray-600">Nenhuma equipe cadastrada.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {dadosDiario.atendimentosPorEquipe.map((e: any, i: number) => (
+                          <div key={e.equipeId} className="flex items-center gap-3">
+                            <span className="flex-1 text-sm text-gray-300 truncate">{e.equipeNome}</span>
+                            <input
+                              type="number"
+                              value={e.quantidade}
+                              onChange={ev => atualizarQuantidadeEquipe(i, Number(ev.target.value))}
+                              className="w-24 gts-input text-right"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-500 border-t border-white/5 pt-3">
+                    Ponto das equipes, feedback e movimentacao de estoque entram no PDF exatamente como coletados pelo sistema (nao editaveis aqui).
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <CalendarDays className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 font-medium">Carregue os dados do dia</p>
+                  <p className="text-gray-600 text-sm mt-1">Clique em &quot;Carregar Dados do Dia&quot; ao lado para revisar e corrigir os numeros antes de gerar o PDF.</p>
+                </div>
+              )
+            ) : (
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-lg">
               {/* Cabecalho simulado */}
               <div className="bg-[#111827] px-6 py-4 flex items-center justify-between">
@@ -247,7 +379,6 @@ export function ReportsView() {
                   <p className="text-gray-400 text-xs">Emitido em:</p>
                   <p className="text-white text-xs">{new Date().toLocaleDateString('pt-BR')}</p>
                   <p className="text-gray-400 text-xs mt-1">Periodo: {
-                    tipo === 'diario' ? new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR') :
                     periodo === 'diario' ? 'Hoje' :
                     periodo === 'semanal' ? 'Esta semana' :
                     periodo === 'mensal' ? 'Este mes' : 'Personalizado'
@@ -292,9 +423,13 @@ export function ReportsView() {
                 <p className="text-xs text-gray-500">Pagina 1 / 1</p>
               </div>
             </div>
+            )}
 
             <p className="text-xs text-gray-500 text-center mt-4">
-              Configure os parametros ao lado e clique em <strong className="text-white">Gerar e Baixar PDF</strong>
+              {tipo === 'diario'
+                ? <>Revise os numeros acima e clique em <strong className="text-white">Gerar e Baixar PDF</strong></>
+                : <>Configure os parametros ao lado e clique em <strong className="text-white">Gerar e Baixar PDF</strong></>
+              }
             </p>
           </div>
         </div>
