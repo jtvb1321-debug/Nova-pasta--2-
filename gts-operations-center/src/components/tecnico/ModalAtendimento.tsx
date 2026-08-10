@@ -5,11 +5,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   X, MapPin, Phone, Clock, Truck, Zap,
   CheckCircle, Package, FileText, ChevronRight,
-  Loader2, Camera, Trash2, AlertTriangle, ImageIcon
+  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity
 } from 'lucide-react'
 import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
+import { DiagnosticoRunner } from './DiagnosticoRunner'
 
 const MIN_FOTOS = 3
 
@@ -41,6 +42,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const [relato, setRelato] = useState(chamado.relato || '')
   const [fotos, setFotos] = useState<string[]>([])
   const [materiaisUtilizados, setMateriaisUtilizados] = useState<Record<string, { quantidade: number; observacao: string }>>({})
+  const [showDiagnostico, setShowDiagnostico] = useState(false)
   const inputFotoRef = useRef<HTMLInputElement>(null)
 
   const prioridade = detectarPrioridade(chamado.observacao)
@@ -292,6 +294,16 @@ async function marcarClienteAusente() {
                 <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
                 <p className="text-sm text-yellow-400 font-medium">Atendimento em andamento</p>
               </div>
+
+              {/* Diagnostico tecnico */}
+              <button
+                onClick={() => setShowDiagnostico(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-medium rounded-xl transition-colors"
+              >
+                <Activity className="w-4 h-4" />
+                Diagnostico Tecnico
+              </button>
+
 {/* Cliente ausente */}
               <button
                 onClick={marcarClienteAusente}
@@ -477,6 +489,10 @@ async function marcarClienteAusente() {
           )}
         </div>
       </div>
+
+      {showDiagnostico && (
+        <DiagnosticoRunner chamado={chamado} onClose={() => setShowDiagnostico(false)} />
+      )}
     </div>
   )
 }

@@ -125,6 +125,7 @@ model Equipe {
   usosMaterial UsoMaterial[]
   solicitacoesMaterial SolicitacaoMaterial[]
   escalas EscalaTrabalho[]
+  diagnosticos Diagnostico[]
   @@map("equipes")
 }
 
@@ -144,6 +145,7 @@ model Funcionario {
   usuario  Usuario?               @relation(fields: [usuarioId], references: [id])
   despesas SolicitacaoPagamento[]
   registrosPonto RegistroPonto[]
+  diagnosticos Diagnostico[]
 
   @@map("funcionarios")
 }
@@ -272,6 +274,7 @@ model Chamado {
   materiaisDevolvidos MaterialDevolvido[]
   materiaisReservados MaterialReservado[]
   usosMaterial        UsoMaterial[]
+  diagnosticos        Diagnostico[]
 
   @@map("chamados")
 }
@@ -318,6 +321,97 @@ model MaterialDevolvido {
   item    ItemEstoque @relation(fields: [itemId], references: [id])
 
   @@map("materiais_devolvidos")
+}
+
+enum FaseDiagnostico {
+  ANTES
+  DEPOIS
+}
+
+enum StatusDiagnostico {
+  EM_ANDAMENTO
+  CONCLUIDO
+}
+
+enum ClassificacaoDiagnostico {
+  NORMAL
+  ATENCAO
+  POSSIVEL_PROBLEMA
+  PROBLEMA
+  INDETERMINADO
+}
+
+// Diagnostico tecnico de conexao (Wi-Fi/velocidade/latencia/sinal optico)
+// rodado pelo tecnico em campo, vinculado a um Chamado. Um par ANTES/DEPOIS
+// na mesma OS permite comparar o resultado antes e depois da manutencao.
+model Diagnostico {
+  id                     String                    @id @default(cuid())
+  chamadoId              String
+  funcionarioId          String?
+  equipeId               String?
+  fase                   FaseDiagnostico           @default(ANTES)
+  diagnosticoAnteriorId  String?                   @unique
+  status                 StatusDiagnostico         @default(EM_ANDAMENTO)
+  dispositivoUtilizado   String?
+  classificacao          ClassificacaoDiagnostico?
+  origemProvavel         String?
+  recomendacoes          Json?
+  resumo                 Json?
+  problemaEncontrado     String?
+  acaoRealizada          String?
+  equipamentoSubstituido Boolean                   @default(false)
+  equipamentoAntigoDesc  String?
+  equipamentoNovoDesc    String?
+  resultadoFinal         String?
+  iniciadoPor            String?
+  iniciadoEm             DateTime                  @default(now())
+  finalizadoEm           DateTime?
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+
+  chamado              Chamado            @relation(fields: [chamadoId], references: [id])
+  funcionario          Funcionario?       @relation(fields: [funcionarioId], references: [id])
+  equipe               Equipe?            @relation(fields: [equipeId], references: [id])
+  diagnosticoAnterior  Diagnostico?       @relation("AntesDepois", fields: [diagnosticoAnteriorId], references: [id])
+  diagnosticoPosterior Diagnostico?       @relation("AntesDepois")
+  testes               DiagnosticoTeste[]
+
+  @@map("diagnosticos")
+}
+
+model DiagnosticoTeste {
+  id            String   @id @default(cuid())
+  diagnosticoId String
+  tipo          String
+  status        String
+  valor         Float?
+  unidade       String?
+  duracaoMs     Int?
+  detalhes      Json?
+  erro          String?
+  createdAt     DateTime @default(now())
+
+  diagnostico Diagnostico @relation(fields: [diagnosticoId], references: [id])
+
+  @@map("diagnostico_testes")
+}
+
+// Configuracao unica (id fixo "default") dos limiares usados pelo motor de
+// diagnostico - evita hardcode no codigo, ajustavel pelo admin.
+model ConfiguracaoDiagnostico {
+  id                          String   @id @default("default")
+  limiteJitterAtencaoMs       Float    @default(20)
+  limiteJitterProblemaMs      Float    @default(50)
+  limitePerdaAtencaoPct       Float    @default(1)
+  limitePerdaInstabilidadePct Float    @default(3)
+  limiteLatenciaAtencaoMs     Float    @default(60)
+  limiteLatenciaProblemaMs    Float    @default(120)
+  limiteSinalAtencaoDbm       Float    @default(-25)
+  limiteSinalCriticoDbm       Float    @default(-28)
+  duracaoOscilacaoPadraoSeg   Int      @default(60)
+  updatedAt                   DateTime @updatedAt
+
+  @@map("configuracoes_diagnostico")
 }
 
 model Cliente {

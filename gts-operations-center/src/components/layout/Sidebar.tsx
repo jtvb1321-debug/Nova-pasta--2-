@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, CalendarDays, Network, Wifi, Radio, Search,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, CalendarDays, Network, Wifi, Radio, Search, Activity,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -59,6 +59,13 @@ const TODOS_GRUPOS: MenuGroup[] = [
     ],
   },
   {
+    label:     'Diagnostico',
+    permissao: 'verDiagnostico',
+    items: [
+      { href: '/diagnostico', label: 'Diagnostico Tecnico', icon: Activity, permissao: 'verDiagnostico' },
+    ],
+  },
+  {
     label:     'Estoque',
     permissao: 'verEstoque',
     items: [
@@ -97,6 +104,7 @@ export function Sidebar() {
     Geral:          true,
     Operacional:    true,
     Monitoramento:  true,
+    Diagnostico:    true,
     Estoque:        true,
     Comercial:      true,
     Sistema:        false,

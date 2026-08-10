@@ -2,7 +2,6 @@ export type Role = 'ADMIN' | 'GESTOR' | 'OPERADOR' | 'TECNICO' | 'VENDEDOR' | 'C
 
 export interface Permission {
   verDashboard:      boolean
-  verNOC:            boolean
   verChamados:       boolean
   verEquipes:        boolean
   verMapa:           boolean
@@ -12,20 +11,29 @@ export interface Permission {
   verAuditoria:      boolean
   verUsuarios:       boolean
   verConfiguracoes:  boolean
-  verProdutividade:  boolean
   verTV:             boolean
   verFinanceiro:     boolean
+  verSolicitacoes:   boolean
+  verPonto:          boolean
+  verHorasExtras:    boolean
+  verEscala:         boolean
+  verClientes:       boolean
+  verMapaInmap:      boolean
+  verSmartOLT:       boolean
+  verLinkDedicado:   boolean
+ verCombustivel:    boolean
+  verMinhaComissao:  boolean
   aprovarVendas:     boolean
   aprovarDevolucoes: boolean
   editarUsuarios:    boolean
   excluirRegistros:  boolean
   apenasMinhaEquipe: boolean
+  verDiagnostico:    boolean
 }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
   ADMIN: {
     verDashboard:      true,
-    verNOC:            true,
     verChamados:       true,
     verEquipes:        true,
     verMapa:           true,
@@ -35,18 +43,27 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      true,
     verUsuarios:       true,
     verConfiguracoes:  true,
-    verProdutividade:  true,
     verTV:             true,
     verFinanceiro:     true,
+    verSolicitacoes:   true,
+    verPonto:          false,
+    verHorasExtras:    true,
+    verEscala:         true,
+    verClientes:       true,
+    verMapaInmap:      true,
+    verSmartOLT:       true,
+    verLinkDedicado:   true,
+    verCombustivel:    true,
+    verMinhaComissao:  false,
     aprovarVendas:     true,
     aprovarDevolucoes: true,
     editarUsuarios:    true,
     excluirRegistros:  true,
     apenasMinhaEquipe: false,
+    verDiagnostico:    true,
   },
   GESTOR: {
     verDashboard:      true,
-    verNOC:            true,
     verChamados:       true,
     verEquipes:        true,
     verMapa:           true,
@@ -56,18 +73,27 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      true,
     verUsuarios:       false,
     verConfiguracoes:  false,
-    verProdutividade:  true,
     verTV:             true,
     verFinanceiro:     true,
+    verSolicitacoes:   true,
+    verPonto:          false,
+    verHorasExtras:    true,
+    verEscala:         true,
+    verClientes:       true,
+    verMapaInmap:      true,
+    verSmartOLT:       true,
+    verLinkDedicado:   true,
+    verCombustivel:    true,
+    verMinhaComissao:  false,
     aprovarVendas:     true,
     aprovarDevolucoes: true,
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
+    verDiagnostico:    true,
   },
   OPERADOR: {
     verDashboard:      true,
-    verNOC:            true,
     verChamados:       true,
     verEquipes:        true,
     verMapa:           true,
@@ -77,18 +103,27 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      false,
     verUsuarios:       false,
     verConfiguracoes:  false,
-    verProdutividade:  false,
     verTV:             true,
     verFinanceiro:     true,
+    verSolicitacoes:   false,
+    verPonto:          false,
+    verHorasExtras:    false,
+    verEscala:         false,
+    verClientes:       true,
+    verMapaInmap:      true,
+    verSmartOLT:       true,
+    verLinkDedicado:   true,
+    verCombustivel:    false,
+    verMinhaComissao:  true,
     aprovarVendas:     false,
     aprovarDevolucoes: false,
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
+    verDiagnostico:    true,
   },
   COMERCIAL: {
     verDashboard:      true,
-    verNOC:            true,
     verChamados:       true,
     verEquipes:        true,
     verMapa:           true,
@@ -98,18 +133,27 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      false,
     verUsuarios:       false,
     verConfiguracoes:  false,
-    verProdutividade:  false,
     verTV:             true,
     verFinanceiro:     true,
+    verSolicitacoes:   false,
+    verPonto:          false,
+    verHorasExtras:    false,
+    verEscala:         false,
+    verClientes:       true,
+    verMapaInmap:      false,
+    verSmartOLT:       false,
+    verLinkDedicado:   false,
+    verCombustivel:    false,
+    verMinhaComissao:  false,
     aprovarVendas:     false,
     aprovarDevolucoes: false,
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
+    verDiagnostico:    false,
   },
   TECNICO: {
     verDashboard:      false,
-    verNOC:            false,
     verChamados:       true,
     verEquipes:        true,
     verMapa:           false,
@@ -119,18 +163,27 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      false,
     verUsuarios:       false,
     verConfiguracoes:  false,
-    verProdutividade:  false,
     verTV:             false,
     verFinanceiro:     false,
+    verSolicitacoes:   false,
+    verPonto:          true,
+    verHorasExtras:    false,
+    verEscala:         true,
+    verClientes:       false,
+    verMapaInmap:      true,
+    verSmartOLT:       false,
+    verLinkDedicado:   false,
+    verCombustivel:    false,
+    verMinhaComissao:  false,
     aprovarVendas:     false,
     aprovarDevolucoes: false,
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: true,
+    verDiagnostico:    true,
   },
   VENDEDOR: {
     verDashboard:      true,
-    verNOC:            false,
     verChamados:       false,
     verEquipes:        false,
     verMapa:           false,
@@ -140,14 +193,24 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verAuditoria:      false,
     verUsuarios:       false,
     verConfiguracoes:  false,
-    verProdutividade:  false,
     verTV:             false,
     verFinanceiro:     false,
+    verSolicitacoes:   false,
+    verPonto:          false,
+    verHorasExtras:    false,
+    verEscala:         false,
+    verClientes:       false,
+    verMapaInmap:      false,
+    verSmartOLT:       false,
+    verLinkDedicado:   false,
+    verCombustivel:    false,
+    verMinhaComissao:  true,
     aprovarVendas:     false,
     aprovarDevolucoes: false,
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
+    verDiagnostico:    false,
   },
 }
 

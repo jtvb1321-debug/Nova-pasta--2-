@@ -9,12 +9,23 @@ const PUBLIC_ROUTES = [
 
 const ROTAS_TECNICO = [
   '/meus-chamados',
+  '/meu-carro',
+  '/ponto',
+  '/escala',
+  '/mapa-inmap',
   '/api/tickets',
   '/api/teams',
   '/api/agenda',
   '/api/upload',
   '/api/inventory',
   '/api/movements',
+  '/api/vehicles',
+  '/api/tecnico',
+  '/api/ponto',
+  '/api/escala',
+  '/api/gts',
+  '/diagnostico',
+  '/api/diagnostico',
 ]
 
 const ROTAS_VENDEDOR = [
@@ -78,7 +89,7 @@ export default auth((req) => {
 
   const role = (session.user as any)?.role || 'OPERADOR'
 
-  // TECNICO — acesso restrito
+  // TECNICO - acesso restrito
   if (role === 'TECNICO') {
     const podeAcessar = ROTAS_TECNICO.some(r => pathname.startsWith(r))
     if (!podeAcessar) {
@@ -89,7 +100,7 @@ export default auth((req) => {
     }
   }
 
-  // VENDEDOR — acesso restrito
+  // VENDEDOR - acesso restrito
   if (role === 'VENDEDOR') {
     const podeAcessar = ROTAS_VENDEDOR.some(r => pathname.startsWith(r))
     if (!podeAcessar) {
@@ -100,7 +111,7 @@ export default auth((req) => {
     }
   }
 
-  // OPERADOR e COMERCIAL — bloquear rotas de sistema
+  // OPERADOR e COMERCIAL - bloquear rotas de sistema
   if (role === 'OPERADOR' || role === 'COMERCIAL') {
     const bloqueado = ROTAS_BLOQUEADAS_OPERADOR.some(r => pathname.startsWith(r))
     if (bloqueado) {
