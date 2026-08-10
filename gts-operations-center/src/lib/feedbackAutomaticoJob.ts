@@ -3,9 +3,14 @@ import { enviarWhatsApp } from './whatsapp'
 
 const ATRASO_FEEDBACK_MS = 60 * 60 * 1000 // 1 hora apos o chamado ser finalizado
 const JANELA_MAXIMA_MS = 48 * 60 * 60 * 1000 // nao manda feedback de chamados fechados ha mais de 48h
-const LOTE_MAXIMO = 20 // no maximo X envios por execucao, pra nao sobrecarregar de uma vez
+const LOTE_MAXIMO = 8 // no maximo X envios por execucao, pra nao sobrecarregar de uma vez
+const INTERVALO_ENTRE_ENVIOS_MS = 3000 // espaco entre cada envio
 
 let intervaloAtivo: NodeJS.Timeout | null = null
+
+function aguardar(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 function montarMensagem(cliente: string) {
   return `Olá, ${cliente}! 😊\n\nA GTSNET gostaria de saber como foi a sua experiência com o atendimento da sua solicitação.\n\nSeu atendimento ocorreu de forma tranquila? O serviço foi realizado dentro do prazo esperado e nossa equipe atendeu às suas expectativas?\n\nSua opinião é muito importante para nós e nos ajuda a melhorar cada vez mais. Agradecemos pelo seu feedback!`
@@ -53,6 +58,12 @@ async function verificar() {
           data: { feedbackEnviado: false, feedbackEnviadoEm: null },
         })
       }
+
+      // Espaca os envios - mandar um lote inteiro de uma vez (sem pausa)
+      // deixa o processo do WhatsApp (que roda no mesmo processo Node do
+      // servidor) ocupado por varios segundos seguidos e deixa o site
+      // lento/travando pra quem esta usando o sistema nesse momento.
+      await aguardar(INTERVALO_ENTRE_ENVIOS_MS)
     }
   } catch (error) {
     console.error('[FeedbackAutomatico] Erro ao verificar/enviar feedback:', error)
