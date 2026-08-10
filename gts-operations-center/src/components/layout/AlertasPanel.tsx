@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { X, AlertTriangle, Package, Truck, Users, ShoppingCart, FileText, RotateCcw, CheckCircle } from 'lucide-react'
+import { X, AlertTriangle, Package, Truck, Users, ShoppingCart, FileText, RotateCcw, CheckCircle, Wifi } from 'lucide-react'
 import { cn, timeAgo } from '@/lib/utils'
 
 interface Alerta {
@@ -90,6 +90,8 @@ export function AlertasPanel({ onClose }: Props) {
                 : alerta.icone === 'cart' ? ShoppingCart
                 : alerta.icone === 'file' ? FileText
                 : alerta.icone === 'return' ? RotateCcw
+                : alerta.icone === 'check' ? CheckCircle
+                : alerta.icone === 'wifi' ? Wifi
                 : AlertTriangle
 
               return (

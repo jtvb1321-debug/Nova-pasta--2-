@@ -1,12 +1,43 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { statusPorOlt } from '@/lib/smartoltMonitor'
 
 export async function GET() {
   const session = await auth()
   if (!session) return NextResponse.json([], { status: 401 })
 
   const alertas = []
+
+  // OLT (link de onde a internet chega) fora do ar - inferido pela grande
+  // maioria das ONUs daquela OLT caindo ao mesmo tempo (SmartOLT nao expoe
+  // um status de comunicacao da OLT em si).
+  try {
+    const oltsStatus = await statusPorOlt()
+    for (const olt of oltsStatus) {
+      if (olt.status === 'OFFLINE') {
+        alertas.push({
+          id: `olt-offline-${olt.oltId}`,
+          tipo: 'critico',
+          titulo: `OLT ${olt.nome} Fora do Ar`,
+          descricao: `${olt.onusIndisponiveis} de ${olt.totalOnus} clientes (${(olt.percentualIndisponivel * 100).toFixed(0)}%) sem conexao - possivel queda do link/OLT`,
+          icone: 'wifi',
+          tempo: 'Agora',
+        })
+      } else if (olt.status === 'DEGRADADO') {
+        alertas.push({
+          id: `olt-degradado-${olt.oltId}`,
+          tipo: 'alto',
+          titulo: `OLT ${olt.nome} Instavel`,
+          descricao: `${olt.onusIndisponiveis} de ${olt.totalOnus} clientes (${(olt.percentualIndisponivel * 100).toFixed(0)}%) sem conexao`,
+          icone: 'wifi',
+          tempo: 'Atencao',
+        })
+      }
+    }
+  } catch {
+    // SmartOLT indisponivel/nao configurado - nao quebra o resto dos alertas
+  }
 
   // Estoque critico
   const estoquesBaixos = await prisma.itemEstoque.findMany({
@@ -26,7 +57,7 @@ export async function GET() {
       id: `estoque-${item.id}`,
       tipo: 'critico',
       titulo: 'Estoque Critico',
-      descricao: `${item.descricao} — ${item.quantidadeAtual} ${item.quantidadeAtual === 1 ? 'unidade' : 'unidades'} restante(s)`,
+      descricao: `${item.descricao} - ${item.quantidadeAtual} ${item.quantidadeAtual === 1 ? 'unidade' : 'unidades'} restante(s)`,
       icone: 'package',
       tempo: 'Agora',
     })
