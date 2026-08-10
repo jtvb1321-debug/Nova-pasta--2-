@@ -2,6 +2,8 @@ import { prisma } from './prisma'
 import { enviarWhatsApp } from './whatsapp'
 
 const ATRASO_FEEDBACK_MS = 60 * 60 * 1000 // 1 hora apos o chamado ser finalizado
+const JANELA_MAXIMA_MS = 48 * 60 * 60 * 1000 // nao manda feedback de chamados fechados ha mais de 48h
+const LOTE_MAXIMO = 20 // no maximo X envios por execucao, pra nao sobrecarregar de uma vez
 
 let intervaloAtivo: NodeJS.Timeout | null = null
 
@@ -11,16 +13,24 @@ function montarMensagem(cliente: string) {
 
 async function verificar() {
   try {
-    const limite = new Date(Date.now() - ATRASO_FEEDBACK_MS)
+    const agora = Date.now()
+    const limite = new Date(agora - ATRASO_FEEDBACK_MS)
+    const janelaMinima = new Date(agora - JANELA_MAXIMA_MS)
 
     const candidatos = await prisma.chamado.findMany({
       where: {
         status: 'FINALIZADO',
         feedbackEnviado: false,
         telefone: { not: null },
-        dataFim: { lte: limite },
+        // dataFim entre 48h atras e 1h atras - chamados mais antigos que
+        // isso (ex: acumulados enquanto o job estava parado) nao entram
+        // mais na fila, pra nao mandar pesquisa de feedback fora de hora
+        // pra clientes de semanas/meses atras nem processar um backlog
+        // gigante de uma vez (isso ja travou o servidor uma vez).
+        dataFim: { lte: limite, gte: janelaMinima },
       },
       select: { id: true, cliente: true, telefone: true },
+      take: LOTE_MAXIMO,
     })
 
     for (const chamado of candidatos) {
