@@ -11,6 +11,53 @@ export type OrigemProvavel =
   | 'WIFI' | 'DISPOSITIVO' | 'ROTEADOR' | 'ONU_ONT' | 'FIBRA' | 'SINAL_OPTICO'
   | 'REDE_LOCAL' | 'REDE_GTSNET' | 'DNS' | 'ROTA_EXTERNA' | 'SERVIDOR' | 'INDETERMINADO'
 
+// Labels em texto puro (sem icone/cor) - reaproveitados em qualquer lugar que
+// precise so do texto: notificacao do Telegram, PDFs, etc. A versao com
+// icone/cor pra tela fica em DiagnosticoRunner.tsx.
+export const CLASSIFICACAO_LABEL: Record<Classificacao, string> = {
+  NORMAL: 'Normal',
+  ATENCAO: 'Atencao',
+  POSSIVEL_PROBLEMA: 'Possivel Problema',
+  PROBLEMA: 'Problema Identificado',
+  INDETERMINADO: 'Nao foi possivel determinar',
+}
+
+export const CLASSIFICACAO_EMOJI: Record<Classificacao, string> = {
+  NORMAL: '🟢',
+  ATENCAO: '🟡',
+  POSSIVEL_PROBLEMA: '🟠',
+  PROBLEMA: '🔴',
+  INDETERMINADO: '⚫',
+}
+
+export const ORIGEM_LABEL: Record<OrigemProvavel, string> = {
+  WIFI: 'Wi-Fi',
+  DISPOSITIVO: 'Dispositivo do cliente',
+  ROTEADOR: 'Roteador',
+  ONU_ONT: 'ONU/ONT',
+  FIBRA: 'Fibra',
+  SINAL_OPTICO: 'Sinal Optico',
+  REDE_LOCAL: 'Rede Local',
+  REDE_GTSNET: 'Rede GTSNET',
+  DNS: 'DNS',
+  ROTA_EXTERNA: 'Rota Externa',
+  SERVIDOR: 'Servidor',
+  INDETERMINADO: 'Indeterminado',
+}
+
+export const PROBLEMA_ENCONTRADO_LABEL: Record<string, string> = {
+  WIFI: 'Wi-Fi', ROTEADOR: 'Roteador', ONU: 'ONU', FIBRA: 'Fibra',
+  SINAL: 'Sinal', CONFIGURACAO: 'Configuracao', REDE: 'Rede', OUTRO: 'Outro',
+}
+
+export const RESULTADO_FINAL_LABEL: Record<string, string> = {
+  RESOLVIDO: 'Resolvido',
+  RESOLVIDO_PARCIAL: 'Resolvido parcialmente',
+  NAO_RESOLVIDO: 'Nao resolvido',
+  ESCALAR: 'Necessario escalar',
+  RETORNO: 'Necessario retorno',
+}
+
 export interface LimitesDiagnostico {
   limiteJitterAtencaoMs: number
   limiteJitterProblemaMs: number

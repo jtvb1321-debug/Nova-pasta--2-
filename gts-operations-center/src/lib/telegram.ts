@@ -1,6 +1,11 @@
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { formatarEnderecoCompleto } from './utils'
+import {
+  CLASSIFICACAO_LABEL, CLASSIFICACAO_EMOJI, ORIGEM_LABEL,
+  PROBLEMA_ENCONTRADO_LABEL, RESULTADO_FINAL_LABEL,
+  type Classificacao, type OrigemProvavel,
+} from './diagnosticoEngine'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
@@ -175,6 +180,76 @@ export async function notificarInicioAtendimento(chamado: {
   await enviarMensagem(GROUP_OS!, texto)
 }
 
+interface ResumoDiagnostico {
+  downloadMbps?: number | null
+  uploadMbps?: number | null
+  latenciaGtsnetMs?: number | null
+  latenciaExternaMs?: number | null
+  jitterMs?: number | null
+  perdaPct?: number | null
+  sinalRxDbm?: number | null
+  onuStatus?: string | null
+}
+
+interface DadosDiagnostico {
+  fase: 'ANTES' | 'DEPOIS'
+  classificacao: Classificacao
+  origemProvavel: OrigemProvavel
+  recomendacoes?: string[] | null
+  resumo?: ResumoDiagnostico | null
+  problemaEncontrado?: string | null
+  acaoRealizada?: string | null
+  resultadoFinal?: string | null
+  resumoAnterior?: ResumoDiagnostico | null
+}
+
+function formatarMetrica(valor: number | null | undefined, unidade: string, casas = 0) {
+  return valor == null ? '-' : `${valor.toFixed(casas)}${unidade}`
+}
+
+function montarBlocoDiagnostico(d: DadosDiagnostico): string[] {
+  const linhas: string[] = []
+  linhas.push(``)
+  linhas.push(`🔧 <b>DIAGNOSTICO TECNICO DE CONEXAO</b>`)
+  linhas.push(`${CLASSIFICACAO_EMOJI[d.classificacao]} <b>${CLASSIFICACAO_LABEL[d.classificacao]}</b> — Origem provavel: <b>${ORIGEM_LABEL[d.origemProvavel]}</b>`)
+
+  if (d.resumo) {
+    const r = d.resumo
+    linhas.push(``)
+    linhas.push(`📊 <b>Resultados da medicao:</b>`)
+    linhas.push(`  • Download: ${formatarMetrica(r.downloadMbps, ' Mbps')} | Upload: ${formatarMetrica(r.uploadMbps, ' Mbps')}`)
+    linhas.push(`  • Latencia GTSNET: ${formatarMetrica(r.latenciaGtsnetMs, ' ms')} | Externa: ${formatarMetrica(r.latenciaExternaMs, ' ms')}`)
+    linhas.push(`  • Jitter: ${formatarMetrica(r.jitterMs, ' ms')} | Perda de pacotes: ${formatarMetrica(r.perdaPct, '%', 1)}`)
+    linhas.push(`  • Sinal optico (RX): ${formatarMetrica(r.sinalRxDbm, ' dBm', 1)}${r.onuStatus ? ` | ONU: ${r.onuStatus}` : ''}`)
+  }
+
+  if (d.resumoAnterior && d.resumo) {
+    const a = d.resumoAnterior
+    const dp = d.resumo
+    linhas.push(``)
+    linhas.push(`🔄 <b>Comparacao Antes x Depois:</b>`)
+    linhas.push(`  • Download: ${formatarMetrica(a.downloadMbps, ' Mbps')} → ${formatarMetrica(dp.downloadMbps, ' Mbps')}`)
+    linhas.push(`  • Latencia: ${formatarMetrica(a.latenciaGtsnetMs, ' ms')} → ${formatarMetrica(dp.latenciaGtsnetMs, ' ms')}`)
+    linhas.push(`  • Perda: ${formatarMetrica(a.perdaPct, '%', 1)} → ${formatarMetrica(dp.perdaPct, '%', 1)}`)
+  }
+
+  if (d.recomendacoes && d.recomendacoes.length > 0) {
+    linhas.push(``)
+    linhas.push(`💡 <b>Recomendacoes:</b>`)
+    d.recomendacoes.forEach(rec => linhas.push(`  ☐ ${rec}`))
+  }
+
+  if (d.problemaEncontrado || d.acaoRealizada || d.resultadoFinal) {
+    linhas.push(``)
+    linhas.push(`📋 <b>Registro do atendimento (diagnostico):</b>`)
+    if (d.problemaEncontrado) linhas.push(`  • Problema encontrado: ${PROBLEMA_ENCONTRADO_LABEL[d.problemaEncontrado] || d.problemaEncontrado}`)
+    if (d.acaoRealizada) linhas.push(`  • Acao realizada: ${d.acaoRealizada}`)
+    if (d.resultadoFinal) linhas.push(`  • Resultado: ${RESULTADO_FINAL_LABEL[d.resultadoFinal] || d.resultadoFinal}`)
+  }
+
+  return linhas
+}
+
 export async function notificarFinalizacao(chamado: {
   cliente: string
   cidade: string
@@ -185,6 +260,7 @@ export async function notificarFinalizacao(chamado: {
   tempoMinutos?: number
   fotos?: string[]
   materiaisUtilizados?: { descricao: string; quantidade: number; unidade: string }[]
+  diagnostico?: DadosDiagnostico
 }) {
   const tipo = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }[chamado.tipo] || chamado.tipo
   const agora = new Date().toLocaleString('pt-BR')
@@ -223,6 +299,10 @@ export async function notificarFinalizacao(chamado: {
   if (chamado.fotos && chamado.fotos.length > 0) {
     linhas.push(``)
     linhas.push(`📸 <b>${chamado.fotos.length} evidencia(s) fotografica(s) anexada(s)</b>`)
+  }
+
+  if (chamado.diagnostico) {
+    linhas.push(...montarBlocoDiagnostico(chamado.diagnostico))
   }
 
   linhas.push(``)
