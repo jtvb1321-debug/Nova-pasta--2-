@@ -39,8 +39,10 @@ export async function GET() {
 
   await ativarChamadosAgendados()
 
+  // Inclui AGENDADO tambem - operador/admin precisa poder ver e corrigir o
+  // tipo de um chamado agendado antes da equipe iniciar, nao so os abertos.
   const chamados = await prisma.chamado.findMany({
-    where: { status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
+    where: { status: { in: ['ABERTO', 'EM_ANDAMENTO', 'AGENDADO'] } },
     include: {
       equipe: { include: { funcionarios: true, veiculo: true } },
       materiaisReservados: { include: { item: true } },

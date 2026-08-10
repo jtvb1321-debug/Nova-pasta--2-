@@ -196,13 +196,13 @@ function CardChamado({
                 Trocar equipe
               </button>
             )}
-            {isOperador && chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO' && onAlterarTipo && (
+            {(isAdmin || isOperador) && (chamado.status === 'ABERTO' || chamado.status === 'AGENDADO') && onAlterarTipo && (
               <select
                 value={chamado.tipo}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => { e.stopPropagation(); onAlterarTipo(chamado.id, e.target.value) }}
                 className="bg-white/5 border border-orange-500/20 text-orange-400 text-xs rounded px-1.5 py-0.5 focus:outline-none"
-                title="Alterar tipo do chamado (Operador)"
+                title="Alterar tipo do chamado (antes da equipe iniciar)"
               >
                 {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
                   <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
