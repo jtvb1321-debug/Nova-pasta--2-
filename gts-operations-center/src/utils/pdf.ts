@@ -695,7 +695,7 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
 
   const boxW = (width - 24 - 9) / 4
   kpiBox(doc, 'Chamados no dia', String(dados.totalChamados), 12, y, boxW, CORES.azul)
-  kpiBox(doc, 'Instalacoes', String(dados.totalInstalacoes), 12 + boxW + 3, y, boxW, CORES.verde)
+  kpiBox(doc, 'Instalacoes (Vendas)', String(dados.totalInstalacoes), 12 + boxW + 3, y, boxW, CORES.verde)
   kpiBox(doc, 'Vendas', String(dados.totalVendas), 12 + (boxW + 3) * 2, y, boxW, CORES.amarelo)
   kpiBox(doc, 'Equipes com ponto', String(dados.pontoPorEquipe.length), 12 + (boxW + 3) * 3, y, boxW, CORES.cinza)
   y += 28
@@ -717,6 +717,38 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
       alternateRowStyles: { fillColor: CORES.fundo },
     })
     y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  if (dados.instalacoes) {
+    if (y > 250) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Instalacoes via Chamados (OS) Finalizadas no Dia', y)
+    doc.setFontSize(9)
+    doc.setTextColor(...CORES.cinza)
+    doc.text(`Total: ${dados.instalacoes.totalChamados} instalacao(oes) fechada(s) como OS no dia.`, 12, y + 4)
+    y += 10
+
+    if (dados.instalacoes.chamados.length === 0) {
+      doc.setFontSize(9)
+      doc.setTextColor(...CORES.cinza)
+      doc.text('Nenhum chamado de instalacao finalizado no dia.', 12, y + 4)
+      y += 14
+    } else {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Cliente', 'Cidade', 'Equipe', 'Hora']],
+        body: dados.instalacoes.chamados.map((i: any) => [
+          i.cliente,
+          i.cidade,
+          i.equipeNome,
+          i.dataFim ? new Date(i.dataFim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        ]),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
   }
 
   if (dados.pontoPorEquipe.length === 0) {

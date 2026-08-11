@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     prisma.venda.count({ where: { data: { gte: inicioDia, lt: fimDia }, status: 'APROVADO' } }),
     prisma.chamado.findMany({
       where: { status: 'FINALIZADO', dataFim: { gte: inicioDia, lt: fimDia } },
-      select: { equipeId: true, equipe: { select: { nome: true } } },
+      select: { cliente: true, cidade: true, tipo: true, dataAbertura: true, dataFim: true, equipeId: true, equipe: { select: { nome: true } } },
     }),
     prisma.registroPonto.findMany({
       where: { data: { gte: inicioDia, lt: fimDia } },
@@ -92,6 +92,18 @@ export async function GET(request: NextRequest) {
   // aberto/agendados e nao representa o que as equipes efetivamente fizeram).
   const totalChamados = atendimentosPorEquipe.reduce((soma, e) => soma + e.quantidade, 0)
 
+  // Instalacoes via chamado/OS (tipo INSTALACAO finalizado no dia) - diferente
+  // da instalacao de venda (Venda.statusInstalacao), que e o fluxo comercial.
+  // O time de campo fecha isso como chamado, e esse numero nao aparecia no
+  // relatorio antes.
+  const chamadosInstalacao = chamadosFinalizados.filter(c => c.tipo === 'INSTALACAO')
+  const instalacoesChamados = chamadosInstalacao.map(c => ({
+    cliente: c.cliente,
+    cidade: c.cidade,
+    equipeNome: c.equipe?.nome || 'Sem equipe',
+    dataFim: c.dataFim,
+  }))
+
   const porTipoMap = new Map<string, { tipo: string; quantidadeMovimentos: number; quantidadeTotal: number }>()
   for (const m of movimentacoesDoDia) {
     if (!porTipoMap.has(m.tipo)) porTipoMap.set(m.tipo, { tipo: m.tipo, quantidadeMovimentos: 0, quantidadeTotal: 0 })
@@ -157,6 +169,11 @@ export async function GET(request: NextRequest) {
     totalVendas,
     atendimentosPorEquipe,
     pontoPorEquipe,
+    instalacoes: {
+      totalVendas: totalInstalacoes,
+      totalChamados: chamadosInstalacao.length,
+      chamados: instalacoesChamados,
+    },
     feedback: {
       enviados: feedbacksEnviados,
       respondidos: feedbacksRespondidos.length,
