@@ -9,7 +9,7 @@ import {
   Truck, Users, ClipboardList, Package,
   DollarSign, Wifi, Clock,
   AlertTriangle, CheckCircle, Zap, Activity, Sparkles,
-  ShieldCheck, Award, Rocket, Radio, Headphones, Signal, Globe, Calendar,
+  ShieldCheck, Award, Rocket, Radio, Headphones, Signal, Globe,
   Camera, Handshake, WifiOff, ShieldAlert, Server, PlugZap, Gauge, Navigation2
 } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -19,6 +19,7 @@ import { TVNetworkAlternator } from './TVNetworkAlternator'
 import { MissionControlBackground } from './MissionControlBackground'
 import { EventTicker } from './EventTicker'
 import { RadialGauge } from './RadialGauge'
+import { TVAgendaEquipes } from './TVAgendaEquipes'
 ChartJS.register(ArcElement, Tooltip, Legend)
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 const STATUS_EQUIPE = {
@@ -132,11 +133,6 @@ async function fetchChamadosAndamento() {
   if (!res.ok) return { chamados: [] }
   return res.json()
 }
-async function fetchAgenda() {
-  const res = await fetch('/api/agenda')
-  if (!res.ok) return []
-  return res.json()
-}
 async function fetchTvRede() {
   const res = await fetch('/api/dashboard/tv-rede')
   if (!res.ok) return null
@@ -190,7 +186,6 @@ export function TVDashboard() {
 
   const { data: stats } = useQuery({ queryKey: ['tv-stats'], queryFn: fetchStats, refetchInterval: 30000 })
   const { data: smartolt } = useQuery({ queryKey: ['tv-smartolt'], queryFn: fetchSmartOLT, refetchInterval: 60000 })
-  const { data: agendaChamados = [] } = useQuery({ queryKey: ['tv-agenda'], queryFn: fetchAgenda, refetchInterval: 20000 })
   const { data: rede } = useQuery({ queryKey: ['tv-rede'], queryFn: fetchTvRede, refetchInterval: 20000 })
   const { data: tecnicosGpsData } = useQuery({ queryKey: ['tv-tecnicos-gps'], queryFn: fetchTecnicosGps, refetchInterval: 15000 })
   const { data: andamentoData } = useQuery({ queryKey: ['tv-chamados-andamento'], queryFn: fetchChamadosAndamento, refetchInterval: 20000 })
@@ -219,10 +214,6 @@ export function TVDashboard() {
       }
     })
   }, [alarmesCriticos])
-
-  const agendaFiltrada = agendaChamados
-    .filter((c: any) => c.status === 'AGENDADO' || c.status === 'ABERTO')
-    .slice(0, 8)
 
   return (
     <div className="relative h-full bg-[#0B1120] text-white overflow-hidden flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -332,7 +323,9 @@ export function TVDashboard() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -12 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="grid grid-cols-3 gap-5 px-10 pb-8 h-full">
+            className="flex flex-col gap-5 px-10 pb-8 h-full">
+
+            <div className="grid grid-cols-2 gap-5 flex-[1.6] min-h-0">
 
             {/* Equipes */}
             <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden flex flex-col">
@@ -430,56 +423,11 @@ export function TVDashboard() {
               </div>
             </div>
 
-            {/* Agenda */}
-            <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden flex flex-col">
-              <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-400" />
-                  <h2 className="font-bold text-white text-lg">Agenda</h2>
-                </div>
-                {agendaFiltrada.length > 0 && (
-                  <span className="text-sm bg-purple-500 text-white px-2.5 py-0.5 rounded-full font-bold">
-                    {agendaFiltrada.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {agendaFiltrada.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-32 gap-2">
-                    <CheckCircle className="w-9 h-9 text-emerald-500/50" />
-                    <p className="text-gray-500 text-base">Nenhum chamado na agenda</p>
-                  </div>
-                ) : agendaFiltrada.map((c: any) => (
-                  <div
-                    key={c.id}
-                    className={cn(
-                      'p-4 rounded-xl border',
-                      c.clienteAusente ? 'bg-orange-500/10 border-orange-500/20' :
-                      c.status === 'AGENDADO' ? 'bg-purple-500/10 border-purple-500/20' :
-                      'bg-blue-500/10 border-blue-500/20'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-white text-base">{c.cliente}</span>
-                      {c.clienteAusente && (
-                        <span className="flex items-center gap-1 text-xs text-orange-400 font-bold">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          Ausente
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-400">{c.cidade}</p>
-                    {c.equipe && (
-                      <p className="text-sm text-blue-400 mt-1">{c.equipe.nome}</p>
-                    )}
-                    {c.dataAgendada && (
-                      <p className="text-sm text-purple-400 mt-1">
-                        {new Date(c.dataAgendada).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
+            </div>
+
+            {/* Agenda do dia - Alex e Bernardo / Heitor e Pedro */}
+            <div className="flex-1 min-h-0">
+              <TVAgendaEquipes />
             </div>
           </motion.div>
         )}
