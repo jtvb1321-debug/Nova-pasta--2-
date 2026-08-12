@@ -3,11 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-export const EQUIPES_TV = [
-  { chave: 'alex e bernardo', label: 'Alex e Bernardo' },
-  { chave: 'heitor e pedro',  label: 'Heitor e Pedro' },
-]
+import { EQUIPES_OPERACIONAIS as EQUIPES_TV } from '@/lib/equipesOperacionais'
 
 const STATUS_COR_TV: Record<string, { dot: string; texto: string; borda: string }> = {
   AGENDADO:     { dot: 'bg-purple-400',               texto: 'text-purple-400',  borda: 'border-purple-500/25' },

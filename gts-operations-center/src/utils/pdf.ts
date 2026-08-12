@@ -106,6 +106,22 @@ function kpiBox(doc: jsPDF, label: string, value: string, x: number, y: number, 
   doc.text(value, x + 6, y + 16)
 }
 
+function textoVazio(doc: jsPDF, mensagem: string, y: number): number {
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.cinza)
+  doc.text(mensagem, 12, y + 4)
+  return y + 14
+}
+
+const CORES_TOKEN: Record<string, [number, number, number]> = {
+  VERDE: CORES.verde,
+  AMARELO: CORES.amarelo,
+  AZUL: CORES.azul,
+  VERMELHO: CORES.vermelho,
+  CINZA: CORES.cinza,
+}
+
 // =============================================
 // RELATORIO DE CHAMADOS
 // =============================================
@@ -693,262 +709,157 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
 
   let y = cabecalho(doc, 'Relatorio Diario Operacional', dataLabel)
 
-  const boxW = (width - 24 - 9) / 4
-  kpiBox(doc, 'Chamados no dia', String(dados.totalChamados), 12, y, boxW, CORES.azul)
-  kpiBox(doc, 'Instalacoes (Vendas)', String(dados.totalInstalacoes), 12 + boxW + 3, y, boxW, CORES.verde)
-  kpiBox(doc, 'Vendas', String(dados.totalVendas), 12 + (boxW + 3) * 2, y, boxW, CORES.amarelo)
-  kpiBox(doc, 'Equipes com ponto', String(dados.pontoPorEquipe.length), 12 + (boxW + 3) * 3, y, boxW, CORES.cinza)
+  // 1. KPIs do dia
+  const boxW = (width - 24 - 6) / 3
+  kpiBox(doc, 'Chamados Fechados', String(dados.kpis.chamadosFechados), 12, y, boxW, CORES.azul)
+  kpiBox(doc, 'Instalacoes', String(dados.kpis.instalacoesConcluidas), 12 + boxW + 3, y, boxW, CORES.verde)
+  kpiBox(doc, 'Vendas', String(dados.kpis.vendasRealizadas), 12 + (boxW + 3) * 2, y, boxW, CORES.amarelo)
   y += 28
 
-  y = secao(doc, 'Atendimentos Finalizados por Equipe', y)
-  if (dados.atendimentosPorEquipe.length === 0) {
-    doc.setFontSize(9)
-    doc.setTextColor(...CORES.cinza)
-    doc.text('Nenhuma equipe cadastrada.', 12, y + 4)
-    y += 14
+  // 2. Atendimentos e OS concluidas
+  y = secao(doc, 'Atendimentos e Ordens de Servico Concluidas', y)
+  if (dados.atendimentos.length === 0) {
+    y = textoVazio(doc, 'Nenhum atendimento finalizado no dia.', y)
+  } else {
+    const corSlaPorLinha = dados.atendimentos.map((a: any) => CORES_TOKEN[a.slaCor] || CORES.cinza)
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['Cliente', 'Cidade', 'Equipe', 'Tipo', 'Conclusao', 'TMA', 'SLA']],
+      body: dados.atendimentos.map((a: any) => [a.cliente, a.cidade, a.equipeNome, a.tipoLabel, a.horaConclusao, a.tma, a.slaLabel]),
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 7, textColor: CORES.dark },
+      alternateRowStyles: { fillColor: CORES.fundo },
+      didParseCell: (data: any) => {
+        if (data.section === 'body' && data.column.index === 6) {
+          data.cell.styles.textColor = corSlaPorLinha[data.row.index]
+          data.cell.styles.fontStyle = 'bold'
+        }
+      },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  // 3. Produtividade das equipes de campo (somente as equipes operacionais)
+  if (y > 250) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Produtividade das Equipes de Campo', y)
+  const corStatusPorLinha = dados.produtividadeEquipes.map((e: any) => CORES_TOKEN[e.statusCor] || CORES.cinza)
+  autoTable(doc, {
+    startY: y,
+    margin: { left: 12, right: 12 },
+    head: [['Equipe', 'OS Finalizadas', 'Instalacoes', 'Suportes', 'Status']],
+    body: dados.produtividadeEquipes.map((e: any) => [e.equipeNome, e.osFinalizadas, e.instalacoes, e.suportes, e.statusLabel]),
+    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, textColor: CORES.dark },
+    alternateRowStyles: { fillColor: CORES.fundo },
+    didParseCell: (data: any) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        data.cell.styles.textColor = corStatusPorLinha[data.row.index]
+        data.cell.styles.fontStyle = 'bold'
+      }
+    },
+  })
+  y = (doc as any).lastAutoTable.finalY + 8
+
+  // 4. Feedback dos clientes (WhatsApp)
+  if (y > 250) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Feedback dos Clientes (WhatsApp)', y)
+  const boxWFb = (width - 24 - 6) / 3
+  kpiBox(doc, 'Mensagens Enviadas', String(dados.feedback.enviados), 12, y, boxWFb, CORES.azul)
+  kpiBox(doc, 'Mensagens Respondidas', String(dados.feedback.respondidos), 12 + boxWFb + 3, y, boxWFb, CORES.amarelo)
+  kpiBox(doc, 'Avaliacoes Positivas', String(dados.feedback.positivas), 12 + (boxWFb + 3) * 2, y, boxWFb, CORES.verde)
+  y += 28
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.cinza)
+  doc.text(
+    `Taxa de avaliacao positiva: ${dados.feedback.taxaPositiva != null ? dados.feedback.taxaPositiva + '%' : 'Nao informado'}`,
+    12, y + 4
+  )
+  y += 14
+
+  // 5. Registro de ponto das equipes
+  if (dados.pontoPorEquipe.length === 0) {
+    if (y > 250) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Registro de Ponto das Equipes', y)
+    y = textoVazio(doc, 'Nenhum registro de ponto encontrado para o dia.', y)
+  } else {
+    for (const equipe of dados.pontoPorEquipe) {
+      if (y > 240) { doc.addPage(); y = 20 }
+      y = secao(doc, `Ponto - ${equipe.equipeNome}`, y)
+      autoTable(doc, {
+        startY: y,
+        margin: { left: 12, right: 12 },
+        head: [['Funcionario', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Jornada', 'Status']],
+        body: equipe.registros.map((r: any) => [
+          r.funcionarioNome, r.entrada, r.saidaAlmoco, r.retornoAlmoco, r.saida, r.jornadaLabel, r.statusExtraLabel,
+        ]),
+        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: CORES.dark },
+        alternateRowStyles: { fillColor: CORES.fundo },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  // 6. Gestao de estoque
+  if (y > 250) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Gestao de Estoque - Movimentacao Diaria', y)
+  autoTable(doc, {
+    startY: y,
+    margin: { left: 12, right: 12 },
+    head: [['Indicador', 'Quantidade']],
+    body: [
+      ['Entradas',   dados.estoque.movimentacaoDiaria.entradas],
+      ['Saidas',     dados.estoque.movimentacaoDiaria.saidas],
+      ['Devolucoes', dados.estoque.movimentacaoDiaria.devolucoes],
+      ['Trocas',     dados.estoque.movimentacaoDiaria.trocas],
+    ],
+    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, textColor: CORES.dark },
+    alternateRowStyles: { fillColor: CORES.fundo },
+  })
+  y = (doc as any).lastAutoTable.finalY + 8
+
+  if (y > 250) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Estoque Embarcado por Equipe', y)
+  if (dados.estoquePorVeiculo.length === 0) {
+    y = textoVazio(doc, 'Nenhum item carregado em veiculo de equipe no momento.', y)
   } else {
     autoTable(doc, {
       startY: y,
       margin: { left: 12, right: 12 },
-      head: [['Equipe', 'Chamados Finalizados no Dia']],
-      body: dados.atendimentosPorEquipe.map((e: any) => [e.equipeNome, e.quantidade]),
+      head: [['Equipe', 'Veiculo / Placa', 'Item / Equipamento', 'Quantidade']],
+      body: dados.estoquePorVeiculo.map((e: any) => [
+        e.equipeNome,
+        e.veiculoPlaca ? `${e.veiculoPlaca}${e.veiculoModelo ? ' - ' + e.veiculoModelo : ''}` : 'Sem veiculo',
+        e.item,
+        `${e.quantidade} ${e.unidade}`.trim(),
+      ]),
       headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      bodyStyles: { fontSize: 7, textColor: CORES.dark },
       alternateRowStyles: { fillColor: CORES.fundo },
     })
     y = (doc as any).lastAutoTable.finalY + 8
   }
 
-  if (dados.instalacoes) {
-    if (y > 250) { doc.addPage(); y = 20 }
-    y = secao(doc, 'Instalacoes via Chamados (OS) Finalizadas no Dia', y)
-    doc.setFontSize(9)
-    doc.setTextColor(...CORES.cinza)
-    doc.text(`Total: ${dados.instalacoes.totalChamados} instalacao(oes) fechada(s) como OS no dia.`, 12, y + 4)
-    y += 10
-
-    if (dados.instalacoes.chamados.length === 0) {
-      doc.setFontSize(9)
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhum chamado de instalacao finalizado no dia.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Cliente', 'Cidade', 'Equipe', 'Hora']],
-        body: dados.instalacoes.chamados.map((i: any) => [
-          i.cliente,
-          i.cidade,
-          i.equipeNome,
-          i.dataFim ? new Date(i.dataFim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        ]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-  }
-
-  if (dados.pontoPorEquipe.length === 0) {
-    if (y > 260) { doc.addPage(); y = 20 }
-    y = secao(doc, 'Ponto das Equipes', y)
-    doc.setFontSize(9)
-    doc.setTextColor(...CORES.cinza)
-    doc.text('Nenhum registro de ponto encontrado para o dia.', 12, y + 4)
-    y += 14
-  } else {
-    for (const equipe of dados.pontoPorEquipe) {
-      if (y > 250) { doc.addPage(); y = 20 }
-      y = secao(doc, `Ponto - ${equipe.equipeNome}`, y)
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Funcionario', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Horas', 'Extras', 'Status']],
-        body: equipe.registros.map((r: any) => [
-          r.funcionarioNome,
-          r.entrada ? new Date(r.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-          r.saidaAlmoco ? new Date(r.saidaAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-          r.retornoAlmoco ? new Date(r.retornoAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-          r.saida ? new Date(r.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-          r.horasTrabalhadas ?? '-',
-          r.horasExtras ?? '-',
-          r.statusHorasExtras,
-        ]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-  }
-
-  if (dados.feedback) {
-    if (y > 250) { doc.addPage(); y = 20 }
-    y = secao(doc, 'Feedback de Clientes (WhatsApp)', y)
-
-    const boxWFb = (width - 24 - 6) / 3
-    kpiBox(doc, 'Pedidos enviados', String(dados.feedback.enviados), 12, y, boxWFb, CORES.azul)
-    kpiBox(doc, 'Respondidos', String(dados.feedback.respondidos), 12 + boxWFb + 3, y, boxWFb, CORES.amarelo)
-    kpiBox(doc, 'Confirmados', String(dados.feedback.confirmados), 12 + (boxWFb + 3) * 2, y, boxWFb, CORES.verde)
-    y += 28
-
-    if (dados.feedback.respostas.length === 0) {
-      doc.setFontSize(9)
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhuma resposta de cliente recebida no dia.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Cliente', 'Resposta', 'Recebido em']],
-        body: dados.feedback.respostas.map((f: any) => [
-          f.cliente,
-          f.resposta || '-',
-          f.em ? new Date(f.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        ]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-        columnStyles: { 1: { cellWidth: 100 } },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-  }
-
-  if (dados.estoque) {
-    if (y > 250) { doc.addPage(); y = 20 }
-    y = secao(doc, 'Movimentacao de Estoque', y)
-
-    const porTipoMap: Record<string, number> = {}
-    for (const t of dados.estoque.porTipo) porTipoMap[t.tipo] = t.quantidadeMovimentos
-
-    const boxWEst = (width - 24 - 12) / 5
-    kpiBox(doc, 'Movimentacoes', String(dados.estoque.totalMovimentacoes), 12, y, boxWEst, CORES.azul)
-    kpiBox(doc, 'Saidas', String(porTipoMap.SAIDA ?? 0), 12 + boxWEst + 3, y, boxWEst, CORES.vermelho)
-    kpiBox(doc, 'Devolucoes', String(porTipoMap.DEVOLUCAO ?? 0), 12 + (boxWEst + 3) * 2, y, boxWEst, CORES.verde)
-    kpiBox(doc, 'Transf. p/ equipe', String(porTipoMap.TRANSFERENCIA ?? 0), 12 + (boxWEst + 3) * 3, y, boxWEst, CORES.amarelo)
-    kpiBox(doc, 'Entradas', String(porTipoMap.ENTRADA ?? 0), 12 + (boxWEst + 3) * 4, y, boxWEst, CORES.cinza)
-    y += 28
-
-    const linhaMovimento = (m: any) => [
-      m.item,
-      `${m.quantidade} ${m.unidade}`.trim(),
-      m.motivo,
-      m.cliente || '-',
-      m.em ? new Date(m.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-    ]
-
-    if (y > 260) { doc.addPage(); y = 20 }
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(...CORES.dark)
-    doc.text('Saidas do dia', 12, y + 4)
-    y += 8
-    if (dados.estoque.saidas.length === 0) {
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhuma saida de estoque registrada no dia.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Item', 'Quantidade', 'Motivo', 'Chamado', 'Hora']],
-        body: dados.estoque.saidas.map(linhaMovimento),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-
-    if (y > 260) { doc.addPage(); y = 20 }
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(...CORES.dark)
-    doc.text('Devolucoes do dia', 12, y + 4)
-    y += 8
-    if (dados.estoque.devolucoes.length === 0) {
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhuma devolucao de estoque registrada no dia.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Item', 'Quantidade', 'Motivo', 'Chamado', 'Hora']],
-        body: dados.estoque.devolucoes.map(linhaMovimento),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-
-    if (y > 260) { doc.addPage(); y = 20 }
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(...CORES.dark)
-    doc.text('Transferencias Central -> Equipe (carregamento de veiculo)', 12, y + 4)
-    y += 8
-    if (dados.estoque.transferencias.length === 0) {
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhuma transferencia para equipe registrada no dia.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Item', 'Quantidade', 'Equipe destino', 'Hora']],
-        body: dados.estoque.transferencias.map((m: any) => [
-          m.item,
-          `${m.quantidade} ${m.unidade}`.trim(),
-          m.equipeDestino,
-          m.em ? new Date(m.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        ]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-  }
-
-  if (dados.estoquePorVeiculo) {
-    if (y > 250) { doc.addPage(); y = 20 }
-    y = secao(doc, 'Estoque Atual por Veiculo/Equipe', y)
-
-    if (dados.estoquePorVeiculo.length === 0) {
-      doc.setFontSize(9)
-      doc.setTextColor(...CORES.cinza)
-      doc.text('Nenhum item carregado em veiculo de equipe no momento.', 12, y + 4)
-      y += 14
-    } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Equipe', 'Veiculo', 'Item', 'Quantidade']],
-        body: dados.estoquePorVeiculo.map((e: any) => [
-          e.equipeNome,
-          e.veiculoPlaca ? `${e.veiculoPlaca}${e.veiculoModelo ? ' - ' + e.veiculoModelo : ''}` : 'Sem veiculo',
-          e.item,
-          `${e.quantidade} ${e.unidade}`.trim(),
-        ]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
-    }
-  }
+  // 7. Resumo executivo
+  if (y > 250) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Resumo Executivo', y)
+  const r = dados.resumoExecutivo
+  const linhasResumo = [
+    `Total de OS encerradas: ${r.totalOsEncerradas}`,
+    `Total de instalacoes: ${r.totalInstalacoes}`,
+    `Total de vendas: ${r.totalVendas}`,
+    `Equipe com maior numero de OS finalizadas: ${r.equipeDestaque}`,
+    `Feedbacks concluidos: ${r.feedbacksConcluidos}`,
+    `Movimentacao de estoque: ${r.resumoEstoque}`,
+  ]
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.dark)
+  linhasResumo.forEach((linha, i) => doc.text(`- ${linha}`, 14, y + 4 + i * 6))
+  y += linhasResumo.length * 6 + 10
 
   rodape(doc)
   doc.save(`relatorio-diario-${dados.data}.pdf`)

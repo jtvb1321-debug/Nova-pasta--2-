@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { AgendaCard, type AgendaItem } from './AgendaCard'
 import { CardChamado, TIPO_COR } from './CardChamado'
+import { EQUIPES_OPERACIONAIS as EQUIPES_AGENDA } from '@/lib/equipesOperacionais'
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
@@ -27,12 +28,6 @@ const STATUS_COR: Record<string, string> = {
 }
 
 const TIPOS_LISTA: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'ROMPIMENTO_MASSIVO']
-
-// Visao Dia mostra apenas estas equipes (por nome), organizadas em linhas.
-const EQUIPES_AGENDA = [
-  { chave: 'alex e bernardo', label: 'Alex e Bernardo' },
-  { chave: 'heitor e pedro',  label: 'Heitor e Pedro' },
-]
 
 // Timeline da visao Dia: 07:00 as 19:00, de 30 em 30 min.
 const SLOT_INICIO_MIN = 7 * 60

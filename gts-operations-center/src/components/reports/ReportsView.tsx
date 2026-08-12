@@ -30,6 +30,14 @@ function hojeISO() {
   return new Date().toLocaleDateString('en-CA')
 }
 
+const COR_TOKEN_CLASSE: Record<string, string> = {
+  VERDE: 'text-emerald-400',
+  AMARELO: 'text-yellow-400',
+  AZUL: 'text-blue-400',
+  VERMELHO: 'text-red-400',
+  CINZA: 'text-gray-400',
+}
+
 export function ReportsView() {
   const [tipo, setTipo] = useState<TipoRelatorio>('chamados')
   const [periodo, setPeriodo] = useState('mensal')
@@ -56,14 +64,6 @@ export function ReportsView() {
     } finally {
       setCarregandoDiario(false)
     }
-  }
-
-  function atualizarQuantidadeEquipe(index: number, quantidade: number) {
-    setDadosDiario((d: any) => {
-      const lista = [...d.atendimentosPorEquipe]
-      lista[index] = { ...lista[index], quantidade }
-      return { ...d, atendimentosPorEquipe: lista }
-    })
   }
 
   async function gerarPDF() {
@@ -200,7 +200,7 @@ export function ReportsView() {
                   max={hojeISO()}
                   className="w-full gts-input"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">Carregue os dados do dia para revisar e corrigir os numeros antes de gerar o PDF.</p>
+                <p className="text-xs text-gray-500 mt-1.5">Carregue os dados do dia para conferir o relatorio antes de gerar o PDF.</p>
               </div>
             ) : (
               <>
@@ -295,72 +295,168 @@ export function ReportsView() {
 
             {tipo === 'diario' ? (
               dadosDiario ? (
-                <div className="space-y-5">
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">Revisar dados antes de gerar o PDF</p>
+                    <p className="text-sm font-semibold text-white">Relatorio Diario Operacional</p>
                     <span className="text-xs text-gray-500">{new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Chamados no dia</label>
-                      <input
-                        type="number"
-                        value={dadosDiario.totalChamados}
-                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalChamados: Number(e.target.value) }))}
-                        className="w-full gts-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Instalacoes</label>
-                      <input
-                        type="number"
-                        value={dadosDiario.totalInstalacoes}
-                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalInstalacoes: Number(e.target.value) }))}
-                        className="w-full gts-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Vendas</label>
-                      <input
-                        type="number"
-                        value={dadosDiario.totalVendas}
-                        onChange={e => setDadosDiario((d: any) => ({ ...d, totalVendas: Number(e.target.value) }))}
-                        className="w-full gts-input"
-                      />
+                  {/* 1. KPIs */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Chamados Fechados', valor: dadosDiario.kpis.chamadosFechados },
+                      { label: 'Instalacoes', valor: dadosDiario.kpis.instalacoesConcluidas },
+                      { label: 'Vendas', valor: dadosDiario.kpis.vendasRealizadas },
+                    ].map(k => (
+                      <div key={k.label} className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
+                        <p className="text-[11px] text-gray-500">{k.label}</p>
+                        <p className="text-xl font-bold text-white">{k.valor}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 2. Atendimentos concluidos */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Atendimentos e OS Concluidas</p>
+                    {dadosDiario.atendimentos.length === 0 ? (
+                      <p className="text-xs text-gray-600">Nenhum atendimento finalizado no dia.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-gray-500 border-b border-white/5">
+                              <th className="text-left font-medium py-1.5 pr-2">Cliente</th>
+                              <th className="text-left font-medium py-1.5 pr-2">Equipe</th>
+                              <th className="text-left font-medium py-1.5 pr-2">Tipo</th>
+                              <th className="text-left font-medium py-1.5 pr-2">TMA</th>
+                              <th className="text-left font-medium py-1.5">SLA</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dadosDiario.atendimentos.map((a: any, i: number) => (
+                              <tr key={i} className="border-b border-white/[0.03]">
+                                <td className="py-1.5 pr-2 text-gray-300 truncate max-w-[120px]">{a.cliente}</td>
+                                <td className="py-1.5 pr-2 text-gray-400">{a.equipeNome}</td>
+                                <td className="py-1.5 pr-2 text-gray-400">{a.tipoLabel}</td>
+                                <td className="py-1.5 pr-2 text-gray-400">{a.tma}</td>
+                                <td className={cn('py-1.5 font-medium', COR_TOKEN_CLASSE[a.slaCor])}>{a.slaLabel}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Produtividade das equipes */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Produtividade das Equipes de Campo</p>
+                    <div className="space-y-1.5">
+                      {dadosDiario.produtividadeEquipes.map((e: any) => (
+                        <div key={e.equipeNome} className="flex items-center justify-between text-xs bg-white/[0.02] rounded-lg px-3 py-2">
+                          <span className="text-gray-300 font-medium">{e.equipeNome}</span>
+                          <span className="text-gray-500">{e.osFinalizadas} OS - {e.instalacoes} inst. - {e.suportes} sup.</span>
+                          <span className={cn('font-medium', COR_TOKEN_CLASSE[e.statusCor])}>{e.statusLabel}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
+                  {/* 4. Feedback */}
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-2">Atendimentos finalizados por equipe</p>
-                    {dadosDiario.atendimentosPorEquipe.length === 0 ? (
-                      <p className="text-xs text-gray-600">Nenhuma equipe cadastrada.</p>
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Feedback dos Clientes (WhatsApp)</p>
+                    <div className="grid grid-cols-3 gap-3 mb-2">
+                      {[
+                        { label: 'Enviadas', valor: dadosDiario.feedback.enviados },
+                        { label: 'Respondidas', valor: dadosDiario.feedback.respondidos },
+                        { label: 'Positivas', valor: dadosDiario.feedback.positivas },
+                      ].map(k => (
+                        <div key={k.label} className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5">
+                          <p className="text-[10px] text-gray-500">{k.label}</p>
+                          <p className="text-base font-bold text-white">{k.valor}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Taxa de avaliacao positiva: {dadosDiario.feedback.taxaPositiva != null ? `${dadosDiario.feedback.taxaPositiva}%` : 'Nao informado'}
+                    </p>
+                  </div>
+
+                  {/* 5. Ponto */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Registro de Ponto das Equipes</p>
+                    {dadosDiario.pontoPorEquipe.length === 0 ? (
+                      <p className="text-xs text-gray-600">Nenhum registro de ponto encontrado para o dia.</p>
                     ) : (
-                      <div className="space-y-2">
-                        {dadosDiario.atendimentosPorEquipe.map((e: any, i: number) => (
-                          <div key={e.equipeId} className="flex items-center gap-3">
-                            <span className="flex-1 text-sm text-gray-300 truncate">{e.equipeNome}</span>
-                            <input
-                              type="number"
-                              value={e.quantidade}
-                              onChange={ev => atualizarQuantidadeEquipe(i, Number(ev.target.value))}
-                              className="w-24 gts-input text-right"
-                            />
+                      <div className="space-y-3">
+                        {dadosDiario.pontoPorEquipe.map((eq: any) => (
+                          <div key={eq.equipeId}>
+                            <p className="text-[11px] text-orange-400 font-medium mb-1">{eq.equipeNome}</p>
+                            <div className="space-y-1">
+                              {eq.registros.map((r: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
+                                  <span className="text-gray-300">{r.funcionarioNome}</span>
+                                  <span className="text-gray-500">{r.entrada} - {r.saida}</span>
+                                  <span className="text-gray-400">{r.jornadaLabel}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-500 border-t border-white/5 pt-3">
-                    Ponto das equipes, feedback e movimentacao de estoque entram no PDF exatamente como coletados pelo sistema (nao editaveis aqui).
-                  </p>
+                  {/* 6. Estoque */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Gestao de Estoque</p>
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      {[
+                        { label: 'Entradas',   valor: dadosDiario.estoque.movimentacaoDiaria.entradas },
+                        { label: 'Saidas',     valor: dadosDiario.estoque.movimentacaoDiaria.saidas },
+                        { label: 'Devolucoes', valor: dadosDiario.estoque.movimentacaoDiaria.devolucoes },
+                        { label: 'Trocas',     valor: dadosDiario.estoque.movimentacaoDiaria.trocas },
+                      ].map(k => (
+                        <div key={k.label} className="bg-white/[0.03] border border-white/5 rounded-lg p-2 text-center">
+                          <p className="text-[10px] text-gray-500">{k.label}</p>
+                          <p className="text-sm font-bold text-white">{k.valor}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mb-2">Estoque embarcado por equipe</p>
+                    {dadosDiario.estoquePorVeiculo.length === 0 ? (
+                      <p className="text-xs text-gray-600">Nenhum item carregado em veiculo de equipe no momento.</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {dadosDiario.estoquePorVeiculo.map((e: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
+                            <span className="text-gray-300">{e.equipeNome}{e.veiculoPlaca ? ` - ${e.veiculoPlaca}` : ''}</span>
+                            <span className="text-gray-400 truncate max-w-[140px]">{e.item}</span>
+                            <span className="text-gray-500">{e.quantidade} {e.unidade}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 7. Resumo executivo */}
+                  <div className="border-t border-white/5 pt-4">
+                    <p className="text-xs font-semibold text-gray-300 mb-2">Resumo Executivo</p>
+                    <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                      <li>Total de OS encerradas: {dadosDiario.resumoExecutivo.totalOsEncerradas}</li>
+                      <li>Total de instalacoes: {dadosDiario.resumoExecutivo.totalInstalacoes}</li>
+                      <li>Total de vendas: {dadosDiario.resumoExecutivo.totalVendas}</li>
+                      <li>Equipe destaque: {dadosDiario.resumoExecutivo.equipeDestaque}</li>
+                      <li>Feedbacks concluidos: {dadosDiario.resumoExecutivo.feedbacksConcluidos}</li>
+                      <li>Estoque: {dadosDiario.resumoExecutivo.resumoEstoque}</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-16">
                   <CalendarDays className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400 font-medium">Carregue os dados do dia</p>
-                  <p className="text-gray-600 text-sm mt-1">Clique em &quot;Carregar Dados do Dia&quot; ao lado para revisar e corrigir os numeros antes de gerar o PDF.</p>
+                  <p className="text-gray-600 text-sm mt-1">Clique em &quot;Carregar Dados do Dia&quot; ao lado para conferir o relatorio antes de gerar o PDF.</p>
                 </div>
               )
             ) : (
@@ -427,7 +523,7 @@ export function ReportsView() {
 
             <p className="text-xs text-gray-500 text-center mt-4">
               {tipo === 'diario'
-                ? <>Revise os numeros acima e clique em <strong className="text-white">Gerar e Baixar PDF</strong></>
+                ? <>Confira os dados acima e clique em <strong className="text-white">Gerar e Baixar PDF</strong></>
                 : <>Configure os parametros ao lado e clique em <strong className="text-white">Gerar e Baixar PDF</strong></>
               }
             </p>

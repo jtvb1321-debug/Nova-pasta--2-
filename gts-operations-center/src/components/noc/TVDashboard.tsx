@@ -19,7 +19,8 @@ import { TVNetworkAlternator } from './TVNetworkAlternator'
 import { MissionControlBackground } from './MissionControlBackground'
 import { EventTicker } from './EventTicker'
 import { RadialGauge } from './RadialGauge'
-import { TVAgendaEquipes, EQUIPES_TV } from './TVAgendaEquipes'
+import { TVAgendaEquipes } from './TVAgendaEquipes'
+import { EQUIPES_OPERACIONAIS as EQUIPES_TV } from '@/lib/equipesOperacionais'
 ChartJS.register(ArcElement, Tooltip, Legend)
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 const STATUS_EQUIPE = {
