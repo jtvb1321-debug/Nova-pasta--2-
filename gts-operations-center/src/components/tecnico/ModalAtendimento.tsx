@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   X, MapPin, Phone, Clock, Truck, Zap,
   CheckCircle, Package, FileText, ChevronRight,
-  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity
+  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity, ScanLine, Ban
 } from 'lucide-react'
 import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
@@ -35,6 +35,12 @@ function limparObservacao(obs: string) {
   return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
 }
 
+async function fetchUnidadesEquipe(equipeId: string) {
+  const res = await fetch(`/api/teams/${equipeId}/equipamentos`)
+  if (!res.ok) return { data: [] }
+  return res.json()
+}
+
 export function ModalAtendimento({ chamado, onClose }: Props) {
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
@@ -42,6 +48,8 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const [relato, setRelato] = useState(chamado.relato || '')
   const [fotos, setFotos] = useState<string[]>([])
   const [materiaisUtilizados, setMateriaisUtilizados] = useState<Record<string, { quantidade: number; observacao: string }>>({})
+  const [equipamentosUtilizadosIds, setEquipamentosUtilizadosIds] = useState<string[]>([])
+  const [nenhumEquipamentoUsado, setNenhumEquipamentoUsado] = useState(false)
   const [showDiagnostico, setShowDiagnostico] = useState(false)
   const inputFotoRef = useRef<HTMLInputElement>(null)
 
@@ -50,6 +58,13 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const obs = limparObservacao(chamado.observacao)
   const materiaisDisponiveis = chamado.materiaisReservados ?? []
   const status = chamado.status
+
+  const { data: unidadesData } = useQuery({
+    queryKey: ['unidades-equipamento', chamado.equipeId],
+    queryFn: () => fetchUnidadesEquipe(chamado.equipeId),
+    enabled: !!chamado.equipeId && status === 'EM_ANDAMENTO',
+  })
+  const unidadesDisponiveis = unidadesData?.data ?? []
 
   const podeFinalizarFotos = fotos.length >= MIN_FOTOS
   const fotasFaltando = Math.max(0, MIN_FOTOS - fotos.length)
@@ -132,6 +147,18 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
       [itemId]: { ...prev[itemId], quantidade },
     }))
   }
+
+  function toggleEquipamentoUtilizado(unidadeId: string) {
+    setNenhumEquipamentoUsado(false)
+    setEquipamentosUtilizadosIds(prev =>
+      prev.includes(unidadeId) ? prev.filter(id => id !== unidadeId) : [...prev, unidadeId]
+    )
+  }
+
+  function toggleNenhumEquipamentoUsado() {
+    setNenhumEquipamentoUsado(v => !v)
+    setEquipamentosUtilizadosIds([])
+  }
 async function marcarClienteAusente() {
     const confirmar = window.confirm('Confirma que o cliente nao estava presente? O chamado sera reagendado para amanha.')
     if (!confirmar) return
@@ -161,6 +188,11 @@ async function marcarClienteAusente() {
       return
     }
 
+    if (unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado) {
+      toast({ title: 'Informe qual equipamento foi usado ou marque "Nenhum equipamento foi utilizado"', variant: 'destructive' })
+      return
+    }
+
     const utilizadosPayload = Object.entries(materiaisUtilizados).map(([itemId, dados]) => ({
       itemId,
       quantidade: dados.quantidade,
@@ -183,6 +215,7 @@ async function marcarClienteAusente() {
       fotos: JSON.stringify(fotos),
       materiaisUtilizados: utilizadosPayload,
       materiaisDevolvidos: devolucoesPayload,
+      equipamentosUtilizadosIds,
     })
 
     if (ok) {
@@ -461,6 +494,59 @@ async function marcarClienteAusente() {
                 </div>
               )}
 
+              {/* Equipamento com MAC utilizado */}
+              {unidadesDisponiveis.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-1.5">
+                    <ScanLine className="w-4 h-4" />
+                    Equipamento Utilizado *
+                  </label>
+                  <div className="space-y-2">
+                    {unidadesDisponiveis.map((u: any) => {
+                      const selecionado = equipamentosUtilizadosIds.includes(u.id)
+                      return (
+                        <button
+                          key={u.id}
+                          onClick={() => toggleEquipamentoUtilizado(u.id)}
+                          className={cn(
+                            'w-full flex items-center justify-between p-3 rounded-xl border transition-all',
+                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-white/5 bg-white/[0.02]'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
+                              selecionado ? 'bg-orange-500 border-orange-500' : 'border-gray-600'
+                            )}>
+                              {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                            <div className="text-left">
+                              <p className="text-sm text-white font-medium">{u.item?.descricao}</p>
+                              <p className="text-xs text-gray-500 font-mono">{u.macAddress}</p>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                    <button
+                      onClick={toggleNenhumEquipamentoUsado}
+                      className={cn(
+                        'w-full flex items-center gap-2 p-3 rounded-xl border transition-all',
+                        nenhumEquipamentoUsado ? 'border-gray-500/40 bg-white/5' : 'border-white/5 bg-white/[0.02]'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
+                        nenhumEquipamentoUsado ? 'bg-gray-500 border-gray-500' : 'border-gray-600'
+                      )}>
+                        {nenhumEquipamentoUsado && <Ban className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <p className="text-sm text-gray-300">Nenhum equipamento foi utilizado</p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Botao finalizar */}
               <div className="space-y-2">
                 {!podeFinalizarFotos && (
@@ -469,12 +555,18 @@ async function marcarClienteAusente() {
                     Anexe pelo menos {MIN_FOTOS} fotos para finalizar
                   </p>
                 )}
+                {unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado && (
+                  <p className="text-center text-xs text-red-400 flex items-center justify-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Informe o equipamento usado ou marque &quot;Nenhum equipamento foi utilizado&quot;
+                  </p>
+                )}
                 <button
                   onClick={finalizarAtendimento}
-                  disabled={loading || !relato.trim() || !podeFinalizarFotos}
+                  disabled={loading || !relato.trim() || !podeFinalizarFotos || (unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado)}
                   className={cn(
                     'w-full flex items-center justify-center gap-2 py-4 font-bold rounded-xl transition-colors',
-                    podeFinalizarFotos && relato.trim()
+                    podeFinalizarFotos && relato.trim() && (unidadesDisponiveis.length === 0 || equipamentosUtilizadosIds.length > 0 || nenhumEquipamentoUsado)
                       ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
                       : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   )}

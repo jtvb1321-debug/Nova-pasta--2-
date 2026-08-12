@@ -126,6 +126,7 @@ model Equipe {
   solicitacoesMaterial SolicitacaoMaterial[]
   escalas EscalaTrabalho[]
   diagnosticos Diagnostico[]
+  unidadesEquipamento UnidadeEquipamento[]
   @@map("equipes")
 }
 
@@ -197,7 +198,35 @@ model ItemEstoque {
   solicitacoesMaterial SolicitacaoMaterial[]
   entradasDefeito EntradaDefeito[]
   saldosLocais    EstoqueLocalCentral[]
+  unidadesEquipamento UnidadeEquipamento[]
   @@map("estoques")
+}
+
+enum StatusUnidadeEquipamento {
+  EM_ESTOQUE
+  UTILIZADA
+}
+
+// Rastreio por unidade (MAC) para itens que o operador escolher ler
+// individualmente ao carregar na equipe - convive com EstoqueEquipe.quantidade
+// (que continua sendo a soma agregada, mantida em sincronia a cada unidade
+// criada/consumida) para nao quebrar telas/relatorios que so leem a soma.
+model UnidadeEquipamento {
+  id         String                   @id @default(cuid())
+  itemId     String
+  macAddress String                   @unique
+  equipeId   String
+  status     StatusUnidadeEquipamento @default(EM_ESTOQUE)
+  chamadoId  String?
+  usadoPor   String?
+  usadoEm    DateTime?
+  createdAt  DateTime                 @default(now())
+
+  item    ItemEstoque @relation(fields: [itemId], references: [id])
+  equipe  Equipe      @relation(fields: [equipeId], references: [id])
+  chamado Chamado?    @relation(fields: [chamadoId], references: [id])
+
+  @@map("unidades_equipamento")
 }
 model Movimentacao {
   id         String           @id @default(cuid())
@@ -275,6 +304,7 @@ model Chamado {
   materiaisReservados MaterialReservado[]
   usosMaterial        UsoMaterial[]
   diagnosticos        Diagnostico[]
+  unidadesEquipamento UnidadeEquipamento[]
 
   @@map("chamados")
 }

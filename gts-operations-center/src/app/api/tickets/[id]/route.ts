@@ -42,7 +42,7 @@ export async function PATCH(
 
   const { id } = await params
   const body = await request.json()
-  const { status, equipeId, materiaisUtilizados, materiaisDevolvidos, relato, fotos, clienteAusente, dataAgendada, fechadoAdmin, tipo } = body
+  const { status, equipeId, materiaisUtilizados, materiaisDevolvidos, equipamentosUtilizadosIds, relato, fotos, clienteAusente, dataAgendada, fechadoAdmin, tipo } = body
 
   const role = (session.user as any)?.role
   if (tipo && role !== 'OPERADOR' && role !== 'ADMIN') {
@@ -196,6 +196,48 @@ export async function PATCH(
             chamadoId:  id,
             operadorId: (session.user as any).id,
             motivo:     `Utilizado no chamado (baixa do estoque da equipe)`,
+          },
+        })
+      }
+    }
+
+    // Equipamentos com MAC utilizados - mesma baixa dupla (equipe + geral) dos
+    // materiais acima, so que por unidade rastreada em vez de quantidade.
+    if (status === 'FINALIZADO' && equipamentosUtilizadosIds?.length) {
+      const unidades = await tx.unidadeEquipamento.findMany({
+        where: { id: { in: equipamentosUtilizadosIds }, status: 'EM_ESTOQUE' },
+      })
+      for (const u of unidades) {
+        await tx.unidadeEquipamento.update({
+          where: { id: u.id },
+          data: {
+            status:    'UTILIZADA',
+            chamadoId: id,
+            usadoPor:  (session.user as any)?.name || (session.user as any)?.email,
+            usadoEm:   new Date(),
+          },
+        })
+        await tx.estoqueEquipe.upsert({
+          where: { equipeId_itemId: { equipeId: u.equipeId, itemId: u.itemId } },
+          update: { quantidade: { decrement: 1 } },
+          create: { equipeId: u.equipeId, itemId: u.itemId, quantidade: -1 },
+        })
+        // So aqui o total da empresa realmente diminui - equipamento foi de fato consumido
+        await tx.itemEstoque.update({
+          where: { id: u.itemId },
+          data: {
+            quantidadeAtual: { decrement: 1 },
+            ultimaMovimento: new Date(),
+          },
+        })
+        await tx.movimentacao.create({
+          data: {
+            itemId:     u.itemId,
+            tipo:       'SAIDA',
+            quantidade: 1,
+            chamadoId:  id,
+            operadorId: (session.user as any).id,
+            motivo:     `Equipamento ${u.macAddress} utilizado no chamado (baixa do estoque da equipe)`,
           },
         })
       }

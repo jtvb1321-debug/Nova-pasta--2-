@@ -34,6 +34,12 @@ async function fetchEstoqueEquipe(equipeId: string) {
   return res.json()
 }
 
+async function fetchUnidadesEquipe(equipeId: string) {
+  const res = await fetch(`/api/teams/${equipeId}/equipamentos`)
+  if (!res.ok) return { data: [] }
+  return res.json()
+}
+
 async function fetchAbastecimentos(veiculoId: string) {
   const res = await fetch(`/api/vehicles/${veiculoId}/abastecimento`)
   if (!res.ok) return { data: [] }
@@ -184,7 +190,14 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
     refetchInterval: 30000,
   })
 
+  const { data: unidadesData } = useQuery({
+    queryKey: ['unidades-equipamento', equipeId],
+    queryFn: () => fetchUnidadesEquipe(equipeId),
+    refetchInterval: 30000,
+  })
+
   const itens = data?.data ?? []
+  const unidades = unidadesData?.data ?? []
   const criticos = itens.filter((r: any) => r.quantidadeMinima > 0 && r.quantidade <= r.quantidadeMinima)
 
   function abrirDevolucao(itemId: string, maxQtd: number) {
@@ -239,6 +252,21 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
           </p>
         </div>
       )}
+
+      {unidades.length > 0 && (
+        <div>
+          <p className="text-sm font-medium text-gray-300 mb-2">Equipamentos com MAC</p>
+          <div className="space-y-1.5">
+            {unidades.map((u: any) => (
+              <div key={u.id} className="flex items-center justify-between text-xs bg-white/5 rounded-lg px-3 py-2">
+                <span className="text-gray-300">{u.item.descricao}</span>
+                <span className="font-mono text-blue-400">{u.macAddress}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         {itens.map((registro: any) => {
           const baixo = registro.quantidadeMinima > 0 && registro.quantidade <= registro.quantidadeMinima
