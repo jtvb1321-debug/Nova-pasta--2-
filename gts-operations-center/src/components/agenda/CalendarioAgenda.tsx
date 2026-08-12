@@ -28,6 +28,12 @@ const STATUS_COR: Record<string, string> = {
 
 const TIPOS_LISTA: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'ROMPIMENTO_MASSIVO']
 
+// Visao Dia mostra apenas estas equipes (por nome), organizadas em linhas.
+const EQUIPES_AGENDA = [
+  { chave: 'alex e bernardo', label: 'Alex e Bernardo' },
+  { chave: 'heitor e pedro',  label: 'Heitor e Pedro' },
+]
+
 // Timeline da visao Dia: 07:00 as 19:00, de 30 em 30 min.
 const SLOT_INICIO_MIN = 7 * 60
 const SLOT_FIM_MIN = 19 * 60
@@ -346,20 +352,26 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
   const slots: number[] = []
   for (let m = SLOT_INICIO_MIN; m <= SLOT_FIM_MIN; m += SLOT_PASSO_MIN) slots.push(m)
 
-  const temSemEquipe = itensDoDia.some(i => !i.equipeId)
+  const equipesFiltradas = equipes.filter((eq: any) =>
+    EQUIPES_AGENDA.some(cfg => eq.nome?.toLowerCase().includes(cfg.chave))
+  )
 
-  const porSlotEEquipe = useMemo(() => {
-    const mapa = new Map<number, Map<string, AgendaItem[]>>()
-    for (const item of itensDoDia) {
+  const itensFiltrados = itensDoDia.filter(item =>
+    equipesFiltradas.some((eq: any) => eq.id === item.equipeId)
+  )
+
+  const porEquipeESlot = useMemo(() => {
+    const mapa = new Map<string, Map<number, AgendaItem[]>>()
+    for (const item of itensFiltrados) {
+      if (!item.equipeId) continue
       const slot = slotDoItem(item)
-      if (!mapa.has(slot)) mapa.set(slot, new Map())
-      const chaveEquipe = item.equipeId || 'sem-equipe'
-      const porEquipe = mapa.get(slot)!
-      if (!porEquipe.has(chaveEquipe)) porEquipe.set(chaveEquipe, [])
-      porEquipe.get(chaveEquipe)!.push(item)
+      if (!mapa.has(item.equipeId)) mapa.set(item.equipeId, new Map())
+      const porSlot = mapa.get(item.equipeId)!
+      if (!porSlot.has(slot)) porSlot.set(slot, [])
+      porSlot.get(slot)!.push(item)
     }
     return mapa
-  }, [itensDoDia])
+  }, [itensFiltrados])
 
   if (itensDoDia.length === 0) {
     return (
@@ -370,11 +382,11 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
     )
   }
 
-  if (equipes.length === 0) {
-    // Sem equipes cadastradas - so a timeline vertical simples
+  if (equipesFiltradas.length === 0) {
+    // Nenhuma das equipes esperadas foi encontrada - timeline vertical simples
     return (
       <div className="space-y-2">
-        {itensDoDia.map(item => (
+        {itensFiltrados.map(item => (
           <AgendaCard key={item.id} item={item} onClick={() => onAbrir(item.id)} />
         ))}
       </div>
@@ -383,37 +395,33 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
 
   return (
     <>
-      {/* Desktop: grid horario x equipe */}
+      {/* Desktop: grid equipe (linha) x horario (coluna) */}
       <div className="hidden md:block overflow-x-auto gts-card">
         <div
-          className="grid min-w-[700px]"
-          style={{ gridTemplateColumns: `70px repeat(${equipes.length + (temSemEquipe ? 1 : 0)}, minmax(170px, 1fr))` }}
+          className="grid"
+          style={{ gridTemplateColumns: `180px repeat(${slots.length}, minmax(150px, 1fr))` }}
         >
-          <div className="p-2 text-xs text-gray-500 font-semibold border-b border-white/5">Horario</div>
-          {equipes.map((eq: any) => (
-            <div key={eq.id} className="p-2 text-xs text-orange-400 font-semibold truncate border-b border-l border-white/5">
-              {eq.nome}
+          <div className="p-2 text-xs text-gray-500 font-semibold border-b border-white/5 sticky left-0 bg-[#111827] z-10">
+            Equipe
+          </div>
+          {slots.map(slot => (
+            <div key={slot} className="p-2 text-[11px] text-gray-500 font-mono text-center border-b border-l border-white/5">
+              {formatarSlot(slot)}
             </div>
           ))}
-          {temSemEquipe && <div className="p-2 text-xs text-gray-500 font-semibold border-b border-l border-white/5">Sem equipe</div>}
 
-          {slots.map(slot => (
-            <Fragment key={slot}>
-              <div className="p-2 text-[11px] text-gray-500 font-mono border-t border-white/5">{formatarSlot(slot)}</div>
-              {equipes.map((eq: any) => (
-                <div key={eq.id} className="p-1.5 border-t border-l border-white/5 space-y-1.5 min-h-[56px]">
-                  {(porSlotEEquipe.get(slot)?.get(eq.id) || []).map(item => (
+          {equipesFiltradas.map((eq: any) => (
+            <Fragment key={eq.id}>
+              <div className="p-2 text-xs text-orange-400 font-semibold border-t border-white/5 sticky left-0 bg-[#111827] z-10 flex items-center">
+                {eq.nome}
+              </div>
+              {slots.map(slot => (
+                <div key={slot} className="p-1.5 border-t border-l border-white/5 space-y-1.5 min-h-[70px]">
+                  {(porEquipeESlot.get(eq.id)?.get(slot) || []).map(item => (
                     <AgendaCard key={item.id} item={item} onClick={() => onAbrir(item.id)} />
                   ))}
                 </div>
               ))}
-              {temSemEquipe && (
-                <div className="p-1.5 border-t border-l border-white/5 space-y-1.5 min-h-[56px]">
-                  {(porSlotEEquipe.get(slot)?.get('sem-equipe') || []).map(item => (
-                    <AgendaCard key={item.id} item={item} onClick={() => onAbrir(item.id)} />
-                  ))}
-                </div>
-              )}
             </Fragment>
           ))}
         </div>
@@ -421,7 +429,7 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
 
       {/* Mobile: timeline vertical unica */}
       <div className="md:hidden space-y-2">
-        {itensDoDia.map(item => (
+        {itensFiltrados.map(item => (
           <AgendaCard key={item.id} item={item} onClick={() => onAbrir(item.id)} />
         ))}
       </div>
