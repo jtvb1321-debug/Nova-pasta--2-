@@ -27,6 +27,53 @@ async function enviarMensagem(chatId: string, texto: string) {
   }
 }
 
+const TIPO_LABEL: Record<string, string> = {
+  INSTALACAO: 'Instalação',
+  MANUTENCAO: 'Manutenção',
+  RETIRADA: 'Retirada',
+  SUPORTE: 'Suporte',
+  ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
+}
+
+function tipoLabel(tipo: string) {
+  return TIPO_LABEL[tipo] || tipo
+}
+
+function formatarDataHora(data: Date) {
+  const dataStr = data.toLocaleDateString('pt-BR')
+  const horaStr = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${dataStr} às ${horaStr}`
+}
+
+function formatarDuracao(totalMinutos: number) {
+  const h = Math.floor(totalMinutos / 60)
+  const m = totalMinutos % 60
+  return h > 0 ? `${h}h ${m}min` : `${m}min`
+}
+
+function campo(emoji: string, label: string, valor: string) {
+  return `${emoji} <b>${label}:</b> ${valor}`
+}
+
+// Junta blocos de linhas com exatamente uma linha em branco entre cada
+// bloco nao-vazio - garante o mesmo espacamento visual em toda mensagem
+// enviada ao Telegram, independente do tipo de notificacao.
+function montarMensagem(blocos: Array<string | string[] | null | undefined | false>): string {
+  const linhas: string[] = []
+  for (const bloco of blocos) {
+    if (bloco == null || bloco === false || bloco === '') continue
+    if (Array.isArray(bloco)) {
+      if (bloco.length === 0) continue
+      linhas.push(...bloco)
+    } else {
+      linhas.push(bloco)
+    }
+    linhas.push('')
+  }
+  while (linhas.length > 0 && linhas[linhas.length - 1] === '') linhas.pop()
+  return linhas.join('\n')
+}
+
 async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
   if (!BOT_TOKEN || !chatId) return
   try {
@@ -71,22 +118,23 @@ export async function notificarNovoChamado(chamado: {
   equipe?: string
   prioridade?: string
 }) {
-  const tipo = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }[chamado.tipo] || chamado.tipo
-  const prioridade = chamado.prioridade === 'CRITICO' ? '🔴 CRITICO' : chamado.prioridade === 'URGENTE' ? '🟡 URGENTE' : ''
+  const prioridade = chamado.prioridade === 'CRITICO' ? '🔴 Crítico' : chamado.prioridade === 'URGENTE' ? '🟡 Urgente' : null
   const enderecoCompleto = formatarEnderecoCompleto(chamado)
 
-  const texto = [
-    `📲 <b>NOVO CHAMADO DISPONIVEL</b>`,
-    ``,
-    `👥 <b>Equipe:</b> ${chamado.equipe || 'A definir'}`,
-    `👤 <b>Cliente:</b> ${chamado.cliente}`,
-    `📍 <b>Endereco:</b> ${enderecoCompleto}`,
-    `🔧 <b>Tipo:</b> ${tipo}`,
-    prioridade ? `⚠️ <b>Prioridade:</b> ${prioridade}` : '',
-    ``,
-    `📱 <i>Acesse o sistema para visualizar e iniciar o atendimento.</i>`,
-    `🔗 http://10.10.86.240:3000`,
-  ].filter(Boolean).join('\n')
+  const texto = montarMensagem([
+    `🔵 <b>NOVO CHAMADO DISPONÍVEL</b>`,
+    [
+      campo('👥', 'Equipe', chamado.equipe || 'A definir'),
+      campo('👤', 'Cliente', chamado.cliente),
+      campo('📍', 'Endereço', enderecoCompleto),
+      campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+      prioridade ? campo('⚠️', 'Prioridade', prioridade) : null,
+    ].filter(Boolean) as string[],
+    [
+      `📱 <i>Acesse o sistema para visualizar e iniciar o atendimento.</i>`,
+      `🔗 http://10.10.86.240:3000`,
+    ],
+  ])
 
   await enviarMensagem(GROUP_OS!, texto)
 }
@@ -110,34 +158,24 @@ export async function notificarAgendaDoDia(
   }>,
   dataLabel: string
 ) {
-  const tipoLabel: Record<string, string> = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }
-
-  const linhas = [
-    `🌅 <b>AGENDA DE AMANHA - ${dataLabel}</b>`,
-    ``,
-    `📋 <i>Chamados recebidos pelo plantao apos as 18h, agendados automaticamente para inicio 07:30.</i>`,
-    ``,
-  ]
-
-  if (chamados.length === 0) {
-    linhas.push(`✅ <b>Nenhum chamado agendado para amanha.</b>`)
-  } else {
-    chamados.forEach((c, i) => {
-      const enderecoCompleto = formatarEnderecoCompleto(c)
-      linhas.push(
+  const itens = chamados.length === 0
+    ? [[`✅ <b>Nenhum chamado agendado para amanhã.</b>`]]
+    : chamados.map((c, i) => [
         `<b>${i + 1}. ${c.cliente}</b>`,
-        `   👥 Equipe: ${c.equipe || 'A definir'}`,
-        `   🔧 Tipo: ${tipoLabel[c.tipo] || c.tipo}`,
-        `   📍 ${enderecoCompleto}`,
-        `   🕐 Inicio: ${c.horaAgendada || '07:30'}`,
-        ``
-      )
-    })
-  }
+        campo('👥', 'Equipe', c.equipe || 'A definir'),
+        campo('🔧', 'Tipo', tipoLabel(c.tipo)),
+        `📍 ${formatarEnderecoCompleto(c)}`,
+        campo('🕐', 'Início', c.horaAgendada || '07:30'),
+      ])
 
-  linhas.push(`🔗 http://10.10.86.240:3000`)
+  const texto = montarMensagem([
+    `🌅 <b>AGENDA DE AMANHÃ — ${dataLabel}</b>`,
+    `📋 <i>Chamados recebidos pelo plantão após as 18h, agendados automaticamente para início às 07:30.</i>`,
+    ...itens,
+    `🔗 http://10.10.86.240:3000`,
+  ])
 
-  await enviarMensagem(GROUP_OS!, linhas.filter(Boolean).join('\n'))
+  await enviarMensagem(GROUP_OS!, texto)
 }
 
 export async function notificarACaminho(chamado: {
@@ -145,15 +183,15 @@ export async function notificarACaminho(chamado: {
   cidade: string
   equipe?: string
 }) {
-  const texto = [
-    `🚗 <b>EQUIPE A CAMINHO</b>`,
-    ``,
-    `👥 <b>Equipe:</b> ${chamado.equipe || '—'}`,
-    `👤 <b>Cliente:</b> ${chamado.cliente}`,
-    `🏙️ <b>Cidade:</b> ${chamado.cidade}`,
-    ``,
-    `⏱️ <i>Deslocamento iniciado agora.</i>`,
-  ].filter(Boolean).join('\n')
+  const texto = montarMensagem([
+    `🔵 <b>EQUIPE A CAMINHO</b>`,
+    [
+      campo('👥', 'Equipe', chamado.equipe || '—'),
+      campo('👤', 'Cliente', chamado.cliente),
+      campo('📍', 'Cidade', chamado.cidade),
+    ],
+    `🕐 Deslocamento iniciado agora.`,
+  ])
 
   await enviarMensagem(GROUP_OS!, texto)
 }
@@ -164,18 +202,16 @@ export async function notificarInicioAtendimento(chamado: {
   tipo: string
   equipe?: string
 }) {
-  const tipo = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }[chamado.tipo] || chamado.tipo
-
-  const texto = [
-    `🔧 <b>ATENDIMENTO INICIADO</b>`,
-    ``,
-    `👥 <b>Equipe:</b> ${chamado.equipe || '—'}`,
-    `👤 <b>Cliente:</b> ${chamado.cliente}`,
-    `🏙️ <b>Cidade:</b> ${chamado.cidade}`,
-    `🔧 <b>Tipo:</b> ${tipo}`,
-    ``,
-    `⏳ <i>Atendimento em andamento...</i>`,
-  ].filter(Boolean).join('\n')
+  const texto = montarMensagem([
+    `🟡 <b>ATENDIMENTO INICIADO</b>`,
+    [
+      campo('👥', 'Equipe', chamado.equipe || '—'),
+      campo('👤', 'Cliente', chamado.cliente),
+      campo('📍', 'Cidade', chamado.cidade),
+      campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+    ],
+    `🕐 <b>Status:</b> Atendimento em andamento...`,
+  ])
 
   await enviarMensagem(GROUP_OS!, texto)
 }
@@ -209,42 +245,41 @@ function formatarMetrica(valor: number | null | undefined, unidade: string, casa
 
 function montarBlocoDiagnostico(d: DadosDiagnostico): string[] {
   const linhas: string[] = []
-  linhas.push(``)
-  linhas.push(`🔧 <b>DIAGNOSTICO TECNICO DE CONEXAO</b>`)
-  linhas.push(`${CLASSIFICACAO_EMOJI[d.classificacao]} <b>${CLASSIFICACAO_LABEL[d.classificacao]}</b> — Origem provavel: <b>${ORIGEM_LABEL[d.origemProvavel]}</b>`)
+  linhas.push(`🔧 <b>DIAGNÓSTICO TÉCNICO DE CONEXÃO</b>`)
+  linhas.push(`${CLASSIFICACAO_EMOJI[d.classificacao]} <b>${CLASSIFICACAO_LABEL[d.classificacao]}</b> — Origem provável: <b>${ORIGEM_LABEL[d.origemProvavel]}</b>`)
 
   if (d.resumo) {
     const r = d.resumo
     linhas.push(``)
-    linhas.push(`📊 <b>Resultados da medicao:</b>`)
-    linhas.push(`  • Download: ${formatarMetrica(r.downloadMbps, ' Mbps')} | Upload: ${formatarMetrica(r.uploadMbps, ' Mbps')}`)
-    linhas.push(`  • Latencia GTSNET: ${formatarMetrica(r.latenciaGtsnetMs, ' ms')} | Externa: ${formatarMetrica(r.latenciaExternaMs, ' ms')}`)
-    linhas.push(`  • Jitter: ${formatarMetrica(r.jitterMs, ' ms')} | Perda de pacotes: ${formatarMetrica(r.perdaPct, '%', 1)}`)
-    linhas.push(`  • Sinal optico (RX): ${formatarMetrica(r.sinalRxDbm, ' dBm', 1)}${r.onuStatus ? ` | ONU: ${r.onuStatus}` : ''}`)
+    linhas.push(`📊 <b>Resultados da medição:</b>`)
+    linhas.push(`• Download: ${formatarMetrica(r.downloadMbps, ' Mbps')} | Upload: ${formatarMetrica(r.uploadMbps, ' Mbps')}`)
+    linhas.push(`• Latência GTSNET: ${formatarMetrica(r.latenciaGtsnetMs, ' ms')} | Externa: ${formatarMetrica(r.latenciaExternaMs, ' ms')}`)
+    linhas.push(`• Jitter: ${formatarMetrica(r.jitterMs, ' ms')} | Perda de pacotes: ${formatarMetrica(r.perdaPct, '%', 1)}`)
+    linhas.push(`• Sinal óptico (RX): ${formatarMetrica(r.sinalRxDbm, ' dBm', 1)}${r.onuStatus ? ` | ONU: ${r.onuStatus}` : ''}`)
   }
 
   if (d.resumoAnterior && d.resumo) {
     const a = d.resumoAnterior
     const dp = d.resumo
     linhas.push(``)
-    linhas.push(`🔄 <b>Comparacao Antes x Depois:</b>`)
-    linhas.push(`  • Download: ${formatarMetrica(a.downloadMbps, ' Mbps')} → ${formatarMetrica(dp.downloadMbps, ' Mbps')}`)
-    linhas.push(`  • Latencia: ${formatarMetrica(a.latenciaGtsnetMs, ' ms')} → ${formatarMetrica(dp.latenciaGtsnetMs, ' ms')}`)
-    linhas.push(`  • Perda: ${formatarMetrica(a.perdaPct, '%', 1)} → ${formatarMetrica(dp.perdaPct, '%', 1)}`)
+    linhas.push(`🔄 <b>Comparação Antes × Depois:</b>`)
+    linhas.push(`• Download: ${formatarMetrica(a.downloadMbps, ' Mbps')} → ${formatarMetrica(dp.downloadMbps, ' Mbps')}`)
+    linhas.push(`• Latência: ${formatarMetrica(a.latenciaGtsnetMs, ' ms')} → ${formatarMetrica(dp.latenciaGtsnetMs, ' ms')}`)
+    linhas.push(`• Perda: ${formatarMetrica(a.perdaPct, '%', 1)} → ${formatarMetrica(dp.perdaPct, '%', 1)}`)
   }
 
   if (d.recomendacoes && d.recomendacoes.length > 0) {
     linhas.push(``)
-    linhas.push(`💡 <b>Recomendacoes:</b>`)
-    d.recomendacoes.forEach(rec => linhas.push(`  ☐ ${rec}`))
+    linhas.push(`💡 <b>Recomendações:</b>`)
+    d.recomendacoes.forEach(rec => linhas.push(`☐ ${rec}`))
   }
 
   if (d.problemaEncontrado || d.acaoRealizada || d.resultadoFinal) {
     linhas.push(``)
-    linhas.push(`📋 <b>Registro do atendimento (diagnostico):</b>`)
-    if (d.problemaEncontrado) linhas.push(`  • Problema encontrado: ${PROBLEMA_ENCONTRADO_LABEL[d.problemaEncontrado] || d.problemaEncontrado}`)
-    if (d.acaoRealizada) linhas.push(`  • Acao realizada: ${d.acaoRealizada}`)
-    if (d.resultadoFinal) linhas.push(`  • Resultado: ${RESULTADO_FINAL_LABEL[d.resultadoFinal] || d.resultadoFinal}`)
+    linhas.push(`📋 <b>Registro do atendimento (diagnóstico):</b>`)
+    if (d.problemaEncontrado) linhas.push(`• Problema encontrado: ${PROBLEMA_ENCONTRADO_LABEL[d.problemaEncontrado] || d.problemaEncontrado}`)
+    if (d.acaoRealizada) linhas.push(`• Ação realizada: ${d.acaoRealizada}`)
+    if (d.resultadoFinal) linhas.push(`• Resultado: ${RESULTADO_FINAL_LABEL[d.resultadoFinal] || d.resultadoFinal}`)
   }
 
   return linhas
@@ -262,54 +297,42 @@ export async function notificarFinalizacao(chamado: {
   materiaisUtilizados?: { descricao: string; quantidade: number; unidade: string }[]
   diagnostico?: DadosDiagnostico
 }) {
-  const tipo = { INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada', SUPORTE: 'Suporte' }[chamado.tipo] || chamado.tipo
-  const agora = new Date().toLocaleString('pt-BR')
+  const agora = formatarDataHora(new Date())
 
-  const linhas = [
-    `✅ <b>O.S. FINALIZADA</b>`,
-    ``,
-    `👥 <b>Equipe:</b> ${chamado.equipe || '—'}`,
-    chamado.tecnico ? `👨‍🔧 <b>Tecnico:</b> ${chamado.tecnico}` : '',
-    `👤 <b>Cliente:</b> ${chamado.cliente}`,
-    `🏙️ <b>Cidade:</b> ${chamado.cidade}`,
-    `🔧 <b>Tipo:</b> ${tipo}`,
-    `🕒 <b>Concluido em:</b> ${agora}`,
-  ]
+  const camposPrincipais = [
+    campo('👥', 'Equipe', chamado.equipe || '—'),
+    chamado.tecnico ? campo('👨‍🔧', 'Técnico', chamado.tecnico) : null,
+    campo('👤', 'Cliente', chamado.cliente),
+    campo('📍', 'Cidade', chamado.cidade),
+    campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+    campo('⏱️', 'Concluído em', agora),
+    chamado.tempoMinutos && chamado.tempoMinutos > 0 ? campo('⏳', 'Tempo total', formatarDuracao(chamado.tempoMinutos)) : null,
+  ].filter(Boolean) as string[]
 
-  if (chamado.tempoMinutos && chamado.tempoMinutos > 0) {
-    const h = Math.floor(chamado.tempoMinutos / 60)
-    const m = chamado.tempoMinutos % 60
-    linhas.push(`⏱️ <b>Tempo total:</b> ${h > 0 ? `${h}h ` : ''}${m}min`)
-  }
+  const blocoObservacao = chamado.relato
+    ? [`📝 <b>Observação:</b>`, chamado.relato]
+    : null
 
-  if (chamado.relato) {
-    linhas.push(``)
-    linhas.push(`📝 <b>Observacao do atendimento:</b>`)
-    linhas.push(`<i>${chamado.relato}</i>`)
-  }
+  const blocoMateriais = chamado.materiaisUtilizados && chamado.materiaisUtilizados.length > 0
+    ? [`📦 <b>Materiais utilizados:</b>`, ...chamado.materiaisUtilizados.map(m => `• ${m.descricao}: ${m.quantidade} ${m.unidade}`)]
+    : null
 
-  if (chamado.materiaisUtilizados && chamado.materiaisUtilizados.length > 0) {
-    linhas.push(``)
-    linhas.push(`📦 <b>Materiais utilizados:</b>`)
-    chamado.materiaisUtilizados.forEach(m => {
-      linhas.push(`  • ${m.descricao}: ${m.quantidade} ${m.unidade}`)
-    })
-  }
+  const blocoFotos = chamado.fotos && chamado.fotos.length > 0
+    ? campo('📸', 'Evidências', `${chamado.fotos.length} fotografia(s) anexada(s)`)
+    : null
 
-  if (chamado.fotos && chamado.fotos.length > 0) {
-    linhas.push(``)
-    linhas.push(`📸 <b>${chamado.fotos.length} evidencia(s) fotografica(s) anexada(s)</b>`)
-  }
-
-  if (chamado.diagnostico) {
-    linhas.push(...montarBlocoDiagnostico(chamado.diagnostico))
-  }
-
-  linhas.push(``)
-  linhas.push(`🎯 <i>Ordem de servico encerrada com sucesso.</i>`)
+  const texto = montarMensagem([
+    `🟢 <b>O.S. FINALIZADA</b>`,
+    camposPrincipais,
+    blocoObservacao,
+    blocoMateriais,
+    blocoFotos,
+    chamado.diagnostico ? montarBlocoDiagnostico(chamado.diagnostico) : null,
+    `✅ Ordem de serviço encerrada com sucesso`,
+  ])
 
   // Enviar mensagem de texto primeiro
-  await enviarMensagem(GROUP_OS!, linhas.filter(Boolean).join('\n'))
+  await enviarMensagem(GROUP_OS!, texto)
 
   // Enviar fotos uma a uma
   if (chamado.fotos && chamado.fotos.length > 0) {
@@ -317,7 +340,7 @@ export async function notificarFinalizacao(chamado: {
       await enviarFoto(
         GROUP_OS!,
         chamado.fotos[i],
-        i === 0 ? `📸 Evidencia ${i + 1}/${chamado.fotos.length} — ${chamado.cliente}` : `📸 Evidencia ${i + 1}/${chamado.fotos.length}`
+        i === 0 ? `📸 Evidência ${i + 1}/${chamado.fotos.length} — ${chamado.cliente}` : `📸 Evidência ${i + 1}/${chamado.fotos.length}`
       )
       // Pequena pausa para nao sobrecarregar a API
       await new Promise(r => setTimeout(r, 500))
