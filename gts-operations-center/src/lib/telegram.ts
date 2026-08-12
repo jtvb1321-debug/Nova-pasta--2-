@@ -196,6 +196,28 @@ export async function notificarACaminho(chamado: {
   await enviarMensagem(GROUP_OS!, texto)
 }
 
+export async function notificarReagendamento(chamado: {
+  cliente: string
+  cidade: string
+  tipo: string
+  equipe?: string | null
+  novaData: Date
+}) {
+  const texto = montarMensagem([
+    `🔵 <b>CHAMADO REAGENDADO</b>`,
+    [
+      campo('👥', 'Equipe', chamado.equipe || 'A definir'),
+      campo('👤', 'Cliente', chamado.cliente),
+      campo('📍', 'Cidade', chamado.cidade),
+      campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+      campo('🕐', 'Novo horário', formatarDataHora(chamado.novaData)),
+    ],
+    `📅 O atendimento foi remarcado e passa a aparecer na agenda no novo horário.`,
+  ])
+
+  await enviarMensagem(GROUP_OS!, texto)
+}
+
 export async function notificarInicioAtendimento(chamado: {
   cliente: string
   cidade: string

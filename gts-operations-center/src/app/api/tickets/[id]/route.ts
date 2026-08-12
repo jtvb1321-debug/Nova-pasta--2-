@@ -5,6 +5,7 @@ import {
   notificarACaminho,
   notificarInicioAtendimento,
   notificarFinalizacao,
+  notificarReagendamento,
 } from '@/lib/telegram'
 import { enviarWhatsApp } from '@/lib/whatsapp'
 import { calcularSlaResposta, calcularSlaResolucao } from '@/lib/sla'
@@ -101,6 +102,16 @@ export async function PATCH(
     }
 
     const updated = await tx.chamado.update({ where: { id }, data: dataUpdate })
+
+    if (dataAgendada) {
+      notificarReagendamento({
+        cliente: updated.cliente,
+        cidade:  updated.cidade,
+        tipo:    updated.tipo,
+        equipe:  chamadoAtual?.equipe?.nome,
+        novaData: updated.dataAgendada!,
+      }).catch(() => {})
+    }
 
     const equipeAlvo = equipeId || chamadoAtual?.equipeId
 

@@ -4,10 +4,12 @@ import { useState } from 'react'
 import {
   Zap, Clock, CheckCircle, XCircle, MapPin, User, Package, Calendar,
   ChevronDown, ChevronUp, MessageCircle, Navigation, Ban, Repeat, Send, StopCircle,
+  CalendarClock,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
 import { TrocarEquipeModal } from './TrocarEquipeModal'
+import { ReagendarModal } from './ReagendarModal'
 
 export const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
@@ -87,6 +89,7 @@ export function CardChamado({
   const emAtividade = chamado.status === 'EM_ANDAMENTO'
   const podeEncerrarAdmin = chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO'
   const [showTrocarEquipe, setShowTrocarEquipe] = useState(false)
+  const [showReagendar, setShowReagendar] = useState(false)
 
   return (
     <div className={cn(
@@ -173,6 +176,16 @@ export function CardChamado({
                   <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
                 ))}
               </select>
+            )}
+            {(isAdmin || isOperador) && (chamado.status === 'ABERTO' || chamado.status === 'AGENDADO') && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowReagendar(true) }}
+                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 underline decoration-dotted"
+                title="Define um horario para o atendimento - ele sai da fila de despacho imediato e aparece na agenda"
+              >
+                <CalendarClock className="w-3 h-3" />
+                {chamado.dataAgendada ? 'Reagendar' : 'Definir horario'}
+              </button>
             )}
             {materiaisCount > 0 && (
               <span className="flex items-center gap-1 text-blue-400">
@@ -355,6 +368,12 @@ export function CardChamado({
         <TrocarEquipeModal
           chamado={chamado}
           onClose={() => setShowTrocarEquipe(false)}
+        />
+      )}
+      {showReagendar && (
+        <ReagendarModal
+          chamado={chamado}
+          onClose={() => setShowReagendar(false)}
         />
       )}
 
