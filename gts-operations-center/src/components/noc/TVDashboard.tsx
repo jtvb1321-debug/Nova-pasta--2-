@@ -19,7 +19,7 @@ import { TVNetworkAlternator } from './TVNetworkAlternator'
 import { MissionControlBackground } from './MissionControlBackground'
 import { EventTicker } from './EventTicker'
 import { RadialGauge } from './RadialGauge'
-import { TVAgendaEquipes } from './TVAgendaEquipes'
+import { TVAgendaEquipes, EQUIPES_TV } from './TVAgendaEquipes'
 ChartJS.register(ArcElement, Tooltip, Legend)
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 const STATUS_EQUIPE = {
@@ -191,7 +191,9 @@ export function TVDashboard() {
   const { data: andamentoData } = useQuery({ queryKey: ['tv-chamados-andamento'], queryFn: fetchChamadosAndamento, refetchInterval: 20000 })
 
   const chamadosAndamentoSla = andamentoData?.chamados ?? []
-  const tecnicosGps = tecnicosGpsData?.tecnicos ?? []
+  const tecnicosGps = (tecnicosGpsData?.tecnicos ?? []).filter((t: any) =>
+    EQUIPES_TV.some(cfg => t.equipe?.toLowerCase().includes(cfg.chave))
+  )
   const alarmesCriticos = (smartolt?.alarmesFeed ?? []).filter((a: any) => a.nivel === 'CRITICO')
   const clientesAtendidos = useContagemCrescente(stats?.clientesAtendidosTotal ?? 0)
 

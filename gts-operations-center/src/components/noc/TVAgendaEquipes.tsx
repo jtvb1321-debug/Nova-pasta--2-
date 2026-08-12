@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const EQUIPES_TV = [
+export const EQUIPES_TV = [
   { chave: 'alex e bernardo', label: 'Alex e Bernardo' },
   { chave: 'heitor e pedro',  label: 'Heitor e Pedro' },
 ]
