@@ -35,6 +35,18 @@ function limparObservacao(obs: string) {
   return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
 }
 
+function formatarDataAgendada(data: string | Date) {
+  const d = new Date(data)
+  const hoje = new Date()
+  const amanha = new Date(hoje)
+  amanha.setDate(amanha.getDate() + 1)
+  const mesmoDia = (a: Date, b: Date) => a.toDateString() === b.toDateString()
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  if (mesmoDia(d, hoje))   return `Hoje as ${hora}`
+  if (mesmoDia(d, amanha)) return `Amanha as ${hora}`
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} as ${hora}`
+}
+
 async function fetchMeusChamados() {
   const res = await fetch('/api/tickets?limit=50')
   if (!res.ok) return { data: [] }
@@ -82,6 +94,10 @@ export function PainelTecnico({ session }: Props) {
 
   const aguardando = chamados.filter((c: any) => c.status === 'ABERTO')
   const emAndamento = chamados.filter((c: any) => c.status === 'EM_ANDAMENTO')
+
+  const agendados = (data?.data ?? [])
+    .filter((c: any) => c.status === 'AGENDADO' && c.dataAgendada)
+    .sort((a: any, b: any) => new Date(a.dataAgendada).getTime() - new Date(b.dataAgendada).getTime())
 
   return (
     <div className="min-h-screen bg-[#0B1120]">
@@ -156,20 +172,27 @@ export function PainelTecnico({ session }: Props) {
       <main className="p-4 space-y-5 max-w-2xl mx-auto">
 
         {/* Resumo */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#111827] border border-blue-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-blue-400" />
-              <span className="text-xs text-gray-400">Aguardando</span>
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="bg-[#111827] border border-blue-500/20 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-[11px] text-gray-400">Aguardando</span>
             </div>
-            <p className="text-2xl font-bold text-blue-400">{aguardando.length}</p>
+            <p className="text-xl font-bold text-blue-400">{aguardando.length}</p>
           </div>
-          <div className="bg-[#111827] border border-yellow-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span className="text-xs text-gray-400">Em Atendimento</span>
+          <div className="bg-[#111827] border border-yellow-500/20 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Zap className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="text-[11px] text-gray-400">Em Atendimento</span>
             </div>
-            <p className="text-2xl font-bold text-yellow-400">{emAndamento.length}</p>
+            <p className="text-xl font-bold text-yellow-400">{emAndamento.length}</p>
+          </div>
+          <div className="bg-[#111827] border border-purple-500/20 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Calendar className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-[11px] text-gray-400">Agendados</span>
+            </div>
+            <p className="text-xl font-bold text-purple-400">{agendados.length}</p>
           </div>
         </div>
 
@@ -270,6 +293,33 @@ export function PainelTecnico({ session }: Props) {
                 )
               })}
         </div>
+
+        {/* Meus Agendamentos - chamados com horario definido, ainda nao liberados para atendimento */}
+        {agendados.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-400" />
+              Meus Agendamentos
+            </h2>
+            <div className="space-y-2">
+              {agendados.map((chamado: any) => (
+                <div key={chamado.id} className="bg-[#111827] border border-purple-500/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-sm font-bold text-purple-400">{formatarDataAgendada(chamado.dataAgendada)}</span>
+                    <span className="text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-400">
+                      {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
+                    </span>
+                  </div>
+                  <p className="text-white font-medium">{chamado.cliente}</p>
+                  <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                    {formatarEnderecoCompleto(chamado)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Modal de atendimento */}
