@@ -7,7 +7,7 @@ import {
   XCircle, MapPin, Phone, User, Package, AlertTriangle,
   RefreshCw, StopCircle, Search, Calendar,
   FileText, Filter, Eye, ChevronDown, ChevronUp,
-  MessageCircle, Navigation, Timer, TrendingUp, Ban, Repeat
+  MessageCircle, Navigation, Timer, TrendingUp, Ban, Repeat, Send
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
@@ -99,6 +99,7 @@ function CardChamado({
   onEncerrarAdmin,
   isOperador = false,
   onAlterarTipo,
+  onEncaminhar,
 }: {
   chamado: any
   isAdmin?: boolean
@@ -111,6 +112,7 @@ function CardChamado({
   onEncerrarAdmin?: (id: string) => void
   isOperador?: boolean
   onAlterarTipo?: (id: string, tipo: string) => void
+  onEncaminhar?: (id: string) => void
 }) {
   const prioridade = detectarPrioridade(chamado.observacao)
   const pCor = PRIORIDADE_COR[prioridade]
@@ -322,6 +324,16 @@ function CardChamado({
                 <Navigation className="w-3.5 h-3.5" />
                 Abrir no Mapa
               </button>
+              {chamado.status === 'AGENDADO' && (isAdmin || isOperador) && onEncaminhar && (
+                <button
+                  onClick={() => onEncaminhar(chamado.id)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg text-xs font-bold text-purple-400 transition-colors"
+                  title="Ativa o chamado agora, sem esperar a data/hora agendada"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Encaminhar para Equipe
+                </button>
+              )}
               {emDeslocamento && onIniciar && (
                 <button
                   onClick={() => onIniciar(chamado.id)}
@@ -503,6 +515,21 @@ export function CentralChamados({ session }: { session: Session }) {
       toast({ title: 'Tipo do chamado alterado!', variant: 'success' })
     },
     onError: () => toast({ title: 'Erro ao alterar tipo', variant: 'destructive' }),
+  })
+
+  const encaminharMutation = useMutation({
+    mutationFn: async (chamadoId: string) => {
+      const res = await fetch(`/api/tickets/${chamadoId}/encaminhar`, { method: 'POST' })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agenda'] })
+      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      toast({ title: 'Chamado encaminhado para a equipe!', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao encaminhar chamado', variant: 'destructive' }),
   })
 
   const confirmarFeedbackMutation = useMutation({
@@ -708,6 +735,7 @@ export function CentralChamados({ session }: { session: Session }) {
                 onEncerrarAdmin={handleEncerrarAdmin}
                 isOperador={isOperador}
                 onAlterarTipo={handleAlterarTipo}
+                onEncaminhar={id => encaminharMutation.mutate(id)}
               />
             ))
           }
