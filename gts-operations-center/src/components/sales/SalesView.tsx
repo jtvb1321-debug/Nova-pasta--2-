@@ -72,14 +72,21 @@ async function fetchDashboard() {
   return res.json()
 }
 
-async function aprovarVenda({ id, aprovado }: { id: string; aprovado: boolean }) {
+async function aprovarVenda({ id, aprovado, motivo }: { id: string; aprovado: boolean; motivo?: string }) {
   const res = await fetch(`/api/sales/${id}/approve`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: aprovado ? 'APROVADO' : 'REPROVADO' }),
+    body: JSON.stringify({ status: aprovado ? 'APROVADO' : 'REPROVADO', motivo }),
   })
-  if (!res.ok) throw new Error('Erro ao processar')
-  return res.json()
+  const data = await res.json().catch(() => null)
+  if (!res.ok) throw new Error(data?.error || 'Erro ao processar')
+  return data
+}
+async function marcarInstalada(id: string) {
+  const res = await fetch(`/api/sales/${id}/instalar`, { method: 'PATCH' })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erro ao marcar como instalada')
+  return data
 }
 
 export function SalesView() {
@@ -124,7 +131,16 @@ export function SalesView() {
         variant: vars.aprovado ? 'success' : 'default',
       })
     },
-    onError: () => toast({ title: 'Erro ao processar venda', variant: 'destructive' }),
+    onError: (err: any) => toast({ title: err?.message || 'Erro ao processar venda', variant: 'destructive' }),
+  })
+  const instalarMutation = useMutation({
+    mutationFn: marcarInstalada,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendas'] })
+      queryClient.invalidateQueries({ queryKey: ['clientes'] })
+      toast({ title: 'Venda marcada como instalada! Cliente criado/atualizado.', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: err.message || 'Erro ao marcar como instalada', variant: 'destructive' }),
   })
 
   const vendas = vendasData?.data ?? []
@@ -170,7 +186,7 @@ export function SalesView() {
             Gestao de vendas, comissoes e ranking
             {pendentes > 0 && (
               <span className="ml-2 text-yellow-400 font-medium animate-pulse">
-                · {pendentes} venda(s) aguardando aprovacao
+                - {pendentes} venda(s) aguardando aprovacao
               </span>
             )}
           </p>
@@ -335,6 +351,7 @@ export function SalesView() {
                   const cfg = STATUS_CONFIG[venda.status] || STATUS_CONFIG.PENDENTE
                   const StatusIcon = cfg.icon
                   const isPendente = venda.status === 'PENDENTE'
+                  const podeMarcarInstalado = venda.status === 'APROVADO' && venda.statusInstalacao !== 'INSTALADA'
                   return (
                     <div key={venda.id} className="bg-[#111827] border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all">
                       <div className="flex items-start gap-4">
@@ -386,7 +403,11 @@ export function SalesView() {
                         {isPendente && (
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <button
-                              onClick={() => mutation.mutate({ id: venda.id, aprovado: false })}
+                              onClick={() => {
+                                const motivo = window.prompt('Motivo da reprovacao:')
+                                if (!motivo || !motivo.trim()) return
+                                mutation.mutate({ id: venda.id, aprovado: false, motivo: motivo.trim() })
+                              }}
                               disabled={mutation.isPending}
                               className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-400 transition-colors disabled:opacity-50"
                             >
@@ -400,6 +421,18 @@ export function SalesView() {
                             >
                               <ThumbsUp className="w-3.5 h-3.5" />
                               Aprovar
+                            </button>
+                          </div>
+                        )}
+                        {podeMarcarInstalado && (
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => instalarMutation.mutate(venda.id)}
+                              disabled={instalarMutation.isPending}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs text-blue-400 transition-colors disabled:opacity-50"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              Marcar Instalado
                             </button>
                           </div>
                         )}
@@ -440,7 +473,7 @@ export function SalesView() {
                     <div className={cn('w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2', med.bg)}>
                       <MedIcon className={cn('w-6 h-6', med.cor)} />
                     </div>
-                    <p className="text-white font-bold text-sm">{v?.nome || '—'}</p>
+                    <p className="text-white font-bold text-sm">{v?.nome || '-'}</p>
                     <p className={cn('text-2xl font-black mt-1', med.cor)}>{v?.totalVendas ?? 0}</p>
                     <p className="text-xs text-gray-500">vendas</p>
                     <p className="text-xs text-emerald-400 mt-1">{formatCurrency(v?.totalValor ?? 0)}</p>
