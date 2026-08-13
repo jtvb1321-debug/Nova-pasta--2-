@@ -89,7 +89,7 @@ export interface PosicaoHistorico {
 }
 
 // ================================
-// TIPOS DE FORMULÁRIO
+// TIPOS DE FORMULARIO
 // ================================
 
 export interface LoginForm {
@@ -189,6 +189,7 @@ export const STATUS_CHAMADO_LABELS: Record<StatusChamado, string> = {
   EM_ANDAMENTO: 'Em Andamento',
   FINALIZADO: 'Finalizado',
   CANCELADO: 'Cancelado',
+  AGENDADO: 'Agendado',
 }
 
 export const TIPO_CHAMADO_LABELS: Record<TipoChamado, string> = {
@@ -196,6 +197,7 @@ export const TIPO_CHAMADO_LABELS: Record<TipoChamado, string> = {
   MANUTENCAO: 'Manutenção',
   RETIRADA: 'Retirada',
   SUPORTE: 'Suporte',
+  ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
 }
 
 export const CATEGORIA_LABELS: Record<CategoriaEstoque, string> = {
@@ -203,6 +205,7 @@ export const CATEGORIA_LABELS: Record<CategoriaEstoque, string> = {
   EACE: 'EACE',
   FERRAMENTAS: 'Ferramentas',
   LIMPEZA: 'Limpeza',
+  MANINFO: 'ManINFO',
 }
 
 export const STATUS_VENDA_LABELS: Record<StatusVenda, string> = {

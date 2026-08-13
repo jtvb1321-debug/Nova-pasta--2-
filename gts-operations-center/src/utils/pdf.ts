@@ -3,6 +3,11 @@
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { TIPO_CHAMADO_LABELS } from '@/types'
+
+function tipoLabelPdf(tipo: string) {
+  return (TIPO_CHAMADO_LABELS as Record<string, string>)[tipo] || tipo
+}
 
 const CORES = {
   azul:     [37, 99, 235]  as [number, number, number],
@@ -152,7 +157,7 @@ export function gerarPDFChamados(chamados: any[], filtros: { periodo: string; eq
     head: [['Cliente', 'Tipo', 'Cidade', 'Equipe', 'Status', 'Abertura', 'Conclusao']],
     body: chamados.map(c => [
       c.cliente,
-      c.tipo === 'INSTALACAO' ? 'Instalacao' : c.tipo === 'MANUTENCAO' ? 'Manutencao' : c.tipo === 'SUPORTE' ? 'Suporte' : 'Retirada',
+      tipoLabelPdf(c.tipo),
       c.cidade,
       c.equipe?.nome || '-',
       c.status,
@@ -883,16 +888,12 @@ export function gerarPDFQualidade(dados: any, mesLabel: string) {
   y += 28
 
   y = secao(doc, 'Reincidencia por Tipo de Chamado', y)
-  const tiposLabel: Record<string, string> = {
-    INSTALACAO: 'Instalacao', MANUTENCAO: 'Manutencao', RETIRADA: 'Retirada',
-    SUPORTE: 'Suporte', ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
-  }
   autoTable(doc, {
     startY: y,
     margin: { left: 12, right: 12 },
     head: [['Tipo', 'Total no Mes', 'Reincidentes', '% Reincidencia']],
     body: Object.entries(dados.reincidencia.porTipo).map(([tipo, v]: [string, any]) => [
-      tiposLabel[tipo] || tipo,
+      tipoLabelPdf(tipo),
       v.total,
       v.reincidentes,
       v.total > 0 ? `${Math.round((v.reincidentes / v.total) * 1000) / 10}%` : '0%',

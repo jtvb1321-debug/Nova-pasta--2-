@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Users, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TIPO_CHAMADO_LABELS } from '@/types'
 
 const STATUS_CONFIG = {
   AGUARDANDO:   { label: 'Disponivel',   cor: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
@@ -75,7 +76,7 @@ export function TeamStatusList() {
                     <div className="ml-4 mt-1.5 space-y-0.5">
                       <p className="text-xs text-white font-medium">{chamado.cliente}</p>
                       <p className="text-xs text-gray-400">
-                        {chamado.tipo === 'INSTALACAO' ? 'Instalacao' : chamado.tipo === 'MANUTENCAO' ? 'Manutencao' : chamado.tipo === 'SUPORTE' ? 'Suporte' : 'Retirada'}
+                        {(TIPO_CHAMADO_LABELS as Record<string, string>)[chamado.tipo] || chamado.tipo}
                       </p>
                       {equipe.horaInicio && (
                         <div className="flex items-center gap-1.5 mt-1">

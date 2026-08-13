@@ -6,12 +6,16 @@ import {
   ClipboardList, RefreshCw, Phone, MapPin,
   MessageCircle, Navigation, FileText, Timer,
   Play, StopCircle, CheckCircle, AlertTriangle,
-  ChevronDown, Loader2
+  ChevronDown, ChevronUp, Loader2, DollarSign, CalendarDays, Download,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import { cn, formatarEnderecoCompleto } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { useState, useEffect } from 'react'
 import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
+import { PainelAdminEquipesModal } from './PainelAdminEquipesModal'
+import type { Session } from 'next-auth'
+import { TIPO_CHAMADO_LABELS } from '@/types'
 
 const STATUS_CONFIG = {
   AGUARDANDO:   { label: 'Disponivel',    cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
@@ -25,13 +29,6 @@ const TIPO_COR: Record<string, string> = {
   MANUTENCAO: 'bg-yellow-500/20 text-yellow-400',
   RETIRADA:   'bg-red-500/20 text-red-400',
   SUPORTE:    'bg-purple-500/20 text-purple-400',
-}
-
-const TIPO_LABEL: Record<string, string> = {
-  INSTALACAO: 'Instalacao',
-  MANUTENCAO: 'Manutencao',
-  RETIRADA:   'Retirada',
-  SUPORTE:    'Suporte',
 }
 
 function Cronometro({ inicio }: { inicio: string }) {
@@ -62,15 +59,42 @@ async function updateChamadoStatus(payload: { chamadoId: string; status: string 
   return res.json()
 }
 
-export function TeamsView() {
+export function TeamsView({ session }: { session?: Session }) {
+  const isAdmin = (session?.user as any)?.role === 'ADMIN'
+  const [showPainelAdmin, setShowPainelAdmin] = useState(false)
   const queryClient = useQueryClient()
   const [chamadoFinalizar, setChamadoFinalizar] = useState<any>(null)
+  const [equipeExpandidaId, setEquipeExpandidaId] = useState<string | null>(null)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
 
   const { data: equipes = [], isLoading, refetch } = useQuery({
     queryKey: ['teams'],
     queryFn: fetchTeams,
     refetchInterval: 10000,
   })
+
+  const { data: painelDiario, isLoading: carregandoPainel } = useQuery({
+    queryKey: ['painel-diario', equipeExpandidaId],
+    queryFn: () => fetch(`/api/teams/${equipeExpandidaId}/painel-diario`).then(r => r.json()),
+    enabled: !!equipeExpandidaId,
+  })
+
+  async function baixarRelatorioPdf() {
+    setGerandoPdf(true)
+    try {
+      const paineis = await Promise.all(
+        equipes.map((e: any) => fetch(`/api/teams/${e.id}/painel-diario`).then(r => r.json()))
+      )
+      const pdfUtils = await import('@/utils/pdf')
+      pdfUtils.gerarPDFPainelDiarioEquipes(paineis)
+      toast({ title: 'PDF gerado com sucesso!', variant: 'success' })
+    } catch (err) {
+      console.error(err)
+      toast({ title: 'Erro ao gerar PDF', variant: 'destructive' })
+    } finally {
+      setGerandoPdf(false)
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: updateChamadoStatus,
@@ -106,15 +130,33 @@ export function TeamsView() {
         <div>
           <h1 className="text-2xl font-bold text-white">Equipes Tecnicas</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {equipes.filter((e: any) => e.status === 'ATIVIDADE').length} em atividade ·{' '}
-            {equipes.filter((e: any) => e.status === 'DESLOCAMENTO').length} em deslocamento ·{' '}
+            {equipes.filter((e: any) => e.status === 'ATIVIDADE').length} em atividade -{' '}
+            {equipes.filter((e: any) => e.status === 'DESLOCAMENTO').length} em deslocamento -{' '}
             {equipes.filter((e: any) => e.status === 'AGUARDANDO').length} disponiveis
           </p>
         </div>
-        <button onClick={() => refetch()} className="gts-btn-secondary">
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link href="/escala" className="gts-btn-secondary">
+              <CalendarDays className="w-4 h-4" />
+              Escala de Trabalho
+            </Link>
+          )}
+          {isAdmin && (
+            <button onClick={() => setShowPainelAdmin(true)} className="gts-btn-primary">
+              <DollarSign className="w-4 h-4" />
+              Painel Admin
+            </button>
+          )}
+          <button onClick={baixarRelatorioPdf} disabled={gerandoPdf} className="gts-btn-secondary disabled:opacity-50">
+            {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Baixar Relatorio em PDF
+          </button>
+          <button onClick={() => refetch()} className="gts-btn-secondary">
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </button>
+        </div>
       </div>
 
       {/* Cards */}
@@ -187,16 +229,16 @@ export function TeamsView() {
                     {/* Tipo e status do chamado */}
                     <div className="flex items-center justify-between">
                       <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', TIPO_COR[chamado.tipo] || 'bg-gray-500/20 text-gray-400')}>
-                        {TIPO_LABEL[chamado.tipo] || chamado.tipo}
+                        {(TIPO_CHAMADO_LABELS as Record<string, string>)[chamado.tipo] || chamado.tipo}
                       </span>
                       {emDeslocamento && (
                         <span className="text-xs text-blue-400 font-medium animate-pulse">
-                          🚗 A caminho
+                          A caminho
                         </span>
                       )}
                       {emAtividade && (
                         <span className="text-xs text-yellow-400 font-medium animate-pulse">
-                          🔧 Em servico
+                          Em servico
                         </span>
                       )}
                     </div>
@@ -212,9 +254,8 @@ export function TeamsView() {
                       )}
                       <p className="text-xs text-gray-400 flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {chamado.endereco}
+                        {formatarEnderecoCompleto(chamado)}
                       </p>
-                      <p className="text-xs text-gray-500 ml-4">{chamado.cidade}</p>
                     </div>
 
                     {/* Materiais reservados */}
@@ -228,7 +269,7 @@ export function TeamsView() {
                     {/* Observacao */}
                     {chamado.observacao && (
                       <p className="text-xs text-gray-500 italic border-t border-white/5 pt-2">
-                        {chamado.observacao.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?—?\s?/g, '').trim()}
+                        {chamado.observacao.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?\u2014?\s?/g, '').trim()}
                       </p>
                     )}
 
@@ -247,15 +288,14 @@ export function TeamsView() {
                           </button>
                         )}
                         <button
-                          onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(chamado.endereco + ', ' + chamado.cidade)}`, '_blank')}
+                          onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(formatarEnderecoCompleto(chamado))}`, '_blank')}
                           className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-medium text-blue-400 transition-colors"
                         >
                           <Navigation className="w-3.5 h-3.5" />
                           Mapa
                         </button>
                       </div>
-
-                      {/* Botao INICIAR ATIVIDADE — aparece quando em deslocamento */}
+                      {/* Botao INICIAR ATIVIDADE - aparece quando em deslocamento */}
                       {emDeslocamento && (
                         <button
                           onClick={() => iniciarAtividade(chamado.id)}
@@ -266,11 +306,11 @@ export function TeamsView() {
                             ? <Loader2 className="w-4 h-4 animate-spin" />
                             : <Play className="w-4 h-4" />
                           }
-                          Cheguei ao Local — Iniciar Atividade
+                          Cheguei ao Local - Iniciar Atividade
                         </button>
                       )}
 
-                      {/* Botao FINALIZAR — aparece quando em atividade */}
+                      {/* Botao FINALIZAR - aparece quando em atividade */}
                       {emAtividade && (
                         <button
                           onClick={() => setChamadoFinalizar(chamado)}
@@ -295,11 +335,86 @@ export function TeamsView() {
                     )}
                   </div>
                 )}
+
+                {/* Painel diario operacional */}
+                <button
+                  onClick={() => setEquipeExpandidaId(v => v === equipe.id ? null : equipe.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    Painel do Dia
+                  </span>
+                  {equipeExpandidaId === equipe.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                {equipeExpandidaId === equipe.id && (
+                  <div className="bg-white/[0.02] border border-white/5 rounded-lg p-3 space-y-3">
+                    {carregandoPainel ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                      </div>
+                    ) : painelDiario ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-black/20 rounded p-2">
+                            <p className="text-xs text-gray-500">Atendimentos hoje</p>
+                            <p className="text-sm font-bold text-white">{painelDiario.metricas?.atendimentosHoje ?? 0}</p>
+                          </div>
+                          <div className="bg-black/20 rounded p-2">
+                            <p className="text-xs text-gray-500">Tempo medio</p>
+                            <p className="text-sm font-bold text-white">
+                              {painelDiario.metricas?.tempoMedioMinutos != null ? `${painelDiario.metricas.tempoMedioMinutos} min` : '-'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1.5">Ponto do dia</p>
+                          <div className="space-y-1">
+                            {(painelDiario.funcionarios ?? []).map((f: any) => (
+                              <div key={f.id} className="flex items-center justify-between text-xs">
+                                <span className="text-gray-300">{f.nome}</span>
+                                <span className="text-gray-500 font-mono">
+                                  {f.ponto?.entrada
+                                    ? new Date(f.ponto.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                    : 'Sem ponto'}
+                                  {f.ponto?.saida ? ` - ${new Date(f.ponto.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {(painelDiario.estoque ?? []).length > 0 && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1.5">Materiais em posse</p>
+                            <div className="space-y-1">
+                              {painelDiario.estoque.map((e: any) => (
+                                <div key={e.itemId} className="flex items-center justify-between text-xs">
+                                  <span className="text-gray-300 truncate">{e.descricao}</span>
+                                  <span className="text-blue-400 font-mono flex-shrink-0">{e.quantidade} {e.unidade}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-500 text-center py-2">Erro ao carregar painel</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )
         })}
       </div>
+
+      {/* Painel Admin */}
+      {showPainelAdmin && (
+        <PainelAdminEquipesModal onClose={() => setShowPainelAdmin(false)} />
+      )}
 
       {/* Modal finalizar */}
       {chamadoFinalizar && (

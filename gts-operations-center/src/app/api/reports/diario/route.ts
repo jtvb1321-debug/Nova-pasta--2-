@@ -2,14 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { EQUIPES_OPERACIONAIS } from '@/lib/equipesOperacionais'
-
-const TIPO_LABEL: Record<string, string> = {
-  INSTALACAO: 'Instalação',
-  MANUTENCAO: 'Manutenção',
-  RETIRADA: 'Retirada',
-  SUPORTE: 'Suporte',
-  ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
-}
+import { TIPO_CHAMADO_LABELS } from '@/types'
 
 const STATUS_EQUIPE_LABEL: Record<string, { label: string; cor: 'VERDE' | 'AMARELO' | 'AZUL' | 'CINZA' }> = {
   AGUARDANDO:   { label: 'Disponível',            cor: 'AMARELO' },
@@ -108,7 +101,7 @@ export async function GET(request: NextRequest) {
         cliente: c.cliente,
         cidade: c.cidade,
         equipeNome: c.equipe?.nome || 'Sem equipe',
-        tipoLabel: TIPO_LABEL[c.tipo] || c.tipo,
+        tipoLabel: (TIPO_CHAMADO_LABELS as Record<string, string>)[c.tipo] || c.tipo,
         horaConclusao: formatarHora(c.dataFim),
         tma: formatarTma(c.dataInicio, c.dataFim),
         slaLabel: sla.label,

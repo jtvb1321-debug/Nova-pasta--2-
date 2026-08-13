@@ -6,6 +6,7 @@ import {
   PROBLEMA_ENCONTRADO_LABEL, RESULTADO_FINAL_LABEL,
   type Classificacao, type OrigemProvavel,
 } from './diagnosticoEngine'
+import { TIPO_CHAMADO_LABELS } from '@/types'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
@@ -27,16 +28,8 @@ async function enviarMensagem(chatId: string, texto: string) {
   }
 }
 
-const TIPO_LABEL: Record<string, string> = {
-  INSTALACAO: 'Instalação',
-  MANUTENCAO: 'Manutenção',
-  RETIRADA: 'Retirada',
-  SUPORTE: 'Suporte',
-  ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
-}
-
 function tipoLabel(tipo: string) {
-  return TIPO_LABEL[tipo] || tipo
+  return (TIPO_CHAMADO_LABELS as Record<string, string>)[tipo] || tipo
 }
 
 function formatarDataHora(data: Date) {
