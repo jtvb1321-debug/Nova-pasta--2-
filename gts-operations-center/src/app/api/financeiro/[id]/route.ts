@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { temPermissao } from '@/lib/permissions'
+
+const ESTADOS_FINAIS = ['PAGO', 'CANCELADO', 'REPROVADO']
 
 export async function GET(
   _: NextRequest,
@@ -8,6 +11,9 @@ export async function GET(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  if (!temPermissao((session.user as any)?.role, 'verFinanceiro')) {
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { id } = await params
 
@@ -31,6 +37,9 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  if (!temPermissao((session.user as any)?.role, 'verFinanceiro')) {
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { id } = await params
   const body = await request.json()
@@ -44,6 +53,21 @@ export async function PATCH(
     return NextResponse.json({ error: 'Sem permissao para esta acao' }, { status: 403 })
   }
 
+  const atual = await prisma.solicitacaoPagamento.findUnique({ where: { id }, select: { status: true } })
+  if (!atual) return NextResponse.json({ error: 'Nao encontrado' }, { status: 404 })
+
+  // Estado final (pago/cancelado/reprovado) nao pode ser reaberto ou re-transicionado
+  if (status && ESTADOS_FINAIS.includes(atual.status) && status !== atual.status) {
+    return NextResponse.json({ error: `Solicitacao ja esta ${atual.status.toLowerCase()} e nao pode ser alterada` }, { status: 409 })
+  }
+
+  if (status === 'PAGO') {
+    const valorPagoNum = Number(valorPago)
+    if (!valorPago || isNaN(valorPagoNum) || valorPagoNum <= 0) {
+      return NextResponse.json({ error: 'Informe um valor pago valido' }, { status: 400 })
+    }
+  }
+
   const data: any = {}
   if (status) data.status = status
   if (observacoes) data.observacoes = observacoes
@@ -53,7 +77,7 @@ export async function PATCH(
   }
 
   if (status === 'PAGO') {
-    data.valorPago      = valorPago
+    data.valorPago      = Number(valorPago)
     data.dataPagamento  = dataPagamento ? new Date(dataPagamento) : new Date()
     data.aprovadorId    = (session.user as any).id
   }

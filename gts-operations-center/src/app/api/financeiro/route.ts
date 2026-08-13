@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { z } from 'zod'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { temPermissao } from '@/lib/permissions'
 
 const createSchema = z.object({
   titulo:         z.string().min(1),
@@ -22,6 +23,9 @@ const createSchema = z.object({
 export async function GET(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  if (!temPermissao((session.user as any)?.role, 'verFinanceiro')) {
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { searchParams } = new URL(request.url)
   const status      = searchParams.get('status')      || undefined
@@ -91,6 +95,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  if (!temPermissao((session.user as any)?.role, 'verFinanceiro')) {
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const contentType = request.headers.get('content-type') || ''
 

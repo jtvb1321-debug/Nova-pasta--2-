@@ -3,6 +3,15 @@ import { auth } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
+const TIPOS_PERMITIDOS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg':  'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+}
+const TAMANHO_MAXIMO_BYTES = 15 * 1024 * 1024 // 15MB por foto
+
 export async function POST(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
@@ -15,6 +24,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma foto enviada' }, { status: 400 })
     }
 
+    for (const file of files) {
+      if (!TIPOS_PERMITIDOS[file.type]) {
+        return NextResponse.json({ error: `Tipo de arquivo nao permitido: ${file.type || 'desconhecido'}` }, { status: 400 })
+      }
+      if (file.size > TAMANHO_MAXIMO_BYTES) {
+        return NextResponse.json({ error: `Arquivo muito grande (maximo ${TAMANHO_MAXIMO_BYTES / 1024 / 1024}MB)` }, { status: 400 })
+      }
+    }
+
     // Criar pasta se nao existir
     const uploadDir = join(process.cwd(), 'public', 'uploads', 'evidencias')
     await mkdir(uploadDir, { recursive: true })
@@ -25,9 +43,9 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
-      // Nome unico para o arquivo
+      // Extensao derivada do tipo MIME validado, nunca do nome enviado pelo cliente
+      const ext = TIPOS_PERMITIDOS[file.type]
       const timestamp = Date.now()
-      const ext = file.name.split('.').pop() || 'jpg'
       const fileName = `evidencia_${timestamp}_${Math.random().toString(36).slice(2)}.${ext}`
       const filePath = join(uploadDir, fileName)
 
