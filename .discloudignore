@@ -1,0 +1,43 @@
+# Reinstalado e reconstruido no servidor pelo BUILD do discloud.config
+gts-operations-center/node_modules
+gts-operations-center/.next
+.git
+.claude
+
+# perfis/sessoes locais do whatsapp-web.js (nao portaveis entre maquinas)
+gts-operations-center/.wwebjs_auth
+gts-operations-center/.wwebjs_cache
+
+# logs e artefatos locais
+*.log
+gts-operations-center/cloudflared.log
+gts-operations-center/whatsapp-debug.log
+*.tsbuildinfo
+gts-operations-center/tsconfig.tsbuildinfo
+
+# banco local (dev)
+gts-operations-center/prisma/dev.db
+gts-operations-center/prisma/dev.db-journal
+
+# arquivos avulsos sem uso em runtime
+gts-operations-center/nfeeee.txt
+gts-operations-center/npx
+gts-operations-center/type
+
+# uploads em runtime (nao fazem parte do codigo-fonte)
+gts-operations-center/public/uploads
+
+# dados sensiveis de importacao
+gts-operations-center/scripts/clientes_importar.json
+
+# variaveis de ambiente sao configuradas pelo painel/CLI da Discloud,
+# nao enviadas dentro do pacote (evita subir segredos e segue a
+# recomendacao oficial para apps Next.js na plataforma)
+gts-operations-center/.env
+gts-operations-center/.env.local
+gts-operations-center/.env.*.local
+
+# lockfile gerado no Windows - pode fixar binarios nativos (sharp,
+# swc, prisma) da plataforma errada; "npm install" sem ele resolve
+# as versoes corretas para o container Linux da Discloud
+gts-operations-center/package-lock.json
