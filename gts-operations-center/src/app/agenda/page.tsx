@@ -11,7 +11,7 @@ export default async function AgendaPage() {
   if (!session) redirect('/login')
   return (
     <AppShell title="Central de Chamados">
-      <CentralChamados />
+      <CentralChamados session={session} />
     </AppShell>
   )
 }

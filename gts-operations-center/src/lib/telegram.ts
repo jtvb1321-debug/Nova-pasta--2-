@@ -7,6 +7,7 @@ import {
   type Classificacao, type OrigemProvavel,
 } from './diagnosticoEngine'
 import { TIPO_CHAMADO_LABELS } from '@/types'
+import { gerarImagemAgenda } from './agendaImagem'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
@@ -95,6 +96,29 @@ async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
   }
 }
 
+async function enviarFotoBuffer(chatId: string, buffer: Buffer, nomeArquivo: string, legenda?: string) {
+  if (!BOT_TOKEN || !chatId) return
+  try {
+    const formData = new FormData()
+    formData.append('chat_id', chatId)
+    if (legenda) formData.append('caption', legenda)
+    formData.append('parse_mode', 'HTML')
+    formData.append('photo', new Blob([new Uint8Array(buffer)]), nomeArquivo)
+
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      const erro = await res.text()
+      console.error('Telegram sendPhoto (buffer) falhou:', res.status, erro)
+    }
+  } catch (error) {
+    console.error('Erro ao enviar foto (buffer) Telegram:', error)
+  }
+}
+
 export async function notificarNovoChamado(chamado: {
   cliente: string
   endereco: string
@@ -110,24 +134,50 @@ export async function notificarNovoChamado(chamado: {
   tipo: string
   equipe?: string
   prioridade?: string
+  eace?: boolean
+  escolaResponsavel?: string | null
+  escolaCodigoInep?: string | null
+  latitude?: number | null
+  longitude?: number | null
 }) {
   const prioridade = chamado.prioridade === 'CRITICO' ? '🔴 Crítico' : chamado.prioridade === 'URGENTE' ? '🟡 Urgente' : null
   const enderecoCompleto = formatarEnderecoCompleto(chamado)
+  const coordenadasLink = chamado.latitude != null && chamado.longitude != null
+    ? `https://www.google.com/maps?q=${chamado.latitude},${chamado.longitude}`
+    : null
 
-  const texto = montarMensagem([
-    `🔵 <b>NOVO CHAMADO DISPONÍVEL</b>`,
-    [
-      campo('👥', 'Equipe', chamado.equipe || 'A definir'),
-      campo('👤', 'Cliente', chamado.cliente),
-      campo('📍', 'Endereço', enderecoCompleto),
-      campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
-      prioridade ? campo('⚠️', 'Prioridade', prioridade) : null,
-    ].filter(Boolean) as string[],
-    [
-      `📱 <i>Acesse o sistema para visualizar e iniciar o atendimento.</i>`,
-      `🔗 http://10.10.86.240:3000`,
-    ],
-  ])
+  const texto = chamado.eace
+    ? montarMensagem([
+        `🏫 <b>NOVO CHAMADO EACE</b>`,
+        [
+          campo('👥', 'Equipe', chamado.equipe || 'A definir'),
+          campo('🏫', 'Escola', chamado.cliente),
+          chamado.escolaResponsavel ? campo('👤', 'Responsável', chamado.escolaResponsavel) : null,
+          chamado.escolaCodigoInep ? campo('🔢', 'Código INEP', chamado.escolaCodigoInep) : null,
+          campo('📍', 'Localização', enderecoCompleto),
+          coordenadasLink ? campo('🗺️', 'Coordenadas', coordenadasLink) : null,
+          campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+          prioridade ? campo('⚠️', 'Prioridade', prioridade) : null,
+        ].filter(Boolean) as string[],
+        [
+          `📱 <i>Acesse o sistema para visualizar e iniciar o atendimento.</i>`,
+          `🔗 http://10.10.86.240:3000`,
+        ],
+      ])
+    : montarMensagem([
+        `🔵 <b>NOVO CHAMADO DISPONÍVEL</b>`,
+        [
+          campo('👥', 'Equipe', chamado.equipe || 'A definir'),
+          campo('👤', 'Cliente', chamado.cliente),
+          campo('📍', 'Endereço', enderecoCompleto),
+          campo('🔧', 'Tipo', tipoLabel(chamado.tipo)),
+          prioridade ? campo('⚠️', 'Prioridade', prioridade) : null,
+        ].filter(Boolean) as string[],
+        [
+          `📱 <i>Acesse o sistema para visualizar e iniciar o atendimento.</i>`,
+          `🔗 http://10.10.86.240:3000`,
+        ],
+      ])
 
   await enviarMensagem(GROUP_OS!, texto)
 }
@@ -151,24 +201,42 @@ export async function notificarAgendaDoDia(
   }>,
   dataLabel: string
 ) {
-  const itens = chamados.length === 0
-    ? [[`✅ <b>Nenhum chamado agendado para amanhã.</b>`]]
-    : chamados.map((c, i) => [
-        `<b>${i + 1}. ${c.cliente}</b>`,
-        campo('👥', 'Equipe', c.equipe || 'A definir'),
-        campo('🔧', 'Tipo', tipoLabel(c.tipo)),
-        `📍 ${formatarEnderecoCompleto(c)}`,
-        campo('🕐', 'Início', c.horaAgendada || '07:30'),
-      ])
+  if (chamados.length === 0) {
+    const texto = montarMensagem([
+      `🌅 <b>AGENDA DE AMANHÃ — ${dataLabel}</b>`,
+      `✅ <b>Nenhum chamado agendado para amanhã.</b>`,
+      `🔗 http://10.10.86.240:3000`,
+    ])
+    await enviarMensagem(GROUP_OS!, texto)
+    return
+  }
 
-  const texto = montarMensagem([
-    `🌅 <b>AGENDA DE AMANHÃ — ${dataLabel}</b>`,
-    `📋 <i>Chamados recebidos pelo plantão após as 18h, agendados automaticamente para início às 07:30.</i>`,
-    ...itens,
-    `🔗 http://10.10.86.240:3000`,
-  ])
-
-  await enviarMensagem(GROUP_OS!, texto)
+  try {
+    const imagem = await gerarImagemAgenda(
+      chamados.map(c => ({ cliente: c.cliente, tipo: c.tipo, equipe: c.equipe, horaAgendada: c.horaAgendada })),
+      dataLabel
+    )
+    const legenda = montarMensagem([
+      `🌅 <b>AGENDA DE AMANHÃ — ${dataLabel}</b>`,
+      `📋 <i>${chamados.length} chamado(s) agendado(s) - recebidos pelo plantão após as 18h.</i>`,
+      `🔗 http://10.10.86.240:3000`,
+    ])
+    await enviarFotoBuffer(GROUP_OS!, imagem, `agenda-${dataLabel.replace(/\//g, '-')}.png`, legenda)
+  } catch (error) {
+    console.error('Erro ao gerar imagem da agenda, enviando texto como fallback:', error)
+    const itens = chamados.map((c, i) => [
+      `<b>${i + 1}. ${c.cliente}</b>`,
+      campo('👥', 'Equipe', c.equipe || 'A definir'),
+      campo('🔧', 'Tipo', tipoLabel(c.tipo)),
+      campo('🕐', 'Início', c.horaAgendada || '07:30'),
+    ])
+    const texto = montarMensagem([
+      `🌅 <b>AGENDA DE AMANHÃ — ${dataLabel}</b>`,
+      ...itens,
+      `🔗 http://10.10.86.240:3000`,
+    ])
+    await enviarMensagem(GROUP_OS!, texto)
+  }
 }
 
 export async function notificarACaminho(chamado: {

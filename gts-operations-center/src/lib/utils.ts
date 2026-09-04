@@ -159,6 +159,53 @@ export function slugify(text: string) {
     .replace(/(^-|-$)/g, '')
 }
 
+// Alguns dados de endereco vem de importacoes/integracoes legadas (ex: sync
+// IXC) que gravam a string literal "null"/"undefined" em vez de deixar o
+// campo vazio de verdade - Boolean("NULL") e true, entao sem esse filtro
+// esses valores passavam direto e apareciam como "Bloco NULL" na tela.
+function valorValido(v?: string | null): v is string {
+  if (!v) return false
+  const normalizado = v.trim().toLowerCase()
+  return normalizado !== '' && normalizado !== 'null' && normalizado !== 'undefined' && normalizado !== 'n/a'
+}
+
+/**
+ * Monta o endereco completo de um chamado/cliente a partir dos campos
+ * separados (numero, complemento, condominio, bloco, apartamento, uf, cep).
+ * Todos os campos sao opcionais, exceto endereco/bairro/cidade.
+ */
+export function formatarEnderecoCompleto(dados: {
+  endereco?: string | null
+  numero?: string | null
+  complemento?: string | null
+  condominio?: string | null
+  bloco?: string | null
+  apartamento?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  uf?: string | null
+  cep?: string | null
+}) {
+  const linha1 = [dados.endereco, dados.numero].filter(valorValido).join(', ')
+
+  const complementoPartes = [
+    valorValido(dados.complemento) ? dados.complemento : '',
+    valorValido(dados.condominio) ? `Cond. ${dados.condominio}` : '',
+    valorValido(dados.bloco) ? `Bloco ${dados.bloco}` : '',
+    valorValido(dados.apartamento) ? `Apto ${dados.apartamento}` : '',
+  ].filter(Boolean)
+
+  const cidadeUf = [dados.cidade, dados.uf].filter(valorValido).join('/')
+
+  return [
+    linha1,
+    complementoPartes.join(' - '),
+    valorValido(dados.bairro) ? dados.bairro : '',
+    cidadeUf,
+    valorValido(dados.cep) ? `CEP ${dados.cep}` : '',
+  ].filter(Boolean).join(' - ')
+}
+
 /**
  * Gera cor consistente baseada em string
  */

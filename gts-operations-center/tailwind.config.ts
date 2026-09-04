@@ -27,6 +27,10 @@ const config: Config = {
           yellow: '#F59E0B',
           red: '#EF4444',
           gray: '#6B7280',
+          // Sinal - segunda cor de destaque (dados de rede/telemetria ao vivo),
+          // separada da laranja (marca/acao) para dar mais faixa cromatica
+          // sem virar "arco-iris" - usar com moderacao.
+          signal: '#22D3EE',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -64,8 +68,8 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Inter', ...fontFamily.sans],
-        mono: ['JetBrains Mono', ...fontFamily.mono],
+        sans: ['var(--font-inter)', ...fontFamily.sans],
+        mono: ['var(--font-mono-tech)', ...fontFamily.mono],
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',

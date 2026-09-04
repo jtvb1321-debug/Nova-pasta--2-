@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ClipboardList, Plus, Zap, Clock, CheckCircle,
   AlertTriangle, RefreshCw, Search, Calendar,
-  Phone, MessageCircle, Repeat,
+  Phone, MessageCircle, Repeat, GraduationCap,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
@@ -15,8 +16,9 @@ import { CardChamado, detectarPrioridade } from './CardChamado'
 import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
+import { PageHeader } from '@/components/ui/PageHeader'
 
-type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'feedback' | 'historico' | 'calendario'
+type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'feedback' | 'historico' | 'calendario' | 'eace'
 
 async function fetchAgenda() {
   const res = await fetch('/api/agenda')
@@ -26,6 +28,12 @@ async function fetchAgenda() {
 
 async function fetchAtivos() {
   const res = await fetch('/api/tickets?status=EM_ANDAMENTO&limit=50')
+  if (!res.ok) return { data: [] }
+  return res.json()
+}
+
+async function fetchEace() {
+  const res = await fetch('/api/tickets?eace=true&limit=50')
   if (!res.ok) return { data: [] }
   return res.json()
 }
@@ -59,12 +67,32 @@ export function CentralChamados({ session }: { session: Session }) {
   const queryClient = useQueryClient()
   const [aba, setAba] = useState<Aba>('despacho')
   const [showDespacho, setShowDespacho] = useState(false)
+  const [despachoInicialEace, setDespachoInicialEace] = useState(false)
   const [chamadoFinalizar, setChamadoFinalizar] = useState<any>(null)
   const [busca, setBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [page, setPage] = useState(1)
   const [expandido, setExpandido] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  // Deep-link vindo do historico de diagnostico (/agenda?chamadoId=...) - abre
+  // direto na aba certa com o card ja expandido, sem duplicar nenhum card.
+  useEffect(() => {
+    const chamadoId = searchParams.get('chamadoId')
+    if (!chamadoId) return
+    fetch(`/api/tickets/${chamadoId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(chamado => {
+        if (!chamado) return
+        if (chamado.status === 'ABERTO' || chamado.status === 'AGENDADO') setAba('despacho')
+        else if (chamado.status === 'EM_ANDAMENTO') setAba('ativos')
+        else setAba('historico')
+        setExpandido(chamadoId)
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { data: agendaData = [], isLoading: loadingAgenda, refetch: refetchAgenda } = useQuery({
     queryKey: ['agenda'],
@@ -75,6 +103,12 @@ export function CentralChamados({ session }: { session: Session }) {
   const { data: ativosData, isLoading: loadingAtivos } = useQuery({
     queryKey: ['chamados-ativos'],
     queryFn: fetchAtivos,
+    refetchInterval: 10000,
+  })
+
+  const { data: eaceData, isLoading: loadingEace } = useQuery({
+    queryKey: ['chamados-eace'],
+    queryFn: fetchEace,
     refetchInterval: 10000,
   })
 
@@ -203,6 +237,7 @@ export function CentralChamados({ session }: { session: Session }) {
 
   const agenda = agendaData
   const ativos = ativosData?.data ?? []
+  const eace = eaceData?.data ?? []
   const historico = historicoData?.data ?? []
   const totalPages = historicoData?.totalPages ?? 1
   const totalHistorico = historicoData?.total ?? 0
@@ -239,6 +274,7 @@ export function CentralChamados({ session }: { session: Session }) {
 
   const abas = [
     { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
+    { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length, badgeCor: 'bg-orange-500' },
     { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
     { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes, badgeCor: 'bg-orange-500' },
     { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks, badgeCor: 'bg-purple-500' },
@@ -247,29 +283,32 @@ export function CentralChamados({ session }: { session: Session }) {
   ]
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Central de Chamados</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Despacho, monitoramento e historico unificados
-            {totalCriticos > 0 && (
-              <span className="ml-2 text-red-400 font-medium animate-pulse">
-                - {totalCriticos} critico(s)
-              </span>
+      <PageHeader
+        title="Central de Chamados"
+        subtitle={
+          totalCriticos > 0
+            ? `Despacho, monitoramento e historico unificados · ${totalCriticos} critico(s)`
+            : 'Despacho, monitoramento e historico unificados'
+        }
+        actions={
+          <>
+            <button onClick={() => { refetchAgenda(); queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] }) }} className="gts-btn-secondary">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            {aba === 'eace' ? (
+              <button onClick={() => { setDespachoInicialEace(true); setShowDespacho(true) }} className="gts-btn-primary">
+                <GraduationCap className="w-4 h-4" />
+                Novo Despacho EACE
+              </button>
+            ) : (
+              <button onClick={() => { setDespachoInicialEace(false); setShowDespacho(true) }} className="gts-btn-primary">
+                <Plus className="w-4 h-4" />
+                Novo Despacho
+              </button>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => { refetchAgenda(); queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] }) }} className="gts-btn-secondary">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button onClick={() => setShowDespacho(true)} className="gts-btn-primary">
-            <Plus className="w-4 h-4" />
-            Novo Despacho
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -362,7 +401,7 @@ export function CentralChamados({ session }: { session: Session }) {
               <div className="gts-card text-center py-16">
                 <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400 font-medium">Nenhum chamado na fila</p>
-                <button onClick={() => setShowDespacho(true)} className="gts-btn-primary mx-auto mt-4">
+                <button onClick={() => { setDespachoInicialEace(false); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
                   <Plus className="w-4 h-4" /> Novo Despacho
                 </button>
               </div>
@@ -653,14 +692,51 @@ export function CentralChamados({ session }: { session: Session }) {
         />
       )}
 
-      {/* Modal despacho */}
+      {/* EACE */}
+      {aba === 'eace' && (
+        <div className="space-y-3">
+          {loadingEace
+            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            : filtrar(eace).length === 0
+            ? (
+              <div className="gts-card text-center py-16">
+                <GraduationCap className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 font-medium">Nenhum chamado EACE encontrado</p>
+                <button onClick={() => { setDespachoInicialEace(true); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
+                  <GraduationCap className="w-4 h-4" /> Novo Despacho EACE
+                </button>
+              </div>
+            )
+            : filtrar(eace).map((c: any) => (
+              <CardChamado
+                key={c.id}
+                chamado={c}
+                isAdmin={isAdmin}
+                mostrarFinalizar
+                expandido={expandido === c.id}
+                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onFinalizar={setChamadoFinalizar}
+                onIniciar={id => iniciarMutation.mutate(id)}
+                onEncerrarAdmin={handleEncerrarAdmin}
+                isOperador={isOperador}
+                onAlterarTipo={handleAlterarTipo}
+                onEncaminhar={id => encaminharMutation.mutate(id)}
+              />
+            ))
+          }
+        </div>
+      )}
+
+      {/* Modal despacho (padrao ou EACE, mesmo fluxo) */}
       {showDespacho && (
         <NovoDespachoModal
+          initialData={despachoInicialEace ? { eace: true } : undefined}
           onClose={() => setShowDespacho(false)}
           onSuccess={() => {
             setShowDespacho(false)
             queryClient.invalidateQueries({ queryKey: ['agenda'] })
             queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
+            queryClient.invalidateQueries({ queryKey: ['chamados-eace'] })
             queryClient.invalidateQueries({ queryKey: ['teams'] })
           }}
         />

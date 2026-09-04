@@ -142,6 +142,25 @@ export async function GET() {
     WHERE "quantidadeAtual" <= "quantidadeMinima"
   `
 
+  // Comparativo do contador "hoje" da TV: quantos chamados foram finalizados
+  // ate este mesmo horario em cada um dos ultimos 7 dias corridos (para
+  // comparativo vs ontem e media da semana) - tudo com dados reais de Chamado.
+  const contagensDiasAnteriores = await Promise.all(
+    Array.from({ length: 7 }, (_, i) => {
+      const diasAtras = i + 1
+      const inicioDia = new Date(inicioHoje)
+      inicioDia.setDate(inicioDia.getDate() - diasAtras)
+      const fimDia = new Date(inicioDia)
+      fimDia.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds())
+      return prisma.chamado.count({ where: { status: 'FINALIZADO', dataFim: { gte: inicioDia, lte: fimDia } } })
+    })
+  )
+  const chamadosFinalizadosOntemMesmaHora = contagensDiasAnteriores[0]
+  const mediaFinalizadosMesmaHora7Dias = Math.round((contagensDiasAnteriores.reduce((a, b) => a + b, 0) / 7) * 10) / 10
+  const vsOntemMesmaHora = chamadosFinalizadosOntemMesmaHora > 0
+    ? Math.round(((chamadosFinalizadosHoje - chamadosFinalizadosOntemMesmaHora) / chamadosFinalizadosOntemMesmaHora) * 1000) / 10
+    : null
+
   // Montar dados para graficos
   const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
   const ultimos7dias = Array.from({ length: 7 }, (_, i) => {
@@ -183,6 +202,9 @@ export async function GET() {
     chamadosAbertos,
     chamadosAndamento,
     chamadosFinalizadosHoje,
+    chamadosFinalizadosOntemMesmaHora,
+    mediaFinalizadosMesmaHora7Dias,
+    vsOntemMesmaHora,
     chamadosFinalizadosMes,
     estoqueBaixo:    Number((estoqueBaixoReal[0] as any)?.count ?? 0),
     vendasHoje:      vendasHoje._sum.valor ?? 0,

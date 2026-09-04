@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2, AlertCircle, Wifi } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle, Wifi, Map, Users, Package, BarChart3, Bell } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
   email: z.string().email('E-mail invalido'),
@@ -64,7 +65,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center px-12">
+        <div className="relative z-10 flex flex-col items-center text-center px-12 animate-fade-in-up">
           <div className="w-56 h-56 mb-6 drop-shadow-2xl">
             <img
               src="/images/logo.png"
@@ -73,32 +74,47 @@ export default function LoginPage() {
             />
           </div>
 
-          <h1 className="text-4xl font-black mb-2">
+          <h1 className="text-5xl font-black mb-3 tracking-tight">
             <span className="text-white">GTS</span>
-            <span className="text-orange-400">net</span>
+            <span className="bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">net</span>
             <span className="text-white"> Operations Center</span>
           </h1>
-          <p className="text-gray-400 text-lg mb-8">
+          <p className="text-gray-400 text-lg mb-10">
             Centro de Operacoes Inteligente
           </p>
 
           <div className="space-y-3 text-left w-full max-w-sm">
             {[
-              { icon: '🗺️', text: 'Monitoramento de veiculos em tempo real' },
-              { icon: '👥', text: 'Gestao completa das equipes de campo' },
-              { icon: '📦', text: 'Controle de estoque e materiais' },
-              { icon: '📊', text: 'Dashboard executivo com KPIs ao vivo' },
-              { icon: '🔔', text: 'Alertas inteligentes e notificacoes' },
+              { icon: Map, text: 'Monitoramento de veiculos em tempo real', destaque: true },
+              { icon: Users, text: 'Gestao completa das equipes de campo' },
+              { icon: Package, text: 'Controle de estoque e materiais' },
+              { icon: BarChart3, text: 'Dashboard executivo com KPIs ao vivo' },
+              { icon: Bell, text: 'Alertas inteligentes e notificacoes' },
             ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/5 rounded-xl">
-                <span className="text-xl">{f.icon}</span>
+              <div
+                key={i}
+                className={cn(
+                  'flex items-center gap-3 p-3 bg-white/[0.03] border rounded-xl',
+                  'transition-all duration-200 hover:bg-white/[0.06] hover:border-orange-500/20 hover:-translate-y-0.5',
+                  'animate-fade-in-up',
+                  f.destaque ? 'border-orange-500/25 gts-hud-corner' : 'border-white/5'
+                )}
+                style={{ animationDelay: `${120 + i * 70}ms` }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-500/5 flex items-center justify-center flex-shrink-0">
+                  <f.icon className="w-4 h-4 text-orange-400" />
+                </div>
                 <p className="text-sm text-gray-300">{f.text}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="absolute bottom-6 text-center">
+        <div className="absolute bottom-6 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 text-xs font-mono tracking-wider">SISTEMA ONLINE</span>
+          </div>
           <p className="text-gray-600 text-xs">GTSNet — Provedor de Internet</p>
         </div>
       </div>
@@ -109,7 +125,7 @@ export default function LoginPage() {
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/3 rounded-full blur-3xl" />
         </div>
 
-        <div className="w-full max-w-sm relative">
+        <div className="w-full max-w-sm relative animate-fade-in-up">
           {/* Logo mobile */}
           <div className="flex flex-col items-center mb-8 lg:hidden">
             <div className="w-24 h-24 mb-4">
@@ -127,9 +143,10 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-[#111827] border border-white/10 rounded-2xl p-8 shadow-2xl">
+          <div className="relative bg-[#111827] border border-white/10 rounded-xl p-8 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0B1120] p-1 flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#0B1120] p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
                 <img
                   src="/images/icon.png"
                   alt="GTSNet"
@@ -137,7 +154,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Bem-vindo!</h2>
+                <h2 className="text-xl font-bold text-white">Bem-vindo!</h2>
                 <p className="text-gray-500 text-xs">Entre com suas credenciais</p>
               </div>
             </div>
@@ -196,9 +213,10 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-orange-500 hover:bg-orange-400 text-white font-semibold py-2.5 rounded-lg
+                className="w-full bg-orange-500 hover:bg-orange-400 text-white font-semibold py-3 rounded-lg
                   transition-all duration-200 flex items-center justify-center gap-2
-                  disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-2"
+                  shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98] mt-2"
               >
                 {loading
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>

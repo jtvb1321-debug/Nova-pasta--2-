@@ -15,6 +15,8 @@ import {
 } from '@/types'
 import { NewTicketModal } from './NewTicketModal'
 import { FinalizeTicketModal } from './FinalizeTicketModal'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 const STATUS_STYLE: Record<StatusChamado, { icon: React.ElementType; cls: string }> = {
   ABERTO:       { icon: AlertCircle,  cls: 'text-blue-400 bg-blue-500/10' },
@@ -69,19 +71,16 @@ export function TicketsView() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Chamados</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {data?.total ?? 0} chamados no total
-          </p>
-        </div>
-        <button onClick={() => setShowNewModal(true)} className="gts-btn-primary">
-          <Plus className="w-4 h-4" />
-          Novo Chamado
-        </button>
-      </div>
+      <PageHeader
+        title="Chamados"
+        subtitle={`${data?.total ?? 0} chamados no total`}
+        actions={
+          <button onClick={() => setShowNewModal(true)} className="gts-btn-primary">
+            <Plus className="w-4 h-4" />
+            Novo Chamado
+          </button>
+        }
+      />
 
       {/* Filtros por status */}
       <div className="flex flex-wrap items-center gap-2">
@@ -92,7 +91,7 @@ export function TicketsView() {
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
               status === f.value
-                ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30'
+                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
                 : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
             )}
           >
@@ -109,11 +108,7 @@ export function TicketsView() {
             ))
           : chamados.length === 0
           ? (
-            <div className="gts-card text-center py-16">
-              <ClipboardList className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Nenhum chamado encontrado</p>
-              <p className="text-gray-600 text-sm mt-1">Crie um novo chamado para comecar</p>
-            </div>
+            <EmptyState icon={<ClipboardList className="w-full h-full" />} title="Nenhum chamado encontrado" description="Crie um novo chamado para comecar" />
           )
           : chamados.map((chamado: any) => {
               const statusCfg = STATUS_STYLE[chamado.status as StatusChamado] || STATUS_STYLE.ABERTO

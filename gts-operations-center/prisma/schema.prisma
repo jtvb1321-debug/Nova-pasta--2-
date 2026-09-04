@@ -105,6 +105,7 @@ model Usuario {
   aprovacoes   SolicitacaoPagamento[] @relation("aprovacoes")
   baixasRealizadas ContaReceber[]
   clientes     Cliente[]
+  diagnosticosRemotos Diagnostico[]
 
   @@map("usuarios")
 }
@@ -146,7 +147,8 @@ model Funcionario {
   usuario  Usuario?               @relation(fields: [usuarioId], references: [id])
   despesas SolicitacaoPagamento[]
   registrosPonto RegistroPonto[]
-  diagnosticos Diagnostico[]
+  diagnosticos Diagnostico[] @relation("DiagnosticoFuncionario")
+  diagnosticosValidados Diagnostico[] @relation("DiagnosticoValidador")
 
   @@map("funcionarios")
 }
@@ -294,10 +296,25 @@ model Chamado {
   dentroSlaResolucao    Boolean?
   reincidente           Boolean   @default(false)
   chamadoOrigemReincidenciaId String?
+  // Chamados EACE (escolas) - reaproveitam o mesmo fluxo de despacho/equipe/
+  // status/Telegram; so ganham esse sinalizador e os campos proprios da
+  // escola. "cliente" guarda o nome da escola, "observacao" guarda as
+  // informacoes passadas pelo cliente - sem duplicar campo.
+  eace                  Boolean   @default(false)
+  escolaResponsavel     String?
+  escolaCodigoInep      String?
+  localizacaoLink       String?
+  latitude              Float?
+  longitude             Float?
+  // Vinculo opcional com o cadastro de cliente (IXC) capturado no momento do
+  // despacho - hoje "cliente" acima e so um nome copiado, sem ligacao com o
+  // registro de origem. Nullable pois nem todo chamado tem match confiavel.
+  clienteId    String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   equipe              Equipe?             @relation(fields: [equipeId], references: [id])
+  clienteCadastro     Cliente?            @relation(fields: [clienteId], references: [id])
   movimentacoes       Movimentacao[]
   materiaisUtilizados MaterialUtilizado[]
   materiaisDevolvidos MaterialDevolvido[]
@@ -306,6 +323,15 @@ model Chamado {
   diagnosticos        Diagnostico[]
   unidadesEquipamento UnidadeEquipamento[]
 
+  // Filtros usados o tempo todo pelos jobs em background (feedback, agenda
+  // diaria) e pelas telas de chamados/relatorios - tabela sem nenhum indice
+  // alem das PKs/FKs implicitas ate agora.
+  @@index([status])
+  @@index([dataFim])
+  @@index([dataAgendada])
+  @@index([feedbackEnviado])
+  @@index([equipeId])
+  @@index([clienteId])
   @@map("chamados")
 }
 
@@ -356,6 +382,24 @@ model MaterialDevolvido {
 enum FaseDiagnostico {
   ANTES
   DEPOIS
+  // Diagnostico remoto do NOC, rodado antes do despacho de equipe - trilha
+  // isolada de ANTES/DEPOIS (que e o par antes/depois do proprio tecnico em
+  // campo) para nao quebrar o pareamento automatico existente.
+  REMOTO
+}
+
+// Quem rodou o diagnostico - independente da fase acima.
+enum OrigemDiagnostico {
+  NOC_REMOTO
+  TECNICO_CAMPO
+}
+
+// Veredito do tecnico em campo sobre um diagnostico REMOTO do NOC.
+enum ValidacaoTecnico {
+  CONFIRMADO
+  PARCIAL
+  INCORRETO
+  INCONCLUSIVO
 }
 
 enum StatusDiagnostico {
@@ -380,11 +424,15 @@ model Diagnostico {
   funcionarioId          String?
   equipeId               String?
   fase                   FaseDiagnostico           @default(ANTES)
+  origem                 OrigemDiagnostico         @default(TECNICO_CAMPO)
   diagnosticoAnteriorId  String?                   @unique
   status                 StatusDiagnostico         @default(EM_ANDAMENTO)
   dispositivoUtilizado   String?
   classificacao          ClassificacaoDiagnostico?
   origemProvavel         String?
+  confianca              Int?
+  evidencias             Json?
+  hipotese               String?
   recomendacoes          Json?
   resumo                 Json?
   problemaEncontrado     String?
@@ -394,17 +442,28 @@ model Diagnostico {
   equipamentoNovoDesc    String?
   resultadoFinal         String?
   iniciadoPor            String?
+  iniciadoPorUsuarioId   String?
+  // Validacao do tecnico em campo sobre um diagnostico REMOTO do NOC (secao
+  // 25) - fica gravada no proprio registro REMOTO, nao no diagnostico do
+  // tecnico, pra separar "o que o NOC concluiu" de "o que o tecnico confirmou".
+  validacaoTecnico       ValidacaoTecnico?
+  causaReal              String?
+  validadoPorId          String?
+  validadoEm             DateTime?
+  resolvidoRemotamente   Boolean                   @default(false)
   iniciadoEm             DateTime                  @default(now())
   finalizadoEm           DateTime?
   createdAt              DateTime                  @default(now())
   updatedAt              DateTime                  @updatedAt
 
   chamado              Chamado            @relation(fields: [chamadoId], references: [id])
-  funcionario          Funcionario?       @relation(fields: [funcionarioId], references: [id])
+  funcionario          Funcionario?       @relation("DiagnosticoFuncionario", fields: [funcionarioId], references: [id])
   equipe               Equipe?            @relation(fields: [equipeId], references: [id])
   diagnosticoAnterior  Diagnostico?       @relation("AntesDepois", fields: [diagnosticoAnteriorId], references: [id])
   diagnosticoPosterior Diagnostico?       @relation("AntesDepois")
   testes               DiagnosticoTeste[]
+  iniciadoPorUsuario   Usuario?           @relation(fields: [iniciadoPorUsuarioId], references: [id])
+  validadoPor          Funcionario?       @relation("DiagnosticoValidador", fields: [validadoPorId], references: [id])
 
   @@map("diagnosticos")
 }
@@ -474,6 +533,7 @@ model Cliente {
   vendas        Venda[]
   vendedor      Usuario?       @relation(fields: [vendedorId], references: [id])
   contasReceber ContaReceber[]
+  chamados      Chamado[]
 
   @@map("clientes")
 }
@@ -918,6 +978,7 @@ model RegistroPonto {
   horasTrabalhadas  Float?
   horasExtras       Float?
   statusHorasExtras StatusHorasExtras @default(SEM_EXTRA)
+  tipoRegistro      TipoRegistroPonto @default(TRABALHADO)
   aprovadoPor       String?
   aprovadoEm        DateTime?
   observacao        String?
@@ -928,6 +989,16 @@ model RegistroPonto {
 
   @@unique([funcionarioId, data])
   @@map("registros_ponto")
+}
+
+enum TipoRegistroPonto {
+  TRABALHADO
+  FALTA
+  ATESTADO
+  FOLGA
+  FERIADO
+  AUSENCIA_JUSTIFICADA
+  AUSENCIA_NAO_JUSTIFICADA
 }
 enum TipoEscala {
   TRABALHO

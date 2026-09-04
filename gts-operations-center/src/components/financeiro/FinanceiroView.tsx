@@ -7,12 +7,15 @@ import {
   CheckCircle, XCircle, Clock, CreditCard,
   FileText, ChevronLeft, ChevronRight,
   History, User, Calendar,
-  ThumbsUp, ThumbsDown, BarChart2, Tag
+  ThumbsUp, ThumbsDown, BarChart2, Tag,
+  Globe, Zap, Building2
 } from 'lucide-react'
 import { cn, formatCurrency, timeAgo } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
 import { NovaSolicitacaoModal } from './NovaSolicitacaoModal'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { MetricCard } from '@/components/ui/MetricCard'
 
 type Aba = 'resumo' | 'solicitacoes' | 'aprovacoes' | 'historico'
 
@@ -24,10 +27,10 @@ const STATUS_CFG: Record<string, { label: string; icon: React.ElementType; cls: 
   CANCELADO: { label: 'Cancelado', icon: XCircle,     cls: 'text-gray-400 bg-gray-500/10 border-gray-500/20' },
 }
 
-const CENTRO_CFG: Record<string, { label: string; cor: string; emoji: string }> = {
-  PROVEDOR:       { label: 'GTS Provedor',       cor: 'text-blue-400',   emoji: '🌐' },
-  EACE:           { label: 'GTS EACE',           cor: 'text-yellow-400', emoji: '⚡' },
-  ADMINISTRATIVO: { label: 'GTS Administrativo', cor: 'text-purple-400', emoji: '🏢' },
+const CENTRO_CFG: Record<string, { label: string; cor: string; icon: React.ElementType }> = {
+  PROVEDOR:       { label: 'GTS Provedor',       cor: 'text-blue-400',   icon: Globe },
+  EACE:           { label: 'GTS EACE',           cor: 'text-yellow-400', icon: Zap },
+  ADMINISTRATIVO: { label: 'GTS Administrativo', cor: 'text-purple-400', icon: Building2 },
 }
 
 async function fetchFinanceiro(params: any) {
@@ -100,48 +103,43 @@ export function FinanceiroView({ session }: Props) {
   return (
     <div className="space-y-5 animate-fade-in">
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard Financeiro</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Solicitacoes de pagamento, aprovacoes e historico
-            {pendentesAprov.length > 0 && isAdmin && (
-              <span className="ml-2 text-yellow-400 font-medium animate-pulse">
-                · {pendentesAprov.length} aguardando aprovacao
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => refetch()} className="gts-btn-secondary">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button onClick={() => setShowModal(true)} className="gts-btn-primary">
-            <Plus className="w-4 h-4" />
-            Nova Solicitacao
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Dashboard Financeiro"
+        subtitle={
+          pendentesAprov.length > 0 && isAdmin
+            ? `Solicitacoes de pagamento, aprovacoes e historico · ${pendentesAprov.length} aguardando aprovacao`
+            : 'Solicitacoes de pagamento, aprovacoes e historico'
+        }
+        actions={
+          <>
+            <button onClick={() => refetch()} className="gts-btn-secondary">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button onClick={() => setShowModal(true)} className="gts-btn-primary">
+              <Plus className="w-4 h-4" />
+              Nova Solicitacao
+            </button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Aguardando',  value: formatCurrency(kpis.totalPendente ?? 0), count: kpis.countPendente ?? 0, icon: Clock,       cor: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/20' },
-          { label: 'Aprovado',    value: formatCurrency(kpis.totalAprovado ?? 0), count: kpis.countAprovado ?? 0, icon: CheckCircle, cor: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20' },
-          { label: 'Pago',        value: formatCurrency(kpis.totalPago     ?? 0), count: kpis.countPago    ?? 0, icon: CreditCard,  cor: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-          { label: 'Total Geral', value: formatCurrency((kpis.totalPendente ?? 0) + (kpis.totalAprovado ?? 0) + (kpis.totalPago ?? 0)), count: (kpis.countPendente ?? 0) + (kpis.countAprovado ?? 0) + (kpis.countPago ?? 0), icon: DollarSign, cor: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-        ].map((kpi, i) => {
-          const Icon = kpi.icon
-          return (
-            <div key={i} className={cn('gts-card border', kpi.border)}>
-              <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', kpi.bg)}>
-                <Icon className={cn('w-4 h-4', kpi.cor)} />
-              </div>
-              <p className="text-xs text-gray-500 mb-1">{kpi.label}</p>
-              <p className={cn('text-xl font-bold', kpi.cor)}>{kpi.value}</p>
-              <p className="text-xs text-gray-600 mt-0.5">{kpi.count} solicitacao(oes)</p>
-            </div>
-          )
-        })}
+          { label: 'Aguardando',  value: formatCurrency(kpis.totalPendente ?? 0), count: kpis.countPendente ?? 0, icon: Clock,       color: '#fbbf24' },
+          { label: 'Aprovado',    value: formatCurrency(kpis.totalAprovado ?? 0), count: kpis.countAprovado ?? 0, icon: CheckCircle, color: '#60a5fa' },
+          { label: 'Pago',        value: formatCurrency(kpis.totalPago     ?? 0), count: kpis.countPago    ?? 0, icon: CreditCard,  color: '#34d399' },
+          { label: 'Total Geral', value: formatCurrency((kpis.totalPendente ?? 0) + (kpis.totalAprovado ?? 0) + (kpis.totalPago ?? 0)), count: (kpis.countPendente ?? 0) + (kpis.countAprovado ?? 0) + (kpis.countPago ?? 0), icon: DollarSign, color: '#fb923c' },
+        ].map((kpi, i) => (
+          <MetricCard
+            key={i}
+            label={kpi.label}
+            value={kpi.value}
+            icon={kpi.icon}
+            color={kpi.color}
+            sublabel={`${kpi.count} solicitacao(oes)`}
+            className={i === 0 ? 'gts-hud-corner' : undefined}
+          />
+        ))}
       </div>
 
       <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto -mx-1 px-1">
@@ -181,9 +179,9 @@ export function FinanceiroView({ session }: Props) {
         </div>
         <select value={filtroCentro} onChange={e => { setFiltroCentro(e.target.value); setPage(1) }} className="gts-input py-2 text-sm w-auto">
           <option value="">Todos os centros</option>
-          <option value="PROVEDOR">🌐 GTS Provedor</option>
-          <option value="EACE">⚡ GTS EACE</option>
-          <option value="ADMINISTRATIVO">🏢 GTS Administrativo</option>
+          <option value="PROVEDOR">GTS Provedor</option>
+          <option value="EACE">GTS EACE</option>
+          <option value="ADMINISTRATIVO">GTS Administrativo</option>
         </select>
         <select value={filtroStatus} onChange={e => { setFiltroStatus(e.target.value); setPage(1) }} className="gts-input py-2 text-sm w-auto">
           <option value="">Todos os status</option>
@@ -199,10 +197,11 @@ export function FinanceiroView({ session }: Props) {
           {Object.entries(CENTRO_CFG).map(([key, cfg]) => {
             const itens = solicitacoes.filter((s: any) => s.centroCusto === key)
             const total = itens.reduce((sum: number, s: any) => sum + s.valor, 0)
+            const CentroIcon = cfg.icon
             return (
               <div key={key} className="gts-card">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">{cfg.emoji}</span>
+                  <CentroIcon className={cn('w-4 h-4', cfg.cor)} />
                   <h3 className={cn('font-bold', cfg.cor)}>{cfg.label}</h3>
                 </div>
                 <p className="text-2xl font-black text-white mb-1">{formatCurrency(total)}</p>
@@ -242,6 +241,7 @@ export function FinanceiroView({ session }: Props) {
             const scfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
             const StatusIcon = scfg.icon
+            const CentroIcon = ccfg.icon
             return (
               <div key={s.id} className="bg-[#111827] border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all">
                 <div className="flex items-start justify-between gap-4">
@@ -253,7 +253,7 @@ export function FinanceiroView({ session }: Props) {
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-3 text-xs text-gray-400">
-                      <span className={cn('flex items-center gap-1', ccfg.cor)}>{ccfg.emoji} {ccfg.label}</span>
+                      <span className={cn('flex items-center gap-1', ccfg.cor)}><CentroIcon className="w-3 h-3" />{ccfg.label}</span>
                       <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{s.subcategoria}</span>
                       {s.fornecedor && <span className="flex items-center gap-1"><User className="w-3 h-3" />{s.fornecedor}</span>}
                       {s.tecnico && <span className="flex items-center gap-1 text-yellow-400"><User className="w-3 h-3" />Tec: {s.tecnico.nome}</span>}
@@ -295,13 +295,14 @@ export function FinanceiroView({ session }: Props) {
             </div>
           ) : pendentesAprov.map((s: any) => {
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
+            const CentroIcon = ccfg.icon
             return (
               <div key={s.id} className="bg-[#111827] border border-yellow-500/20 rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-bold mb-1">{s.titulo}</h3>
                     <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-2">
-                      <span className={ccfg.cor}>{ccfg.emoji} {ccfg.label}</span>
+                      <span className={cn('flex items-center gap-1', ccfg.cor)}><CentroIcon className="w-3 h-3" />{ccfg.label}</span>
                       <span>{s.subcategoria}</span>
                       {s.fornecedor && <span>Favorecido: {s.fornecedor}</span>}
                       {s.tecnico && <span className="text-yellow-400">Tec: {s.tecnico.nome}</span>}

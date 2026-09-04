@@ -4,6 +4,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { TIPO_CHAMADO_LABELS } from '@/types'
+import { formatarHorasHM, situacaoLabel, diaSemanaAbrev, ehSabado } from '@/lib/jornada'
 
 function tipoLabelPdf(tipo: string) {
   return (TIPO_CHAMADO_LABELS as Record<string, string>)[tipo] || tipo
@@ -130,13 +131,15 @@ const CORES_TOKEN: Record<string, [number, number, number]> = {
 // =============================================
 // RELATORIO DE CHAMADOS
 // =============================================
-export function gerarPDFChamados(chamados: any[], filtros: { periodo: string; equipe?: string }) {
+// Chamados e Qualidade/SLA saem juntos no mesmo PDF (mesmo periodo mensal) -
+// evita gerar dois arquivos separados para uma conferencia que sempre anda junta.
+export function gerarPDFChamadosQualidade(chamados: any[], qualidade: any, filtros: { periodo: string; equipe?: string }) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const width = doc.internal.pageSize.getWidth()
 
+  // ---------- Pagina 1: Chamados ----------
   let y = cabecalho(doc, 'Relatorio de Chamados', `Periodo: ${filtros.periodo}${filtros.equipe ? ` | Equipe: ${filtros.equipe}` : ''}`)
 
-  // KPIs
   const total      = chamados.length
   const finalizados = chamados.filter(c => c.status === 'FINALIZADO').length
   const abertos    = chamados.filter(c => c.status === 'ABERTO').length
@@ -175,8 +178,67 @@ export function gerarPDFChamados(chamados: any[], filtros: { periodo: string; eq
     },
   })
 
+  // ---------- Pagina 2+: Qualidade / SLA (mesmo periodo) ----------
+  doc.addPage()
+  y = cabecalho(doc, 'Relatorio Mensal de Qualidade do Suporte', filtros.periodo)
+
+  const boxW2 = (width - 24 - 9) / 4
+  kpiBox(doc, 'Chamados no mes', String(qualidade.totalChamados), 12, y, boxW2, CORES.azul)
+  kpiBox(doc, 'Reincidencias', `${qualidade.reincidencia.total} (${qualidade.reincidencia.percentual}%)`, 12 + boxW2 + 3, y, boxW2, CORES.amarelo)
+  kpiBox(doc, 'SLA resposta OK', qualidade.sla.resposta.percentual !== null ? `${qualidade.sla.resposta.percentual}%` : '-', 12 + (boxW2 + 3) * 2, y, boxW2, CORES.verde)
+  kpiBox(doc, 'SLA resolucao OK', qualidade.sla.resolucao.percentual !== null ? `${qualidade.sla.resolucao.percentual}%` : '-', 12 + (boxW2 + 3) * 3, y, boxW2, CORES.verde)
+  y += 28
+
+  y = secao(doc, 'Reincidencia por Tipo de Chamado', y)
+  autoTable(doc, {
+    startY: y,
+    margin: { left: 12, right: 12 },
+    head: [['Tipo', 'Total no Mes', 'Reincidentes', '% Reincidencia']],
+    body: Object.entries(qualidade.reincidencia.porTipo).map(([tipo, v]: [string, any]) => [
+      tipoLabelPdf(tipo),
+      v.total,
+      v.reincidentes,
+      v.total > 0 ? `${Math.round((v.reincidentes / v.total) * 1000) / 10}%` : '0%',
+    ]),
+    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, textColor: CORES.dark },
+    alternateRowStyles: { fillColor: CORES.fundo },
+  })
+  y = (doc as any).lastAutoTable.finalY + 8
+
+  if (qualidade.reincidencia.porCliente.length > 0) {
+    y = secao(doc, 'Clientes com Chamados Reincidentes', y)
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['Cliente', 'Telefone', 'Qtd. de Reincidencias']],
+      body: qualidade.reincidencia.porCliente.slice(0, 25).map((c: any) => [c.cliente, c.telefone || '-', c.quantidade]),
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      alternateRowStyles: { fillColor: CORES.fundo },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  if (y > 155) { doc.addPage(); y = 20 }
+  y = secao(doc, 'Evolucao dos Ultimos 6 Meses', y)
+  autoTable(doc, {
+    startY: y,
+    margin: { left: 12, right: 12 },
+    head: [['Mes', 'Chamados', '% Reincidencia', '% SLA Resolucao']],
+    body: qualidade.evolucao.map((e: any) => [
+      e.mes,
+      e.totalChamados,
+      `${e.reincidenciaPercentual}%`,
+      e.slaResolucaoPercentual !== null ? `${e.slaResolucaoPercentual}%` : '-',
+    ]),
+    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, textColor: CORES.dark },
+    alternateRowStyles: { fillColor: CORES.fundo },
+  })
+
   rodape(doc)
-  doc.save(`chamados-${new Date().toISOString().split('T')[0]}.pdf`)
+  doc.save(`chamados-qualidade-${filtros.periodo.replace(/\s|\//g, '-')}.pdf`)
 }
 
 // =============================================
@@ -570,58 +632,207 @@ export function gerarPDFRelatorioCompleto(dados: any) {
 // =============================================
 // RELATORIO / ESPELHO DE PONTO E HORAS EXTRAS
 // =============================================
-export function gerarPDFPonto(registros: any[], porEquipe: any[]) {
+function somarPorTecnico(porTecnico: any[]) {
+  return porTecnico.reduce((acc, t) => ({
+    horasTrabalhadas: acc.horasTrabalhadas + t.horasTrabalhadas,
+    horasExtras: acc.horasExtras + t.horasExtras,
+    totalAprovado: acc.totalAprovado + t.totalAprovado,
+    totalRejeitado: acc.totalRejeitado + t.totalRejeitado,
+    totalPendente: acc.totalPendente + t.totalPendente,
+    faltas: acc.faltas + t.faltas,
+    atestados: acc.atestados + t.atestados,
+    folgas: acc.folgas + t.folgas,
+    sabadosTrabalhados: acc.sabadosTrabalhados + t.sabadosTrabalhados,
+  }), { horasTrabalhadas: 0, horasExtras: 0, totalAprovado: 0, totalRejeitado: 0, totalPendente: 0, faltas: 0, atestados: 0, folgas: 0, sabadosTrabalhados: 0 })
+}
+
+function linhaResumoSecundaria(doc: jsPDF, totais: ReturnType<typeof somarPorTecnico>, y: number): number {
+  doc.setFontSize(8)
+  doc.setTextColor(...CORES.dark)
+  doc.text(
+    `Rejeitadas: ${formatarHorasHM(totais.totalRejeitado)}    Faltas: ${totais.faltas}    Atestados: ${totais.atestados}    Folgas: ${totais.folgas}    Sabados trabalhados: ${totais.sabadosTrabalhados}`,
+    12, y
+  )
+  return y + 8
+}
+
+// Resumo executivo em texto - interpreta os numeros agregados pra quem vai
+// ler o relatorio sem abrir o sistema (ex: superior aprovando horas extras).
+function linhasResumoExecutivoPonto(porTecnico: any[], totais: ReturnType<typeof somarPorTecnico>, totalRegistros: number): string[] {
+  if (porTecnico.length === 0) return []
+
+  const linhas: string[] = [
+    `Periodo com ${totalRegistros} registro(s) de ${porTecnico.length} tecnico(s)`,
+    `Horas trabalhadas: ${formatarHorasHM(totais.horasTrabalhadas)}  -  Horas extras: ${formatarHorasHM(totais.horasExtras)} ` +
+      `(Aprovadas ${formatarHorasHM(totais.totalAprovado)}, Pendentes ${formatarHorasHM(totais.totalPendente)}, Rejeitadas ${formatarHorasHM(totais.totalRejeitado)})`,
+  ]
+
+  const maisExtras = [...porTecnico].sort((a, b) => b.horasExtras - a.horasExtras)[0]
+  if (maisExtras && maisExtras.horasExtras > 0) {
+    linhas.push(`Maior volume de horas extras: ${maisExtras.nome} (${maisExtras.equipeNome}) com ${formatarHorasHM(maisExtras.horasExtras)}`)
+  }
+
+  const totalPontoIncompleto = porTecnico.reduce((s, t) => s + (t.pontoIncompleto || 0), 0)
+  if (totalPontoIncompleto > 0) {
+    linhas.push(`Atencao: ${totalPontoIncompleto} registro(s) com ponto incompleto (faltando bater algum horario) precisam de correcao`)
+  }
+
+  const maisAusente = [...porTecnico].sort((a, b) => (b.faltas + b.atestados) - (a.faltas + a.atestados))[0]
+  if (maisAusente && (maisAusente.faltas + maisAusente.atestados) >= 3) {
+    linhas.push(`Atencao: ${maisAusente.nome} concentrou ${maisAusente.faltas + maisAusente.atestados} falta(s)/atestado(s) no periodo`)
+  }
+
+  if (totais.sabadosTrabalhados > 0) {
+    linhas.push(`Sabados trabalhados no periodo: ${totais.sabadosTrabalhados}`)
+  }
+  if (totais.totalRejeitado > 0) {
+    linhas.push(`Horas extras rejeitadas no periodo: ${formatarHorasHM(totais.totalRejeitado)}`)
+  }
+
+  return linhas
+}
+
+function resumoExecutivoPonto(doc: jsPDF, linhas: string[], y: number): number {
+  if (linhas.length === 0) return y
+  y = secao(doc, 'Resumo Executivo', y)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.dark)
+  linhas.forEach((linha, i) => doc.text(`- ${linha}`, 14, y + 4 + i * 6))
+  return y + linhas.length * 6 + 10
+}
+
+// Card visual por tecnico - substitui a tabela unica corrida por um bloco
+// individual com os numeros de cada um em destaque, mais facil de escanear
+// rapidamente do que uma linha de tabela com 11 colunas.
+function desenharCardTecnico(doc: jsPDF, t: any, x: number, y: number, w: number) {
+  doc.setFillColor(...CORES.fundo)
+  doc.setDrawColor(...CORES.cinza)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(x, y, w, 34, 2, 2, 'FD')
+
+  doc.setFillColor(...CORES.azul)
+  doc.roundedRect(x, y, 3, 34, 1, 1, 'F')
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...CORES.dark)
+  doc.text(t.nome, x + 6, y + 6)
+
+  doc.setFontSize(6.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.cinza)
+  doc.text(t.equipeNome, x + 6, y + 10.5)
+
+  doc.setFontSize(7.5)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...CORES.dark)
+  doc.text(`Trabalhadas: ${formatarHorasHM(t.horasTrabalhadas)}`, x + 6, y + 16.5)
+  doc.setTextColor(...CORES.amarelo)
+  doc.text(`Extras: ${formatarHorasHM(t.horasExtras)}`, x + 6, y + 21.5)
+
+  doc.setFontSize(6.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.verde)
+  doc.text(`Apr ${formatarHorasHM(t.totalAprovado)}`, x + 6, y + 26.5)
+  doc.setTextColor(...CORES.vermelho)
+  doc.text(`Rej ${formatarHorasHM(t.totalRejeitado)}`, x + 6 + w * 0.34, y + 26.5)
+  doc.setTextColor(...CORES.amarelo)
+  doc.text(`Pen ${formatarHorasHM(t.totalPendente)}`, x + 6 + w * 0.67, y + 26.5)
+
+  const extras: string[] = []
+  if (t.faltas > 0) extras.push(`${t.faltas} falta(s)`)
+  if (t.atestados > 0) extras.push(`${t.atestados} atestado(s)`)
+  if (t.folgas > 0) extras.push(`${t.folgas} folga(s)`)
+  doc.setFontSize(6.5)
+  doc.setTextColor(...CORES.cinza)
+  doc.text(extras.length > 0 ? extras.join('  -  ') : 'Sem faltas, atestados ou folgas no periodo', x + 6, y + 31)
+}
+
+function cardsPorTecnico(doc: jsPDF, porTecnico: any[], y: number): number {
+  const width = doc.internal.pageSize.getWidth()
+  const margin = 12
+  const gap = 4
+  const colunas = 3
+  const cardW = (width - margin * 2 - gap * (colunas - 1)) / colunas
+  const cardH = 34
+
+  let cursorY = y
+  porTecnico.forEach((t, i) => {
+    const col = i % colunas
+    if (col === 0) {
+      if (i > 0) cursorY += cardH + gap
+      if (cursorY + cardH > 185) { doc.addPage(); cursorY = 20 }
+    }
+    desenharCardTecnico(doc, t, margin + col * (cardW + gap), cursorY, cardW)
+  })
+
+  return cursorY + cardH + 8
+}
+
+function tabelaEspelhoDetalhado(doc: jsPDF, registros: any[], y: number) {
+  autoTable(doc, {
+    startY: y,
+    margin: { left: 12, right: 12 },
+    head: [['Funcionario', 'Equipe', 'Data', 'Dia', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Horas', 'Extras', 'Status', 'Situacao', 'Observacao']],
+    body: registros.map(r => {
+      const data = new Date(r.data)
+      return [
+        r.funcionario?.nome || '',
+        r.funcionario?.equipe?.nome || '',
+        data.toLocaleDateString('pt-BR'),
+        diaSemanaAbrev(data),
+        r.entrada ? new Date(r.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        r.saidaAlmoco ? new Date(r.saidaAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        r.retornoAlmoco ? new Date(r.retornoAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        r.saida ? new Date(r.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
+        formatarHorasHM(r.horasTrabalhadas),
+        formatarHorasHM(r.horasExtras),
+        r.statusHorasExtras,
+        situacaoLabel(r.tipoRegistro, r.horasTrabalhadas),
+        r.observacao || '-',
+      ]
+    }),
+    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 7, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 6.5, textColor: CORES.dark },
+    alternateRowStyles: { fillColor: CORES.fundo },
+    didParseCell: (data: any) => {
+      const registro = registros[data.row.index]
+      if (!registro) return
+      if (ehSabado(new Date(registro.data))) {
+        data.cell.styles.fillColor = [239, 246, 255]
+      }
+    },
+  })
+}
+
+export function gerarPDFPonto(registros: any[], porTecnico: any[]) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const width = doc.internal.pageSize.getWidth()
 
   let y = cabecalho(doc, 'Espelho de Ponto e Horas Extras', `Emitido em: ${new Date().toLocaleDateString('pt-BR')}`)
 
-  const totalPendente = registros.reduce((s, r) => s + (r.statusHorasExtras === 'PENDENTE' ? (r.horasExtras || 0) : 0), 0)
-  const totalAprovado  = registros.reduce((s, r) => s + (r.statusHorasExtras === 'APROVADA' ? (r.horasExtras || 0) : 0), 0)
+  const totais = somarPorTecnico(porTecnico)
   const totalRegistros = registros.length
   const boxW = (width - 24 - 9) / 4
 
   kpiBox(doc, 'Registros no periodo', String(totalRegistros), 12, y, boxW, CORES.azul)
-  kpiBox(doc, 'Horas extras pendentes', `${totalPendente.toFixed(1)}h`, 12 + boxW + 3, y, boxW, CORES.amarelo)
-  kpiBox(doc, 'Horas extras aprovadas', `${totalAprovado.toFixed(1)}h`, 12 + (boxW+3)*2, y, boxW, CORES.verde)
-  kpiBox(doc, 'Equipes', String(porEquipe.length), 12 + (boxW+3)*3, y, boxW, CORES.cinza)
+  kpiBox(doc, 'Horas extras pendentes', formatarHorasHM(totais.totalPendente), 12 + boxW + 3, y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Horas extras aprovadas', formatarHorasHM(totais.totalAprovado), 12 + (boxW+3)*2, y, boxW, CORES.verde)
+  kpiBox(doc, 'Tecnicos', String(porTecnico.length), 12 + (boxW+3)*3, y, boxW, CORES.cinza)
   y += 28
+  y = linhaResumoSecundaria(doc, totais, y)
+  y = resumoExecutivoPonto(doc, linhasResumoExecutivoPonto(porTecnico, totais, totalRegistros), y)
 
-  if (porEquipe.length > 0) {
-    y = secao(doc, 'Horas Extras por Equipe', y)
-    autoTable(doc, {
-      startY: y,
-      margin: { left: 12, right: 12 },
-      head: [['Equipe', 'Pendente (h)', 'Aprovada (h)']],
-      body: porEquipe.map(e => [e.equipeNome, e.totalPendente.toFixed(1), e.totalAprovado.toFixed(1)]),
-      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 7, textColor: CORES.dark },
-      alternateRowStyles: { fillColor: CORES.fundo },
-    })
-    y = (doc as any).lastAutoTable.finalY + 8
+  if (porTecnico.length > 0) {
+    if (y > 150) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Horas Extras por Tecnico', y)
+    y = cardsPorTecnico(doc, porTecnico, y)
   }
 
+  if (y > 170) { doc.addPage(); y = 20 }
   y = secao(doc, 'Espelho de Ponto Detalhado', y)
-  autoTable(doc, {
-    startY: y,
-    margin: { left: 12, right: 12 },
-    head: [['Funcionario', 'Equipe', 'Data', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Horas', 'Extras', 'Status']],
-    body: registros.map(r => [
-      r.funcionario?.nome || '',
-      r.funcionario?.equipe?.nome || '',
-      new Date(r.data).toLocaleDateString('pt-BR'),
-      r.entrada ? new Date(r.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-      r.saidaAlmoco ? new Date(r.saidaAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-      r.retornoAlmoco ? new Date(r.retornoAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-      r.saida ? new Date(r.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-      r.horasTrabalhadas ?? '-',
-      r.horasExtras ?? '-',
-      r.statusHorasExtras,
-    ]),
-    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 7, textColor: CORES.dark },
-    alternateRowStyles: { fillColor: CORES.fundo },
-  })
+  tabelaEspelhoDetalhado(doc, registros, y)
 
   rodape(doc)
   doc.save(`espelho-ponto-${new Date().toISOString().split('T')[0]}.pdf`)
@@ -634,7 +845,7 @@ export function gerarPDFPonto(registros: any[], porEquipe: any[]) {
 
 export function gerarPDFRelatorioGeralHorasExtras(
   registros: any[],
-  porEquipe: any[],
+  porTecnico: any[],
   opcoes: { incluirResumo: boolean; incluirDetalhado: boolean },
   filtros: { equipeLabel: string; periodoLabel: string }
 ) {
@@ -643,61 +854,36 @@ export function gerarPDFRelatorioGeralHorasExtras(
 
   let y = cabecalho(doc, 'Relatorio Geral de Horas Extras', `${filtros.equipeLabel} - ${filtros.periodoLabel}`)
 
-  const totalPendente = registros.reduce((s, r) => s + (r.statusHorasExtras === 'PENDENTE' ? (r.horasExtras || 0) : 0), 0)
-  const totalAprovado  = registros.reduce((s, r) => s + (r.statusHorasExtras === 'APROVADA' ? (r.horasExtras || 0) : 0), 0)
+  const totais = somarPorTecnico(porTecnico)
   const totalRegistros = registros.length
   const boxW = (width - 24 - 9) / 4
 
   kpiBox(doc, 'Registros no periodo', String(totalRegistros), 12, y, boxW, CORES.azul)
-  kpiBox(doc, 'Horas extras pendentes', `${totalPendente.toFixed(1)}h`, 12 + boxW + 3, y, boxW, CORES.amarelo)
-  kpiBox(doc, 'Horas extras aprovadas', `${totalAprovado.toFixed(1)}h`, 12 + (boxW+3)*2, y, boxW, CORES.verde)
-  kpiBox(doc, 'Equipes no periodo', String(porEquipe.length), 12 + (boxW+3)*3, y, boxW, CORES.cinza)
+  kpiBox(doc, 'Horas extras pendentes', formatarHorasHM(totais.totalPendente), 12 + boxW + 3, y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Horas extras aprovadas', formatarHorasHM(totais.totalAprovado), 12 + (boxW+3)*2, y, boxW, CORES.verde)
+  kpiBox(doc, 'Tecnicos no periodo', String(porTecnico.length), 12 + (boxW+3)*3, y, boxW, CORES.cinza)
   y += 28
+  y = linhaResumoSecundaria(doc, totais, y)
 
   if (opcoes.incluirResumo) {
-    y = secao(doc, 'Resumo de Horas Extras por Equipe', y)
-    if (porEquipe.length === 0) {
+    y = resumoExecutivoPonto(doc, linhasResumoExecutivoPonto(porTecnico, totais, totalRegistros), y)
+
+    if (porTecnico.length > 0 && y > 150) { doc.addPage(); y = 20 }
+    y = secao(doc, 'Resumo de Horas Extras por Tecnico', y)
+    if (porTecnico.length === 0) {
       doc.setFontSize(9)
       doc.setTextColor(...CORES.cinza)
       doc.text('Nenhum registro encontrado para os filtros selecionados.', 12, y + 4)
       y += 14
     } else {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: 12, right: 12 },
-        head: [['Equipe', 'Pendente (h)', 'Aprovada (h)']],
-        body: porEquipe.map(e => [e.equipeNome, e.totalPendente.toFixed(1), e.totalAprovado.toFixed(1)]),
-        headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7, textColor: CORES.dark },
-        alternateRowStyles: { fillColor: CORES.fundo },
-      })
-      y = (doc as any).lastAutoTable.finalY + 8
+      y = cardsPorTecnico(doc, porTecnico, y)
     }
   }
 
   if (opcoes.incluirDetalhado) {
     if (y > 170) { doc.addPage(); y = 20 }
     y = secao(doc, 'Espelho de Ponto Detalhado', y)
-    autoTable(doc, {
-      startY: y,
-      margin: { left: 12, right: 12 },
-      head: [['Funcionario', 'Equipe', 'Data', 'Entrada', 'Saida Almoco', 'Retorno', 'Saida', 'Horas', 'Extras', 'Status']],
-      body: registros.map(r => [
-        r.funcionario?.nome || '',
-        r.funcionario?.equipe?.nome || '',
-        new Date(r.data).toLocaleDateString('pt-BR'),
-        r.entrada ? new Date(r.entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        r.saidaAlmoco ? new Date(r.saidaAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        r.retornoAlmoco ? new Date(r.retornoAlmoco).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        r.saida ? new Date(r.saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-',
-        r.horasTrabalhadas ?? '-',
-        r.horasExtras ?? '-',
-        r.statusHorasExtras,
-      ]),
-      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 7, textColor: CORES.dark },
-      alternateRowStyles: { fillColor: CORES.fundo },
-    })
+    tabelaEspelhoDetalhado(doc, registros, y)
   }
 
   rodape(doc)
@@ -871,46 +1057,28 @@ export function gerarPDFDiario(dados: any, dataLabel: string) {
 }
 
 // =============================================
-// RELATORIO MENSAL DE QUALIDADE (SLA / REINCIDENCIA)
+// CANCELAMENTOS DO MES (IXC)
 // =============================================
 
-export function gerarPDFQualidade(dados: any, mesLabel: string) {
+export function gerarPDFCancelados(dados: any, mesLabel: string) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const width = doc.internal.pageSize.getWidth()
 
-  let y = cabecalho(doc, 'Relatorio Mensal de Qualidade do Suporte', mesLabel)
+  let y = cabecalho(doc, 'Relatorio de Cancelamentos do Mes (IXC)', mesLabel)
 
-  const boxW = (width - 24 - 9) / 4
-  kpiBox(doc, 'Chamados no mes', String(dados.totalChamados), 12, y, boxW, CORES.azul)
-  kpiBox(doc, 'Reincidencias', `${dados.reincidencia.total} (${dados.reincidencia.percentual}%)`, 12 + boxW + 3, y, boxW, CORES.amarelo)
-  kpiBox(doc, 'SLA resposta OK', dados.sla.resposta.percentual !== null ? `${dados.sla.resposta.percentual}%` : '-', 12 + (boxW + 3) * 2, y, boxW, CORES.verde)
-  kpiBox(doc, 'SLA resolucao OK', dados.sla.resolucao.percentual !== null ? `${dados.sla.resolucao.percentual}%` : '-', 12 + (boxW + 3) * 3, y, boxW, CORES.verde)
+  const boxW = (width - 24 - 6) / 3
+  kpiBox(doc, 'Total de Cancelamentos', String(dados.total), 12, y, boxW, CORES.vermelho)
+  kpiBox(doc, 'Principal Motivo', dados.porMotivo[0]?.motivo?.slice(0, 28) || '-', 12 + boxW + 3, y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Cidade com Mais Cancelamentos', dados.porCidade[0]?.cidade?.slice(0, 24) || '-', 12 + (boxW + 3) * 2, y, boxW, CORES.azul)
   y += 28
 
-  y = secao(doc, 'Reincidencia por Tipo de Chamado', y)
-  autoTable(doc, {
-    startY: y,
-    margin: { left: 12, right: 12 },
-    head: [['Tipo', 'Total no Mes', 'Reincidentes', '% Reincidencia']],
-    body: Object.entries(dados.reincidencia.porTipo).map(([tipo, v]: [string, any]) => [
-      tipoLabelPdf(tipo),
-      v.total,
-      v.reincidentes,
-      v.total > 0 ? `${Math.round((v.reincidentes / v.total) * 1000) / 10}%` : '0%',
-    ]),
-    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 8, textColor: CORES.dark },
-    alternateRowStyles: { fillColor: CORES.fundo },
-  })
-  y = (doc as any).lastAutoTable.finalY + 8
-
-  if (dados.reincidencia.porCliente.length > 0) {
-    y = secao(doc, 'Clientes com Chamados Reincidentes', y)
+  if (dados.porCidade.length > 0) {
+    y = secao(doc, 'Cancelamentos por Cidade', y)
     autoTable(doc, {
       startY: y,
       margin: { left: 12, right: 12 },
-      head: [['Cliente', 'Telefone', 'Qtd. de Reincidencias']],
-      body: dados.reincidencia.porCliente.slice(0, 25).map((c: any) => [c.cliente, c.telefone || '-', c.quantidade]),
+      head: [['Cidade', 'Quantidade']],
+      body: dados.porCidade.map((c: any) => [c.cidade, c.quantidade]),
       headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8, textColor: CORES.dark },
       alternateRowStyles: { fillColor: CORES.fundo },
@@ -919,24 +1087,29 @@ export function gerarPDFQualidade(dados: any, mesLabel: string) {
   }
 
   if (y > 240) { doc.addPage(); y = 20 }
-  y = secao(doc, 'Evolucao dos Ultimos 6 Meses', y)
-  autoTable(doc, {
-    startY: y,
-    margin: { left: 12, right: 12 },
-    head: [['Mes', 'Chamados', '% Reincidencia', '% SLA Resolucao']],
-    body: dados.evolucao.map((e: any) => [
-      e.mes,
-      e.totalChamados,
-      `${e.reincidenciaPercentual}%`,
-      e.slaResolucaoPercentual !== null ? `${e.slaResolucaoPercentual}%` : '-',
-    ]),
-    headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 8, textColor: CORES.dark },
-    alternateRowStyles: { fillColor: CORES.fundo },
-  })
+  y = secao(doc, 'Clientes Cancelados no Periodo', y)
+  if (dados.cancelados.length === 0) {
+    y = textoVazio(doc, 'Nenhum cancelamento registrado no periodo.', y)
+  } else {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['Cliente', 'Cidade', 'Data Cancel.', 'Motivo']],
+      body: dados.cancelados.map((c: any) => [
+        c.clienteNome,
+        c.cidade || '-',
+        new Date(c.dataCancelamento + 'T12:00:00').toLocaleDateString('pt-BR'),
+        c.motivoResumo || 'Nao informado',
+      ]),
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      alternateRowStyles: { fillColor: CORES.fundo },
+      columnStyles: { 3: { cellWidth: 80 } },
+    })
+  }
 
   rodape(doc)
-  doc.save(`relatorio-qualidade-${mesLabel.replace(/\s|\//g, '-')}.pdf`)
+  doc.save(`relatorio-cancelados-${mesLabel.replace(/\s|\//g, '-')}.pdf`)
 }
 
 // =============================================
@@ -999,4 +1172,91 @@ export function gerarPDFPainelDiarioEquipes(paineis: any[]) {
 
   rodape(doc)
   doc.save(`painel-diario-equipes-${new Date().toISOString().split('T')[0]}.pdf`)
+}
+
+// =============================================
+// RELATORIO DE TESTE DE VELOCIDADE / DIAGNOSTICO
+// =============================================
+const CLASSIFICACAO_LABEL_PDF: Record<string, string> = {
+  NORMAL: 'Dentro dos parametros analisados',
+  ATENCAO: 'Atencao',
+  POSSIVEL_PROBLEMA: 'Possivel Problema',
+  PROBLEMA: 'Problema Identificado',
+  INDETERMINADO: 'Nao foi possivel determinar',
+}
+
+const ORIGEM_LABEL_PDF: Record<string, string> = {
+  WIFI: 'Wi-Fi', DISPOSITIVO: 'Dispositivo do cliente', ROTEADOR: 'Roteador', ONU_ONT: 'ONU/ONT',
+  FIBRA: 'Fibra', SINAL_OPTICO: 'Sinal Optico', REDE_LOCAL: 'Rede Local', REDE_GTSNET: 'Rede GTSNET',
+  DNS: 'DNS', ROTA_EXTERNA: 'Rota Externa', SERVIDOR: 'Servidor', INDETERMINADO: 'Indeterminado',
+}
+
+export function gerarRelatorioDiagnostico(diagnostico: any, chamado?: any, modo: 'salvar' | 'abrir' = 'salvar') {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const width = doc.internal.pageSize.getWidth()
+  const resumo = diagnostico.resumo || {}
+
+  let y = cabecalho(doc, 'Teste de Velocidade / Diagnostico', 'Diagnostico e Monitoramento de Rede')
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.dark)
+  doc.text(`Cliente: ${chamado?.cliente ?? '-'}`, 12, y)
+  y += 5
+  doc.text(`Plano: ${resumo.planoMbps ? `${resumo.planoMbps} Mbps` : 'Nao informado'}`, 12, y)
+  y += 5
+  doc.text(`Data/Hora: ${new Date(diagnostico.iniciadoEm ?? diagnostico.createdAt).toLocaleString('pt-BR')}`, 12, y)
+  y += 5
+  doc.text(`ID do Teste: ${diagnostico.id}`, 12, y)
+  y += 8
+
+  const boxW = (width - 24 - 8) / 4
+  kpiBox(doc, 'Download', resumo.downloadMbps != null ? `${resumo.downloadMbps.toFixed(0)} Mbps` : '-', 12, y, boxW, CORES.azul)
+  kpiBox(doc, 'Latencia', resumo.latenciaMs != null ? `${resumo.latenciaMs.toFixed(0)} ms` : '-', 12 + (boxW + 3), y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Jitter', resumo.jitterMs != null ? `${resumo.jitterMs.toFixed(0)} ms` : '-', 12 + (boxW + 3) * 2, y, boxW, CORES.cinza)
+  kpiBox(doc, 'Perda', resumo.perdaPct != null ? `${resumo.perdaPct.toFixed(1)}%` : '-', 12 + (boxW + 3) * 3, y, boxW, CORES.vermelho)
+  y += 28
+
+  y = secao(doc, 'Resultado', y)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...CORES.dark)
+  doc.text(CLASSIFICACAO_LABEL_PDF[diagnostico.classificacao] || diagnostico.classificacao, 12, y)
+  y += 6
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CORES.cinza)
+  if (diagnostico.origemProvavel) {
+    doc.text(`Causa provavel: ${ORIGEM_LABEL_PDF[diagnostico.origemProvavel] || diagnostico.origemProvavel}`, 12, y)
+    y += 5
+  }
+  if (diagnostico.confianca != null) {
+    doc.text(`Confianca: ${diagnostico.confianca}%`, 12, y)
+    y += 5
+  }
+  if (diagnostico.hipotese) {
+    doc.text(diagnostico.hipotese, 12, y, { maxWidth: width - 24 })
+    y += 8
+  }
+
+  const recomendacoes: string[] = Array.isArray(diagnostico.recomendacoes) ? diagnostico.recomendacoes : []
+  if (recomendacoes.length > 0) {
+    y = secao(doc, 'Recomendacoes', y)
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['#', 'Recomendacao']],
+      body: recomendacoes.map((r, i) => [String(i + 1), r]),
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      alternateRowStyles: { fillColor: CORES.fundo },
+    })
+  }
+
+  rodape(doc)
+  if (modo === 'abrir') {
+    doc.output('dataurlnewwindow')
+  } else {
+    doc.save(`GTS-${diagnostico.id}.pdf`)
+  }
 }

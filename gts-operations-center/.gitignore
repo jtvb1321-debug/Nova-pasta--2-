@@ -47,3 +47,14 @@ cloudflared.log
 
 # dados sensiveis de clientes (importacao)
 scripts/clientes_importar.json
+
+# uploads em runtime (fotos de evidencia, recibos) - conteudo gerado pelo
+# uso do sistema, nunca codigo-fonte. Nao deve ir para o historico do git.
+/public/uploads/
+
+# arquivos de teste/scratch avulsos, nao fazem parte do codigo
+nfeeee.txt
+
+# script local de backup (Windows/Task Scheduler) - contem a senha do
+# Postgres em texto puro e so faz sentido nesta maquina, nunca no repositorio
+scripts/backup-diario.ps1

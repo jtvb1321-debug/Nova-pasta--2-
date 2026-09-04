@@ -157,7 +157,7 @@ export function SearchModal({ onClose }: Props) {
                     onMouseEnter={() => setSelecionado(i)}
                     className={cn(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors text-left',
-                      isSelected ? 'bg-gts-blue/10' : 'hover:bg-white/[0.03]'
+                      isSelected ? 'bg-orange-500/10' : 'hover:bg-white/[0.03]'
                     )}
                   >
                     <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', cfg.cor.split(' ')[1])}>
@@ -179,7 +179,7 @@ export function SearchModal({ onClose }: Props) {
                       <span className={cn('text-xs px-2 py-0.5 rounded-full', cfg.cor)}>
                         {cfg.label}
                       </span>
-                      {isSelected && <ArrowRight className="w-3.5 h-3.5 text-gts-blue" />}
+                      {isSelected && <ArrowRight className="w-3.5 h-3.5 text-orange-400" />}
                     </div>
                   </button>
                 )

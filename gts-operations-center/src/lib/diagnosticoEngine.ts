@@ -97,6 +97,14 @@ export interface EntradaDiagnostico {
 export interface ResultadoDiagnostico {
   classificacao: Classificacao
   origemProvavel: OrigemProvavel
+  // Nivel de confianca da hipotese (0-100) - quanto mais direta a regra que
+  // disparou (ex: sinal optico critico), maior a confianca; quando faltam
+  // dados a confianca cai, nunca afirmando uma causa com certeza absoluta.
+  confianca: number
+  // Fatos observados que embasam a hipotese (o que foi medido).
+  evidencias: string[]
+  // Causa provavel em uma frase, separada das recomendacoes/proximos passos.
+  hipotese: string
   recomendacoes: string[]
 }
 
@@ -119,6 +127,9 @@ export function classificar(
     return {
       classificacao: 'INDETERMINADO',
       origemProvavel: 'INDETERMINADO',
+      confianca: 0,
+      evidencias: [],
+      hipotese: 'Nao foi possivel determinar a causa provavel.',
       recomendacoes: ['Nao foi possivel coletar dados suficientes. Repita o diagnostico.'],
     }
   }
@@ -128,8 +139,10 @@ export function classificar(
     return {
       classificacao: 'PROBLEMA',
       origemProvavel: 'SINAL_OPTICO',
+      confianca: 92,
+      evidencias: [`Sinal optico critico (${sinalRxDbm.toFixed(1)} dBm)`],
+      hipotese: 'Provavel problema na fibra/conexao optica (conector, drop, CTO ou emenda).',
       recomendacoes: [
-        `Sinal optico critico (${sinalRxDbm.toFixed(1)} dBm)`,
         'Verificar conectores',
         'Verificar drop',
         'Verificar CTO',
@@ -145,8 +158,10 @@ export function classificar(
     return {
       classificacao: 'PROBLEMA',
       origemProvavel: 'ONU_ONT',
+      confianca: 95,
+      evidencias: [`ONU com status "${onuStatus}"`],
+      hipotese: 'Provavel problema na ONU (sem alimentacao ou fibra desconectada).',
       recomendacoes: [
-        `ONU com status "${onuStatus}"`,
         'Verificar alimentacao/fonte da ONU',
         'Verificar conexao da fibra na ONU',
         'Consultar historico de quedas da ONU',
@@ -160,8 +175,10 @@ export function classificar(
     return {
       classificacao: 'POSSIVEL_PROBLEMA',
       origemProvavel: 'SINAL_OPTICO',
+      confianca: 70,
+      evidencias: [`Sinal optico proximo do limite (${sinalRxDbm.toFixed(1)} dBm)`],
+      hipotese: 'Possivel degradacao na fibra/conectores, ainda nao critica.',
       recomendacoes: [
-        `Sinal optico proximo do limite (${sinalRxDbm.toFixed(1)} dBm)`,
         'Verificar conectores e emendas',
         'Acompanhar variacao do sinal nas proximas visitas',
       ],
@@ -180,8 +197,10 @@ export function classificar(
       return {
         classificacao: 'POSSIVEL_PROBLEMA',
         origemProvavel: 'REDE_LOCAL',
+        confianca: 75,
+        evidencias: ['Instabilidade detectada mesmo no trajeto mais curto (servidor GTSNET)'],
+        hipotese: 'Possivel problema na rede local/acesso do cliente, nao so externo.',
         recomendacoes: [
-          'Instabilidade detectada mesmo no trajeto mais curto (servidor GTSNET)',
           'Repetir o teste',
           'Testar por cabo, sem Wi-Fi',
           'Verificar equipamento (roteador/ONU) e conexoes fisicas',
@@ -192,8 +211,10 @@ export function classificar(
       return {
         classificacao: 'POSSIVEL_PROBLEMA',
         origemProvavel: 'ROTA_EXTERNA',
+        confianca: 60,
+        evidencias: ['Trajeto ate a GTSNET esta normal, mas ate a internet externa nao'],
+        hipotese: 'Possivel instabilidade na rota externa/destino, fora da rede da GTSNET.',
         recomendacoes: [
-          'Trajeto ate a GTSNET esta normal, mas ate a internet externa nao',
           'Repetir o teste em outro horario',
           'Testar outro destino/servidor de referencia',
           'Verificar se o problema e generalizado (varios clientes) ou so deste cliente',
@@ -203,8 +224,10 @@ export function classificar(
     return {
       classificacao: 'POSSIVEL_PROBLEMA',
       origemProvavel: 'REDE_GTSNET',
+      confianca: 65,
+      evidencias: ['Perda de pacotes ou instabilidade acima do esperado'],
+      hipotese: 'Possivel instabilidade na infraestrutura/rota da GTSNET.',
       recomendacoes: [
-        'Perda de pacotes ou instabilidade acima do esperado',
         'Repetir o teste',
         'Testar por cabo',
         'Verificar infraestrutura/rota',
@@ -218,8 +241,10 @@ export function classificar(
     return {
       classificacao: 'ATENCAO',
       origemProvavel: 'WIFI',
+      confianca: 55,
+      evidencias: [`Download (${downloadMbps.toFixed(0)} Mbps) bem abaixo do plano contratado (${planoMbps} Mbps)`],
+      hipotese: 'Possivel problema de Wi-Fi/roteador/dispositivo do cliente.',
       recomendacoes: [
-        `Download (${downloadMbps.toFixed(0)} Mbps) bem abaixo do plano contratado (${planoMbps} Mbps)`,
         'Verificar distancia e posicionamento do roteador',
         'Testar rede 5 GHz',
         'Verificar interferencia de outros equipamentos',
@@ -234,8 +259,10 @@ export function classificar(
     return {
       classificacao: 'ATENCAO',
       origemProvavel: 'DNS',
+      confianca: 80,
+      evidencias: ['A conexao com a internet esta disponivel, mas foram identificadas falhas na resolucao DNS.'],
+      hipotese: 'Provavel problema de configuracao de DNS.',
       recomendacoes: [
-        'A conexao com a internet esta disponivel, mas foram identificadas falhas na resolucao DNS.',
         'Verificar servidor DNS configurado no roteador/dispositivo',
         'Testar DNS alternativo (1.1.1.1 ou 8.8.8.8)',
       ],
@@ -250,8 +277,10 @@ export function classificar(
     return {
       classificacao: 'ATENCAO',
       origemProvavel: 'REDE_GTSNET',
+      confianca: 40,
+      evidencias: ['Pequenas variacoes de latencia/perda detectadas - dentro do aceitavel, mas vale acompanhar'],
+      hipotese: 'Sem causa provavel definida - variacao leve, dentro do aceitavel.',
       recomendacoes: [
-        'Pequenas variacoes de latencia/perda detectadas - dentro do aceitavel, mas vale acompanhar',
         'Repetir o teste em outro momento para confirmar',
       ],
     }
@@ -261,6 +290,9 @@ export function classificar(
   return {
     classificacao: 'NORMAL',
     origemProvavel: 'INDETERMINADO',
+    confianca: 100,
+    evidencias: ['Nao foram identificadas anomalias relevantes durante o diagnostico.'],
+    hipotese: 'Conexao dentro dos parametros analisados.',
     recomendacoes: ['Nao foram identificadas anomalias relevantes durante o diagnostico.'],
   }
 }

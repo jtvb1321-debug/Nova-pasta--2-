@@ -5,19 +5,21 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Calendar, Plus, Clock, MapPin, User,
   Phone, FileText, Package, AlertTriangle,
-  CheckCircle, Zap, RefreshCw, Filter
+  CheckCircle, Zap, RefreshCw, Filter, RotateCcw
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
 import { NovoDespachoModal } from './NovoDespachoModal'
+import { toast } from '@/hooks/use-toast'
+import { MetricCard } from '@/components/ui/MetricCard'
 
 const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
   URGENTE: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
   NORMAL:  'text-blue-400 bg-blue-500/10 border-blue-500/30',
 }
-
 const STATUS_COR: Record<StatusChamado, string> = {
+  AGENDADO:     'text-purple-400 bg-purple-500/10',
   ABERTO:       'text-blue-400 bg-blue-500/10',
   EM_ANDAMENTO: 'text-yellow-400 bg-yellow-500/10',
   FINALIZADO:   'text-emerald-400 bg-emerald-500/10',
@@ -25,6 +27,7 @@ const STATUS_COR: Record<StatusChamado, string> = {
 }
 
 const STATUS_LABEL: Record<StatusChamado, string> = {
+  AGENDADO:     'Agendado',
   ABERTO:       'Aguardando',
   EM_ANDAMENTO: 'Em Andamento',
   FINALIZADO:   'Finalizado',
@@ -48,6 +51,10 @@ export function AgendaView() {
   const [showModal, setShowModal] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroEquipe, setFiltroEquipe] = useState('')
+  const [redisparoId, setRedisparoId] = useState<string | null>(null)
+  const [novaData, setNovaData] = useState('')
+  const [novaHora, setNovaHora] = useState('08:00')
+  const [enviandoRedisparo, setEnviandoRedisparo] = useState(false)
 
   const { data: chamados = [], isLoading, refetch } = useQuery({
     queryKey: ['agenda'],
@@ -70,6 +77,36 @@ export function AgendaView() {
     andamento: chamados.filter((c: any) => c.status === 'EM_ANDAMENTO').length,
     criticos: chamados.filter((c: any) => detectarPrioridade(c.observacao) === 'CRITICO').length,
     urgentes: chamados.filter((c: any) => detectarPrioridade(c.observacao) === 'URGENTE').length,
+  }
+
+  function abrirRedisparo(chamadoId: string) {
+    setRedisparoId(chamadoId)
+    const amanha = new Date()
+    amanha.setDate(amanha.getDate() + 1)
+    setNovaData(amanha.toISOString().split('T')[0])
+    setNovaHora('08:00')
+  }
+
+  async function confirmarRedisparo() {
+    if (!redisparoId || !novaData) return
+    setEnviandoRedisparo(true)
+    try {
+      const dataAgendada = `${novaData}T${novaHora}:00`
+      const res = await fetch(`/api/tickets/${redisparoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataAgendada }),
+      })
+      if (!res.ok) throw new Error()
+
+      toast({ title: 'Chamado redisparado com novo horario!', variant: 'success' })
+      setRedisparoId(null)
+      queryClient.invalidateQueries({ queryKey: ['agenda'] })
+    } catch {
+      toast({ title: 'Erro ao redisparar chamado', variant: 'destructive' })
+    } finally {
+      setEnviandoRedisparo(false)
+    }
   }
 
   return (
@@ -96,22 +133,13 @@ export function AgendaView() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Aguardando',     value: totais.abertos,   icon: Clock,         cor: 'text-blue-400 bg-blue-500/10' },
-          { label: 'Em Andamento',   value: totais.andamento, icon: Zap,           cor: 'text-yellow-400 bg-yellow-500/10' },
-          { label: 'Criticos',       value: totais.criticos,  icon: AlertTriangle, cor: 'text-red-400 bg-red-500/10' },
-          { label: 'Urgentes',       value: totais.urgentes,  icon: AlertTriangle, cor: 'text-orange-400 bg-orange-500/10' },
-        ].map((kpi, i) => {
-          const Icon = kpi.icon
-          return (
-            <div key={i} className="gts-card">
-              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mb-2', kpi.cor.split(' ')[1])}>
-                <Icon className={cn('w-4 h-4', kpi.cor.split(' ')[0])} />
-              </div>
-              <p className={cn('text-2xl font-bold', kpi.cor.split(' ')[0])}>{kpi.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
-            </div>
-          )
-        })}
+          { label: 'Aguardando',     value: totais.abertos,   icon: Clock,         color: '#60a5fa' },
+          { label: 'Em Andamento',   value: totais.andamento, icon: Zap,           color: '#fbbf24' },
+          { label: 'Criticos',       value: totais.criticos,  icon: AlertTriangle, color: '#f87171' },
+          { label: 'Urgentes',       value: totais.urgentes,  icon: AlertTriangle, color: '#fb923c' },
+        ].map((kpi, i) => (
+          <MetricCard key={i} label={kpi.label} value={kpi.value} icon={kpi.icon} color={kpi.color} className={i === 0 ? 'gts-hud-corner' : undefined} />
+        ))}
       </div>
 
       {/* Filtros */}
@@ -176,12 +204,14 @@ export function AgendaView() {
               const pCor = PRIORIDADE_COR[prioridade] || PRIORIDADE_COR.NORMAL
               const sCor = STATUS_COR[chamado.status as StatusChamado] || STATUS_COR.ABERTO
               const materiaisCount = chamado.materiaisReservados?.length ?? 0
+              const estaRedisparando = redisparoId === chamado.id
 
               return (
                 <div
                   key={chamado.id}
                   className={cn(
                     'bg-[#111827] border rounded-xl p-5 transition-all hover:border-white/10',
+                    chamado.clienteAusente ? 'border-orange-500/40' :
                     prioridade === 'CRITICO' ? 'border-red-500/30' :
                     prioridade === 'URGENTE' ? 'border-yellow-500/20' :
                     'border-white/5'
@@ -191,6 +221,7 @@ export function AgendaView() {
                     {/* Prioridade indicator */}
                     <div className={cn(
                       'w-1 rounded-full flex-shrink-0 self-stretch min-h-full',
+                      chamado.clienteAusente ? 'bg-orange-500' :
                       prioridade === 'CRITICO' ? 'bg-red-500' :
                       prioridade === 'URGENTE' ? 'bg-yellow-500' :
                       'bg-blue-500'
@@ -200,6 +231,12 @@ export function AgendaView() {
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-white font-bold">{chamado.cliente}</h3>
+                          {chamado.clienteAusente && (
+                            <span className="status-badge text-xs border text-orange-400 bg-orange-500/10 border-orange-500/30 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Cliente Ausente
+                            </span>
+                          )}
                           <span className={cn('status-badge text-xs border', pCor)}>
                             {prioridade}
                           </span>
@@ -240,7 +277,7 @@ export function AgendaView() {
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-4 text-xs text-gray-600 mb-2">
                         {materiaisCount > 0 && (
                           <span className="flex items-center gap-1 text-blue-400">
                             <Package className="w-3 h-3" />
@@ -257,6 +294,49 @@ export function AgendaView() {
                           </span>
                         )}
                       </div>
+
+                      {/* Redisparo - so aparece para chamados marcados como cliente ausente */}
+                      {chamado.clienteAusente && chamado.status !== 'FINALIZADO' && (
+                        <div className="mt-2">
+                          {!estaRedisparando ? (
+                            <button
+                              onClick={() => abrirRedisparo(chamado.id)}
+                              className="flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg px-3 py-1.5 transition-colors"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              Redisparar para a equipe
+                            </button>
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-2 p-3 bg-white/[0.03] border border-orange-500/20 rounded-xl">
+                              <input
+                                type="date"
+                                value={novaData}
+                                onChange={e => setNovaData(e.target.value)}
+                                className="gts-input py-1.5 text-sm w-auto"
+                              />
+                              <input
+                                type="time"
+                                value={novaHora}
+                                onChange={e => setNovaHora(e.target.value)}
+                                className="gts-input py-1.5 text-sm w-auto"
+                              />
+                              <button
+                                onClick={confirmarRedisparo}
+                                disabled={enviandoRedisparo || !novaData}
+                                className="gts-btn-primary py-1.5 px-3 text-xs disabled:opacity-50"
+                              >
+                                {enviandoRedisparo ? 'Enviando...' : 'Confirmar'}
+                              </button>
+                              <button
+                                onClick={() => setRedisparoId(null)}
+                                className="text-xs text-gray-400 hover:text-white px-2"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

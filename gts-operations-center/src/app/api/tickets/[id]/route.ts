@@ -289,9 +289,11 @@ export async function PATCH(
 
       // Se o tecnico rodou um Diagnostico Tecnico nessa OS, manda o
       // resultado completo (classificacao, metricas, recomendacoes,
-      // antes/depois) junto na mesma mensagem de fechamento.
+      // antes/depois) junto na mesma mensagem de fechamento. So considera
+      // ANTES/DEPOIS (diagnostico de campo do tecnico) - nunca um REMOTO do
+      // NOC, que e uma trilha separada sem os campos de fechamento abaixo.
       const ultimoDiagnostico = await prisma.diagnostico.findFirst({
-        where: { chamadoId: id, status: 'CONCLUIDO' },
+        where: { chamadoId: id, status: 'CONCLUIDO', fase: { in: ['ANTES', 'DEPOIS'] } },
         orderBy: { createdAt: 'desc' },
         include: { diagnosticoAnterior: true },
       })
@@ -311,7 +313,7 @@ export async function PATCH(
           unidade:    m.item.unidade,
         })) || [],
         diagnostico: ultimoDiagnostico ? {
-          fase: ultimoDiagnostico.fase,
+          fase: ultimoDiagnostico.fase as 'ANTES' | 'DEPOIS',
           classificacao: ultimoDiagnostico.classificacao as any,
           origemProvavel: ultimoDiagnostico.origemProvavel as any,
           recomendacoes: ultimoDiagnostico.recomendacoes as any,

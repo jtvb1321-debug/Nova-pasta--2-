@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn, formatCurrency, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
+import { MetricCard } from '@/components/ui/MetricCard'
 
 function hojeISO() {
   return new Date().toISOString().split('T')[0]
@@ -160,22 +161,13 @@ export function RelatorioVendasView() {
       {/* KPIs gerais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Vendas',  value: totalGeral.totalVendas ?? 0,                       icon: Users,        cor: 'text-blue-400',    bg: 'bg-blue-500/10' },
-          { label: 'Aprovadas',        value: totalGeral.totalAprovadas ?? 0,                     icon: CheckCircle,  cor: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Valor Total',      value: formatCurrency(totalGeral.valorTotal ?? 0),         icon: DollarSign,   cor: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Comissoes',        value: formatCurrency(totalGeral.comissaoTotal ?? 0),      icon: TrendingUp,   cor: 'text-yellow-400',  bg: 'bg-yellow-500/10' },
-        ].map((kpi, i) => {
-          const Icon = kpi.icon
-          return (
-            <div key={i} className="gts-card">
-              <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', kpi.bg)}>
-                <Icon className={cn('w-4 h-4', kpi.cor)} />
-              </div>
-              <p className="text-xs text-gray-500 mb-1">{kpi.label}</p>
-              <p className={cn('text-2xl font-bold', kpi.cor)}>{kpi.value}</p>
-            </div>
-          )
-        })}
+          { label: 'Total de Vendas',  value: totalGeral.totalVendas ?? 0,                  icon: Users,       color: '#60a5fa' },
+          { label: 'Aprovadas',        value: totalGeral.totalAprovadas ?? 0,                icon: CheckCircle, color: '#34d399' },
+          { label: 'Valor Total',      value: formatCurrency(totalGeral.valorTotal ?? 0),    icon: DollarSign,  color: '#34d399' },
+          { label: 'Comissoes',        value: formatCurrency(totalGeral.comissaoTotal ?? 0), icon: TrendingUp,  color: '#fbbf24' },
+        ].map((kpi, i) => (
+          <MetricCard key={i} label={kpi.label} value={kpi.value} icon={kpi.icon} color={kpi.color} className={i === 0 ? 'gts-hud-corner' : undefined} />
+        ))}
       </div>
 
       {/* Lista por vendedor */}

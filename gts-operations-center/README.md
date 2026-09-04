@@ -188,6 +188,26 @@ npm run start
 
 Configure um proxy reverso (nginx/caddy) apontando para a porta 3000.
 
+## Deploy na Discloud
+
+Segue exatamente o padrão documentado pela Discloud para apps Next.js (docs.discloud.com/how-to-host/frameworks/nextjs). Requer **Plano Platinum** (obrigatório para `TYPE=site`) e o subdomínio reservado antes do primeiro deploy.
+
+`discloud.config`:
+
+- **MAIN**: `next.config.ts` — arquivo real do projeto usado pela Discloud para identificar a aplicação (o comando que efetivamente roda é o `START`).
+- **BUILD**: `npm install && npx prisma generate && npm run build`.
+- **START**: `npm run start`, que roda `next start -p 8080` (script já ajustado em `package.json`) — a porta 8080 fica fixa no script, não em variável de ambiente.
+- **APT**: bibliotecas do sistema necessárias para o Chromium do Puppeteer/whatsapp-web.js rodar em container Linux.
+
+Variáveis de ambiente **não vão dentro do pacote enviado** — o `.discloudignore` exclui o `.env`. Configure cada uma direto no painel da Discloud (ou via CLI/API), usando `.env.example` como referência: `DATABASE_URL` (Postgres acessível pela internet — a Discloud não hospeda banco), `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SOCKET_URL` e as demais chaves de integração (Telegram, IXC, SmartOLT, SMTP).
+
+Antes de subir:
+
+1. Confirme que o subdomínio `gtscenter` (campo `ID`) já está reservado na sua conta Discloud.
+2. Cadastre as variáveis de ambiente de produção no painel/CLI da Discloud (não é o `.env` local que sobe).
+3. `.discloudignore` já exclui `node_modules`, `.next`, `.env`, `package-lock.json`, `.wwebjs_auth`, `.wwebjs_cache`, logs e arquivos locais — tudo isso é reconstruído/gerado no próprio container pelo `BUILD`.
+4. Como o WhatsApp (`whatsapp-web.js`) inicia automaticamente com o servidor, a primeira execução no container vai exigir escanear o QR Code (visível nos logs da Discloud) para autenticar a sessão.
+
 ---
 
 **GTSNet © 2024 — GTS Operations Center**

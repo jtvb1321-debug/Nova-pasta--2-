@@ -11,6 +11,8 @@ import {
   Trash2, Plus, CheckCircle
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { MetricCard } from '@/components/ui/MetricCard'
 
 const ENTIDADE_CONFIG: Record<string, { icon: React.ElementType; cor: string; label: string }> = {
   chamado:    { icon: ClipboardList, cor: 'text-blue-400 bg-blue-500/10',     label: 'Chamado' },
@@ -87,19 +89,16 @@ export function AuditView() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Auditoria do Sistema</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {total} registros de auditoria — nenhuma informacao pode ser excluida
-          </p>
-        </div>
-        <button onClick={() => refetch()} className="gts-btn-secondary">
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </button>
-      </div>
+      <PageHeader
+        title="Auditoria do Sistema"
+        subtitle={`${total} registros de auditoria — nenhuma informacao pode ser excluida`}
+        actions={
+          <button onClick={() => refetch()} className="gts-btn-secondary">
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </button>
+        }
+      />
 
       {/* Aviso */}
       <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
@@ -133,7 +132,7 @@ export function AuditView() {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 entidade === e.value
-                  ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30'
+                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
                   : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
               )}
             >
@@ -146,23 +145,13 @@ export function AuditView() {
       {/* Estatisticas rapidas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Registros', value: total,                                    icon: Activity,   cor: 'text-blue-400 bg-blue-500/10' },
-          { label: 'Hoje',               value: logs.filter((l: any) => new Date(l.createdAt).toDateString() === new Date().toDateString()).length, icon: Clock, cor: 'text-emerald-400 bg-emerald-500/10' },
-          { label: 'Usuarios Ativos',    value: new Set(logs.map((l: any) => l.usuarioId).filter(Boolean)).size, icon: User, cor: 'text-yellow-400 bg-yellow-500/10' },
-          { label: 'Acoes Criticas',     value: logs.filter((l: any) => ['DELETE', 'REJECT'].includes(l.acao)).length, icon: AlertTriangle, cor: 'text-red-400 bg-red-500/10' },
-        ].map((stat, i) => {
-          const Icon = stat.icon
-          const [corText, corBg] = stat.cor.split(' ')
-          return (
-            <div key={i} className="gts-card">
-              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mb-3', corBg)}>
-                <Icon className={cn('w-4 h-4', corText)} />
-              </div>
-              <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-              <p className={cn('text-2xl font-bold', corText)}>{stat.value}</p>
-            </div>
-          )
-        })}
+          { label: 'Total de Registros', value: total,                                    icon: Activity,   color: '#60a5fa' },
+          { label: 'Hoje',               value: logs.filter((l: any) => new Date(l.createdAt).toDateString() === new Date().toDateString()).length, icon: Clock, color: '#34d399' },
+          { label: 'Usuarios Ativos',    value: new Set(logs.map((l: any) => l.usuarioId).filter(Boolean)).size, icon: User, color: '#fbbf24' },
+          { label: 'Acoes Criticas',     value: logs.filter((l: any) => ['DELETE', 'REJECT'].includes(l.acao)).length, icon: AlertTriangle, color: '#f87171' },
+        ].map((stat, i) => (
+          <MetricCard key={i} label={stat.label} value={stat.value} icon={stat.icon} color={stat.color} className={i === 0 ? 'gts-hud-corner' : undefined} />
+        ))}
       </div>
 
       {/* Tabela de logs */}

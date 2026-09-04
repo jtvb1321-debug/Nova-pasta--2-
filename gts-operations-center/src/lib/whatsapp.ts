@@ -31,7 +31,12 @@ function getClient() {
       type: 'local',
     },
     puppeteer: {
-      executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      // So forca um executavel especifico se CHROME_PATH estiver definido
+      // (ex: Chrome local no Windows). Sem isso, o Puppeteer usa o Chromium
+      // que ele mesmo baixa na instalacao - funciona em qualquer SO/host
+      // sem precisar de um caminho fixo (o hardcode anterior so funcionava
+      // no Windows, quebrando em qualquer ambiente Linux/container).
+      ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}),
       headless: true,
       args: [
         '--no-sandbox',

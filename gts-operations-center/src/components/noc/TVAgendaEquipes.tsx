@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EQUIPES_OPERACIONAIS as EQUIPES_TV } from '@/lib/equipesOperacionais'
 
 const STATUS_COR_TV: Record<string, { dot: string; texto: string; borda: string }> = {
   AGENDADO:     { dot: 'bg-purple-400',               texto: 'text-purple-400',  borda: 'border-purple-500/25' },
@@ -36,14 +35,15 @@ export function TVAgendaEquipes() {
 
   const itensHoje = (calendario?.porDia?.[chaveDiaLocal(new Date())] ?? []) as any[]
 
-  const lanes = EQUIPES_TV.map(cfg => {
-    const equipe = equipes.find((e: any) => e.nome?.toLowerCase().includes(cfg.chave))
-    const itens = equipe
-      ? itensHoje
-          .filter(item => item.equipeId === equipe.id)
-          .sort((a, b) => (a.dataReferencia || '').localeCompare(b.dataReferencia || ''))
-      : []
-    return { ...cfg, itens }
+  // Equipes de campo reais (com pelo menos 1 funcionario ativo) - sem filtro
+  // fixo por nome, para qualquer equipe cadastrada aparecer automaticamente.
+  const equipesDeCampo = (equipes as any[]).filter(e => (e.funcionarios?.length ?? 0) > 0)
+
+  const lanes = equipesDeCampo.map(equipe => {
+    const itens = itensHoje
+      .filter(item => item.equipeId === equipe.id)
+      .sort((a, b) => (a.dataReferencia || '').localeCompare(b.dataReferencia || ''))
+    return { chave: equipe.id, label: equipe.nome, itens }
   })
 
   return (
@@ -56,14 +56,14 @@ export function TVAgendaEquipes() {
         </span>
       </div>
 
-      <div className="flex-1 flex flex-col divide-y divide-white/5 min-h-0">
+      <div className="flex-1 flex flex-col divide-y divide-white/5 min-h-0 overflow-y-auto">
         {lanes.map(lane => (
-          <div key={lane.chave} className="flex-1 flex items-stretch min-h-0">
-            <div className="w-52 flex-shrink-0 flex flex-col items-start justify-center gap-0.5 px-5 border-r border-white/5">
+          <div key={lane.chave} className="flex-shrink-0 min-h-[76px] flex items-stretch">
+            <div className="w-52 flex-shrink-0 flex flex-col items-start justify-center gap-0.5 px-5 py-3 border-r border-white/5">
               <span className="text-lg font-bold text-white leading-tight">{lane.label}</span>
               <span className="text-sm text-gray-500">{lane.itens.length} atendimento(s)</span>
             </div>
-            <div className="flex-1 flex items-center gap-3 px-5 overflow-x-auto">
+            <div className="flex-1 flex items-center gap-3 px-5 py-3 overflow-x-auto">
               {lane.itens.length === 0 ? (
                 <span className="text-base text-gray-500">Sem atendimentos hoje</span>
               ) : lane.itens.map(item => {

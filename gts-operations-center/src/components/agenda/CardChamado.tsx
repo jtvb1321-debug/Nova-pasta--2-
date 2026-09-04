@@ -1,15 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Zap, Clock, CheckCircle, XCircle, MapPin, User, Package, Calendar,
   ChevronDown, ChevronUp, MessageCircle, Navigation, Ban, Repeat, Send, StopCircle,
-  CalendarClock,
+  CalendarClock, GraduationCap, Hash, Brain, RotateCw,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
 import { TrocarEquipeModal } from './TrocarEquipeModal'
 import { ReagendarModal } from './ReagendarModal'
+import { toast } from '@/hooks/use-toast'
+import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL, ORIGEM_LABEL, type OrigemProvavel } from '@/lib/diagnosticoEngine'
+import { medirVelocidadeGts } from '@/lib/speedtestClient'
+
+const STATUS_ONU_QUEDA = new Set(['Offline', 'LOS', 'Power failure'])
 
 export const PRIORIDADE_COR: Record<string, string> = {
   CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
@@ -90,6 +96,51 @@ export function CardChamado({
   const podeEncerrarAdmin = chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO'
   const [showTrocarEquipe, setShowTrocarEquipe] = useState(false)
   const [showReagendar, setShowReagendar] = useState(false)
+  const [mostrarDiagnosticoCompleto, setMostrarDiagnosticoCompleto] = useState(false)
+  const diagnosticoRemoto = chamado.diagnosticos?.[0]
+  const queryClient = useQueryClient()
+
+  function invalidarChamados() {
+    queryClient.invalidateQueries({ queryKey: ['agenda'] })
+    queryClient.invalidateQueries({
+      predicate: (q) => typeof q.queryKey[0] === 'string' && (q.queryKey[0] as string).startsWith('chamados'),
+    })
+  }
+
+  const diagnosticoRemotoMutation = useMutation({
+    mutationFn: async () => {
+      const medicao = await medirVelocidadeGts()
+      const res = await fetch('/api/diagnostico/remoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chamadoId: chamado.id,
+          downloadMbps: medicao.downloadMbps,
+          latenciaMs: medicao.latenciaMs,
+          jitterMs: medicao.jitterMs,
+          perdaPct: medicao.perdaPct,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => {
+      toast({ title: 'Diagnostico remoto concluido', variant: 'success' })
+      setMostrarDiagnosticoCompleto(true)
+      invalidarChamados()
+    },
+    onError: () => toast({ title: 'Erro ao executar diagnostico remoto', variant: 'destructive' }),
+  })
+
+  const reiniciarOnuMutation = useMutation({
+    mutationFn: async (diagnosticoId: string) => {
+      const res = await fetch(`/api/diagnostico/${diagnosticoId}/reiniciar-onu`, { method: 'POST' })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => toast({ title: 'Comando de reinicio enviado a ONU', variant: 'success' }),
+    onError: () => toast({ title: 'Erro ao reiniciar a ONU', variant: 'destructive' }),
+  })
 
   return (
     <div className={cn(
@@ -113,6 +164,12 @@ export function CardChamado({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-white font-bold">{chamado.cliente}</h3>
+              {chamado.eace && (
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 font-bold">
+                  <GraduationCap className="w-3 h-3" />
+                  EACE
+                </span>
+              )}
               {prioridade !== 'NORMAL' && (
                 <span className={cn('text-xs px-2 py-0.5 rounded-full border font-bold', pCor)}>
                   {prioridade}
@@ -212,9 +269,32 @@ export function CardChamado({
       {expandido && (
         <div className="px-4 pb-4 space-y-3 border-t border-white/5 pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {chamado.eace && chamado.escolaResponsavel && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Responsavel pela escola</p>
+                <p className="text-sm text-white">{chamado.escolaResponsavel}</p>
+              </div>
+            )}
+            {chamado.eace && chamado.escolaCodigoInep && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Codigo INEP</p>
+                <p className="text-sm text-white font-mono">{chamado.escolaCodigoInep}</p>
+              </div>
+            )}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Endereco completo</p>
+              <p className="text-xs text-gray-500 mb-1">{chamado.eace ? 'Localizacao' : 'Endereco completo'}</p>
               <p className="text-sm text-white">{formatarEnderecoCompleto(chamado)}</p>
+              {chamado.eace && chamado.latitude != null && chamado.longitude != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${chamado.latitude},${chamado.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs text-blue-400 hover:text-blue-300 underline decoration-dotted"
+                >
+                  Ver coordenadas no mapa
+                </a>
+              )}
             </div>
             {chamado.telefone && (
               <div>
@@ -281,9 +361,123 @@ export function CardChamado({
             </div>
           )}
 
+          {/* Diagnostico remoto do NOC - nunca um card separado, so um painel
+              dentro do proprio chamado (regra explicita do produto). */}
+          {diagnosticoRemoto && (
+            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
+                </p>
+                {diagnosticoRemoto.confianca != null && (
+                  <span className="text-xs font-mono text-gray-400">{diagnosticoRemoto.confianca}%</span>
+                )}
+              </div>
+              <p className="text-sm text-white">
+                {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
+                {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
+                {diagnosticoRemoto.origemProvavel
+                  ? ` — ${ORIGEM_LABEL[diagnosticoRemoto.origemProvavel as OrigemProvavel] ?? diagnosticoRemoto.origemProvavel}`
+                  : ''}
+              </p>
+              {diagnosticoRemoto.hipotese && (
+                <p className="text-xs text-gray-400">{diagnosticoRemoto.hipotese}</p>
+              )}
+              {diagnosticoRemoto.resumo?.downloadMbps != null && (
+                <p className="text-xs text-gray-500">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
+              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setMostrarDiagnosticoCompleto(v => !v) }}
+                className="text-xs text-blue-400 hover:text-blue-300 underline decoration-dotted"
+              >
+                {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
+              </button>
+
+              {mostrarDiagnosticoCompleto && (
+                <div className="pt-2 border-t border-white/5 space-y-2">
+                  {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
+                    <div>
+                      <p className="text-[11px] text-gray-500 mb-1">Evidencias</p>
+                      <ul className="space-y-0.5">
+                        {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
+                          <li key={i} className="text-xs text-gray-300">• {ev}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
+                    <div>
+                      <p className="text-[11px] text-gray-500 mb-1">Recomendacoes</p>
+                      <ul className="space-y-0.5">
+                        {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
+                          <li key={i} className="text-xs text-gray-300">• {r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {diagnosticoRemoto.resumo?.onuStatus && (
+                    <p className="text-xs text-gray-500">
+                      ONU: <span className="text-gray-300">{diagnosticoRemoto.resumo.onuStatus}</span>
+                      {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {(isAdmin || isOperador) && diagnosticoRemoto.resumo?.onuEncontrada && STATUS_ONU_QUEDA.has(diagnosticoRemoto.resumo.onuStatus) && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (window.confirm('Reiniciar a ONU deste cliente agora?')) {
+                            reiniciarOnuMutation.mutate(diagnosticoRemoto.id)
+                          }
+                        }}
+                        disabled={reiniciarOnuMutation.isPending}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg text-xs font-medium text-orange-400 transition-colors disabled:opacity-50"
+                      >
+                        <RotateCw className="w-3.5 h-3.5" />
+                        {reiniciarOnuMutation.isPending ? 'Reiniciando...' : 'Reiniciar ONU'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'salvar'))
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+                    >
+                      Gerar Relatorio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+                    >
+                      Imprimir
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Botoes rapidos */}
           {mostrarFinalizar && (
             <div className="flex flex-wrap gap-2 pt-1">
+              {(isAdmin || isOperador) && podeEncerrarAdmin && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); diagnosticoRemotoMutation.mutate() }}
+                  disabled={diagnosticoRemotoMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg text-xs font-bold text-cyan-400 transition-colors disabled:opacity-50"
+                >
+                  <Brain className="w-3.5 h-3.5" />
+                  {diagnosticoRemotoMutation.isPending ? 'Diagnosticando...' : 'Iniciar Diagnostico Remoto'}
+                </button>
+              )}
               {chamado.telefone && (
                 <button
                   onClick={() => window.open(`https://wa.me/55${chamado.telefone.replace(/\D/g, '')}`, '_blank')}

@@ -60,7 +60,7 @@ export function MapFullScreen() {
                 className={cn(
                   'px-3 py-1.5 text-xs font-medium transition-colors',
                   filtroOnline === f
-                    ? 'bg-gts-blue text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'text-gray-400 hover:text-white'
                 )}
               >

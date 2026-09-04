@@ -127,7 +127,7 @@ export function DevolutionsView() {
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
               filtro === f.value
-                ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30'
+                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
                 : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
             )}
           >

@@ -33,7 +33,7 @@ function KPIItem({ kpi }: { kpi: KPI }) {
         : 'bg-white/[0.03] border-white/5'
     )}>
       <Icon className={cn('w-3 h-3 flex-shrink-0', kpi.cor)} />
-      <span className={cn('text-xs font-bold', kpi.cor)}>{kpi.value}</span>
+      <span className={cn('text-xs font-bold font-mono', kpi.cor)}>{kpi.value}</span>
       <span className="text-xs text-gray-600 hidden xl:block">{kpi.label}</span>
     </div>
   )
@@ -113,8 +113,8 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
             {kpis.map((kpi, i) => <KPIItem key={i} kpi={kpi} />)}
           </div>
           <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-emerald-400 font-medium hidden sm:block">Ao Vivo</span>
+            <span className="w-2 h-2 rounded-full bg-[#22D3EE] animate-pulse shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+            <span className="text-xs text-[#22D3EE] font-mono font-bold uppercase tracking-wide hidden sm:block">Ao Vivo</span>
           </div>
           <button
             onClick={() => refetch()}
@@ -126,12 +126,12 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
         </div>
 
         {/* Barra principal */}
-        <div className="flex items-center gap-3 px-4 py-2.5">
+        <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5">
           {title && (
-            <h1 className="text-sm font-semibold text-white flex-shrink-0">{title}</h1>
+            <h1 className="text-base font-bold tracking-tight text-white flex-shrink-0 truncate">{title}</h1>
           )}
 
-          <div className="flex items-center gap-3 ml-auto flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
             {/* Hora — so renderiza no cliente apos hydration */}
             {horaStr && (
               <span className="text-xs text-gray-500 font-mono hidden lg:block">
@@ -146,11 +146,11 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
 
             <button
               onClick={onAlertasClick}
-              className="relative text-gray-400 hover:text-white transition-colors"
+              className="relative text-gray-400 hover:text-white hover:bg-white/5 rounded-lg p-1.5 transition-colors"
             >
               <Bell className="w-4 h-4" />
               {totalAlertas > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
                   {totalAlertas > 9 ? '9+' : totalAlertas}
                 </span>
               )}

@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
   const hoje = inicioDoDia(new Date())
   const agora = new Date()
 
+  if (agora.getDay() === 0) {
+    return NextResponse.json({ error: 'Nao ha batida de ponto aos domingos' }, { status: 400 })
+  }
+
   try {
     const registro = await prisma.$transaction(async (tx) => {
       let atual = await tx.registroPonto.findUnique({

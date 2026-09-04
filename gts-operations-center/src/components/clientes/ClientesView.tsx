@@ -11,6 +11,9 @@ import { toast } from '@/hooks/use-toast'
 import { DarBaixaModal } from './DarBaixaModal'
 import { RelatorioBaixasModal } from './RelatorioBaixasModal'
 import { ConferenciaIxcModal } from './ConferenciaIxcModal'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 
 async function fetchClientes(params: Record<string, string>) {
   const q = new URLSearchParams(params)
@@ -19,10 +22,10 @@ async function fetchClientes(params: Record<string, string>) {
   return res.json()
 }
 
-const STATUS_CFG: Record<string, { label: string; cor: string; bg: string }> = {
-  ATIVO:     { label: 'Ativo',     cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  INATIVO:   { label: 'Inativo',   cor: 'text-gray-400',    bg: 'bg-white/5 border-white/10' },
-  CANCELADO: { label: 'Cancelado', cor: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
+const STATUS_CFG: Record<string, { label: string; variant: BadgeVariant; bg: string }> = {
+  ATIVO:     { label: 'Ativo',     variant: 'success', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  INATIVO:   { label: 'Inativo',   variant: 'neutral', bg: 'bg-white/5 border-white/10' },
+  CANCELADO: { label: 'Cancelado', variant: 'danger',  bg: 'bg-red-500/10 border-red-500/20' },
 }
 
 export function ClientesView() {
@@ -100,30 +103,30 @@ export function ClientesView() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Clientes</h1>
-          <p className="text-gray-500 text-sm mt-1">Gestao de clientes ativos e cobranca</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setShowRelatorio(true)} className="gts-btn-secondary">
-            <FileText className="w-4 h-4" />
-            Relatorio de Baixas
-          </button>
-          <button
-            onClick={() => sincronizarMutation.mutate()}
-            disabled={sincronizarMutation.isPending}
-            className="gts-btn-primary disabled:opacity-50"
-          >
-            <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} />
-            Sincronizar com IXC
-          </button>
-          <button onClick={() => setShowConferencia(true)} className="gts-btn-secondary">
-            <GitCompare className="w-4 h-4" />
-            Conferencia IXC x GTS
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Clientes"
+        subtitle="Gestao de clientes ativos e cobranca"
+        actions={
+          <>
+            <button onClick={() => setShowRelatorio(true)} className="gts-btn-secondary">
+              <FileText className="w-4 h-4" />
+              Relatorio de Baixas
+            </button>
+            <button
+              onClick={() => sincronizarMutation.mutate()}
+              disabled={sincronizarMutation.isPending}
+              className="gts-btn-primary disabled:opacity-50"
+            >
+              <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} />
+              Sincronizar com IXC
+            </button>
+            <button onClick={() => setShowConferencia(true)} className="gts-btn-secondary">
+              <GitCompare className="w-4 h-4" />
+              Conferencia IXC x GTS
+            </button>
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
@@ -182,10 +185,7 @@ export function ClientesView() {
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)
         ) : clientes.length === 0 ? (
-          <div className="gts-card text-center py-16">
-            <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 font-medium">Nenhum cliente encontrado</p>
-          </div>
+          <EmptyState icon={<Users className="w-full h-full" />} title="Nenhum cliente encontrado" />
         ) : clientes.map((c: any) => {
           const cfg = STATUS_CFG[c.status] || STATUS_CFG.ATIVO
           const ultimaConta = c.contasReceber?.[0]
@@ -195,7 +195,7 @@ export function ClientesView() {
                 <div className="flex-1 min-w-[220px]">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="text-white font-semibold">{c.nome}</p>
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', cfg.cor, cfg.bg)}>{cfg.label}</span>
+                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
                     {c.setorCobranca && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 flex items-center gap-1">
                         <Headphones className="w-3 h-3" /> Cobranca

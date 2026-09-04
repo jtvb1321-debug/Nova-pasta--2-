@@ -10,13 +10,14 @@ import { toast } from '@/hooks/use-toast'
 import { TIPO_CHAMADO_LABELS } from '@/types'
 
 const schema = z.object({
-  cliente: z.string().min(1, 'Obrigatório'),
-  endereco: z.string().min(1, 'Obrigatório'),
-  cidade: z.string().min(1, 'Obrigatório'),
+  cliente: z.string().min(1, 'Obrigatorio'),
+  endereco: z.string().min(1, 'Obrigatorio'),
+  cidade: z.string().min(1, 'Obrigatorio'),
   telefone: z.string().optional(),
   tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
   observacao: z.string().optional(),
   equipeId: z.string().optional(),
+  subCategoria: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -31,15 +32,16 @@ interface MaterialSelecionado {
 interface Props {
   onClose: () => void
   onSuccess: () => void
+  initialData?: Partial<FormData>
 }
 
-export function NewTicketModal({ onClose, onSuccess }: Props) {
+export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
   const [materiais, setMateriais] = useState<MaterialSelecionado[]>([])
   const [arquivoPDF, setArquivoPDF] = useState<File | null>(null)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'INSTALACAO' },
+    defaultValues: { tipo: 'INSTALACAO', ...initialData },
   })
 
   const { data: equipes = [] } = useQuery({
@@ -129,7 +131,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
                 <label key={tipo} className="cursor-pointer">
                   <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
                   <div className="px-3 py-2 text-xs text-center font-medium border border-white/10 rounded-lg
-                                  peer-checked:border-gts-blue peer-checked:bg-gts-blue/10 peer-checked:text-gts-blue
+                                  peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-400
                                   text-gray-400 hover:border-white/20 transition-colors">
                     {TIPO_CHAMADO_LABELS[tipo]}
                   </div>
@@ -137,6 +139,26 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
               ))}
             </div>
           </div>
+          {(watch('tipo') === 'MANUTENCAO' || watch('tipo') === 'SUPORTE') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Detalhe da Solicitacao</label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {(watch('tipo') === 'MANUTENCAO'
+                  ? ['Lentidao', 'Oscilacao', 'Problemas de conexao']
+                  : ['LOSS - Perda de Sinal', 'Equipamento com defeito']
+                ).map((opcao) => (
+                  <label key={opcao} className="cursor-pointer">
+                    <input {...register('subCategoria')} type="radio" value={opcao} className="sr-only peer" />
+                    <div className="px-3 py-2 text-xs text-center font-medium border border-white/10 rounded-lg
+                                    peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-400
+                                    text-gray-400 hover:border-white/20 transition-colors">
+                      {opcao}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Cliente + Telefone */}
           <div className="grid grid-cols-2 gap-4">
@@ -151,23 +173,23 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          {/* Endereço + Cidade */}
+          {/* Endereco + Cidade */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Endereço *</label>
-              <input {...register('endereco')} placeholder="Rua, número, bairro" className="w-full gts-input" />
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Endereco *</label>
+              <input {...register('endereco')} placeholder="Rua, numero, bairro" className="w-full gts-input" />
               {errors.endereco && <p className="text-xs text-red-400 mt-1">{errors.endereco.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Cidade *</label>
-              <input {...register('cidade')} placeholder="Cidade — Estado" className="w-full gts-input" />
+              <input {...register('cidade')} placeholder="Cidade ou Estado" className="w-full gts-input" />
               {errors.cidade && <p className="text-xs text-red-400 mt-1">{errors.cidade.message}</p>}
             </div>
           </div>
 
           {/* Equipe */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Equipe Responsável</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Equipe Responsavel</label>
             <select {...register('equipeId')} className="w-full gts-input">
               <option value="">Selecionar equipe...</option>
               {equipes.map((e: any) => (
@@ -176,9 +198,9 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
             </select>
           </div>
 
-          {/* Observação */}
+          {/* Observacoes */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Observações</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Observacoes</label>
             <textarea
               {...register('observacao')}
               rows={3}
@@ -190,7 +212,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
           {/* Upload O.S PDF */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Ordem de Serviço (PDF)
+              Ordem de Servico (PDF)
             </label>
             <div className="relative">
               <input
@@ -205,7 +227,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
                 className={`w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg cursor-pointer transition-all ${
                   arquivoPDF
                     ? 'border-emerald-500/50 bg-emerald-500/5'
-                    : 'border-white/20 bg-white/[0.03] hover:border-gts-blue/50 hover:bg-gts-blue/5'
+                    : 'border-white/20 bg-white/[0.03] hover:border-orange-500/50 hover:bg-orange-500/5'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -221,7 +243,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
                     <>
                       <p className="text-sm text-emerald-400 font-medium truncate">{arquivoPDF.name}</p>
                       <p className="text-xs text-gray-500">
-                        {(arquivoPDF.size / 1024).toFixed(0)} KB — Clique para trocar
+                        {(arquivoPDF.size / 1024).toFixed(0)} KB - Clique para trocar
                       </p>
                     </>
                   ) : (
@@ -259,7 +281,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
                 <option value="">+ Adicionar material</option>
                 {estoque?.data?.map((item: any) => (
                   <option key={item.id} value={item.id}>
-                    [{item.codigo}] {item.descricao} — {item.quantidadeAtual} {item.unidade}
+                    [{item.codigo}] {item.descricao} - {item.quantidadeAtual} {item.unidade}
                   </option>
                 ))}
               </select>
@@ -293,7 +315,7 @@ export function NewTicketModal({ onClose, onSuccess }: Props) {
             )}
           </div>
 
-          {/* Botões */}
+          {/* Botoes */}
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 gts-btn-secondary justify-center">
               Cancelar

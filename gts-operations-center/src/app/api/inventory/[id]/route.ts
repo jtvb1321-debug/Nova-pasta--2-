@@ -62,3 +62,36 @@ export async function PATCH(
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Apenas administradores podem excluir itens' }, { status: 403 })
+  }
+
+  const { id } = await params
+
+  try {
+    const item = await prisma.itemEstoque.findUnique({ where: { id } })
+    if (!item) return NextResponse.json({ error: 'Item nao encontrado' }, { status: 404 })
+
+    await prisma.$transaction(async (tx) => {
+      await tx.materialReservado.deleteMany({ where: { itemId: id } })
+      await tx.materialUtilizado.deleteMany({ where: { itemId: id } })
+      await tx.materialDevolvido.deleteMany({ where: { itemId: id } })
+      await tx.movimentacao.deleteMany({ where: { itemId: id } })
+      await tx.itemEstoque.delete({ where: { id } })
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Erro ao excluir item:', error)
+    return NextResponse.json({ error: 'Erro interno ao excluir item' }, { status: 500 })
+  }
+}

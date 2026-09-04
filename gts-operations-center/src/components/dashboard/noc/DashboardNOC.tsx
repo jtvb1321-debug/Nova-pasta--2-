@@ -17,7 +17,7 @@ import { DashboardFooterBar } from './DashboardFooterBar'
 export function DashboardNOC() {
   return (
     <div className="-m-6 min-h-full" style={{ backgroundColor: NOC.bg }}>
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         <DashboardToolbar />
 
         <KpiRow />
@@ -48,7 +48,7 @@ export function DashboardNOC() {
           <UnifiedTimelineCard />
         </div>
 
-        <div className="rounded-2xl border" style={{ backgroundColor: `${NOC.card}CC`, borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-xl border" style={{ backgroundColor: `${NOC.card}CC`, borderColor: 'rgba(255,255,255,0.05)' }}>
           <DashboardFooterBar />
         </div>
       </div>

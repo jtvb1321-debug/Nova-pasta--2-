@@ -68,3 +68,25 @@ export async function PATCH(
     return NextResponse.json({ error: error.message || 'Erro ao atualizar' }, { status: 400 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  const role = (session.user as any)?.role
+  if (!['ADMIN', 'GESTOR'].includes(role)) {
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
+
+  const { id } = await params
+
+  try {
+    await prisma.registroPonto.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error: any) {
+    console.error('Erro ao excluir ponto:', error)
+    return NextResponse.json({ error: error.message || 'Erro ao excluir' }, { status: 400 })
+  }
+}

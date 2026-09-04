@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['localhost'],
   },
-  serverExternalPackages: ['socket.io'],
+  serverExternalPackages: ['socket.io', 'whatsapp-web.js', 'puppeteer', 'puppeteer-core'],
 }
 
 export default nextConfig

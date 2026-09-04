@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, CalendarDays, Network, Wifi, Radio, Search, Activity,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, CalendarDays, Network, Wifi, Radio, Search, Activity, HardHat,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -42,6 +42,7 @@ const TODOS_GRUPOS: MenuGroup[] = [
     items: [
       { href: '/agenda',       label: 'Chamados',      icon: ClipboardList, permissao: 'verChamados' },
       { href: '/teams',        label: 'Equipes',       icon: Users,         permissao: 'verEquipes' },
+      { href: '/tecnicos',     label: 'Tecnicos',      icon: HardHat,       permissao: 'verEquipes' },
       { href: '/solicitacoes', label: 'Solicitacoes de Equipe', icon: ClipboardCheck, permissao: 'verSolicitacoes' },
       { href: '/horas-extras', label: 'Horas Extras', icon: Clock, permissao: 'verHorasExtras' },
       { href: '/escala', label: 'Escala de Trabalho', icon: CalendarDays, permissao: 'verEscala' },
@@ -146,7 +147,7 @@ export function Sidebar() {
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5 flex-shrink-0">
-        <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-[#0B1120] p-1">
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-transparent p-1 ring-1 ring-orange-500/20">
           <img src="/images/icon.png" alt="GTSNet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         {!collapsed && (
@@ -224,14 +225,14 @@ export function Sidebar() {
                         href={item.href}
                         title={collapsed ? item.label : undefined}
                         className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group relative',
+                          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group relative',
                           isActive
-                            ? 'bg-orange-500/10 text-orange-400'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-gradient-to-r from-orange-500/20 to-orange-500/[0.03] text-orange-400 font-semibold border border-orange-500/20 shadow-[inset_0_0_12px_rgba(249,115,22,0.08)]'
+                            : 'text-gray-400 font-medium hover:text-white hover:bg-white/5 border border-transparent'
                         )}
                       >
                         {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-orange-400 rounded-r-full" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-400 rounded-r-full shadow-[0_0_8px_rgba(251,146,60,0.8)]" />
                         )}
                         <Icon className={cn('flex-shrink-0 w-4 h-4', isActive ? 'text-orange-400' : '')} />
                         {!collapsed && <span className="truncate">{item.label}</span>}
@@ -265,7 +266,7 @@ export function Sidebar() {
       <div className="border-t border-white/5 p-3 flex-shrink-0">
         {!collapsed ? (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 bg-orange-500/20 ring-2 ring-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-xs font-bold flex-shrink-0">
               {session?.user?.name ? getInitials(session.user.name) : 'U'}
             </div>
             <div className="flex-1 min-w-0">

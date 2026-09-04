@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
   const equipeId       = searchParams.get('equipeId')       || undefined
   const reincidente    = searchParams.get('reincidente')    || undefined
   const feedbackEnviado = searchParams.get('feedbackEnviado') || undefined
+  const eace           = searchParams.get('eace')            || undefined
+  const dataInicio     = searchParams.get('dataInicio')     || undefined
+  const dataFim        = searchParams.get('dataFim')        || undefined
   const page     = parseInt(searchParams.get('page')  || '1')
   const limit    = parseInt(searchParams.get('limit') || '20')
   const skip     = (page - 1) * limit
@@ -43,6 +46,12 @@ export async function GET(request: NextRequest) {
   if (equipeId)     where.equipeId     = equipeId
   if (reincidente === 'true') where.reincidente = true
   if (feedbackEnviado === 'true') where.feedbackEnviado = true
+  if (eace === 'true') where.eace = true
+  if (dataInicio || dataFim) {
+    where.dataAbertura = {}
+    if (dataInicio) where.dataAbertura.gte = new Date(`${dataInicio}T00:00:00`)
+    if (dataFim) where.dataAbertura.lte = new Date(`${dataFim}T23:59:59`)
+  }
 
   if (searchParams.get('excluirFechadoAdmin') === 'true') where.fechadoAdmin = { not: true }
   // TECNICO - filtrar apenas chamados da sua equipe
@@ -67,6 +76,7 @@ export async function GET(request: NextRequest) {
         equipe: { include: { funcionarios: true } },
         materiaisReservados: { include: { item: true } },
         materiaisUtilizados: { include: { item: true } },
+        diagnosticos: { where: { fase: 'REMOTO' }, orderBy: { iniciadoEm: 'desc' }, take: 1, include: { testes: true } },
       },
       orderBy: { createdAt: 'desc' },
       skip,

@@ -16,6 +16,8 @@ import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { PainelAdminEquipesModal } from './PainelAdminEquipesModal'
 import type { Session } from 'next-auth'
 import { TIPO_CHAMADO_LABELS } from '@/types'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 const STATUS_CONFIG = {
   AGUARDANDO:   { label: 'Disponivel',    cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
@@ -125,41 +127,39 @@ export function TeamsView({ session }: { session?: Session }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Equipes Tecnicas</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {equipes.filter((e: any) => e.status === 'ATIVIDADE').length} em atividade -{' '}
-            {equipes.filter((e: any) => e.status === 'DESLOCAMENTO').length} em deslocamento -{' '}
-            {equipes.filter((e: any) => e.status === 'AGUARDANDO').length} disponiveis
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Link href="/escala" className="gts-btn-secondary">
-              <CalendarDays className="w-4 h-4" />
-              Escala de Trabalho
-            </Link>
-          )}
-          {isAdmin && (
-            <button onClick={() => setShowPainelAdmin(true)} className="gts-btn-primary">
-              <DollarSign className="w-4 h-4" />
-              Painel Admin
+      <PageHeader
+        title="Equipes Tecnicas"
+        subtitle={`${equipes.filter((e: any) => e.status === 'ATIVIDADE').length} em atividade · ${equipes.filter((e: any) => e.status === 'DESLOCAMENTO').length} em deslocamento · ${equipes.filter((e: any) => e.status === 'AGUARDANDO').length} disponiveis`}
+        actions={
+          <>
+            {isAdmin && (
+              <Link href="/escala" className="gts-btn-secondary">
+                <CalendarDays className="w-4 h-4" />
+                Escala de Trabalho
+              </Link>
+            )}
+            {isAdmin && (
+              <button onClick={() => setShowPainelAdmin(true)} className="gts-btn-primary">
+                <DollarSign className="w-4 h-4" />
+                Painel Admin
+              </button>
+            )}
+            <button onClick={baixarRelatorioPdf} disabled={gerandoPdf} className="gts-btn-secondary disabled:opacity-50">
+              {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Baixar Relatorio em PDF
             </button>
-          )}
-          <button onClick={baixarRelatorioPdf} disabled={gerandoPdf} className="gts-btn-secondary disabled:opacity-50">
-            {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Baixar Relatorio em PDF
-          </button>
-          <button onClick={() => refetch()} className="gts-btn-secondary">
-            <RefreshCw className="w-4 h-4" />
-            Atualizar
-          </button>
-        </div>
-      </div>
+            <button onClick={() => refetch()} className="gts-btn-secondary">
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
+            </button>
+          </>
+        }
+      />
 
       {/* Cards */}
+      {equipes.length === 0 ? (
+        <EmptyState icon={<Users className="w-full h-full" />} title="Nenhuma equipe cadastrada" />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {equipes.map((equipe: any) => {
           const cfg = STATUS_CONFIG[equipe.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.AGUARDANDO
@@ -410,6 +410,7 @@ export function TeamsView({ session }: { session?: Session }) {
           )
         })}
       </div>
+      )}
 
       {/* Painel Admin */}
       {showPainelAdmin && (

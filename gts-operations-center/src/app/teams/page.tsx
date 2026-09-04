@@ -12,7 +12,7 @@ export default async function TeamsPage() {
   if (!session) redirect('/login')
   return (
     <AppShell title="Equipes">
-      <TeamsView />
+      <TeamsView session={session} />
     </AppShell>
   )
 }

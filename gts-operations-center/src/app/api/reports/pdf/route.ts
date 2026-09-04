@@ -1,7 +1,14 @@
-// src/app/api/reports/pdf/route.ts
+﻿// src/app/api/reports/pdf/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+
+const CATEGORIA_LABELS_REPORT: Record<string, string> = {
+  GTSNET: 'GTS',
+  EACE: 'EACE',
+  FERRAMENTAS: 'Ferramentas',
+  LIMPEZA: 'Limpeza',
+}
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -11,8 +18,8 @@ export async function GET(request: NextRequest) {
   const tipo = searchParams.get('tipo') || 'materiais'
   const periodo = searchParams.get('periodo') || 'mensal'
   const equipeId = searchParams.get('equipeId') || undefined
+  const categoria = searchParams.get('categoria') || undefined
 
-  // Calcular intervalo de datas
   const agora = new Date()
   let dataInicio = new Date()
 
@@ -29,7 +36,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Buscar dados conforme o tipo
     let dados: any = {}
 
     if (tipo === 'materiais') {
@@ -65,17 +71,27 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 200,
       })
+    } else if (tipo === 'estoque') {
+      const where: any = {}
+      if (categoria) where.categoria = categoria
+
+      dados.itens = await prisma.itemEstoque.findMany({
+        where,
+        orderBy: { descricao: 'asc' },
+      })
+      dados.categoria = categoria
     }
 
-    // Gerar HTML do relatório para renderização
-    // Em produção, usar jsPDF ou Puppeteer para PDF real
-    // Aqui retornamos dados JSON que o frontend pode usar para gerar PDF client-side
     const htmlContent = gerarHTMLRelatorio(tipo, dados, dataInicio, agora)
+
+    const nomeArquivo = tipo === 'estoque'
+      ? `relatorio-estoque-${(categoria || 'todos').toLowerCase()}`
+      : `relatorio-${tipo}`
 
     return new NextResponse(htmlContent, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="relatorio-${tipo}.html"`,
+        'Content-Disposition': `attachment; filename="${nomeArquivo}.html"`,
       },
     })
   } catch (error) {
@@ -87,6 +103,14 @@ export async function GET(request: NextRequest) {
 function gerarHTMLRelatorio(tipo: string, dados: any, inicio: Date, fim: Date): string {
   const dtInicio = inicio.toLocaleDateString('pt-BR')
   const dtFim = fim.toLocaleDateString('pt-BR')
+
+  const tituloTipo = tipo === 'materiais'
+    ? 'Materiais'
+    : tipo === 'chamados'
+      ? 'Chamados'
+      : tipo === 'estoque'
+        ? `Estoque — ${CATEGORIA_LABELS_REPORT[dados.categoria] || 'Todas as Categorias'}`
+        : 'Vendas'
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -116,7 +140,7 @@ function gerarHTMLRelatorio(tipo: string, dados: any, inicio: Date, fim: Date): 
     <p style="opacity:0.7;font-size:11px">GTSNet — Sistema de Gestão Operacional</p>
   </div>
   <div class="meta">
-    <p><strong>Relatório de ${tipo === 'materiais' ? 'Materiais' : tipo === 'chamados' ? 'Chamados' : 'Vendas'}</strong></p>
+    <p><strong>Relatório de ${tituloTipo}</strong></p>
     <p>Período: ${dtInicio} a ${dtFim}</p>
     <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
   </div>
@@ -126,6 +150,7 @@ function gerarHTMLRelatorio(tipo: string, dados: any, inicio: Date, fim: Date): 
   ${tipo === 'materiais' ? gerarTabelaMateriais(dados.materiais || []) : ''}
   ${tipo === 'chamados' ? gerarTabelaChamados(dados.chamados || []) : ''}
   ${tipo === 'comercial' ? gerarTabelaVendas(dados.vendas || []) : ''}
+  ${tipo === 'estoque' ? gerarTabelaEstoque(dados.itens || []) : ''}
 </div>
 
 <div class="footer">
@@ -207,6 +232,36 @@ function gerarTabelaVendas(vendas: any[]): string {
       <td colspan="4" style="text-align:right">TOTAIS APROVADOS</td>
       <td>R$ ${total.toFixed(2)}</td>
       <td>R$ ${comissoes.toFixed(2)}</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>`
+}
+
+function gerarTabelaEstoque(itens: any[]): string {
+  const valorTotal = itens.reduce((s: number, i: any) => s + (i.quantidadeAtual * i.valorUnitario), 0)
+  const criticos = itens.filter((i: any) => i.quantidadeAtual <= i.quantidadeMinima).length
+
+  return `
+<h2 class="section-title">Itens em Estoque (${itens.length}) ${criticos > 0 ? `— ${criticos} em estado crítico` : ''}</h2>
+<table>
+  <thead><tr><th>Código</th><th>Descrição</th><th>Qtd Atual</th><th>Qtd Mínima</th><th>Und</th><th>Valor Unit.</th><th>Valor Total</th><th>Status</th></tr></thead>
+  <tbody>
+    ${itens.map(i => `
+      <tr>
+        <td>${i.codigo}</td>
+        <td>${i.descricao}</td>
+        <td>${i.quantidadeAtual}</td>
+        <td>${i.quantidadeMinima}</td>
+        <td>${i.unidade}</td>
+        <td>R$ ${i.valorUnitario.toFixed(2)}</td>
+        <td>R$ ${(i.quantidadeAtual * i.valorUnitario).toFixed(2)}</td>
+        <td>${i.quantidadeAtual <= i.quantidadeMinima ? 'CRÍTICO' : 'OK'}</td>
+      </tr>
+    `).join('')}
+    <tr style="font-weight:bold;background:#f0f9ff">
+      <td colspan="6" style="text-align:right">VALOR TOTAL EM ESTOQUE</td>
+      <td>R$ ${valorTotal.toFixed(2)}</td>
       <td></td>
     </tr>
   </tbody>

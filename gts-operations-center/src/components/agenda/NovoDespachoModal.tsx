@@ -8,13 +8,14 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   X, Loader2, Package, Trash2, FileText,
   CheckCircle, MapPin, Phone, AlertTriangle,
-  Clock, Users, Zap, Search, WifiOff
+  Clock, Users, Zap, Search, WifiOff, GraduationCap, Hash, Link2,
 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { TIPO_CHAMADO_LABELS } from '@/types'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
+  eace: z.boolean().optional(),
   cliente: z.string().min(1, 'Obrigatorio'),
   telefone: z.string().optional(),
   cep: z.string().min(1, 'Obrigatorio'),
@@ -27,6 +28,9 @@ const schema = z.object({
   bairro: z.string().min(1, 'Obrigatorio'),
   cidade: z.string().min(1, 'Obrigatorio'),
   uf: z.string().optional(),
+  escolaResponsavel: z.string().optional(),
+  escolaCodigoInep: z.string().optional(),
+  localizacaoLink: z.string().optional(),
   tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
   prioridade: z.enum(['NORMAL', 'URGENTE', 'CRITICO']),
   equipeId: z.string().min(1, 'Selecione uma equipe'),
@@ -62,13 +66,18 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   const [arquivoPDF, setArquivoPDF] = useState<File | null>(null)
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false)
   const [clienteVinculado, setClienteVinculado] = useState(!!initialData?.cliente)
+  // Id do cadastro de cliente (IXC) selecionado no autocomplete - guardado a
+  // parte pois nao e um campo do formulario, so acompanha o despacho pra
+  // permitir cruzar o chamado com o cadastro depois (plano, diagnostico etc).
+  const [clienteIdSelecionado, setClienteIdSelecionado] = useState<string | null>(null)
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'INSTALACAO', prioridade: 'NORMAL', ...initialData },
+    defaultValues: { tipo: 'INSTALACAO', prioridade: 'NORMAL', eace: false, ...initialData },
   })
 
   const prioridade = watch('prioridade')
+  const eace = watch('eace')
   const agora = new Date()
   const horaAtual = agora.getHours()
   const ehPlantaoPosHorario = horaAtual >= 18
@@ -97,7 +106,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
       const json = await res.json()
       return (json.data ?? []) as any[]
     },
-    enabled: mostrarSugestoes && buscaCliente.length >= 3 && !clienteVinculado,
+    enabled: mostrarSugestoes && buscaCliente.length >= 3 && !clienteVinculado && !eace,
     retry: false,
     staleTime: 30000,
   })
@@ -117,6 +126,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
     if (c.cidade) setValue('cidade', c.cidade, { shouldValidate: true })
     if (c.uf) setValue('uf', c.uf)
     setClienteVinculado(true)
+    setClienteIdSelecionado(c.id ?? null)
     setMostrarSugestoes(false)
   }
 
@@ -141,7 +151,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
       const res = await fetch('/api/agenda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, materiais }),
+        body: JSON.stringify({ ...data, materiais, clienteId: clienteIdSelecionado ?? undefined }),
       })
       if (!res.ok) throw new Error('Erro ao despachar chamado')
       return res.json()
@@ -182,12 +192,17 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 sticky top-0 bg-[#111827] z-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gts-blue/20 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-gts-blue" />
+            <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              {eace
+                ? <GraduationCap className="w-4 h-4 text-orange-400" />
+                : <Zap className="w-4 h-4 text-orange-400" />
+              }
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Novo Despacho NOC</h2>
-              <p className="text-xs text-gray-500">O chamado sera enviado diretamente para a equipe</p>
+              <h2 className="text-lg font-semibold text-white">{eace ? 'Novo Despacho EACE' : 'Novo Despacho NOC'}</h2>
+              <p className="text-xs text-gray-500">
+                {eace ? 'Chamado de escola - sera enviado diretamente para a equipe' : 'O chamado sera enviado diretamente para a equipe'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-2 -m-2 rounded-lg hover:bg-white/5 flex-shrink-0">
@@ -196,6 +211,19 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
         </div>
 
         <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="p-6 space-y-5">
+
+          {/* Toggle EACE */}
+          <label className={cn(
+            'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+            eace ? 'border-orange-500/40 bg-orange-500/10' : 'border-white/10 bg-white/[0.02] hover:border-orange-500/30'
+          )}>
+            <input {...register('eace')} type="checkbox" className="w-4 h-4 accent-orange-500" />
+            <GraduationCap className={cn('w-4 h-4 flex-shrink-0', eace ? 'text-orange-400' : 'text-gray-500')} />
+            <div>
+              <p className="text-sm font-medium text-gray-200">Chamado EACE (escola)</p>
+              <p className="text-xs text-gray-500">Marque se este chamado e de uma escola do contrato EACE</p>
+            </div>
+          </label>
 
           {/* Prioridade */}
           <div>
@@ -225,7 +253,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 <label key={tipo} className="cursor-pointer">
                   <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
                   <div className="px-3 py-2 text-xs text-center font-medium border border-white/10 rounded-lg
-                                  peer-checked:border-gts-blue peer-checked:bg-gts-blue/10 peer-checked:text-gts-blue
+                                  peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-400
                                   text-gray-400 hover:border-white/20 transition-colors">
                     {TIPO_CHAMADO_LABELS[tipo]}
                   </div>
@@ -258,8 +286,11 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                <Phone className="w-3.5 h-3.5 inline mr-1" />
-                Cliente *
+                {eace
+                  ? <GraduationCap className="w-3.5 h-3.5 inline mr-1" />
+                  : <Phone className="w-3.5 h-3.5 inline mr-1" />
+                }
+                {eace ? 'Nome da Escola *' : 'Cliente *'}
               </label>
               <div className="relative">
                 <input
@@ -267,6 +298,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                   onChange={(e) => {
                     clienteRegister.onChange(e)
                     setClienteVinculado(false)
+                    setClienteIdSelecionado(null)
                     setMostrarSugestoes(true)
                   }}
                   onFocus={() => setMostrarSugestoes(true)}
@@ -274,31 +306,31 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                     clienteRegister.onBlur(e)
                     setTimeout(() => setMostrarSugestoes(false), 150)
                   }}
-                  placeholder="Nome, CPF/CNPJ ou telefone do cliente"
+                  placeholder={eace ? 'Nome da escola' : 'Nome, CPF/CNPJ ou telefone do cliente'}
                   autoComplete="off"
                   className="w-full gts-input pr-8"
                 />
-                {buscandoClientes && (
+                {!eace && buscandoClientes && (
                   <Loader2 className="w-3.5 h-3.5 text-gray-500 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
                 )}
-                {!buscandoClientes && clienteVinculado && (
+                {!eace && !buscandoClientes && clienteVinculado && (
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-400 absolute right-3 top-1/2 -translate-y-1/2" />
                 )}
               </div>
               {errors.cliente && <p className="text-xs text-red-400 mt-1">{errors.cliente.message}</p>}
 
-              {clienteVinculado && !errors.cliente && (
+              {!eace && clienteVinculado && !errors.cliente && (
                 <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" /> Dados preenchidos a partir do cadastro do cliente
                 </p>
               )}
-              {mostrarSugestoes && !clienteVinculado && erroBuscaClientes && (
+              {!eace && mostrarSugestoes && !clienteVinculado && erroBuscaClientes && (
                 <p className="text-xs text-yellow-500 mt-1 flex items-center gap-1">
                   <WifiOff className="w-3 h-3" /> Nao foi possivel buscar o cliente agora. Preencha os dados manualmente.
                 </p>
               )}
 
-              {mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
+              {!eace && mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
                 <div
                   onMouseDown={(e) => e.preventDefault()}
                   className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-[#1a2333] border border-white/10 rounded-lg shadow-xl"
@@ -328,21 +360,40 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
             </div>
           </div>
 
-          {/* Condominio / Bloco / Apartamento */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Condominio</label>
-              <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
+          {/* Condominio / Bloco / Apartamento - nao se aplica a escolas */}
+          {!eace && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Condominio</label>
+                <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Bloco</label>
+                <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Apartamento</label>
+                <input {...register('apartamento')} placeholder="Apartamento" className="w-full gts-input" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Bloco</label>
-              <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
+          )}
+
+          {/* Dados da escola (apenas EACE) */}
+          {eace && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Responsavel pela Escola</label>
+                <input {...register('escolaResponsavel')} placeholder="Nome do responsavel/diretor(a)" className="w-full gts-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <Hash className="w-3.5 h-3.5 inline mr-1" />
+                  Codigo INEP
+                </label>
+                <input {...register('escolaCodigoInep')} placeholder="00000000" className="w-full gts-input" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Apartamento</label>
-              <input {...register('apartamento')} placeholder="Apartamento" className="w-full gts-input" />
-            </div>
-          </div>
+          )}
 
           {/* CEP / Endereco / Numero */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -391,6 +442,18 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
             </div>
           </div>
+
+          {/* Localizacao (apenas EACE) */}
+          {eace && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <Link2 className="w-3.5 h-3.5 inline mr-1" />
+                Link do Google Maps
+              </label>
+              <input {...register('localizacaoLink')} placeholder="Cole aqui o link compartilhado do Google Maps" className="w-full gts-input" />
+              <p className="text-xs text-gray-600 mt-1">As coordenadas sao extraidas automaticamente do link, quando possivel.</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -468,12 +531,15 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Observacao / Solicitacao */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Solicitacao / Observacoes *
+              {eace ? 'Informacoes passadas pelo cliente' : 'Solicitacao / Observacoes *'}
             </label>
             <textarea
               {...register('observacao')}
               rows={4}
-              placeholder="Descreva detalhadamente a atividade a ser realizada, problema relatado, equipamentos envolvidos, acesso ao local, etc..."
+              placeholder={eace
+                ? 'Descreva o que foi relatado pela escola: problema, acesso ao local, ponto de instalacao, etc...'
+                : 'Descreva detalhadamente a atividade a ser realizada, problema relatado, equipamentos envolvidos, acesso ao local, etc...'
+              }
               className="w-full gts-input resize-none"
             />
           </div>
@@ -497,7 +563,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 'w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg cursor-pointer transition-all',
                 arquivoPDF
                   ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-white/20 bg-white/[0.02] hover:border-gts-blue/50 hover:bg-gts-blue/5'
+                  : 'border-white/20 bg-white/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
               )}
             >
               <div className={cn(

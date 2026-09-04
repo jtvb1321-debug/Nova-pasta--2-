@@ -39,7 +39,7 @@ export function AppShell({ children, title }: AppShellProps) {
             totalAlertas={alertas.length}
           />
         </div>
-        <main className="relative z-10 flex-1 overflow-y-auto p-6">
+        <main className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6">
           {children}
         </main>
       </div>

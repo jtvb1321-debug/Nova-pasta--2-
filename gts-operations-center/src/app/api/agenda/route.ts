@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { notificarNovoChamado } from '@/lib/telegram'
 import { ativarChamadosAgendados } from '@/lib/ativarAgendados'
 import { detectarReincidencia } from '@/lib/sla'
+import { extrairCoordenadasDeLinkMaps } from '@/lib/googleMaps'
 
 const createSchema = z.object({
   cliente:      z.string().min(1),
@@ -31,6 +32,14 @@ const createSchema = z.object({
     itemId:     z.string(),
     quantidade: z.number().min(0.01),
   })).optional(),
+  // Chamados EACE (escolas) - mesmo fluxo, campos extras opcionais.
+  eace:              z.boolean().optional(),
+  escolaResponsavel: z.string().optional(),
+  escolaCodigoInep:  z.string().optional(),
+  localizacaoLink:   z.string().optional(),
+  // Cadastro de cliente (IXC) selecionado no autocomplete do despacho, se
+  // houver - permite depois cruzar o chamado com plano/status/diagnostico.
+  clienteId:         z.string().optional(),
 })
 
 export async function GET() {
@@ -46,6 +55,7 @@ export async function GET() {
     include: {
       equipe: { include: { funcionarios: true, veiculo: true } },
       materiaisReservados: { include: { item: true } },
+      diagnosticos: { where: { fase: 'REMOTO' }, orderBy: { iniciadoEm: 'desc' }, take: 1, include: { testes: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -85,7 +95,7 @@ export async function POST(request: NextRequest) {
     const ehFuturo = dataAgendadaCompleta.getTime() > agora.getTime() + 60000 // margem de 1 min
 
     if (ehFuturo) {
-      const podeAgendar = EMAILS_AUTORIZADOS_AGENDAR.includes(usuarioEmail) || usuarioRole === 'OPERADOR'
+      const podeAgendar = EMAILS_AUTORIZADOS_AGENDAR.includes(usuarioEmail) || usuarioRole === 'OPERADOR' || usuarioRole === 'ADMIN'
       if (!podeAgendar) {
         return NextResponse.json(
           { error: 'Apenas Kawan, Melke ou usuarios Operador podem agendar chamados para datas futuras' },
@@ -126,6 +136,13 @@ export async function POST(request: NextRequest) {
     dataAbertura,
   })
 
+  // Chamado EACE (escola) - resolve as coordenadas do link colado antes de
+  // abrir a transacao (fetch externo nao deve segurar a transacao aberta).
+  let coordenadas: { lat: number; lng: number } | null = null
+  if (chamadoData.eace && chamadoData.localizacaoLink) {
+    coordenadas = await extrairCoordenadasDeLinkMaps(chamadoData.localizacaoLink)
+  }
+
   try {
     const chamado = await prisma.$transaction(async (tx) => {
 
@@ -158,6 +175,13 @@ export async function POST(request: NextRequest) {
             : undefined,
           reincidente,
           chamadoOrigemReincidenciaId,
+          clienteId:         chamadoData.clienteId,
+          eace:              chamadoData.eace ?? false,
+          escolaResponsavel: chamadoData.escolaResponsavel,
+          escolaCodigoInep:  chamadoData.escolaCodigoInep,
+          localizacaoLink:   chamadoData.localizacaoLink,
+          latitude:          coordenadas?.lat,
+          longitude:         coordenadas?.lng,
         },
         include: { equipe: { include: { funcionarios: true } } },
       })
@@ -204,6 +228,11 @@ export async function POST(request: NextRequest) {
         tipo:        chamado.tipo,
         equipe:      chamado.equipe?.nome,
         prioridade:  prioridade,
+        eace:              chamado.eace,
+        escolaResponsavel: chamado.escolaResponsavel,
+        escolaCodigoInep:  chamado.escolaCodigoInep,
+        latitude:          chamado.latitude,
+        longitude:         chamado.longitude,
       }).catch(() => {})
     }
     return NextResponse.json(chamado, { status: 201 })

@@ -59,7 +59,7 @@ export function MovementsView() {
         <button
           onClick={() => { setTipo(''); setPage(1) }}
           className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-            !tipo ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30' : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+            !tipo ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
           )}
         >
           Todos
@@ -69,7 +69,7 @@ export function MovementsView() {
             key={k}
             onClick={() => { setTipo(k); setPage(1) }}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-              tipo === k ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30' : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+              tipo === k ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
             )}
           >
             {v.label}

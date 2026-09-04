@@ -11,6 +11,7 @@ import {
 import { cn, formatSpeed, formatDateTime, getSpeedColor, timeAgo } from '@/lib/utils'
 import type { VeiculoRastreado } from '@/types'
 import Link from 'next/link'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 type Aba = 'mapa' | 'lista' | 'alertas'
 
@@ -86,11 +87,10 @@ export function CentralMonitoramento() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Central de Monitoramento</h1>
-          <p className="text-gray-500 text-sm mt-1">
+      <PageHeader
+        title="Central de Monitoramento"
+        subtitle={
+          <>
             <span className="text-emerald-400 font-medium">{online} online</span>
             {' · '}
             <span className="text-gray-400">{offline} offline</span>
@@ -104,19 +104,21 @@ export function CentralMonitoramento() {
                 · Atualizado {timeAgo(new Date(dataUpdatedAt))}
               </span>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/tv" className="gts-btn-secondary">
-            <Maximize2 className="w-4 h-4" />
-            Modo TV
-          </Link>
-          <button onClick={() => refetch()} className="gts-btn-secondary">
-            <RefreshCw className="w-4 h-4" />
-            Atualizar
-          </button>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <Link href="/tv" className="gts-btn-secondary">
+              <Maximize2 className="w-4 h-4" />
+              Modo TV
+            </Link>
+            <button onClick={() => refetch()} className="gts-btn-secondary">
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
+            </button>
+          </>
+        }
+      />
 
       {/* Alerta de velocidade */}
       {emAlerta > 0 && (
@@ -142,7 +144,7 @@ export function CentralMonitoramento() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 aba === a.id
-                  ? 'border-gts-blue text-gts-blue'
+                  ? 'border-orange-400 text-orange-400'
                   : 'border-transparent text-gray-400 hover:text-white'
               )}
             >
@@ -183,7 +185,7 @@ export function CentralMonitoramento() {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                   filtroStatus === f.value
-                    ? 'bg-gts-blue/20 text-gts-blue border-gts-blue/30'
+                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
                     : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
                 )}
               >
@@ -247,8 +249,8 @@ export function CentralMonitoramento() {
                           </p>
                           <p className="text-xs text-gray-500">km/h</p>
                           {v.alerta && (
-                            <p className="text-xs text-red-400 font-bold mt-1 animate-pulse">
-                              ⚠️ ACIMA DO LIMITE
+                            <p className="text-xs text-red-400 font-bold mt-1 animate-pulse flex items-center justify-center gap-1">
+                              <AlertTriangle className="w-3 h-3" /> ACIMA DO LIMITE
                             </p>
                           )}
                         </div>
@@ -337,7 +339,7 @@ export function CentralMonitoramento() {
           {/* Historico de todos os veiculos */}
           <div className="gts-card">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-gts-blue" />
+              <Activity className="w-4 h-4 text-orange-400" />
               Status Atual de Todos os Veiculos
             </h3>
             <div className="space-y-2">

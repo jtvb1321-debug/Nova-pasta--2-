@@ -12,6 +12,9 @@ import { toast } from '@/hooks/use-toast'
 interface Props {
   chamado: any
   onClose: () => void
+  // Diagnostico REMOTO do NOC (se existir) - mostrado ao tecnico antes do seu
+  // proprio teste, e validado ao final do atendimento (secoes 24-25).
+  diagnosticoRemoto?: any
 }
 
 type StatusEtapa = 'pendente' | 'rodando' | 'ok' | 'atencao' | 'problema' | 'indisponivel' | 'erro'
@@ -78,7 +81,7 @@ async function medirRtt(destino: 'gtsnet' | 'externo', amostras: number) {
   return { tempos, falhas, amostras }
 }
 
-export function DiagnosticoRunner({ chamado, onClose }: Props) {
+export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props) {
   const { data: session } = useSession()
   const [fase, setFase] = useState<'inicio' | 'rodando' | 'resultado' | 'atendimento'>('inicio')
   const [diagnosticoId, setDiagnosticoId] = useState<string | null>(null)
@@ -103,6 +106,9 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
   const [equipamentoNovoDesc, setEquipamentoNovoDesc] = useState('')
   const [resultadoFinal, setResultadoFinal] = useState('')
   const [enviandoAtendimento, setEnviandoAtendimento] = useState(false)
+  // Validacao do diagnostico REMOTO do NOC (so existe quando diagnosticoRemoto existe)
+  const [validacaoTecnico, setValidacaoTecnico] = useState('')
+  const [causaReal, setCausaReal] = useState('')
 
   useEffect(() => {
     async function verificarAnterior() {
@@ -259,6 +265,10 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
       toast({ title: 'Preencha problema, acao realizada e resultado', variant: 'destructive' })
       return
     }
+    if (diagnosticoRemoto && !validacaoTecnico) {
+      toast({ title: 'Informe se o diagnostico do NOC estava correto', variant: 'destructive' })
+      return
+    }
     setEnviandoAtendimento(true)
     try {
       const res = await fetch(`/api/diagnostico/${diagnosticoId}/finish`, {
@@ -271,6 +281,15 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
         }),
       })
       if (!res.ok) throw new Error()
+
+      if (diagnosticoRemoto) {
+        await fetch(`/api/diagnostico/${diagnosticoRemoto.id}/validar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ validacaoTecnico, causaReal: causaReal || undefined }),
+        }).catch(() => {})
+      }
+
       toast({ title: 'Atendimento registrado!', variant: 'success' })
       onClose()
     } catch {
@@ -317,6 +336,17 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
                 <p className="text-xs text-gray-500">Tecnico: {session?.user?.name || '-'}</p>
                 <p className="text-xs text-gray-500">OS: {chamado.id.slice(0, 8)}</p>
               </div>
+
+              {diagnosticoRemoto && (
+                <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-1">
+                  <p className="text-xs text-cyan-400 font-bold">Diagnostico do NOC (antes do despacho)</p>
+                  <p className="text-sm text-gray-200">
+                    {CLASSIFICACAO_CFG[diagnosticoRemoto.classificacao]?.label ?? diagnosticoRemoto.classificacao}
+                    {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
+                  </p>
+                  {diagnosticoRemoto.hipotese && <p className="text-xs text-gray-400">{diagnosticoRemoto.hipotese}</p>}
+                </div>
+              )}
 
               {!carregandoHistorico && temAnteriorPendente && (
                 <div className="flex items-center gap-2 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
@@ -485,6 +515,52 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
 
           {fase === 'atendimento' && (
             <div className="space-y-4">
+              {diagnosticoRemoto && (
+                <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-3">
+                  <p className="text-xs text-cyan-400 font-bold">O diagnostico do NOC estava correto?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { valor: 'CONFIRMADO', label: 'Confirmado' },
+                      { valor: 'PARCIAL', label: 'Parcialmente' },
+                      { valor: 'INCORRETO', label: 'Incorreto' },
+                      { valor: 'INCONCLUSIVO', label: 'Inconclusivo' },
+                    ].map(op => (
+                      <button
+                        key={op.valor}
+                        type="button"
+                        onClick={() => setValidacaoTecnico(op.valor)}
+                        className={cn(
+                          'py-2 rounded-lg text-xs font-medium border transition-colors',
+                          validacaoTecnico === op.valor
+                            ? 'bg-cyan-500 border-cyan-500 text-black'
+                            : 'bg-[#111827] border-white/10 text-gray-300'
+                        )}
+                      >
+                        {op.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Causa real</label>
+                    <select
+                      value={causaReal}
+                      onChange={e => setCausaReal(e.target.value)}
+                      className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="WIFI">Wi-Fi</option>
+                      <option value="ROTEADOR">Roteador</option>
+                      <option value="ONU">ONU</option>
+                      <option value="FIBRA">Fibra</option>
+                      <option value="SINAL">Sinal</option>
+                      <option value="CONFIGURACAO">Configuracao</option>
+                      <option value="REDE">Rede</option>
+                      <option value="OUTRO">Outro</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Problema encontrado *</label>
                 <select
@@ -561,7 +637,7 @@ export function DiagnosticoRunner({ chamado, onClose }: Props) {
 
               <button
                 onClick={enviarAtendimento}
-                disabled={enviandoAtendimento}
+                disabled={enviandoAtendimento || (!!diagnosticoRemoto && !validacaoTecnico)}
                 className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
               >
                 {enviandoAtendimento ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}

@@ -24,6 +24,8 @@ import { EntradaDefeitoModal } from './EntradaDefeitoModal'
 import { RelatorioCompletoModal } from './RelatorioCompletoModal'
 import { PorTecnicoTab } from './PorTecnicoTab'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico'
 const CATEGORIA_CORES: Record<CategoriaEstoque, string> = {
   GTSNET:      'text-blue-400 bg-blue-500/10',
@@ -326,51 +328,52 @@ export function CentralEstoque({ session }: Props) {
   return (
     <div className="space-y-5 animate-fade-in">
 
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Central de Estoque</h1>
-          <p className="text-gray-500 text-sm mt-1">
+      <PageHeader
+        title="Central de Estoque"
+        subtitle={
+          <>
             Estoque, movimentacoes e devolucoes
             {criticos > 0 && <span className="ml-2 text-red-400 font-medium">- {criticos} critico(s)</span>}
             {devPendentes > 0 && <span className="ml-2 text-yellow-400 font-medium">- {devPendentes} devolucao(oes) pendente(s)</span>}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={handleExport} className="gts-btn-secondary">
-            <Download className="w-4 h-4" />
-            Exportar
-          </button>
-          <button onClick={() => setShowImportarNF(true)} className="gts-btn-secondary">
-            <Upload className="w-4 h-4" />
-            Importar Nota Fiscal
-          </button>
-          <button onClick={() => setShowHistoricoRetiradas(true)} className="gts-btn-secondary">
-            <History className="w-4 h-4" />
-            Historico de Retiradas
-          </button>
-          <button onClick={() => setShowRetirarMaterial(true)} className="gts-btn-secondary">
-            <PackageMinus className="w-4 h-4" />
-            Retirar Material
-          </button>
-          <button onClick={() => setShowTransferencia(true)} className="gts-btn-secondary">
-            <ArrowLeftRight className="w-4 h-4" />
-            Transferencia
-          </button>
-          <button onClick={() => setShowRelatorioCompleto(true)} className="gts-btn-secondary">
-            <FileSpreadsheet className="w-4 h-4" />
-            Baixar Relatorio
-          </button>
-          <button onClick={() => setShowTransferenciaLocal(true)} className="gts-btn-secondary">
-            <ArrowRightLeft className="w-4 h-4" />
-            Transferir Estoque
-          </button>
-          <button onClick={() => setShowNovoItem(true)} className="gts-btn-primary">
-            <Plus className="w-4 h-4" />
-            Novo Item
-          </button>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <button onClick={handleExport} className="gts-btn-secondary">
+              <Download className="w-4 h-4" />
+              Exportar
+            </button>
+            <button onClick={() => setShowImportarNF(true)} className="gts-btn-secondary">
+              <Upload className="w-4 h-4" />
+              Importar Nota Fiscal
+            </button>
+            <button onClick={() => setShowHistoricoRetiradas(true)} className="gts-btn-secondary">
+              <History className="w-4 h-4" />
+              Historico de Retiradas
+            </button>
+            <button onClick={() => setShowRetirarMaterial(true)} className="gts-btn-secondary">
+              <PackageMinus className="w-4 h-4" />
+              Retirar Material
+            </button>
+            <button onClick={() => setShowTransferencia(true)} className="gts-btn-secondary">
+              <ArrowLeftRight className="w-4 h-4" />
+              Transferencia
+            </button>
+            <button onClick={() => setShowRelatorioCompleto(true)} className="gts-btn-secondary">
+              <FileSpreadsheet className="w-4 h-4" />
+              Baixar Relatorio
+            </button>
+            <button onClick={() => setShowTransferenciaLocal(true)} className="gts-btn-secondary">
+              <ArrowRightLeft className="w-4 h-4" />
+              Transferir Estoque
+            </button>
+            <button onClick={() => setShowNovoItem(true)} className="gts-btn-primary">
+              <Plus className="w-4 h-4" />
+              Novo Item
+            </button>
+          </>
+        }
+      />
 
       {/* Abas */}
       <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto -mx-1 px-1">
@@ -660,7 +663,7 @@ export function CentralEstoque({ session }: Props) {
                   className={cn(
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     periodoMov === p.valor
-                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                      ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
                       : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
                   )}
                 >
@@ -1115,42 +1118,22 @@ export function CentralEstoque({ session }: Props) {
 
       {/* Modal confirmar exclusao */}
       {itemExcluir && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111827] border border-red-500/20 rounded-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Excluir item do estoque</h3>
-                <p className="text-sm text-gray-500">Esta acao nao pode ser desfeita</p>
-              </div>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-white font-medium">{itemExcluir.descricao}</p>
-              <p className="text-xs text-gray-500 font-mono">{itemExcluir.codigo}</p>
-            </div>
-            <p className="text-sm text-gray-400">
-              Tem certeza que deseja excluir permanentemente este item?
-            </p>
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setItemExcluir(null)}
-                className="flex-1 gts-btn-secondary justify-center"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => excluirMutation.mutate(itemExcluir.id)}
-                disabled={excluirMutation.isPending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 font-medium transition-colors disabled:opacity-50"
-              >
-                {excluirMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                Excluir definitivamente
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          titulo="Excluir item do estoque"
+          mensagem={
+            <>
+              <span className="block bg-white/5 rounded-lg p-3 mb-3">
+                <span className="block text-white font-medium">{itemExcluir.descricao}</span>
+                <span className="block text-xs text-gray-500 font-mono">{itemExcluir.codigo}</span>
+              </span>
+              Tem certeza que deseja excluir permanentemente este item? Esta acao nao pode ser desfeita.
+            </>
+          }
+          confirmarLabel="Excluir definitivamente"
+          carregando={excluirMutation.isPending}
+          onConfirmar={() => excluirMutation.mutate(itemExcluir.id)}
+          onCancelar={() => setItemExcluir(null)}
+        />
       )}
     </div>
   )

@@ -136,6 +136,9 @@ export async function POST(
       data: {
         classificacao: resultado.classificacao,
         origemProvavel: resultado.origemProvavel,
+        confianca: resultado.confianca,
+        evidencias: resultado.evidencias,
+        hipotese: resultado.hipotese,
         recomendacoes: resultado.recomendacoes,
         resumo,
       },

@@ -5,12 +5,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   X, MapPin, Phone, Clock, Truck, Zap,
   CheckCircle, Package, FileText, ChevronRight,
-  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity, ScanLine, Ban
+  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity, ScanLine, Ban, Brain,
 } from 'lucide-react'
 import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 import { DiagnosticoRunner } from './DiagnosticoRunner'
+import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
 
 const MIN_FOTOS = 3
 
@@ -51,6 +52,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const [equipamentosUtilizadosIds, setEquipamentosUtilizadosIds] = useState<string[]>([])
   const [nenhumEquipamentoUsado, setNenhumEquipamentoUsado] = useState(false)
   const [showDiagnostico, setShowDiagnostico] = useState(false)
+  const [mostrarDiagnosticoCompleto, setMostrarDiagnosticoCompleto] = useState(false)
   const inputFotoRef = useRef<HTMLInputElement>(null)
 
   const prioridade = detectarPrioridade(chamado.observacao)
@@ -58,6 +60,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const obs = limparObservacao(chamado.observacao)
   const materiaisDisponiveis = chamado.materiaisReservados ?? []
   const status = chamado.status
+  const diagnosticoRemoto = chamado.diagnosticos?.[0]
 
   const { data: unidadesData } = useQuery({
     queryKey: ['unidades-equipamento', chamado.equipeId],
@@ -328,6 +331,74 @@ async function marcarClienteAusente() {
                 <p className="text-sm text-yellow-400 font-medium">Atendimento em andamento</p>
               </div>
 
+              {/* Diagnostico do NOC - o tecnico ve o que foi concluido
+                  remotamente antes de rodar seu proprio teste em campo. */}
+              {diagnosticoRemoto && (
+                <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-1">
+                  <p className="text-xs text-cyan-400 font-bold flex items-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
+                  </p>
+                  <p className="text-sm text-gray-200">
+                    {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
+                    {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
+                    {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
+                  </p>
+                  {diagnosticoRemoto.hipotese && (
+                    <p className="text-xs text-gray-400">{diagnosticoRemoto.hipotese}</p>
+                  )}
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setMostrarDiagnosticoCompleto(v => !v)}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 underline decoration-dotted"
+                    >
+                      {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 underline decoration-dotted"
+                    >
+                      Ver relatorio
+                    </button>
+                  </div>
+
+                  {mostrarDiagnosticoCompleto && (
+                    <div className="pt-2 border-t border-cyan-500/10 space-y-2">
+                      {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
+                        <div>
+                          <p className="text-[11px] text-gray-500 mb-1">Evidencias</p>
+                          <ul className="space-y-0.5">
+                            {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
+                              <li key={i} className="text-xs text-gray-300">• {ev}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
+                        <div>
+                          <p className="text-[11px] text-gray-500 mb-1">Recomendacoes</p>
+                          <ul className="space-y-0.5">
+                            {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
+                              <li key={i} className="text-xs text-gray-300">• {r}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {diagnosticoRemoto.resumo?.downloadMbps != null && (
+                        <p className="text-xs text-gray-500">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
+                      )}
+                      {diagnosticoRemoto.resumo?.onuStatus && (
+                        <p className="text-xs text-gray-500">
+                          ONU: <span className="text-gray-300">{diagnosticoRemoto.resumo.onuStatus}</span>
+                          {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Diagnostico tecnico */}
               <button
                 onClick={() => setShowDiagnostico(true)}
@@ -583,7 +654,7 @@ async function marcarClienteAusente() {
       </div>
 
       {showDiagnostico && (
-        <DiagnosticoRunner chamado={chamado} onClose={() => setShowDiagnostico(false)} />
+        <DiagnosticoRunner chamado={chamado} diagnosticoRemoto={diagnosticoRemoto} onClose={() => setShowDiagnostico(false)} />
       )}
     </div>
   )

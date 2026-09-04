@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -20,15 +20,10 @@ import { MissionControlBackground } from './MissionControlBackground'
 import { EventTicker } from './EventTicker'
 import { RadialGauge } from './RadialGauge'
 import { TVAgendaEquipes } from './TVAgendaEquipes'
-import { EQUIPES_OPERACIONAIS as EQUIPES_TV } from '@/lib/equipesOperacionais'
+import { calcularEstadoEquipeTv, ESTADO_EQUIPE_TV_CFG, ETAPAS_JORNADA_EQUIPE, etapaJornadaIndex } from '@/lib/statusEquipeTv'
 ChartJS.register(ArcElement, Tooltip, Legend)
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
-const STATUS_EQUIPE = {
-  AGUARDANDO:   { label: 'Disponivel',   cor: 'text-emerald-400', bg: 'bg-emerald-500/20', dot: 'bg-emerald-400' },
-  DESLOCAMENTO: { label: 'Deslocamento', cor: 'text-yellow-400',  bg: 'bg-yellow-500/20',  dot: 'bg-yellow-400' },
-  ATIVIDADE:    { label: 'Em Atividade', cor: 'text-yellow-400',  bg: 'bg-yellow-500/20',  dot: 'bg-yellow-400 animate-pulse' },
-  FINALIZADO:   { label: 'Finalizado',   cor: 'text-red-400',     bg: 'bg-red-500/20',     dot: 'bg-red-400' },
-}
+const ORDEM_PRIORIDADE: Record<string, number> = { CRITICA: 0, ALTA: 1, MEDIA: 2, NORMAL: 3 }
 
 const DIFERENCIAIS_GTSNET = [
   { label: 'Atendimento Humanizado',   icon: Headphones },
@@ -191,12 +186,43 @@ export function TVDashboard() {
   const { data: tecnicosGpsData } = useQuery({ queryKey: ['tv-tecnicos-gps'], queryFn: fetchTecnicosGps, refetchInterval: 15000 })
   const { data: andamentoData } = useQuery({ queryKey: ['tv-chamados-andamento'], queryFn: fetchChamadosAndamento, refetchInterval: 20000 })
 
-  const chamadosAndamentoSla = andamentoData?.chamados ?? []
-  const tecnicosGps = (tecnicosGpsData?.tecnicos ?? []).filter((t: any) =>
-    EQUIPES_TV.some(cfg => t.equipe?.toLowerCase().includes(cfg.chave))
-  )
+  // Chamados em andamento ordenados por prioridade real (critica > alta > media > normal)
+  // e, dentro da mesma prioridade, pelo maior tempo em atendimento primeiro.
+  const chamadosAndamentoSla = useMemo(() => {
+    const lista = [...(andamentoData?.chamados ?? [])]
+    lista.sort((a: any, b: any) => {
+      const diffPrioridade = (ORDEM_PRIORIDADE[a.prioridade] ?? 9) - (ORDEM_PRIORIDADE[b.prioridade] ?? 9)
+      if (diffPrioridade !== 0) return diffPrioridade
+      return b.minutosDecorridos - a.minutosDecorridos
+    })
+    return lista
+  }, [andamentoData])
+
+  // Todas as equipes de campo reais (sem filtro fixo por nome), com estado
+  // calculado (6 estados) a partir de status bruto + SLA do chamado ativo + ponto do dia.
+  const tecnicosGps = useMemo(() => (tecnicosGpsData?.tecnicos ?? []).map((t: any) => ({
+    ...t,
+    estadoTv: calcularEstadoEquipeTv({ status: t.status, pontoBatidoHoje: t.pontoBatidoHoje, chamadoAtual: t.chamadoAtual }),
+  })), [tecnicosGpsData])
+
   const alarmesCriticos = (smartolt?.alarmesFeed ?? []).filter((a: any) => a.nivel === 'CRITICO')
   const clientesAtendidos = useContagemCrescente(stats?.clientesAtendidosTotal ?? 0)
+  const atendimentosHoje = useContagemCrescente(stats?.chamadosFinalizadosHoje ?? 0)
+
+  // Status geral da operacao (cabecalho) = pior sinal entre rede, SLA de
+  // chamados e estado das equipes - nao e so a rede como era antes.
+  const statusGeralOperacao = useMemo(() => {
+    const redeCritico = rede?.statusGeral === 'CRITICO'
+    const redeAtencao = rede?.statusGeral === 'ATENCAO'
+    const chamadoCritico = chamadosAndamentoSla.some((c: any) => c.slaEstourado)
+    const chamadoAtencao = chamadosAndamentoSla.some((c: any) => c.percentualSla >= 70)
+    const equipeCritico = tecnicosGps.some((t: any) => t.estadoTv === 'CRITICO')
+    const equipeAtencao = tecnicosGps.some((t: any) => t.estadoTv === 'ATENCAO')
+
+    if (redeCritico || chamadoCritico || equipeCritico) return 'CRITICO'
+    if (redeAtencao || chamadoAtencao || equipeAtencao) return 'ATENCAO'
+    return 'OPERACIONAL'
+  }, [rede, chamadosAndamentoSla, tecnicosGps])
 
   // Toast para alarmes criticos novos - evita repetir o mesmo alarme a cada
   // refetch e nao dispara retroativamente para os que ja existiam ao carregar.
@@ -225,7 +251,7 @@ export function TVDashboard() {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-10 py-5 border-b border-white/10 bg-[#111827]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gts-blue rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.5)]">
+          <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)]">
             <Zap className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -239,7 +265,7 @@ export function TVDashboard() {
         {/* Status geral ao vivo */}
         <div className="hidden xl:flex items-center gap-4">
           {(() => {
-            const cfg = STATUS_GERAL_CFG[rede?.statusGeral] ?? STATUS_GERAL_CFG.OPERACIONAL
+            const cfg = STATUS_GERAL_CFG[statusGeralOperacao] ?? STATUS_GERAL_CFG.OPERACIONAL
             return (
               <div className={cn('flex items-center gap-2 px-4 py-2 rounded-xl border', cfg.bg)}>
                 <Activity className={cn('w-4 h-4', cfg.cor)} />
@@ -283,17 +309,30 @@ export function TVDashboard() {
         </div>
       )}
 
-      {/* Banner de clientes atendidos */}
-      <div className="relative z-10 flex-shrink-0 px-10 py-4 bg-gradient-to-r from-blue-600/10 via-purple-500/10 to-emerald-500/10 border-b border-white/5 flex items-center justify-center gap-4">
-        <Sparkles className="w-7 h-7 text-yellow-400 flex-shrink-0" />
-        <p className="text-xl text-gray-300">
-          Ja realizamos{' '}
-          <span className="text-4xl font-black text-white tabular-nums">
-            {clientesAtendidos.toLocaleString('pt-BR')}
-          </span>
-          {' '}atendimentos com excelencia
-        </p>
-        <Sparkles className="w-7 h-7 text-yellow-400 flex-shrink-0" />
+      {/* Banner de produtividade - destaque do dia + numero vitrine historico */}
+      <div className="relative z-10 flex-shrink-0 px-10 py-4 bg-gradient-to-r from-orange-500/10 via-amber-400/10 to-emerald-500/10 border-b border-white/5 flex items-center justify-center gap-8">
+        <div className="relative flex items-center gap-4 gts-hud-corner px-4 py-1 rounded-lg">
+          <span className="font-mono text-6xl font-black text-white tabular-nums leading-none">{atendimentosHoje}</span>
+          <div className="text-left">
+            <p className="text-sm font-bold text-gray-300 uppercase tracking-wide">Atendimentos Concluidos Hoje</p>
+            {stats?.vsOntemMesmaHora != null && (
+              <p className={cn('text-sm font-semibold', stats.vsOntemMesmaHora >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                {stats.vsOntemMesmaHora >= 0 ? '▲' : '▼'} {Math.abs(stats.vsOntemMesmaHora)}% vs ontem no mesmo horario
+              </p>
+            )}
+            {stats?.mediaFinalizadosMesmaHora7Dias != null && (
+              <p className="text-xs text-gray-500">Media dos ultimos 7 dias ate agora: {stats.mediaFinalizadosMesmaHora7Dias}</p>
+            )}
+          </div>
+        </div>
+        <div className="h-12 w-px bg-white/10 flex-shrink-0" />
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-6 h-6 text-yellow-400 flex-shrink-0" />
+          <p className="text-lg text-gray-400">
+            <span className="font-mono text-2xl font-black text-white tabular-nums">{clientesAtendidos.toLocaleString('pt-BR')}</span>
+            {' '}atendimentos realizados no total
+          </p>
+        </div>
       </div>
 
       {/* Navegacao de paineis */}
@@ -305,7 +344,7 @@ export function TVDashboard() {
             className={cn(
               'px-6 py-2 rounded-full text-base font-medium transition-all',
               painelAtivo === i
-                ? 'bg-gts-blue text-white'
+                ? 'bg-orange-500 text-white'
                 : 'bg-white/5 text-gray-400 hover:text-white'
             )}
           >
@@ -333,24 +372,47 @@ export function TVDashboard() {
             {/* Equipes */}
             <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-white/5 flex items-center gap-2">
-                <Users className="w-5 h-5 text-gts-blue" />
+                <Users className="w-5 h-5 text-orange-400" />
                 <h2 className="font-bold text-white text-lg">Status das Equipes</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {tecnicosGps.map((t: any) => {
-                  const cfg = STATUS_EQUIPE[t.status as keyof typeof STATUS_EQUIPE] || STATUS_EQUIPE.AGUARDANDO
+                {tecnicosGps.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32 gap-2">
+                    <Users className="w-9 h-9 text-gray-600" />
+                    <p className="text-gray-500 text-base">Nenhuma equipe de campo ativa</p>
+                  </div>
+                ) : tecnicosGps.map((t: any) => {
+                  const cfg = ESTADO_EQUIPE_TV_CFG[t.estadoTv as keyof typeof ESTADO_EQUIPE_TV_CFG]
                   const emAtividade = t.status === 'ATIVIDADE' || t.status === 'DESLOCAMENTO'
+                  const etapaAtual = etapaJornadaIndex(t.status)
                   return (
-                    <div key={t.id} className={cn('p-4 rounded-xl border border-white/5', cfg.bg)}>
-                      <div className="flex items-center justify-between mb-1">
+                    <div key={t.id} className={cn('p-4 rounded-xl border', cfg.bg)}>
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className={cn('w-3.5 h-3.5 rounded-full', cfg.dot)} />
                           <span className="font-bold text-white text-lg">{t.equipe}</span>
                         </div>
                         <span className={cn('text-base font-bold', cfg.cor)}>{cfg.label}</span>
                       </div>
+
+                      {/* Micro linha do tempo da jornada */}
+                      <div className="flex items-center gap-1.5 pl-5 mb-2">
+                        {ETAPAS_JORNADA_EQUIPE.map((etapa, i) => (
+                          <div key={etapa} className="flex items-center gap-1.5">
+                            <span className={cn(
+                              'w-2 h-2 rounded-full',
+                              i <= etapaAtual ? 'bg-orange-400' : 'bg-white/10'
+                            )} />
+                            {i < ETAPAS_JORNADA_EQUIPE.length - 1 && (
+                              <span className={cn('w-4 h-px', i < etapaAtual ? 'bg-orange-400' : 'bg-white/10')} />
+                            )}
+                          </div>
+                        ))}
+                        <span className="text-xs text-gray-500 ml-1">{ETAPAS_JORNADA_EQUIPE[etapaAtual]}</span>
+                      </div>
+
                       {emAtividade && t.chamadoAtual && (
-                        <div className="mt-2 pl-5 space-y-0.5">
+                        <div className="pl-5 space-y-0.5">
                           <p className="text-base text-white font-medium">{t.chamadoAtual.cliente}</p>
                           <p className="text-sm text-gray-400">{t.cidade}</p>
                           {t.horaInicio && (
@@ -362,7 +424,9 @@ export function TVDashboard() {
                         </div>
                       )}
                       {t.status === 'AGUARDANDO' && (
-                        <p className="text-base text-gray-500 pl-5">Aguardando chamado</p>
+                        <p className="text-base text-gray-500 pl-5">
+                          {t.pontoBatidoHoje ? 'Aguardando chamado' : 'Expediente nao iniciado'}
+                        </p>
                       )}
                       {t.gps && (
                         <div className="flex items-center gap-3 mt-2 pl-5 text-sm">
@@ -387,7 +451,7 @@ export function TVDashboard() {
             {/* Chamados em andamento */}
             <div className="bg-[#111827] rounded-xl border border-white/5 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-white/5 flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-gts-blue" />
+                <ClipboardList className="w-5 h-5 text-orange-400" />
                 <h2 className="font-bold text-white text-lg">Chamados em Andamento</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -396,10 +460,16 @@ export function TVDashboard() {
                     <CheckCircle className="w-9 h-9 text-emerald-500/50" />
                     <p className="text-gray-500 text-base">Nenhum chamado em andamento</p>
                   </div>
-                ) : chamadosAndamentoSla.map((c: any) => (
+                ) : chamadosAndamentoSla.map((c: any) => {
+                  const restanteMinutos = c.metaMinutos - c.minutosDecorridos
+                  return (
                   <div key={c.id} className={cn(
                     'p-4 rounded-xl border',
-                    c.slaEstourado ? 'bg-red-500/5 border-red-500/20' : 'bg-yellow-500/5 border-yellow-500/20'
+                    c.prioridade === 'CRITICA' ? 'bg-red-500/10 border-red-500/30' :
+                    c.prioridade === 'ALTA' ? 'bg-red-500/5 border-red-500/20' :
+                    c.prioridade === 'MEDIA' ? 'bg-yellow-500/5 border-yellow-500/20' :
+                    'bg-white/[0.02] border-white/5',
+                    c.slaEstourado && 'velocity-alert'
                   )}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-white text-lg">{c.cliente}</span>
@@ -414,15 +484,17 @@ export function TVDashboard() {
                     <p className="text-sm text-gray-500 mb-2">{c.cidade} {c.tecnico ? `· ${c.tecnico}` : ''}</p>
                     <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                       <div
-                        className={cn('h-full rounded-full transition-all', c.slaEstourado ? 'bg-red-500' : c.percentualSla >= 70 ? 'bg-yellow-500' : 'bg-emerald-500')}
+                        className={cn('h-full rounded-full transition-all', c.slaEstourado ? 'bg-red-500' : c.percentualSla >= 70 ? 'bg-orange-500' : 'bg-emerald-500')}
                         style={{ width: `${Math.min(100, c.percentualSla)}%` }}
                       />
                     </div>
                     <p className={cn('text-xs mt-1 font-medium', c.slaEstourado ? 'text-red-400' : 'text-gray-500')}>
-                      SLA {Math.min(100, c.percentualSla)}% · {formatarTempo(c.minutosDecorridos)}
+                      SLA {Math.min(100, c.percentualSla)}% · {c.slaEstourado
+                        ? `estourado ha ${formatarTempo(Math.abs(restanteMinutos))}`
+                        : `${formatarTempo(restanteMinutos)} restantes`}
                     </p>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
 
@@ -465,16 +537,16 @@ export function TVDashboard() {
               <h2 className="font-bold text-white text-xl mb-4 flex items-center gap-2"><Radio className="w-6 h-6 text-blue-400" /> Network At-a-Glance</h2>
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col justify-center">
                 <p className="text-gray-400 text-base">Clientes Online</p>
-                <p className="text-4xl font-black text-emerald-400">{smartolt?.status?.online ?? 0}</p>
+                <p className="font-mono text-4xl font-black text-emerald-400">{smartolt?.status?.online ?? 0}</p>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 flex flex-col justify-center">
                   <p className="text-gray-400 text-base">LOS Alarms</p>
-                  <p className="text-4xl font-black text-red-400">{smartolt?.status?.los ?? 0}</p>
+                  <p className="font-mono text-4xl font-black text-red-400">{smartolt?.status?.los ?? 0}</p>
                 </div>
                 <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-5 flex flex-col justify-center">
                   <p className="text-gray-400 text-base">Dying Gasp</p>
-                  <p className="text-4xl font-black text-orange-400">{smartolt?.status?.quedaEnergia ?? 0}</p>
+                  <p className="font-mono text-4xl font-black text-orange-400">{smartolt?.status?.quedaEnergia ?? 0}</p>
                 </div>
               </div>
 

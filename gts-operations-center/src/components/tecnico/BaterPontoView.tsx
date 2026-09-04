@@ -52,6 +52,7 @@ export function BaterPontoView() {
 
   const hoje = data?.hoje
   const historico = (data?.data ?? []).filter((r: any) => r.id !== hoje?.id)
+  const ehDomingo = new Date().getDay() === 0
 
   const botoes = [
     { tipo: 'ENTRADA',        label: 'Entrada',         icon: LogIn,  feito: !!hoje?.entrada,       podeClicar: !hoje?.entrada },
@@ -84,6 +85,13 @@ export function BaterPontoView() {
           </div>
         ) : (
           <>
+            {ehDomingo ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-10 rounded-xl border border-white/5 bg-white/[0.02] text-center">
+                <Clock className="w-8 h-8 text-gray-600" />
+                <p className="text-gray-400 font-medium">Domingo nao tem batida de ponto</p>
+                <p className="text-gray-600 text-xs">Volte amanha para registrar sua jornada</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 gap-3">
               {botoes.map(b => {
                 const Icon = b.icon
@@ -112,6 +120,7 @@ export function BaterPontoView() {
                 )
               })}
             </div>
+            )}
 
             {hoje?.saida && (
               <div className={cn('rounded-xl p-4 border', STATUS_CFG[hoje.statusHorasExtras]?.bg)}>

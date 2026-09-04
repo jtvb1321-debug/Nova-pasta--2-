@@ -14,6 +14,9 @@ import {
 import { cn, formatCurrency, formatDate, timeAgo } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { NewSaleModal } from './NewSaleModal'
+import { MetricCard } from '@/components/ui/MetricCard'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { LoadingState } from '@/components/ui/LoadingState'
 import { Bar, Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
@@ -241,22 +244,13 @@ export function SalesView() {
         <div className="space-y-5">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Vendas do Mes',      value: dashboard?.vendasMes      ?? 0,                          icon: ShoppingCart, cor: 'text-blue-400',    bg: 'bg-blue-500/10' },
-              { label: 'Faturamento Mes',    value: formatCurrency(dashboard?.faturamentoMes ?? 0),           icon: DollarSign,   cor: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-              { label: 'Total Comissoes',    value: formatCurrency(dashboard?.totalComissoes  ?? 0),          icon: Star,         cor: 'text-yellow-400',  bg: 'bg-yellow-500/10' },
-              { label: 'Ticket Medio',       value: formatCurrency(dashboard?.ticketMedio     ?? 0),          icon: TrendingUp,   cor: 'text-purple-400',  bg: 'bg-purple-500/10' },
-            ].map((kpi, i) => {
-              const Icon = kpi.icon
-              return (
-                <div key={i} className="gts-card">
-                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', kpi.bg)}>
-                    <Icon className={cn('w-4 h-4', kpi.cor)} />
-                  </div>
-                  <p className="text-xs text-gray-500 mb-1">{kpi.label}</p>
-                  <p className={cn('text-2xl font-bold', kpi.cor)}>{kpi.value}</p>
-                </div>
-              )
-            })}
+              { label: 'Vendas do Mes',   value: dashboard?.vendasMes ?? 0,                     icon: ShoppingCart, color: '#60a5fa' },
+              { label: 'Faturamento Mes', value: formatCurrency(dashboard?.faturamentoMes ?? 0), icon: DollarSign,   color: '#34d399' },
+              { label: 'Total Comissoes', value: formatCurrency(dashboard?.totalComissoes ?? 0), icon: Star,         color: '#fbbf24' },
+              { label: 'Ticket Medio',    value: formatCurrency(dashboard?.ticketMedio ?? 0),    icon: TrendingUp,   color: '#c084fc' },
+            ].map((kpi, i) => (
+              <MetricCard key={i} label={kpi.label} value={kpi.value} icon={kpi.icon} color={kpi.color} className={i === 0 ? 'gts-hud-corner' : undefined} />
+            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -336,16 +330,18 @@ export function SalesView() {
 
           <div className="space-y-3">
             {loadingVendas
-              ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)
+              ? <LoadingState linhas={5} altura="h-28" />
               : vendas.length === 0
               ? (
-                <div className="gts-card text-center py-16">
-                  <ShoppingCart className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400 font-medium">Nenhuma venda encontrada</p>
-                  <button onClick={() => setShowModal(true)} className="gts-btn-primary mx-auto mt-4">
-                    <Plus className="w-4 h-4" /> Nova Venda
-                  </button>
-                </div>
+                <EmptyState
+                  icon={<ShoppingCart className="w-full h-full" />}
+                  title="Nenhuma venda encontrada"
+                  action={
+                    <button onClick={() => setShowModal(true)} className="gts-btn-primary mx-auto">
+                      <Plus className="w-4 h-4" /> Nova Venda
+                    </button>
+                  }
+                />
               )
               : vendas.map((venda: any) => {
                   const cfg = STATUS_CONFIG[venda.status] || STATUS_CONFIG.PENDENTE

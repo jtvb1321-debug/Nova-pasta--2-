@@ -53,7 +53,7 @@ export function OltLinksCard() {
       if (olt.status === 'OFFLINE' && !vistas.current.has(olt.oltId)) {
         vistas.current.add(olt.oltId)
         toast({
-          title: `🔴 OLT ${olt.nome} fora do ar`,
+          title: `OLT ${olt.nome} fora do ar`,
           description: `${olt.onusIndisponiveis} de ${olt.totalOnus} clientes sem conexao`,
           variant: 'destructive',
         })
