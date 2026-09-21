@@ -16,9 +16,9 @@ async function fetchMinhaComissao(mes: string) {
 }
 
 const STATUS_CFG: Record<string, { label: string; icon: React.ElementType; cls: string }> = {
-  PENDENTE:  { label: 'Pendente',  icon: Clock,       cls: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
-  APROVADO:  { label: 'Aprovado',  icon: CheckCircle, cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  REPROVADO: { label: 'Reprovado', icon: XCircle,     cls: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  PENDENTE:  { label: 'Pendente',  icon: Clock,       cls: 'text-amber-700 bg-amber-500/10 border-amber-500/20' },
+  APROVADO:  { label: 'Aprovado',  icon: CheckCircle, cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
+  REPROVADO: { label: 'Reprovado', icon: XCircle,     cls: 'text-red-700 bg-red-500/10 border-red-500/20' },
 }
 
 export function MinhaComissaoView() {
@@ -41,11 +41,11 @@ export function MinhaComissaoView() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Minha Comissao</h1>
-          <p className="text-gray-500 text-sm mt-1">Acompanhe suas vendas e comissoes</p>
+          <h1 className="text-2xl font-bold text-[#201D17]">Minha Comissao</h1>
+          <p className="text-[#A69E8F] text-sm mt-1">Acompanhe suas vendas e comissoes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-500" />
+          <Calendar className="w-4 h-4 text-[#A69E8F]" />
           <input
             type="month"
             value={mes}
@@ -59,43 +59,43 @@ export function MinhaComissaoView() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-blue-400" />
-            <p className="text-xs text-gray-500 uppercase">Vendas no Mes</p>
+            <TrendingUp className="w-4 h-4 text-blue-700" />
+            <p className="text-xs text-[#A69E8F] uppercase">Vendas no Mes</p>
           </div>
-          <p className="text-2xl font-black text-white">{resumo.totalVendas}</p>
+          <p className="text-2xl font-black text-[#201D17]">{resumo.totalVendas}</p>
         </div>
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <p className="text-xs text-gray-500 uppercase">Aprovadas</p>
+            <CheckCircle className="w-4 h-4 text-emerald-700" />
+            <p className="text-xs text-[#A69E8F] uppercase">Aprovadas</p>
           </div>
-          <p className="text-2xl font-black text-white">{resumo.totalAprovadas}</p>
+          <p className="text-2xl font-black text-[#201D17]">{resumo.totalAprovadas}</p>
         </div>
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-emerald-400" />
-            <p className="text-xs text-gray-500 uppercase">Valor Vendido</p>
+            <DollarSign className="w-4 h-4 text-emerald-700" />
+            <p className="text-xs text-[#A69E8F] uppercase">Valor Vendido</p>
           </div>
-          <p className="text-2xl font-black text-white">{formatCurrency(resumo.valorAprovado)}</p>
+          <p className="text-2xl font-black text-[#201D17]">{formatCurrency(resumo.valorAprovado)}</p>
         </div>
-        <div className="gts-card p-4 border-emerald-500/20 bg-emerald-500/5">
+        <div className="gts-card p-4 border-emerald-500/25 bg-emerald-500/5">
           <div className="flex items-center gap-2 mb-2">
-            <Wallet className="w-4 h-4 text-emerald-400" />
-            <p className="text-xs text-gray-500 uppercase">Comissao Total</p>
+            <Wallet className="w-4 h-4 text-emerald-700" />
+            <p className="text-xs text-[#A69E8F] uppercase">Comissao Total</p>
           </div>
-          <p className="text-2xl font-black text-emerald-400">{formatCurrency(resumo.comissaoTotal)}</p>
+          <p className="text-2xl font-black text-emerald-700">{formatCurrency(resumo.comissaoTotal)}</p>
         </div>
       </div>
 
       {/* Comissao paga vs a pagar */}
       <div className="grid grid-cols-2 gap-4">
         <div className="gts-card p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">Ja Recebido</p>
-          <p className="text-xl font-bold text-emerald-400">{formatCurrency(resumo.comissaoPaga)}</p>
+          <p className="text-xs text-[#A69E8F] uppercase mb-1">Ja Recebido</p>
+          <p className="text-xl font-bold text-emerald-700">{formatCurrency(resumo.comissaoPaga)}</p>
         </div>
         <div className="gts-card p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">A Receber</p>
-          <p className="text-xl font-bold text-yellow-400">{formatCurrency(resumo.comissaoAPagar)}</p>
+          <p className="text-xs text-[#A69E8F] uppercase mb-1">A Receber</p>
+          <p className="text-xl font-bold text-amber-700">{formatCurrency(resumo.comissaoAPagar)}</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ export function MinhaComissaoView() {
                 ))
               ) : vendas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-gray-500">
+                  <td colSpan={7} className="text-center py-16 text-[#A69E8F]">
                     Nenhuma venda registrada nesse periodo
                   </td>
                 </tr>
@@ -132,13 +132,13 @@ export function MinhaComissaoView() {
                 const Icon = cfg.icon
                 return (
                   <tr key={v.id}>
-                    <td className="px-4 text-white text-sm font-medium">{v.clienteNome}</td>
-                    <td className="px-4 text-gray-300 text-sm">{v.planoVendido}</td>
-                    <td className="px-4 text-gray-400 text-sm">{v.cidade}</td>
-                    <td className="px-4 text-right text-white font-mono text-sm">{formatCurrency(v.valor)}</td>
+                    <td className="px-4 text-[#201D17] text-sm font-medium">{v.clienteNome}</td>
+                    <td className="px-4 text-[#3F3A32] text-sm">{v.planoVendido}</td>
+                    <td className="px-4 text-[#7A7266] text-sm">{v.cidade}</td>
+                    <td className="px-4 text-right text-[#201D17] font-mono text-sm">{formatCurrency(v.valor)}</td>
                     <td className="px-4 text-right font-mono text-sm">
                       {v.comissaoValor != null ? (
-                        <span className={v.comissaoPaga ? 'text-emerald-400' : 'text-yellow-400'}>
+                        <span className={v.comissaoPaga ? 'text-emerald-700' : 'text-amber-700'}>
                           {formatCurrency(v.comissaoValor)}
                         </span>
                       ) : '—'}
@@ -149,7 +149,7 @@ export function MinhaComissaoView() {
                         {cfg.label}
                       </span>
                     </td>
-                    <td className="px-4 text-gray-500 text-xs">{formatDate(v.data)}</td>
+                    <td className="px-4 text-[#A69E8F] text-xs">{formatDate(v.data)}</td>
                   </tr>
                 )
               })}

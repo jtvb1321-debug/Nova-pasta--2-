@@ -29,18 +29,18 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointEleme
 type Aba = 'dashboard' | 'vendas' | 'ranking'
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cls: string }> = {
-  PENDENTE:   { label: 'Pendente',   icon: Clock,         cls: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
-  APROVADO:   { label: 'Aprovado',   icon: CheckCircle,   cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  REPROVADO:  { label: 'Reprovado',  icon: XCircle,       cls: 'text-red-400 bg-red-500/10 border-red-500/20' },
-  INSTALANDO: { label: 'Instalando', icon: Wifi,          cls: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-  INSTALADO:  { label: 'Instalado',  icon: CheckCircle,   cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  CANCELADO:  { label: 'Cancelado',  icon: XCircle,       cls: 'text-gray-400 bg-gray-500/10 border-gray-500/20' },
+  PENDENTE:   { label: 'Pendente',   icon: Clock,         cls: 'text-amber-700 bg-amber-500/10 border-amber-500/20' },
+  APROVADO:   { label: 'Aprovado',   icon: CheckCircle,   cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
+  REPROVADO:  { label: 'Reprovado',  icon: XCircle,       cls: 'text-red-700 bg-red-500/10 border-red-500/20' },
+  INSTALANDO: { label: 'Instalando', icon: Wifi,          cls: 'text-blue-700 bg-blue-500/10 border-blue-500/20' },
+  INSTALADO:  { label: 'Instalado',  icon: CheckCircle,   cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
+  CANCELADO:  { label: 'Cancelado',  icon: XCircle,       cls: 'text-[#7A7266] bg-black/[0.03] border-[#E6E1D6]' },
 }
 
 const MEDALHAS = [
-  { icon: Trophy, cor: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-  { icon: Medal,  cor: 'text-gray-300',   bg: 'bg-gray-500/10' },
-  { icon: Award,  cor: 'text-orange-400', bg: 'bg-orange-500/10' },
+  { icon: Trophy, cor: 'text-amber-700', bg: 'bg-amber-500/10' },
+  { icon: Medal,  cor: 'text-[#7A7266]',   bg: 'bg-black/[0.03]' },
+  { icon: Award,  cor: 'text-orange-600', bg: 'bg-orange-500/10' },
 ]
 
 const CHART_OPT = {
@@ -48,11 +48,11 @@ const CHART_OPT = {
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { backgroundColor: '#1F2937', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#fff', bodyColor: '#9CA3AF' },
+    tooltip: { backgroundColor: '#FFFFFF', borderColor: 'rgba(230,225,214,1)', borderWidth: 1, titleColor: '#201D17', bodyColor: '#7A7266' },
   },
   scales: {
-    x: { ticks: { color: '#6B7280', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-    y: { ticks: { color: '#6B7280', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+    x: { ticks: { color: '#A69E8F', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+    y: { ticks: { color: '#A69E8F', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.06)' }, beginAtZero: true },
   },
 }
 
@@ -184,11 +184,11 @@ export function SalesView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Comercial</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#201D17]">Comercial</h1>
+          <p className="text-[#A69E8F] text-sm mt-1">
             Gestao de vendas, comissoes e ranking
             {pendentes > 0 && (
-              <span className="ml-2 text-yellow-400 font-medium animate-pulse">
+              <span className="ml-2 text-amber-700 font-medium animate-pulse">
                 - {pendentes} venda(s) aguardando aprovacao
               </span>
             )}
@@ -213,7 +213,7 @@ export function SalesView() {
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-white/5">
+      <div className="flex items-center gap-1 border-b border-[#E6E1D6]">
         {abas.map(a => {
           const Icon = a.icon
           return (
@@ -223,14 +223,14 @@ export function SalesView() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 aba === a.id
-                  ? 'border-orange-400 text-orange-400'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-[#A69E8F] hover:text-[#201D17]'
               )}
             >
               <Icon className="w-4 h-4" />
               {a.label}
               {(a as any).badge > 0 && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold bg-yellow-500">
+                <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold bg-amber-500">
                   {(a as any).badge}
                 </span>
               )}
@@ -256,8 +256,8 @@ export function SalesView() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="gts-card">
               <div className="flex items-center gap-2 mb-4">
-                <ShoppingCart className="w-4 h-4 text-orange-400" />
-                <h2 className="text-sm font-semibold text-white">Vendas por Mes</h2>
+                <ShoppingCart className="w-4 h-4 text-orange-600" />
+                <h2 className="text-sm font-semibold text-[#201D17]">Vendas por Mes</h2>
               </div>
               <div className="h-44">
                 <Bar data={chartMensal} options={CHART_OPT as any} />
@@ -265,8 +265,8 @@ export function SalesView() {
             </div>
             <div className="gts-card">
               <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white">Faturamento Mensal</h2>
+                <DollarSign className="w-4 h-4 text-emerald-700" />
+                <h2 className="text-sm font-semibold text-[#201D17]">Faturamento Mensal</h2>
               </div>
               <div className="h-44">
                 <Line data={chartFaturamento} options={CHART_OPT as any} />
@@ -275,8 +275,8 @@ export function SalesView() {
           </div>
 
           <div className="gts-card">
-            <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-orange-400" />
+            <h2 className="text-sm font-semibold text-[#201D17] mb-4 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-orange-600" />
               Distribuicao por Status
             </h2>
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
@@ -301,7 +301,7 @@ export function SalesView() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
               <input
                 type="search"
                 value={busca}
@@ -318,8 +318,8 @@ export function SalesView() {
                   className={cn(
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     filtroStatus === s
-                      ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                      : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/30'
+                      : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
                   )}
                 >
                   {s || 'Todas'}
@@ -349,20 +349,20 @@ export function SalesView() {
                   const isPendente = venda.status === 'PENDENTE'
                   const podeMarcarInstalado = venda.status === 'APROVADO' && venda.statusInstalacao !== 'INSTALADA'
                   return (
-                    <div key={venda.id} className="bg-[#111827] border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all">
+                    <div key={venda.id} className="bg-white border border-[#E6E1D6] rounded-xl p-4 hover:border-[#D8D2C3] shadow-sm shadow-black/[0.03] transition-all">
                       <div className="flex items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="text-white font-bold">{venda.clienteNome}</h3>
+                            <h3 className="text-[#201D17] font-bold">{venda.clienteNome}</h3>
                             <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium', cfg.cls)}>
                               <StatusIcon className="w-3 h-3" />
                               {cfg.label}
                             </span>
-                            <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+                            <span className="text-xs text-[#7A7266] bg-black/[0.03] px-2 py-0.5 rounded-full">
                               {venda.planoVendido}
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-2">
+                          <div className="flex flex-wrap gap-3 text-xs text-[#7A7266] mb-2">
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               {venda.endereco}, {venda.cidade}
@@ -378,18 +378,18 @@ export function SalesView() {
                               {timeAgo(venda.data)}
                             </span>
                             {venda.vendedor && (
-                              <span className="flex items-center gap-1 text-orange-400">
+                              <span className="flex items-center gap-1 text-orange-600">
                                 <Users className="w-3 h-3" />
                                 {venda.vendedor.nome}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-sm">
-                            <span className="text-emerald-400 font-bold">
+                            <span className="text-emerald-700 font-bold">
                               {formatCurrency(venda.valor)}
                             </span>
                             {venda.comissao && (
-                              <span className="text-yellow-400 text-xs">
+                              <span className="text-amber-700 text-xs">
                                 Comissao: {formatCurrency(venda.comissao.valor)}
                               </span>
                             )}
@@ -405,7 +405,7 @@ export function SalesView() {
                                 mutation.mutate({ id: venda.id, aprovado: false, motivo: motivo.trim() })
                               }}
                               disabled={mutation.isPending}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-400 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 rounded-lg text-xs text-red-700 transition-colors disabled:opacity-50"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" />
                               Reprovar
@@ -413,7 +413,7 @@ export function SalesView() {
                             <button
                               onClick={() => mutation.mutate({ id: venda.id, aprovado: true })}
                               disabled={mutation.isPending}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs text-emerald-400 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg text-xs text-emerald-700 transition-colors disabled:opacity-50"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" />
                               Aprovar
@@ -425,7 +425,7 @@ export function SalesView() {
                             <button
                               onClick={() => instalarMutation.mutate(venda.id)}
                               disabled={instalarMutation.isPending}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs text-blue-400 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 rounded-lg text-xs text-blue-700 transition-colors disabled:opacity-50"
                             >
                               <CheckCircle className="w-3.5 h-3.5" />
                               Marcar Instalado
@@ -440,7 +440,7 @@ export function SalesView() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">Pagina {page} de {totalPages}</p>
+              <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages}</p>
               <div className="flex gap-2">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-1 px-2 disabled:opacity-30">
                   <ChevronLeft className="w-3.5 h-3.5" />
@@ -469,11 +469,11 @@ export function SalesView() {
                     <div className={cn('w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2', med.bg)}>
                       <MedIcon className={cn('w-6 h-6', med.cor)} />
                     </div>
-                    <p className="text-white font-bold text-sm">{v?.nome || '-'}</p>
+                    <p className="text-[#201D17] font-bold text-sm">{v?.nome || '-'}</p>
                     <p className={cn('text-2xl font-black mt-1', med.cor)}>{v?.totalVendas ?? 0}</p>
-                    <p className="text-xs text-gray-500">vendas</p>
-                    <p className="text-xs text-emerald-400 mt-1">{formatCurrency(v?.totalValor ?? 0)}</p>
-                    <p className="text-xs text-yellow-400">Comissao: {formatCurrency(v?.totalComissao ?? 0)}</p>
+                    <p className="text-xs text-[#A69E8F]">vendas</p>
+                    <p className="text-xs text-emerald-700 mt-1">{formatCurrency(v?.totalValor ?? 0)}</p>
+                    <p className="text-xs text-amber-700">Comissao: {formatCurrency(v?.totalComissao ?? 0)}</p>
                   </div>
                 )
               })}
@@ -495,8 +495,8 @@ export function SalesView() {
               <tbody>
                 {ranking.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-gray-500">
-                      <Trophy className="w-8 h-8 mx-auto mb-2 text-gray-700" />
+                    <td colSpan={6} className="text-center py-12 text-[#A69E8F]">
+                      <Trophy className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
                       Nenhum dado de ranking disponivel
                     </td>
                   </tr>
@@ -509,21 +509,21 @@ export function SalesView() {
                         {i < 3 && MedIcon ? (
                           <MedIcon className={cn('w-4 h-4', med.cor)} />
                         ) : (
-                          <span className="text-gray-500 font-mono text-sm">{i + 1}</span>
+                          <span className="text-[#A69E8F] font-mono text-sm">{i + 1}</span>
                         )}
                       </td>
                       <td className="px-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-xs font-bold">
+                          <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-700 text-xs font-bold">
                             {v.nome?.[0] || '?'}
                           </div>
-                          <p className="text-sm text-white font-medium">{v.nome}</p>
+                          <p className="text-sm text-[#201D17] font-medium">{v.nome}</p>
                         </div>
                       </td>
-                      <td className="px-4 text-right font-bold text-white">{v.totalVendas}</td>
-                      <td className="px-4 text-right text-emerald-400 font-medium">{formatCurrency(v.totalValor ?? 0)}</td>
-                      <td className="px-4 text-right text-yellow-400 font-medium">{formatCurrency(v.totalComissao ?? 0)}</td>
-                      <td className="px-4 text-right text-gray-300">{formatCurrency(v.ticketMedio ?? 0)}</td>
+                      <td className="px-4 text-right font-bold text-[#201D17]">{v.totalVendas}</td>
+                      <td className="px-4 text-right text-emerald-700 font-medium">{formatCurrency(v.totalValor ?? 0)}</td>
+                      <td className="px-4 text-right text-amber-700 font-medium">{formatCurrency(v.totalComissao ?? 0)}</td>
+                      <td className="px-4 text-right text-[#3F3A32]">{formatCurrency(v.ticketMedio ?? 0)}</td>
                     </tr>
                   )
                 })}

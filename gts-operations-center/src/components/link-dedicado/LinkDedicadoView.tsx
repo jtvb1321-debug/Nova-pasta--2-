@@ -27,8 +27,8 @@ async function fetchClientes() {
 }
 
 function CorPotencia({ valor }: { valor: number | null }) {
-  if (valor == null) return <span className="text-gray-500">-</span>
-  const cor = valor <= -28 ? 'text-red-400' : valor <= -25 ? 'text-yellow-400' : 'text-emerald-400'
+  if (valor == null) return <span className="text-[#A69E8F]">-</span>
+  const cor = valor <= -28 ? 'text-red-700' : valor <= -25 ? 'text-amber-700' : 'text-emerald-700'
   return <span className={cn('font-mono font-bold', cor)}>{valor.toFixed(1)} dBm</span>
 }
 
@@ -48,7 +48,7 @@ function CampoEditavel({
     return (
       <button
         onClick={() => { setRascunho(valor); setEditando(true) }}
-        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+        className="flex items-center gap-1.5 text-xs text-[#7A7266] hover:text-[#201D17] transition-colors"
       >
         <Pencil className="w-3 h-3" />
         {valor ? `${valor}${sufixo || ''}` : `Informar ${placeholder}`}
@@ -66,10 +66,10 @@ function CampoEditavel({
         className="gts-input py-1 px-2 text-xs w-28"
         onKeyDown={e => e.key === 'Enter' && salvar()}
       />
-      <button onClick={salvar} disabled={salvando} className="text-emerald-400 hover:text-emerald-300 disabled:opacity-50">
+      <button onClick={salvar} disabled={salvando} className="text-emerald-700 hover:text-emerald-600 disabled:opacity-50">
         {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
       </button>
-      <button onClick={() => setEditando(false)} disabled={salvando} className="text-gray-500 hover:text-gray-300">
+      <button onClick={() => setEditando(false)} disabled={salvando} className="text-[#A69E8F] hover:text-[#7A7266]">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -116,7 +116,7 @@ export function LinkDedicadoView() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#A69E8F]" />
       </div>
     )
   }
@@ -125,11 +125,11 @@ export function LinkDedicadoView() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Radio className="w-5 h-5 text-purple-400" />
+          <h1 className="text-2xl font-bold text-[#201D17] flex items-center gap-2">
+            <Radio className="w-5 h-5 text-purple-600" />
             Clientes de Link Dedicado
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-[#A69E8F] text-sm mt-1">
             {clientes.length} cliente(s) corporativo(s) em planos dedicados/IP fixo
           </p>
         </div>
@@ -143,7 +143,7 @@ export function LinkDedicadoView() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-white/10 bg-white/[0.02]">
+              <tr className="text-left text-xs text-[#7A7266] border-b border-[#E6E1D6] bg-black/[0.02]">
                 <th className="py-3 px-4 font-medium">Cliente / Razao Social</th>
                 <th className="py-3 px-4 font-medium">Contrato</th>
                 <th className="py-3 px-4 font-medium">Plano</th>
@@ -156,29 +156,29 @@ export function LinkDedicadoView() {
             <tbody>
               {clientes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-gray-500 text-sm">
+                  <td colSpan={7} className="py-10 text-center text-[#A69E8F] text-sm">
                     Nenhum cliente de link dedicado encontrado
                   </td>
                 </tr>
               ) : clientes.map(c => (
-                <tr key={c.codigoIxc} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 text-white font-medium">{c.nome}</td>
-                  <td className="py-3 px-4 text-gray-400 font-mono text-xs">{c.idContrato || '-'}</td>
-                  <td className="py-3 px-4 text-gray-400 text-xs">{c.plano}</td>
+                <tr key={c.codigoIxc} className="border-b border-[#E6E1D6] hover:bg-black/[0.02]">
+                  <td className="py-3 px-4 text-[#201D17] font-medium">{c.nome}</td>
+                  <td className="py-3 px-4 text-[#7A7266] font-mono text-xs">{c.idContrato || '-'}</td>
+                  <td className="py-3 px-4 text-[#7A7266] text-xs">{c.plano}</td>
                   <td className="py-3 px-4">
                     {c.online ? (
-                      <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                      <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
                         <Wifi className="w-3.5 h-3.5" /> Online
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                      <span className="flex items-center gap-1.5 text-xs text-[#A69E8F] font-medium">
                         <WifiOff className="w-3.5 h-3.5" /> Offline
                       </span>
                     )}
                   </td>
                   <td className="py-3 px-4">
                     {c.fonteIp === 'ixc' ? (
-                      <span className="font-mono text-white text-xs">{c.ip}</span>
+                      <span className="font-mono text-[#201D17] text-xs">{c.ip}</span>
                     ) : (
                       <CampoEditavel
                         valor={c.ip || ''}
@@ -218,7 +218,7 @@ export function LinkDedicadoView() {
         </div>
       </div>
 
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-[#A69E8F]">
         IP e potencia optica sao buscados automaticamente do IXC/SmartOLT quando disponiveis.
         Quando nao encontrados, ficam liberados para preenchimento manual (clique no campo) -
         esses dados servem de base para a criacao futura de alertas individuais por cliente.

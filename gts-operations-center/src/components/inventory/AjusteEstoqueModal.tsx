@@ -65,21 +65,21 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-md shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-              <Edit2 className="w-4 h-4 text-orange-400" />
+            <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">
+              <Edit2 className="w-4 h-4 text-orange-700" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white">Ajustar Estoque</h2>
-              <p className="text-xs text-gray-500">{item.descricao}</p>
+              <h2 className="text-base font-semibold text-[#201D17]">Ajustar Estoque</h2>
+              <p className="text-xs text-[#A69E8F]">{item.descricao}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -87,30 +87,30 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
         <div className="p-6 space-y-5">
 
           {/* Info atual */}
-          <div className="flex items-center justify-between p-3 bg-white/[0.03] border border-white/5 rounded-xl">
+          <div className="flex items-center justify-between p-3 bg-black/[0.02] border border-[#E6E1D6] rounded-xl">
             <div>
-              <p className="text-xs text-gray-500">Codigo</p>
-              <p className="text-sm font-mono text-white">{item.codigo}</p>
+              <p className="text-xs text-[#A69E8F]">Codigo</p>
+              <p className="text-sm font-mono text-[#201D17]">{item.codigo}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-500">Estoque Atual</p>
-              <p className="text-2xl font-bold text-white">{formatNumber(item.quantidadeAtual)}</p>
-              <p className="text-xs text-gray-500">{item.unidade}</p>
+              <p className="text-xs text-[#A69E8F]">Estoque Atual</p>
+              <p className="text-2xl font-bold text-[#201D17]">{formatNumber(item.quantidadeAtual)}</p>
+              <p className="text-xs text-[#A69E8F]">{item.unidade}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500">Minimo</p>
-              <p className="text-sm text-gray-400">{formatNumber(item.quantidadeMinima)}</p>
+              <p className="text-xs text-[#A69E8F]">Minimo</p>
+              <p className="text-sm text-[#7A7266]">{formatNumber(item.quantidadeMinima)}</p>
             </div>
           </div>
 
           {/* Tipo de operacao */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Tipo de Operacao *</label>
+            <label className="block text-sm font-medium text-[#7A7266] mb-2">Tipo de Operacao *</label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 'ENTRADA', label: 'Entrada',  icon: ArrowUpCircle,   cor: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' },
-                { value: 'SAIDA',   label: 'Saida',    icon: ArrowDownCircle, cor: 'text-red-400',     bg: 'bg-red-500/20 border-red-500/30' },
-                { value: 'AJUSTE',  label: 'Ajuste',   icon: Edit2,           cor: 'text-yellow-400',  bg: 'bg-yellow-500/20 border-yellow-500/30' },
+                { value: 'ENTRADA', label: 'Entrada',  icon: ArrowUpCircle,   cor: 'text-emerald-700', bg: 'bg-emerald-500/15 border-emerald-500/30' },
+                { value: 'SAIDA',   label: 'Saida',    icon: ArrowDownCircle, cor: 'text-red-700',     bg: 'bg-red-500/15 border-red-500/30' },
+                { value: 'AJUSTE',  label: 'Ajuste',   icon: Edit2,           cor: 'text-amber-700',  bg: 'bg-amber-500/15 border-amber-500/30' },
               ].map(op => {
                 const Icon = op.icon
                 return (
@@ -119,7 +119,7 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
                     onClick={() => setTipo(op.value as any)}
                     className={cn(
                       'flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all text-xs font-medium',
-                      tipo === op.value ? `${op.bg} ${op.cor}` : 'border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                      tipo === op.value ? `${op.bg} ${op.cor}` : 'border-[#E6E1D6] text-[#7A7266] hover:text-[#201D17] hover:border-[#D8D2C3]'
                     )}
                   >
                     <Icon className="w-5 h-5" />
@@ -129,7 +129,7 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
               })}
             </div>
             {tipo === 'AJUSTE' && (
-              <p className="text-xs text-yellow-400 mt-2">
+              <p className="text-xs text-amber-700 mt-2">
                 Ajuste define a quantidade exata — use para corrigir divergencias de inventario
               </p>
             )}
@@ -137,13 +137,13 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
 
           {/* Quantidade */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">
               {tipo === 'AJUSTE' ? 'Nova Quantidade Total *' : 'Quantidade *'}
             </label>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setQuantidade(q => Math.max(0, q - 1))}
-                className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-lg flex items-center justify-center"
+                className="w-10 h-10 rounded-lg bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] font-bold text-lg flex items-center justify-center"
               >
                 -
               </button>
@@ -157,11 +157,11 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
               />
               <button
                 onClick={() => setQuantidade(q => q + 1)}
-                className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-lg flex items-center justify-center"
+                className="w-10 h-10 rounded-lg bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] font-bold text-lg flex items-center justify-center"
               >
                 +
               </button>
-              <span className="text-gray-500 text-sm w-8">{item.unidade}</span>
+              <span className="text-[#A69E8F] text-sm w-8">{item.unidade}</span>
             </div>
           </div>
 
@@ -170,18 +170,18 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
             <div className={cn(
               'flex items-center justify-between p-3 rounded-xl border',
               novaQuantidade < item.quantidadeMinima
-                ? 'bg-red-500/10 border-red-500/20'
-                : 'bg-emerald-500/10 border-emerald-500/20'
+                ? 'bg-red-500/10 border-red-500/25'
+                : 'bg-emerald-500/10 border-emerald-500/25'
             )}>
-              <span className="text-sm text-gray-400">Nova quantidade:</span>
+              <span className="text-sm text-[#7A7266]">Nova quantidade:</span>
               <span className={cn(
                 'text-xl font-bold',
-                novaQuantidade < item.quantidadeMinima ? 'text-red-400' : 'text-emerald-400'
+                novaQuantidade < item.quantidadeMinima ? 'text-red-700' : 'text-emerald-700'
               )}>
                 {formatNumber(novaQuantidade)} {item.unidade}
               </span>
               {novaQuantidade < item.quantidadeMinima && (
-                <span className="text-xs text-red-400 flex items-center gap-1">
+                <span className="text-xs text-red-700 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   Abaixo do minimo
                 </span>
@@ -191,7 +191,7 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
 
           {/* Motivo */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Motivo *</label>
+            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Motivo *</label>
             <input
               value={motivo}
               onChange={e => setMotivo(e.target.value)}
@@ -206,9 +206,9 @@ export function AjusteEstoqueModal({ item, onClose }: Props) {
 
           {/* Erro */}
           {erro && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <p className="text-sm text-red-400">{erro}</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+              <p className="text-sm text-red-700">{erro}</p>
             </div>
           )}
 

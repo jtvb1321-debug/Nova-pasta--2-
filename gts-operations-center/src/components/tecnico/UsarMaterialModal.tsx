@@ -71,20 +71,20 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-      <div className="bg-[#111827] border border-white/10 sm:rounded-2xl w-full sm:max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] sm:rounded-2xl w-full sm:max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Usar Material</h3>
-            <p className="text-xs text-gray-500">{registro.item.descricao}</p>
+            <h3 className="text-lg font-semibold text-[#201D17]">Usar Material</h3>
+            <p className="text-xs text-[#A69E8F]">{registro.item.descricao}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Quantidade utilizada</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Quantidade utilizada</label>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -95,22 +95,22 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
               step={0.01}
               className="w-full gts-input"
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">
+            <span className="text-xs text-[#A69E8F] whitespace-nowrap">
               de {registro.quantidade} {registro.item.unidade}
             </span>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Cliente</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Cliente</label>
           <div className="flex gap-2 mb-2">
             <button
               type="button"
               onClick={() => setModoCliente('chamado')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 modoCliente === 'chamado'
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 border-transparent'
+                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                  : 'bg-black/[0.03] text-[#7A7266] border-transparent'
               }`}
             >
               Chamado aberto
@@ -120,8 +120,8 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
               onClick={() => setModoCliente('texto')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 modoCliente === 'texto'
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 border-transparent'
+                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                  : 'bg-black/[0.03] text-[#7A7266] border-transparent'
               }`}
             >
               Digitar nome
@@ -151,7 +151,7 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5 flex items-center gap-1.5">
+          <label className="block text-xs text-[#7A7266] mb-1.5 flex items-center gap-1.5">
             <Camera className="w-3.5 h-3.5" />
             Foto do MAC Address *
           </label>
@@ -160,14 +160,14 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
             type="file"
             accept="image/*"
             onChange={e => setFoto(e.target.files?.[0] || null)}
-            className="w-full text-sm text-gray-400"
+            className="w-full text-sm text-[#7A7266]"
           />
         </div>
 
         {erro && (
-          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-xs text-red-400">{erro}</p>
+          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/25 rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+            <p className="text-xs text-red-700">{erro}</p>
           </div>
         )}
 

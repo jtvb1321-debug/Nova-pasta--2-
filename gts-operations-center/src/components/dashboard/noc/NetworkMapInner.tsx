@@ -9,6 +9,19 @@ import { NOC } from './theme'
 const CENTRO_PADRAO: [number, number] = [-5.042275450130424, -42.74770897772132]
 const ZOOM_PADRAO = 14
 
+// Este mapa e compartilhado pelo Dashboard normal (tema claro, via
+// NetworkMapCard) e pelo Painel TV (tema escuro intencional, via
+// TVNetworkAlternator com modoTv=true) - por isso as cores de tile/marcador
+// NAO usam o NOC importado acima (que agora e claro) quando em modoTv, e sim
+// esta paleta escura fixa, para o Painel TV continuar igual.
+const TV_CORES = {
+  bg: '#0B1120',
+  critico: '#F87171',
+  azulPrimario: '#2563EB',
+  sucesso: '#34D399',
+  alerta: '#FACC15',
+}
+
 interface CaixaFeature {
   type: 'Feature'
   geometry: { type: 'Point'; coordinates: [number, number] }
@@ -74,10 +87,14 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
   const caboFeatures: CaboFeature[] = cabos?.features ?? []
   const ctosVisiveis = modoTv ? features.filter(f => f.properties.emAlerta) : features
 
+  const cores = modoTv ? TV_CORES : NOC
+
   return (
-    <MapContainer center={CENTRO_PADRAO} zoom={ZOOM_PADRAO} style={{ height: '100%', width: '100%', background: NOC.sidebar }} zoomControl={!modoTv}>
+    <MapContainer center={CENTRO_PADRAO} zoom={ZOOM_PADRAO} style={{ height: '100%', width: '100%', background: cores.bg }} zoomControl={!modoTv}>
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url={modoTv
+          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'}
         attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         maxZoom={19}
       />
@@ -85,7 +102,7 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
       {caboFeatures.map(c => {
         const tronco = isCaboTronco(c.properties.tipo)
         const emFalha = c.properties.status === 'DOWN'
-        const cor = emFalha ? NOC.critico : tronco ? NOC.azulPrimario : NOC.sucesso
+        const cor = emFalha ? cores.critico : tronco ? cores.azulPrimario : cores.sucesso
         const positions = c.geometry.coordinates.map(([lng, lat]) => [lat, lng] as [number, number])
         return (
           <Polyline
@@ -110,7 +127,7 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
       })}
 
       {ctosVisiveis.map(f => {
-        const cor = f.properties.emAlerta ? NOC.critico : f.properties.inativos > 0 ? NOC.alerta : NOC.sucesso
+        const cor = f.properties.emAlerta ? cores.critico : f.properties.inativos > 0 ? cores.alerta : cores.sucesso
         return (
           <CircleMarker
             key={f.properties.id}

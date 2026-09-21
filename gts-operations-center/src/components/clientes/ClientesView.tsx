@@ -24,7 +24,7 @@ async function fetchClientes(params: Record<string, string>) {
 
 const STATUS_CFG: Record<string, { label: string; variant: BadgeVariant; bg: string }> = {
   ATIVO:     { label: 'Ativo',     variant: 'success', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  INATIVO:   { label: 'Inativo',   variant: 'neutral', bg: 'bg-white/5 border-white/10' },
+  INATIVO:   { label: 'Inativo',   variant: 'neutral', bg: 'bg-black/[0.02] border-[#E6E1D6]' },
   CANCELADO: { label: 'Cancelado', variant: 'danger',  bg: 'bg-red-500/10 border-red-500/20' },
 }
 
@@ -130,7 +130,7 @@ export function ClientesView() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A69E8F]" />
           <input
             type="search"
             value={search}
@@ -151,8 +151,8 @@ export function ClientesView() {
               className={cn(
                 'px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
                 status === s.valor
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
+                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
               )}
             >
               {s.label}
@@ -163,7 +163,7 @@ export function ClientesView() {
           onClick={() => setSetorCobranca(!setorCobranca)}
           className={cn(
             'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
-            setorCobranca ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-white/5 text-gray-400 border-transparent'
+            setorCobranca ? 'bg-red-500/15 text-red-700 border-red-500/25' : 'bg-black/[0.02] text-[#7A7266] border-transparent'
           )}
         >
           <Headphones className="w-3.5 h-3.5" />
@@ -173,7 +173,7 @@ export function ClientesView() {
           onClick={() => setMaterialRecolhido(!materialRecolhido)}
           className={cn(
             'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
-            materialRecolhido ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-white/5 text-gray-400 border-transparent'
+            materialRecolhido ? 'bg-blue-500/15 text-blue-700 border-blue-500/25' : 'bg-black/[0.02] text-[#7A7266] border-transparent'
           )}
         >
           <Package className="w-3.5 h-3.5" />
@@ -190,37 +190,37 @@ export function ClientesView() {
           const cfg = STATUS_CFG[c.status] || STATUS_CFG.ATIVO
           const ultimaConta = c.contasReceber?.[0]
           return (
-            <div key={c.id} className={cn('bg-[#111827] border rounded-xl p-4 sm:p-5', cfg.bg)}>
+            <div key={c.id} className={cn('bg-white shadow-sm shadow-black/[0.03] border rounded-xl p-4 sm:p-5', cfg.bg)}>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-[220px]">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className="text-white font-semibold">{c.nome}</p>
+                    <p className="text-[#201D17] font-semibold">{c.nome}</p>
                     <Badge variant={cfg.variant}>{cfg.label}</Badge>
                     {c.setorCobranca && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 flex items-center gap-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-700 flex items-center gap-1">
                         <Headphones className="w-3 h-3" /> Cobranca
                       </span>
                     )}
                     {c.materialRecolhido && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 flex items-center gap-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 flex items-center gap-1">
                         <Package className="w-3 h-3" /> Material Recolhido
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">{c.cpfCnpj || 'CPF/CNPJ nao informado'} - {c.telefone || 'sem telefone'}</p>
-                  <p className="text-sm text-gray-300 mt-1">
+                  <p className="text-xs text-[#A69E8F]">{c.cpfCnpj || 'CPF/CNPJ nao informado'} - {c.telefone || 'sem telefone'}</p>
+                  <p className="text-sm text-[#7A7266] mt-1">
                     {c.plano || 'Sem plano'} {c.valorMensalidade ? `- R$ ${c.valorMensalidade.toFixed(2)}/mes` : ''}
                   </p>
-                  {c.vendedor?.nome && <p className="text-xs text-gray-600 mt-1">Vendedor: {c.vendedor.nome}</p>}
+                  {c.vendedor?.nome && <p className="text-xs text-[#A69E8F] mt-1">Vendedor: {c.vendedor.nome}</p>}
 
                   {ultimaConta && (
                     <div className="flex items-center gap-1.5 mt-2">
                       {ultimaConta.status === 'PAGO' ? (
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
                       ) : (
-                        <Clock className="w-3.5 h-3.5 text-yellow-400" />
+                        <Clock className="w-3.5 h-3.5 text-amber-700" />
                       )}
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-[#7A7266]">
                         Ultima mensalidade: {ultimaConta.status === 'PAGO' ? 'Paga' : 'Pendente'}
                         {ultimaConta.dataPagamento ? ` em ${formatDateTime(ultimaConta.dataPagamento)}` : ''}
                       </span>
@@ -232,7 +232,7 @@ export function ClientesView() {
                   {c.status === 'ATIVO' && (
                     <button
                       onClick={() => setClienteBaixa(c)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-medium text-emerald-400 transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-medium text-emerald-700 transition-colors"
                     >
                       <DollarSign className="w-3.5 h-3.5" />
                       Dar Baixa
@@ -243,8 +243,8 @@ export function ClientesView() {
                     className={cn(
                       'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
                       c.materialRecolhido
-                        ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                        : 'bg-white/5 text-gray-400 border-transparent hover:text-white'
+                        ? 'bg-blue-500/15 text-blue-700 border-blue-500/25'
+                        : 'bg-black/[0.02] text-[#7A7266] border-transparent hover:text-[#201D17]'
                     )}
                   >
                     <Package className="w-3.5 h-3.5" />
@@ -255,8 +255,8 @@ export function ClientesView() {
                     className={cn(
                       'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
                       c.setorCobranca
-                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                        : 'bg-white/5 text-gray-400 border-transparent hover:text-white'
+                        ? 'bg-red-500/15 text-red-700 border-red-500/25'
+                        : 'bg-black/[0.02] text-[#7A7266] border-transparent hover:text-[#201D17]'
                     )}
                   >
                     <Headphones className="w-3.5 h-3.5" />
@@ -265,7 +265,7 @@ export function ClientesView() {
                   {c.status === 'ATIVO' ? (
                     <button
                       onClick={() => statusMutation.mutate({ id: c.id, status: 'INATIVO' })}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-white/5 hover:bg-red-500/10 border border-transparent rounded-lg text-xs font-medium text-gray-400 hover:text-red-400 transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-black/[0.02] hover:bg-red-500/10 border border-transparent rounded-lg text-xs font-medium text-[#7A7266] hover:text-red-700 transition-colors"
                     >
                       <Ban className="w-3.5 h-3.5" />
                       Inativar
@@ -273,7 +273,7 @@ export function ClientesView() {
                   ) : (
                     <button
                       onClick={() => statusMutation.mutate({ id: c.id, status: 'ATIVO' })}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-white/5 hover:bg-emerald-500/10 border border-transparent rounded-lg text-xs font-medium text-gray-400 hover:text-emerald-400 transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-black/[0.02] hover:bg-emerald-500/10 border border-transparent rounded-lg text-xs font-medium text-[#7A7266] hover:text-emerald-700 transition-colors"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       Reativar

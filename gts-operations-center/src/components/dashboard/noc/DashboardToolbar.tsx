@@ -34,8 +34,8 @@ export function DashboardToolbar() {
       </div>
       <button
         onClick={alternarTelaCheia}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors hover:bg-white/5"
-        style={{ borderColor: 'rgba(255,255,255,0.1)', color: NOC.textoSecundario }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors hover:bg-black/[0.04]"
+        style={{ borderColor: 'rgba(32,29,23,0.1)', color: NOC.textoSecundario }}
       >
         {tela ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
         {tela ? 'Sair da Tela Cheia' : 'Tela Cheia'}

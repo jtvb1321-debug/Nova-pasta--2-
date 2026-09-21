@@ -40,9 +40,9 @@ export function DataTable<T>({
   toolbar, pagination, onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="rounded-lg border border-white/10 bg-[#111827]/90 overflow-hidden">
+    <div className="rounded-lg border border-[#E6E1D6] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
       {toolbar && (
-        <div className="p-3 border-b border-white/10">{toolbar}</div>
+        <div className="p-3 border-b border-[#E6E1D6]">{toolbar}</div>
       )}
 
       <div className="overflow-x-auto">
@@ -87,8 +87,8 @@ export function DataTable<T>({
       </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
-          <p className="text-xs text-gray-500 font-mono">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[#E6E1D6]">
+          <p className="text-xs text-[#A69E8F] font-mono">
             Pagina {pagination.page} de {pagination.totalPages}
             {pagination.total != null && ` · ${pagination.total} registro(s)`}
           </p>
@@ -96,14 +96,14 @@ export function DataTable<T>({
             <button
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="p-1.5 rounded-md border border-white/10 text-gray-400 hover:text-white hover:border-white/20 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-md border border-[#E6E1D6] text-[#7A7266] hover:text-[#201D17] hover:border-[#D8D2C3] disabled:opacity-40 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
-              className="p-1.5 rounded-md border border-white/10 text-gray-400 hover:text-white hover:border-white/20 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-md border border-[#E6E1D6] text-[#7A7266] hover:text-[#201D17] hover:border-[#D8D2C3] disabled:opacity-40 disabled:pointer-events-none transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

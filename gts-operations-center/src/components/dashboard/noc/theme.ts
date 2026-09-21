@@ -1,21 +1,23 @@
-// Tokens do Dashboard NOC (Visao Geral) - NAO sao uma paleta nova: sao os
-// mesmos valores hexadecimais ja usados em todo o resto do sistema (Sidebar,
-// TopBar, gts-card, modais, TVDashboard). Mantidos aqui apenas porque graficos
-// Recharts/SVG precisam de string de cor em JS, nao de classe Tailwind.
+// Tokens do Dashboard NOC (Visao Geral) - tema claro. Mesmos valores
+// hexadecimais ja usados em todo o resto do sistema (Sidebar, TopBar,
+// gts-card, modais), mantidos aqui apenas porque graficos Recharts/SVG
+// precisam de string de cor em JS, nao de classe Tailwind. O TVDashboard
+// (Painel TV) tem seu proprio tema escuro intencional e NAO depende mais
+// deste arquivo - ver src/lib/tempoDecorrido.ts para as funcoes compartilhadas.
 export const NOC = {
-  bg: '#0B1120', // bg-[#0B1120] - AppShell, paginas, TVDashboard
-  card: '#111827', // bg-[#111827] / .gts-card - Sidebar, TopBar, cards, modais
-  sidebar: '#111827',
-  azulPrimario: '#2563EB', // gts.blue / bg-gts-blue - cor institucional primaria
-  azulClaro: '#60A5FA', // text-blue-400 - usado em icones e destaques
-  laranja: '#FB923C', // text-orange-400 - usado no Sidebar, atalhos, institucional
-  cinza: '#6B7280', // gts.gray / text-gray-500 - textos terciarios, timestamps
-  cinzaEscuro: '#374151', // border/grid de graficos (equivalente a border-white/10 solido)
-  texto: '#FFFFFF',
-  textoSecundario: '#9CA3AF', // text-gray-400 - texto secundario padrao do sistema
-  sucesso: '#34D399', // text-emerald-400 - online/sucesso em todo o sistema
-  alerta: '#FACC15', // text-yellow-400 - atencao em todo o sistema
-  critico: '#F87171', // text-red-400 - critico em todo o sistema
+  bg: '#FAF9F6', // bg-[#FAF9F6] - AppShell, paginas
+  card: '#FFFFFF', // bg-white / .gts-card - Sidebar, TopBar, cards, modais
+  sidebar: '#FFFFFF',
+  azulPrimario: '#2563EB', // cor institucional primaria
+  azulClaro: '#1D4ED8', // text-blue-700 - usado em icones e destaques
+  laranja: '#EA580C', // text-orange-600 - usado no Sidebar, atalhos, institucional
+  cinza: '#A69E8F', // textos terciarios, timestamps
+  cinzaEscuro: '#E6E1D6', // border/grid de graficos
+  texto: '#201D17',
+  textoSecundario: '#7A7266', // texto secundario padrao do sistema
+  sucesso: '#059669', // emerald-600 - online/sucesso em todo o sistema
+  alerta: '#D97706', // amber-600 - atencao em todo o sistema
+  critico: '#DC2626', // red-600 - critico em todo o sistema
 } as const
 
 export function corNivel(nivel: string): string {
@@ -37,22 +39,4 @@ export function corNivel(nivel: string): string {
   }
 }
 
-export function formatarTempoDecorrido(minutos: number): string {
-  if (minutos < 60) return `${minutos}min`
-  const horas = Math.floor(minutos / 60)
-  const min = minutos % 60
-  if (horas < 24) return `${horas}h${min > 0 ? ` ${min}min` : ''}`
-  const dias = Math.floor(horas / 24)
-  return `${dias}d ${horas % 24}h`
-}
-
-export function formatarTempoRelativo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const min = Math.floor(diffMs / 60000)
-  if (min < 1) return 'agora'
-  if (min < 60) return `${min}min atras`
-  const h = Math.floor(min / 60)
-  if (h < 24) return `${h}h atras`
-  const d = Math.floor(h / 24)
-  return `${d}d atras`
-}
+export { formatarTempoDecorrido, formatarTempoRelativo } from '@/lib/tempoDecorrido'

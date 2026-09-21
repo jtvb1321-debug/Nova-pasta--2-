@@ -16,20 +16,20 @@ export function Toaster() {
         <div
           key={toast.id}
           className={cn(
-            'flex items-start gap-3 p-4 rounded-xl border shadow-2xl transition-all duration-300 animate-slide-in',
+            'flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300 animate-slide-in',
             toast.variant === 'destructive'
-              ? 'bg-red-900/90 border-red-500/30 text-red-100'
+              ? 'bg-white border-red-500/30 text-red-800'
               : toast.variant === 'success'
-              ? 'bg-emerald-900/90 border-emerald-500/30 text-emerald-100'
-              : 'bg-[#111827] border-white/10 text-white'
+              ? 'bg-white border-emerald-500/30 text-emerald-800'
+              : 'bg-white border-[#E6E1D6] text-[#201D17]'
           )}
         >
           {toast.variant === 'destructive' ? (
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
           ) : toast.variant === 'success' ? (
-            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
           ) : (
-            <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
           )}
           <div className="flex-1">
             {toast.title && (
@@ -41,7 +41,7 @@ export function Toaster() {
           </div>
           <button
             onClick={() => dismiss(toast.id)}
-            className="text-white/50 hover:text-white transition-colors"
+            className="text-black/30 hover:text-[#201D17] transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>

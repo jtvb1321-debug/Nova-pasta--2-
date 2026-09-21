@@ -10,11 +10,11 @@ import {
 import { cn } from '@/lib/utils'
 
 const TIPO_CONFIG: Record<string, { label: string; icon: React.ElementType; cor: string }> = {
-  chamado: { label: 'Chamado',  icon: ClipboardList, cor: 'text-blue-400 bg-blue-500/10' },
-  estoque: { label: 'Estoque',  icon: Package,       cor: 'text-yellow-400 bg-yellow-500/10' },
-  equipe:  { label: 'Equipe',   icon: Users,         cor: 'text-emerald-400 bg-emerald-500/10' },
-  veiculo: { label: 'Veiculo',  icon: Truck,         cor: 'text-purple-400 bg-purple-500/10' },
-  venda:   { label: 'Venda',    icon: ShoppingCart,  cor: 'text-pink-400 bg-pink-500/10' },
+  chamado: { label: 'Chamado',  icon: ClipboardList, cor: 'text-blue-700 bg-blue-500/10' },
+  estoque: { label: 'Estoque',  icon: Package,       cor: 'text-amber-700 bg-amber-500/10' },
+  equipe:  { label: 'Equipe',   icon: Users,         cor: 'text-emerald-700 bg-emerald-500/10' },
+  veiculo: { label: 'Veiculo',  icon: Truck,         cor: 'text-purple-700 bg-purple-500/10' },
+  venda:   { label: 'Venda',    icon: ShoppingCart,  cor: 'text-pink-700 bg-pink-500/10' },
 }
 
 interface Props {
@@ -74,29 +74,29 @@ export function SearchModal({ onClose }: Props) {
   }
 
   const STATUS_COR: Record<string, string> = {
-    ABERTO: 'text-blue-400',
-    EM_ANDAMENTO: 'text-yellow-400',
-    FINALIZADO: 'text-emerald-400',
-    CANCELADO: 'text-gray-400',
-    CRITICO: 'text-red-400',
-    OK: 'text-emerald-400',
-    ATIVO: 'text-emerald-400',
-    INATIVO: 'text-gray-400',
-    PENDENTE: 'text-yellow-400',
-    APROVADO: 'text-emerald-400',
-    REPROVADO: 'text-red-400',
-    AGUARDANDO: 'text-blue-400',
-    ATIVIDADE: 'text-yellow-400',
+    ABERTO: 'text-blue-700',
+    EM_ANDAMENTO: 'text-amber-700',
+    FINALIZADO: 'text-emerald-700',
+    CANCELADO: 'text-[#A69E8F]',
+    CRITICO: 'text-red-700',
+    OK: 'text-emerald-700',
+    ATIVO: 'text-emerald-700',
+    INATIVO: 'text-[#A69E8F]',
+    PENDENTE: 'text-amber-700',
+    APROVADO: 'text-emerald-700',
+    REPROVADO: 'text-red-700',
+    AGUARDANDO: 'text-blue-700',
+    ATIVIDADE: 'text-amber-700',
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 pt-20 px-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center z-50 pt-20 px-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-[#E6E1D6]">
           {loading
-            ? <Loader2 className="w-5 h-5 text-gray-400 animate-spin flex-shrink-0" />
-            : <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            ? <Loader2 className="w-5 h-5 text-[#A69E8F] animate-spin flex-shrink-0" />
+            : <Search className="w-5 h-5 text-[#A69E8F] flex-shrink-0" />
           }
           <input
             ref={inputRef}
@@ -105,16 +105,16 @@ export function SearchModal({ onClose }: Props) {
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Pesquisar cliente, OS, equipe, placa, material..."
-            className="flex-1 bg-transparent text-white placeholder:text-gray-500 focus:outline-none text-base"
+            className="flex-1 bg-transparent text-[#201D17] placeholder:text-[#A69E8F] focus:outline-none text-base"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={() => setQuery('')} className="text-[#A69E8F] hover:text-[#201D17] transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-xs text-gray-500 hover:text-white border border-white/10 px-2 py-0.5 rounded transition-colors"
+            className="text-xs text-[#A69E8F] hover:text-[#201D17] border border-[#E6E1D6] px-2 py-0.5 rounded transition-colors"
           >
             ESC
           </button>
@@ -124,14 +124,14 @@ export function SearchModal({ onClose }: Props) {
         <div className="max-h-96 overflow-y-auto">
           {query.length < 2 ? (
             <div className="p-6 text-center">
-              <Search className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm">Digite pelo menos 2 caracteres para pesquisar</p>
+              <Search className="w-8 h-8 text-[#A69E8F] mx-auto mb-2" />
+              <p className="text-[#A69E8F] text-sm">Digite pelo menos 2 caracteres para pesquisar</p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
                 {['Alex', 'Estoque', 'HNP9017', 'Instalacao', 'Fibra'].map(s => (
                   <button
                     key={s}
                     onClick={() => setQuery(s)}
-                    className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-400 hover:text-white transition-colors"
+                    className="px-3 py-1 bg-black/[0.02] border border-[#E6E1D6] rounded-full text-xs text-[#7A7266] hover:text-[#201D17] transition-colors"
                   >
                     {s}
                   </button>
@@ -140,8 +140,8 @@ export function SearchModal({ onClose }: Props) {
             </div>
           ) : resultados.length === 0 && !loading ? (
             <div className="p-6 text-center">
-              <AlertTriangle className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm">Nenhum resultado para "{query}"</p>
+              <AlertTriangle className="w-8 h-8 text-[#A69E8F] mx-auto mb-2" />
+              <p className="text-[#A69E8F] text-sm">Nenhum resultado para "{query}"</p>
             </div>
           ) : (
             <div className="py-2">
@@ -157,7 +157,7 @@ export function SearchModal({ onClose }: Props) {
                     onMouseEnter={() => setSelecionado(i)}
                     className={cn(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors text-left',
-                      isSelected ? 'bg-orange-500/10' : 'hover:bg-white/[0.03]'
+                      isSelected ? 'bg-orange-500/10' : 'hover:bg-black/[0.02]'
                     )}
                   >
                     <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', cfg.cor.split(' ')[1])}>
@@ -166,20 +166,20 @@ export function SearchModal({ onClose }: Props) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white truncate">{r.titulo}</p>
-                        <span className={cn('text-xs flex-shrink-0', STATUS_COR[r.status] || 'text-gray-400')}>
+                        <p className="text-sm font-medium text-[#201D17] truncate">{r.titulo}</p>
+                        <span className={cn('text-xs flex-shrink-0', STATUS_COR[r.status] || 'text-[#7A7266]')}>
                           {r.status}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 truncate">{r.subtitulo}</p>
-                      <p className="text-xs text-gray-600 truncate">{r.detalhe}</p>
+                      <p className="text-xs text-[#7A7266] truncate">{r.subtitulo}</p>
+                      <p className="text-xs text-[#A69E8F] truncate">{r.detalhe}</p>
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className={cn('text-xs px-2 py-0.5 rounded-full', cfg.cor)}>
                         {cfg.label}
                       </span>
-                      {isSelected && <ArrowRight className="w-3.5 h-3.5 text-orange-400" />}
+                      {isSelected && <ArrowRight className="w-3.5 h-3.5 text-orange-600" />}
                     </div>
                   </button>
                 )
@@ -189,7 +189,7 @@ export function SearchModal({ onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-white/5 flex items-center gap-4 text-xs text-gray-600">
+        <div className="px-4 py-2.5 border-t border-[#E6E1D6] flex items-center gap-4 text-xs text-[#A69E8F]">
           <span>↑↓ Navegar</span>
           <span>Enter Abrir</span>
           <span>ESC Fechar</span>

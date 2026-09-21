@@ -14,11 +14,11 @@ import { CampoTexto, CampoNumero, BotaoRemoverLinha, atualizarItem, removerItem 
 type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados'
 
 const RELATORIOS = [
-  { id: 'chamados_qualidade' as TipoRelatorio, title: 'Chamados & Qualidade', description: 'Historico de atendimentos, reincidencia e conformidade de SLA no mesmo periodo', icon: ClipboardList, cor: 'text-blue-400 bg-blue-500/10' },
-  { id: 'estoque'       as TipoRelatorio, title: 'Estoque',       description: 'Inventario completo e itens criticos',         icon: Package,       cor: 'text-yellow-400 bg-yellow-500/10' },
-  { id: 'comercial'     as TipoRelatorio, title: 'Comercial',     description: 'Vendas, comissoes e ranking de vendedores',    icon: TrendingUp,    cor: 'text-emerald-400 bg-emerald-500/10' },
-  { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-400 bg-orange-500/10' },
-  { id: 'cancelados'    as TipoRelatorio, title: 'Cancelados (IXC)', description: 'Clientes cancelados no mes, consultado direto na API do IXC', icon: UserX, cor: 'text-red-400 bg-red-500/10' },
+  { id: 'chamados_qualidade' as TipoRelatorio, title: 'Chamados & Qualidade', description: 'Historico de atendimentos, reincidencia e conformidade de SLA no mesmo periodo', icon: ClipboardList, cor: 'text-blue-700 bg-blue-500/10' },
+  { id: 'estoque'       as TipoRelatorio, title: 'Estoque',       description: 'Inventario completo e itens criticos',         icon: Package,       cor: 'text-amber-700 bg-amber-500/10' },
+  { id: 'comercial'     as TipoRelatorio, title: 'Comercial',     description: 'Vendas, comissoes e ranking de vendedores',    icon: TrendingUp,    cor: 'text-emerald-700 bg-emerald-500/10' },
+  { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-700 bg-orange-500/10' },
+  { id: 'cancelados'    as TipoRelatorio, title: 'Cancelados (IXC)', description: 'Clientes cancelados no mes, consultado direto na API do IXC', icon: UserX, cor: 'text-red-700 bg-red-500/10' },
 ]
 
 async function fetchEquipes() {
@@ -56,11 +56,11 @@ function recomputarAgregadosCancelados(cancelados: any[]) {
 }
 
 const COR_TOKEN_CLASSE: Record<string, string> = {
-  VERDE: 'text-emerald-400',
-  AMARELO: 'text-yellow-400',
-  AZUL: 'text-blue-400',
-  VERMELHO: 'text-red-400',
-  CINZA: 'text-gray-400',
+  VERDE: 'text-emerald-700',
+  AMARELO: 'text-amber-700',
+  AZUL: 'text-blue-700',
+  VERMELHO: 'text-red-700',
+  CINZA: 'text-[#7A7266]',
 }
 
 export function ReportsView() {
@@ -279,8 +279,8 @@ export function ReportsView() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-white">Relatorios</h1>
-        <p className="text-gray-500 text-sm mt-1">Gere relatorios PDF profissionais com logo e cabecalho - confira e corrija os dados antes de gerar</p>
+        <h1 className="text-2xl font-bold text-[#201D17]">Relatorios</h1>
+        <p className="text-[#A69E8F] text-sm mt-1">Gere relatorios PDF profissionais com logo e cabecalho - confira e corrija os dados antes de gerar</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -288,8 +288,8 @@ export function ReportsView() {
         <div className="space-y-4">
           {/* Tipo */}
           <div className="gts-card space-y-3">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <FileText className="w-4 h-4 text-orange-400" />
+            <h2 className="text-sm font-semibold text-[#201D17] flex items-center gap-2">
+              <FileText className="w-4 h-4 text-orange-600" />
               Tipo de Relatorio
             </h2>
             {RELATORIOS.map(r => {
@@ -302,17 +302,17 @@ export function ReportsView() {
                     'w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
                     tipo === r.id
                       ? 'border-orange-500/40 bg-orange-500/10'
-                      : 'border-white/5 hover:border-white/10 bg-white/[0.02]'
+                      : 'border-[#E6E1D6] hover:border-[#D8D2C3] bg-black/[0.02]'
                   )}
                 >
                   <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', r.cor.split(' ')[1])}>
                     <Icon className={cn('w-4 h-4', r.cor.split(' ')[0])} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn('text-sm font-medium', tipo === r.id ? 'text-white' : 'text-gray-300')}>{r.title}</p>
-                    <p className="text-xs text-gray-500 truncate">{r.description}</p>
+                    <p className={cn('text-sm font-medium', tipo === r.id ? 'text-[#201D17]' : 'text-[#7A7266]')}>{r.title}</p>
+                    <p className="text-xs text-[#A69E8F] truncate">{r.description}</p>
                   </div>
-                  {tipo === r.id && <CheckCircle className="w-4 h-4 text-orange-400 flex-shrink-0" />}
+                  {tipo === r.id && <CheckCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />}
                 </button>
               )
             })}
@@ -320,14 +320,14 @@ export function ReportsView() {
 
           {/* Filtros */}
           <div className="gts-card space-y-4">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-orange-400" />
+            <h2 className="text-sm font-semibold text-[#201D17] flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-orange-600" />
               Parametros
             </h2>
 
             {tipo === 'diario' ? (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Data</label>
+                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Data</label>
                 <input
                   type="date"
                   value={dataDiario}
@@ -338,7 +338,7 @@ export function ReportsView() {
               </div>
             ) : tipo === 'cancelados' ? (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Mes</label>
+                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Mes</label>
                 <input
                   type="month"
                   value={mesCancelados}
@@ -346,11 +346,11 @@ export function ReportsView() {
                   max={mesAtualISO()}
                   className="w-full gts-input"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">Consulta direto na API do IXC.</p>
+                <p className="text-xs text-[#A69E8F] mt-1.5">Consulta direto na API do IXC.</p>
               </div>
             ) : tipo === 'chamados_qualidade' ? (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Mes</label>
+                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Mes</label>
                 <input
                   type="month"
                   value={mesChamadosQualidade}
@@ -358,12 +358,12 @@ export function ReportsView() {
                   max={mesAtualISO()}
                   className="w-full gts-input"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">Chamados e Qualidade/SLA saem juntos no mesmo PDF, para o mes escolhido.</p>
+                <p className="text-xs text-[#A69E8F] mt-1.5">Chamados e Qualidade/SLA saem juntos no mesmo PDF, para o mes escolhido.</p>
               </div>
             ) : tipo === 'comercial' ? (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Periodo (rotulo no PDF)</label>
+                  <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Periodo (rotulo no PDF)</label>
                   <select value={periodo} onChange={e => setPeriodo(e.target.value)} className="w-full gts-input">
                     <option value="diario">Hoje</option>
                     <option value="semanal">Esta semana</option>
@@ -374,11 +374,11 @@ export function ReportsView() {
                 {periodo === 'personalizado' && (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Inicio</label>
+                      <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Data Inicio</label>
                       <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full gts-input" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Data Fim</label>
+                      <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Data Fim</label>
                       <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full gts-input" />
                     </div>
                   </div>
@@ -388,7 +388,7 @@ export function ReportsView() {
 
             {tipo === 'chamados_qualidade' && (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Equipe</label>
+                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Equipe</label>
                 <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="w-full gts-input">
                   <option value="">Todas as equipes</option>
                   {equipes.map((e: any) => (
@@ -432,47 +432,47 @@ export function ReportsView() {
                 <relatorioAtual.icon className={cn('w-5 h-5', relatorioAtual.cor.split(' ')[0])} />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-white">{relatorioAtual.title}</h2>
-                <p className="text-xs text-gray-500">{relatorioAtual.description}</p>
+                <h2 className="text-base font-semibold text-[#201D17]">{relatorioAtual.title}</h2>
+                <p className="text-xs text-[#A69E8F]">{relatorioAtual.description}</p>
               </div>
             </div>
 
             {!dadosCarregados ? (
               <div className="text-center py-16">
-                <relatorioAtual.icon className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Carregue os dados para revisar</p>
-                <p className="text-gray-600 text-sm mt-1">Clique em &quot;Carregar Dados&quot; ao lado. Voce podera corrigir textos, numeros e remover linhas antes de gerar o PDF.</p>
+                <relatorioAtual.icon className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Carregue os dados para revisar</p>
+                <p className="text-[#A69E8F] text-sm mt-1">Clique em &quot;Carregar Dados&quot; ao lado. Voce podera corrigir textos, numeros e remover linhas antes de gerar o PDF.</p>
               </div>
             ) : tipo === 'chamados_qualidade' && dadosChamadosQualidade ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-4 gap-3">
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Total</p>
-                    <p className="text-xl font-bold text-blue-400">{kpisChamados.total}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Total</p>
+                    <p className="text-xl font-bold text-blue-700">{kpisChamados.total}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Finalizados</p>
-                    <p className="text-xl font-bold text-emerald-400">{kpisChamados.finalizados}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Finalizados</p>
+                    <p className="text-xl font-bold text-emerald-700">{kpisChamados.finalizados}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Em Andamento</p>
-                    <p className="text-xl font-bold text-yellow-400">{kpisChamados.andamento}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Em Andamento</p>
+                    <p className="text-xl font-bold text-amber-700">{kpisChamados.andamento}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Abertos</p>
-                    <p className="text-xl font-bold text-gray-300">{kpisChamados.abertos}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Abertos</p>
+                    <p className="text-xl font-bold text-[#7A7266]">{kpisChamados.abertos}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Chamados do Periodo ({chamadosAtual.length})</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Chamados do Periodo ({chamadosAtual.length})</p>
                   {chamadosAtual.length === 0 ? (
-                    <p className="text-xs text-gray-600">Nenhum chamado no periodo.</p>
+                    <p className="text-xs text-[#A69E8F]">Nenhum chamado no periodo.</p>
                   ) : (
                     <div className="overflow-x-auto max-h-80 overflow-y-auto">
                       <table className="w-full text-xs">
-                        <thead className="sticky top-0 bg-[#111827]">
-                          <tr className="text-gray-500 border-b border-white/5">
+                        <thead className="sticky top-0 bg-white">
+                          <tr className="text-[#A69E8F] border-b border-[#E6E1D6]">
                             <th className="text-left font-medium py-1.5 pr-2">Cliente</th>
                             <th className="text-left font-medium py-1.5 pr-2">Tipo</th>
                             <th className="text-left font-medium py-1.5 pr-2">Cidade</th>
@@ -483,24 +483,24 @@ export function ReportsView() {
                         </thead>
                         <tbody>
                           {chamadosAtual.map((c: any, i: number) => (
-                            <tr key={c.id ?? i} className="border-b border-white/[0.03]">
+                            <tr key={c.id ?? i} className="border-b border-[#E6E1D6]">
                               <td className="py-1 pr-2">
                                 <CampoTexto
                                   value={c.cliente}
                                   onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, chamados: atualizarItem(d.chamados, i, { cliente: v }) }))}
-                                  className="text-gray-200"
+                                  className="text-[#3F3A32]"
                                 />
                               </td>
-                              <td className="py-1 pr-2 text-gray-400">{c.tipo}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{c.tipo}</td>
                               <td className="py-1 pr-2">
                                 <CampoTexto
                                   value={c.cidade}
                                   onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, chamados: atualizarItem(d.chamados, i, { cidade: v }) }))}
-                                  className="text-gray-400"
+                                  className="text-[#7A7266]"
                                 />
                               </td>
-                              <td className="py-1 pr-2 text-gray-400">{c.equipe?.nome || '-'}</td>
-                              <td className="py-1 pr-2 text-gray-400">{c.status}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{c.equipe?.nome || '-'}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{c.status}</td>
                               <td className="py-1">
                                 <BotaoRemoverLinha onClick={() => setDadosChamadosQualidade(d => d && ({ ...d, chamados: removerItem(d.chamados, i) }))} />
                               </td>
@@ -512,101 +512,101 @@ export function ReportsView() {
                   )}
                 </div>
 
-                <div className="border-t border-white/5 pt-4">
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Qualidade / SLA do Mes</p>
+                <div className="border-t border-[#E6E1D6] pt-4">
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Qualidade / SLA do Mes</p>
                   <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-500">Reincidencias (qtd)</span>
+                    <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5 flex items-center justify-between">
+                      <span className="text-[11px] text-[#A69E8F]">Reincidencias (qtd)</span>
                       <CampoNumero
                         value={dadosChamadosQualidade.qualidade.reincidencia.total}
                         onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, total: v } } }))}
-                        className="text-right text-white font-bold w-16"
+                        className="text-right text-[#201D17] font-bold w-16"
                       />
                     </div>
-                    <div className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-500">Reincidencia (%)</span>
+                    <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5 flex items-center justify-between">
+                      <span className="text-[11px] text-[#A69E8F]">Reincidencia (%)</span>
                       <CampoNumero
                         value={dadosChamadosQualidade.qualidade.reincidencia.percentual}
                         onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, percentual: v } } }))}
-                        className="text-right text-white font-bold w-16"
+                        className="text-right text-[#201D17] font-bold w-16"
                       />
                     </div>
-                    <div className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-500">SLA resposta (%)</span>
+                    <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5 flex items-center justify-between">
+                      <span className="text-[11px] text-[#A69E8F]">SLA resposta (%)</span>
                       <CampoNumero
                         value={dadosChamadosQualidade.qualidade.sla.resposta.percentual}
                         onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, sla: { ...d.qualidade.sla, resposta: { ...d.qualidade.sla.resposta, percentual: v } } } }))}
-                        className="text-right text-white font-bold w-16"
+                        className="text-right text-[#201D17] font-bold w-16"
                       />
                     </div>
-                    <div className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-500">SLA resolucao (%)</span>
+                    <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5 flex items-center justify-between">
+                      <span className="text-[11px] text-[#A69E8F]">SLA resolucao (%)</span>
                       <CampoNumero
                         value={dadosChamadosQualidade.qualidade.sla.resolucao.percentual}
                         onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, sla: { ...d.qualidade.sla, resolucao: { ...d.qualidade.sla.resolucao, percentual: v } } } }))}
-                        className="text-right text-white font-bold w-16"
+                        className="text-right text-[#201D17] font-bold w-16"
                       />
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-gray-500 mb-1.5">Clientes com Chamados Reincidentes</p>
+                  <p className="text-[11px] text-[#A69E8F] mb-1.5">Clientes com Chamados Reincidentes</p>
                   <div className="space-y-1 mb-4">
                     {dadosChamadosQualidade.qualidade.reincidencia.porCliente.length === 0 ? (
-                      <p className="text-xs text-gray-600">Nenhum cliente reincidente no mes.</p>
+                      <p className="text-xs text-[#A69E8F]">Nenhum cliente reincidente no mes.</p>
                     ) : dadosChamadosQualidade.qualidade.reincidencia.porCliente.map((c: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
+                      <div key={i} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
                         <CampoTexto
                           value={c.cliente}
                           onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, porCliente: atualizarItem(d.qualidade.reincidencia.porCliente, i, { cliente: v }) } } }))}
-                          className="text-gray-300 flex-1"
+                          className="text-[#7A7266] flex-1"
                         />
                         <CampoNumero
                           value={c.quantidade}
                           onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, porCliente: atualizarItem(d.qualidade.reincidencia.porCliente, i, { quantidade: v }) } } }))}
-                          className="text-gray-500 w-12 text-right"
+                          className="text-[#A69E8F] w-12 text-right"
                         />
                         <BotaoRemoverLinha onClick={() => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, porCliente: removerItem(d.qualidade.reincidencia.porCliente, i) } } }))} />
                       </div>
                     ))}
                   </div>
 
-                  <p className="text-[11px] text-gray-500 mb-1.5">Reincidencia por Tipo</p>
+                  <p className="text-[11px] text-[#A69E8F] mb-1.5">Reincidencia por Tipo</p>
                   <div className="space-y-1 mb-4">
                     {Object.entries(dadosChamadosQualidade.qualidade.reincidencia.porTipo).map(([tipoChamado, v]: [string, any]) => (
-                      <div key={tipoChamado} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
-                        <span className="text-gray-300 flex-1">{tipoChamado}</span>
-                        <span className="text-gray-600">total</span>
+                      <div key={tipoChamado} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
+                        <span className="text-[#7A7266] flex-1">{tipoChamado}</span>
+                        <span className="text-[#A69E8F]">total</span>
                         <CampoNumero
                           value={v.total}
                           onChange={val => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, porTipo: { ...d.qualidade.reincidencia.porTipo, [tipoChamado]: { ...d.qualidade.reincidencia.porTipo[tipoChamado], total: val } } } } }))}
-                          className="text-gray-400 w-10 text-right"
+                          className="text-[#7A7266] w-10 text-right"
                         />
-                        <span className="text-gray-600">reinc.</span>
+                        <span className="text-[#A69E8F]">reinc.</span>
                         <CampoNumero
                           value={v.reincidentes}
                           onChange={val => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, reincidencia: { ...d.qualidade.reincidencia, porTipo: { ...d.qualidade.reincidencia.porTipo, [tipoChamado]: { ...d.qualidade.reincidencia.porTipo[tipoChamado], reincidentes: val } } } } }))}
-                          className="text-gray-400 w-10 text-right"
+                          className="text-[#7A7266] w-10 text-right"
                         />
                       </div>
                     ))}
                   </div>
 
-                  <p className="text-[11px] text-gray-500 mb-1.5">Evolucao dos Ultimos 6 Meses</p>
+                  <p className="text-[11px] text-[#A69E8F] mb-1.5">Evolucao dos Ultimos 6 Meses</p>
                   <div className="space-y-1">
                     {dadosChamadosQualidade.qualidade.evolucao.map((e: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
-                        <span className="text-gray-300 w-16 flex-shrink-0">{e.mes}</span>
-                        <span className="text-gray-600">chamados</span>
+                      <div key={i} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
+                        <span className="text-[#7A7266] w-16 flex-shrink-0">{e.mes}</span>
+                        <span className="text-[#A69E8F]">chamados</span>
                         <CampoNumero
                           value={e.totalChamados}
                           onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, evolucao: atualizarItem(d.qualidade.evolucao, i, { totalChamados: v }) } }))}
-                          className="text-gray-400 w-10 text-right"
+                          className="text-[#7A7266] w-10 text-right"
                         />
-                        <span className="text-gray-600">SLA%</span>
+                        <span className="text-[#A69E8F]">SLA%</span>
                         <CampoNumero
                           value={e.slaResolucaoPercentual}
                           onChange={v => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, evolucao: atualizarItem(d.qualidade.evolucao, i, { slaResolucaoPercentual: v }) } }))}
-                          className="text-gray-400 w-10 text-right"
+                          className="text-[#7A7266] w-10 text-right"
                         />
                         <BotaoRemoverLinha onClick={() => setDadosChamadosQualidade(d => d && ({ ...d, qualidade: { ...d.qualidade, evolucao: removerItem(d.qualidade.evolucao, i) } }))} />
                       </div>
@@ -617,30 +617,30 @@ export function ReportsView() {
             ) : tipo === 'estoque' && dadosEstoque ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-4 gap-3">
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Total de Itens</p>
-                    <p className="text-xl font-bold text-blue-400">{kpisEstoque.total}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Total de Itens</p>
+                    <p className="text-xl font-bold text-blue-700">{kpisEstoque.total}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-red-500/20 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Criticos</p>
-                    <p className="text-xl font-bold text-red-400">{kpisEstoque.criticos}</p>
+                  <div className="bg-black/[0.02] border border-red-500/20 rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Criticos</p>
+                    <p className="text-xl font-bold text-red-700">{kpisEstoque.criticos}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Valor Total</p>
-                    <p className="text-lg font-bold text-emerald-400">R$ {kpisEstoque.valorTotal.toFixed(2)}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Valor Total</p>
+                    <p className="text-lg font-bold text-emerald-700">R$ {kpisEstoque.valorTotal.toFixed(2)}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Categorias</p>
-                    <p className="text-xl font-bold text-gray-300">{kpisEstoque.categorias}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Categorias</p>
+                    <p className="text-xl font-bold text-[#7A7266]">{kpisEstoque.categorias}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Itens do Estoque ({itensEstoqueAtual.length})</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Itens do Estoque ({itensEstoqueAtual.length})</p>
                   <div className="overflow-x-auto max-h-96 overflow-y-auto">
                     <table className="w-full text-xs">
-                      <thead className="sticky top-0 bg-[#111827]">
-                        <tr className="text-gray-500 border-b border-white/5">
+                      <thead className="sticky top-0 bg-white">
+                        <tr className="text-[#A69E8F] border-b border-[#E6E1D6]">
                           <th className="text-left font-medium py-1.5 pr-2">Descricao</th>
                           <th className="text-left font-medium py-1.5 pr-2">Qtd. Atual</th>
                           <th className="text-left font-medium py-1.5 pr-2">Qtd. Minima</th>
@@ -650,18 +650,18 @@ export function ReportsView() {
                       </thead>
                       <tbody>
                         {itensEstoqueAtual.map((item: any, i: number) => (
-                          <tr key={item.id ?? i} className="border-b border-white/[0.03]">
+                          <tr key={item.id ?? i} className="border-b border-[#E6E1D6]">
                             <td className="py-1 pr-2">
-                              <CampoTexto value={item.descricao} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { descricao: v }))} className="text-gray-200" />
+                              <CampoTexto value={item.descricao} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { descricao: v }))} className="text-[#3F3A32]" />
                             </td>
                             <td className="py-1 pr-2">
-                              <CampoNumero value={item.quantidadeAtual} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { quantidadeAtual: v }))} className="text-gray-300 w-16" />
+                              <CampoNumero value={item.quantidadeAtual} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { quantidadeAtual: v }))} className="text-[#7A7266] w-16" />
                             </td>
                             <td className="py-1 pr-2">
-                              <CampoNumero value={item.quantidadeMinima} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { quantidadeMinima: v }))} className="text-gray-400 w-16" />
+                              <CampoNumero value={item.quantidadeMinima} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { quantidadeMinima: v }))} className="text-[#7A7266] w-16" />
                             </td>
                             <td className="py-1 pr-2">
-                              <CampoNumero value={item.valorUnitario} step={0.01} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { valorUnitario: v }))} className="text-gray-400 w-20" />
+                              <CampoNumero value={item.valorUnitario} step={0.01} onChange={v => setDadosEstoque(lst => lst && atualizarItem(lst, i, { valorUnitario: v }))} className="text-[#7A7266] w-20" />
                             </td>
                             <td className="py-1">
                               <BotaoRemoverLinha onClick={() => setDadosEstoque(lst => lst && removerItem(lst, i))} />
@@ -676,28 +676,28 @@ export function ReportsView() {
             ) : tipo === 'comercial' && dadosComercial ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Total de Vendas</p>
-                    <p className="text-xl font-bold text-blue-400">{kpisComercial.total}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Total de Vendas</p>
+                    <p className="text-xl font-bold text-blue-700">{kpisComercial.total}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Aprovadas</p>
-                    <p className="text-xl font-bold text-emerald-400">{kpisComercial.aprovadas}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Aprovadas</p>
+                    <p className="text-xl font-bold text-emerald-700">{kpisComercial.aprovadas}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Faturamento</p>
-                    <p className="text-lg font-bold text-emerald-400">R$ {kpisComercial.faturamento.toFixed(2)}</p>
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Faturamento</p>
+                    <p className="text-lg font-bold text-emerald-700">R$ {kpisComercial.faturamento.toFixed(2)}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Ranking de Vendedores</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Ranking de Vendedores</p>
                   <div className="space-y-1">
                     {dadosComercial.ranking.map((v: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
-                        <span className="text-gray-600 w-6">{i + 1}o</span>
-                        <CampoTexto value={v.nome} onChange={val => setDadosComercial(d => d && ({ ...d, ranking: atualizarItem(d.ranking, i, { nome: val }) }))} className="text-gray-200 flex-1" />
-                        <CampoNumero value={v.totalVendas} onChange={val => setDadosComercial(d => d && ({ ...d, ranking: atualizarItem(d.ranking, i, { totalVendas: val }) }))} className="text-gray-400 w-14 text-right" />
+                      <div key={i} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
+                        <span className="text-[#A69E8F] w-6">{i + 1}o</span>
+                        <CampoTexto value={v.nome} onChange={val => setDadosComercial(d => d && ({ ...d, ranking: atualizarItem(d.ranking, i, { nome: val }) }))} className="text-[#3F3A32] flex-1" />
+                        <CampoNumero value={v.totalVendas} onChange={val => setDadosComercial(d => d && ({ ...d, ranking: atualizarItem(d.ranking, i, { totalVendas: val }) }))} className="text-[#7A7266] w-14 text-right" />
                         <BotaoRemoverLinha onClick={() => setDadosComercial(d => d && ({ ...d, ranking: removerItem(d.ranking, i) }))} />
                       </div>
                     ))}
@@ -705,11 +705,11 @@ export function ReportsView() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Vendas ({vendasAtual.length})</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Vendas ({vendasAtual.length})</p>
                   <div className="overflow-x-auto max-h-72 overflow-y-auto">
                     <table className="w-full text-xs">
-                      <thead className="sticky top-0 bg-[#111827]">
-                        <tr className="text-gray-500 border-b border-white/5">
+                      <thead className="sticky top-0 bg-white">
+                        <tr className="text-[#A69E8F] border-b border-[#E6E1D6]">
                           <th className="text-left font-medium py-1.5 pr-2">Cliente</th>
                           <th className="text-left font-medium py-1.5 pr-2">Valor</th>
                           <th className="text-left font-medium py-1.5 pr-2">Status</th>
@@ -718,14 +718,14 @@ export function ReportsView() {
                       </thead>
                       <tbody>
                         {vendasAtual.map((v: any, i: number) => (
-                          <tr key={v.id ?? i} className="border-b border-white/[0.03]">
+                          <tr key={v.id ?? i} className="border-b border-[#E6E1D6]">
                             <td className="py-1 pr-2">
-                              <CampoTexto value={v.clienteNome} onChange={val => setDadosComercial(d => d && ({ ...d, vendas: atualizarItem(d.vendas, i, { clienteNome: val }) }))} className="text-gray-200" />
+                              <CampoTexto value={v.clienteNome} onChange={val => setDadosComercial(d => d && ({ ...d, vendas: atualizarItem(d.vendas, i, { clienteNome: val }) }))} className="text-[#3F3A32]" />
                             </td>
                             <td className="py-1 pr-2">
-                              <CampoNumero value={v.valor} step={0.01} onChange={val => setDadosComercial(d => d && ({ ...d, vendas: atualizarItem(d.vendas, i, { valor: val }) }))} className="text-gray-400 w-20" />
+                              <CampoNumero value={v.valor} step={0.01} onChange={val => setDadosComercial(d => d && ({ ...d, vendas: atualizarItem(d.vendas, i, { valor: val }) }))} className="text-[#7A7266] w-20" />
                             </td>
-                            <td className="py-1 pr-2 text-gray-400">{v.status}</td>
+                            <td className="py-1 pr-2 text-[#7A7266]">{v.status}</td>
                             <td className="py-1">
                               <BotaoRemoverLinha onClick={() => setDadosComercial(d => d && ({ ...d, vendas: removerItem(d.vendas, i) }))} />
                             </td>
@@ -739,8 +739,8 @@ export function ReportsView() {
             ) : tipo === 'diario' && dadosDiario ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">Relatorio Diario Operacional</p>
-                  <span className="text-xs text-gray-500">{new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                  <p className="text-sm font-semibold text-[#201D17]">Relatorio Diario Operacional</p>
+                  <span className="text-xs text-[#A69E8F]">{new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
                 </div>
 
                 {/* 1. KPIs - editaveis diretamente */}
@@ -750,12 +750,12 @@ export function ReportsView() {
                     ['Instalacoes', 'instalacoesConcluidas'],
                     ['Vendas', 'vendasRealizadas'],
                   ] as const).map(([label, campo]) => (
-                    <div key={campo} className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                      <p className="text-[11px] text-gray-500 mb-1">{label}</p>
+                    <div key={campo} className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                      <p className="text-[11px] text-[#A69E8F] mb-1">{label}</p>
                       <CampoNumero
                         value={dadosDiario.kpis[campo]}
                         onChange={v => setDadosDiario((d: any) => ({ ...d, kpis: { ...d.kpis, [campo]: v } }))}
-                        className="text-xl font-bold text-white"
+                        className="text-xl font-bold text-[#201D17]"
                       />
                     </div>
                   ))}
@@ -763,14 +763,14 @@ export function ReportsView() {
 
                 {/* 2. Atendimentos concluidos */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Atendimentos e OS Concluidas ({dadosDiario.atendimentos.length})</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Atendimentos e OS Concluidas ({dadosDiario.atendimentos.length})</p>
                   {dadosDiario.atendimentos.length === 0 ? (
-                    <p className="text-xs text-gray-600">Nenhum atendimento finalizado no dia.</p>
+                    <p className="text-xs text-[#A69E8F]">Nenhum atendimento finalizado no dia.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-gray-500 border-b border-white/5">
+                          <tr className="text-[#A69E8F] border-b border-[#E6E1D6]">
                             <th className="text-left font-medium py-1.5 pr-2">Cliente</th>
                             <th className="text-left font-medium py-1.5 pr-2">Equipe</th>
                             <th className="text-left font-medium py-1.5 pr-2">Tipo</th>
@@ -781,13 +781,13 @@ export function ReportsView() {
                         </thead>
                         <tbody>
                           {dadosDiario.atendimentos.map((a: any, i: number) => (
-                            <tr key={i} className="border-b border-white/[0.03]">
+                            <tr key={i} className="border-b border-[#E6E1D6]">
                               <td className="py-1 pr-2">
-                                <CampoTexto value={a.cliente} onChange={v => setDadosDiario((d: any) => ({ ...d, atendimentos: atualizarItem(d.atendimentos, i, { cliente: v }) }))} className="text-gray-300" />
+                                <CampoTexto value={a.cliente} onChange={v => setDadosDiario((d: any) => ({ ...d, atendimentos: atualizarItem(d.atendimentos, i, { cliente: v }) }))} className="text-[#7A7266]" />
                               </td>
-                              <td className="py-1 pr-2 text-gray-400">{a.equipeNome}</td>
-                              <td className="py-1 pr-2 text-gray-400">{a.tipoLabel}</td>
-                              <td className="py-1 pr-2 text-gray-400">{a.tma}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{a.equipeNome}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{a.tipoLabel}</td>
+                              <td className="py-1 pr-2 text-[#7A7266]">{a.tma}</td>
                               <td className={cn('py-1 pr-2 font-medium', COR_TOKEN_CLASSE[a.slaCor])}>{a.slaLabel}</td>
                               <td className="py-1">
                                 <BotaoRemoverLinha onClick={() => setDadosDiario((d: any) => ({ ...d, atendimentos: removerItem(d.atendimentos, i) }))} />
@@ -802,13 +802,13 @@ export function ReportsView() {
 
                 {/* 3. Produtividade das equipes */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Produtividade das Equipes de Campo</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Produtividade das Equipes de Campo</p>
                   <div className="space-y-1.5">
                     {dadosDiario.produtividadeEquipes.map((e: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded-lg px-3 py-2">
-                        <span className="text-gray-300 font-medium flex-shrink-0 w-28 truncate">{e.equipeNome}</span>
-                        <CampoNumero value={e.osFinalizadas} onChange={v => setDadosDiario((d: any) => ({ ...d, produtividadeEquipes: atualizarItem(d.produtividadeEquipes, i, { osFinalizadas: v }) }))} className="text-gray-500 w-12 text-center" />
-                        <span className="text-gray-600">OS</span>
+                      <div key={i} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded-lg px-3 py-2">
+                        <span className="text-[#7A7266] font-medium flex-shrink-0 w-28 truncate">{e.equipeNome}</span>
+                        <CampoNumero value={e.osFinalizadas} onChange={v => setDadosDiario((d: any) => ({ ...d, produtividadeEquipes: atualizarItem(d.produtividadeEquipes, i, { osFinalizadas: v }) }))} className="text-[#A69E8F] w-12 text-center" />
+                        <span className="text-[#A69E8F]">OS</span>
                         <span className={cn('font-medium ml-auto', COR_TOKEN_CLASSE[e.statusCor])}>{e.statusLabel}</span>
                         <BotaoRemoverLinha onClick={() => setDadosDiario((d: any) => ({ ...d, produtividadeEquipes: removerItem(d.produtividadeEquipes, i) }))} />
                       </div>
@@ -818,19 +818,19 @@ export function ReportsView() {
 
                 {/* 4. Feedback */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Feedback dos Clientes (WhatsApp)</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Feedback dos Clientes (WhatsApp)</p>
                   <div className="grid grid-cols-3 gap-3">
                     {([
                       ['Enviadas', 'enviados'],
                       ['Respondidas', 'respondidos'],
                       ['Positivas', 'positivas'],
                     ] as const).map(([label, campo]) => (
-                      <div key={campo} className="bg-white/[0.03] border border-white/5 rounded-lg p-2.5">
-                        <p className="text-[10px] text-gray-500 mb-1">{label}</p>
+                      <div key={campo} className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5">
+                        <p className="text-[10px] text-[#A69E8F] mb-1">{label}</p>
                         <CampoNumero
                           value={dadosDiario.feedback[campo]}
                           onChange={v => setDadosDiario((d: any) => ({ ...d, feedback: { ...d.feedback, [campo]: v } }))}
-                          className="text-base font-bold text-white"
+                          className="text-base font-bold text-[#201D17]"
                         />
                       </div>
                     ))}
@@ -839,23 +839,23 @@ export function ReportsView() {
 
                 {/* 5. Ponto */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Registro de Ponto das Equipes</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Registro de Ponto das Equipes</p>
                   {dadosDiario.pontoPorEquipe.length === 0 ? (
-                    <p className="text-xs text-gray-600">Nenhum registro de ponto encontrado para o dia.</p>
+                    <p className="text-xs text-[#A69E8F]">Nenhum registro de ponto encontrado para o dia.</p>
                   ) : (
                     <div className="space-y-3">
                       {dadosDiario.pontoPorEquipe.map((eq: any, ei: number) => (
                         <div key={eq.equipeId ?? ei}>
-                          <p className="text-[11px] text-orange-400 font-medium mb-1">{eq.equipeNome}</p>
+                          <p className="text-[11px] text-orange-700 font-medium mb-1">{eq.equipeNome}</p>
                           <div className="space-y-1">
                             {eq.registros.map((r: any, ri: number) => (
-                              <div key={ri} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
+                              <div key={ri} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
                                 <CampoTexto
                                   value={r.funcionarioNome}
                                   onChange={v => setDadosDiario((d: any) => ({ ...d, pontoPorEquipe: atualizarItem(d.pontoPorEquipe, ei, { registros: atualizarItem(eq.registros, ri, { funcionarioNome: v }) }) }))}
-                                  className="text-gray-300 flex-1"
+                                  className="text-[#7A7266] flex-1"
                                 />
-                                <span className="text-gray-500">{r.entrada} - {r.saida}</span>
+                                <span className="text-[#A69E8F]">{r.entrada} - {r.saida}</span>
                                 <BotaoRemoverLinha onClick={() => setDadosDiario((d: any) => ({ ...d, pontoPorEquipe: atualizarItem(d.pontoPorEquipe, ei, { registros: removerItem(eq.registros, ri) }) }))} />
                               </div>
                             ))}
@@ -868,16 +868,16 @@ export function ReportsView() {
 
                 {/* 6. Estoque */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Estoque Embarcado por Equipe</p>
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Estoque Embarcado por Equipe</p>
                   {dadosDiario.estoquePorVeiculo.length === 0 ? (
-                    <p className="text-xs text-gray-600">Nenhum item carregado em veiculo de equipe no momento.</p>
+                    <p className="text-xs text-[#A69E8F]">Nenhum item carregado em veiculo de equipe no momento.</p>
                   ) : (
                     <div className="space-y-1">
                       {dadosDiario.estoquePorVeiculo.map((e: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 text-xs bg-white/[0.02] rounded px-2.5 py-1.5">
-                          <span className="text-gray-300 flex-shrink-0 w-32 truncate">{e.equipeNome}{e.veiculoPlaca ? ` - ${e.veiculoPlaca}` : ''}</span>
-                          <CampoTexto value={e.item} onChange={v => setDadosDiario((d: any) => ({ ...d, estoquePorVeiculo: atualizarItem(d.estoquePorVeiculo, i, { item: v }) }))} className="text-gray-400 flex-1" />
-                          <CampoNumero value={e.quantidade} onChange={v => setDadosDiario((d: any) => ({ ...d, estoquePorVeiculo: atualizarItem(d.estoquePorVeiculo, i, { quantidade: v }) }))} className="text-gray-500 w-12 text-right" />
+                        <div key={i} className="flex items-center gap-2 text-xs bg-black/[0.02] rounded px-2.5 py-1.5">
+                          <span className="text-[#7A7266] flex-shrink-0 w-32 truncate">{e.equipeNome}{e.veiculoPlaca ? ` - ${e.veiculoPlaca}` : ''}</span>
+                          <CampoTexto value={e.item} onChange={v => setDadosDiario((d: any) => ({ ...d, estoquePorVeiculo: atualizarItem(d.estoquePorVeiculo, i, { item: v }) }))} className="text-[#7A7266] flex-1" />
+                          <CampoNumero value={e.quantidade} onChange={v => setDadosDiario((d: any) => ({ ...d, estoquePorVeiculo: atualizarItem(d.estoquePorVeiculo, i, { quantidade: v }) }))} className="text-[#A69E8F] w-12 text-right" />
                           <BotaoRemoverLinha onClick={() => setDadosDiario((d: any) => ({ ...d, estoquePorVeiculo: removerItem(d.estoquePorVeiculo, i) }))} />
                         </div>
                       ))}
@@ -886,8 +886,8 @@ export function ReportsView() {
                 </div>
 
                 {/* 7. Resumo executivo - textos livres editaveis */}
-                <div className="border-t border-white/5 pt-4">
-                  <p className="text-xs font-semibold text-gray-300 mb-2">Resumo Executivo</p>
+                <div className="border-t border-[#E6E1D6] pt-4">
+                  <p className="text-xs font-semibold text-[#7A7266] mb-2">Resumo Executivo</p>
                   <div className="space-y-1.5">
                     {([
                       ['Total de OS encerradas', 'totalOsEncerradas'],
@@ -898,11 +898,11 @@ export function ReportsView() {
                       ['Estoque', 'resumoEstoque'],
                     ] as const).map(([label, campo]) => (
                       <div key={campo} className="flex items-center gap-2 text-xs">
-                        <span className="text-gray-500 flex-shrink-0">{label}:</span>
+                        <span className="text-[#A69E8F] flex-shrink-0">{label}:</span>
                         <CampoTexto
                           value={String(dadosDiario.resumoExecutivo[campo])}
                           onChange={v => setDadosDiario((d: any) => ({ ...d, resumoExecutivo: { ...d.resumoExecutivo, [campo]: v } }))}
-                          className="text-gray-300 flex-1"
+                          className="text-[#7A7266] flex-1"
                         />
                       </div>
                     ))}
@@ -912,34 +912,34 @@ export function ReportsView() {
             ) : tipo === 'cancelados' && dadosCancelados ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">Cancelamentos - Direto da API do IXC</p>
-                  <span className="text-xs text-gray-500">
+                  <p className="text-sm font-semibold text-[#201D17]">Cancelamentos - Direto da API do IXC</p>
+                  <span className="text-xs text-[#A69E8F]">
                     {new Date(mesCancelados + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/[0.03] border border-red-500/20 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Total de Cancelamentos</p>
-                    <p className="text-xl font-bold text-red-400">{dadosCancelados.cancelados.length}</p>
+                  <div className="bg-black/[0.02] border border-red-500/20 rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Total de Cancelamentos</p>
+                    <p className="text-xl font-bold text-red-700">{dadosCancelados.cancelados.length}</p>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-lg p-3">
-                    <p className="text-[11px] text-gray-500">Principal Motivo</p>
-                    <p className="text-sm font-bold text-white truncate">
+                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                    <p className="text-[11px] text-[#A69E8F]">Principal Motivo</p>
+                    <p className="text-sm font-bold text-[#201D17] truncate">
                       {recomputarAgregadosCancelados(dadosCancelados.cancelados).porMotivo[0]?.motivo || '-'}
                     </p>
                   </div>
                 </div>
 
                 {dadosCancelados.cancelados.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-8">Nenhum cancelamento encontrado no IXC para esse mes.</p>
+                  <p className="text-[#A69E8F] text-sm text-center py-8">Nenhum cancelamento encontrado no IXC para esse mes.</p>
                 ) : (
                   <div>
-                    <p className="text-xs font-semibold text-gray-300 mb-2">Clientes Cancelados no Periodo ({dadosCancelados.cancelados.length})</p>
+                    <p className="text-xs font-semibold text-[#7A7266] mb-2">Clientes Cancelados no Periodo ({dadosCancelados.cancelados.length})</p>
                     <div className="overflow-x-auto max-h-96 overflow-y-auto">
                       <table className="w-full text-xs">
-                        <thead className="sticky top-0 bg-[#111827]">
-                          <tr className="text-gray-500 border-b border-white/5">
+                        <thead className="sticky top-0 bg-white">
+                          <tr className="text-[#A69E8F] border-b border-[#E6E1D6]">
                             <th className="text-left font-medium py-1.5 pr-2">Cliente</th>
                             <th className="text-left font-medium py-1.5 pr-2">Cidade</th>
                             <th className="text-left font-medium py-1.5">Motivo</th>
@@ -948,15 +948,15 @@ export function ReportsView() {
                         </thead>
                         <tbody>
                           {dadosCancelados.cancelados.map((c: any, i: number) => (
-                            <tr key={c.contratoId ?? i} className="border-b border-white/[0.03]">
+                            <tr key={c.contratoId ?? i} className="border-b border-[#E6E1D6]">
                               <td className="py-1 pr-2">
-                                <CampoTexto value={c.clienteNome} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { clienteNome: v }) }))} className="text-gray-300" />
+                                <CampoTexto value={c.clienteNome} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { clienteNome: v }) }))} className="text-[#7A7266]" />
                               </td>
                               <td className="py-1 pr-2">
-                                <CampoTexto value={c.cidade} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { cidade: v }) }))} className="text-gray-400" />
+                                <CampoTexto value={c.cidade} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { cidade: v }) }))} className="text-[#7A7266]" />
                               </td>
                               <td className="py-1">
-                                <CampoTexto value={c.motivoResumo} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { motivoResumo: v }) }))} className="text-gray-400" />
+                                <CampoTexto value={c.motivoResumo} onChange={v => setDadosCancelados((d: any) => ({ ...d, cancelados: atualizarItem(d.cancelados, i, { motivoResumo: v }) }))} className="text-[#7A7266]" />
                               </td>
                               <td className="py-1">
                                 <BotaoRemoverLinha onClick={() => setDadosCancelados((d: any) => ({ ...d, cancelados: removerItem(d.cancelados, i) }))} />
@@ -972,8 +972,8 @@ export function ReportsView() {
             ) : null}
 
             {dadosCarregados && (
-              <p className="text-xs text-gray-500 text-center mt-4">
-                Corrija o que precisar acima e clique em <strong className="text-white">Gerar e Baixar PDF</strong>. As correcoes valem so para este PDF.
+              <p className="text-xs text-[#A69E8F] text-center mt-4">
+                Corrija o que precisar acima e clique em <strong className="text-[#201D17]">Gerar e Baixar PDF</strong>. As correcoes valem so para este PDF.
               </p>
             )}
           </div>

@@ -41,7 +41,7 @@ export function UnifiedTimelineCard() {
           <p className="text-sm text-center py-10" style={{ color: NOC.textoSecundario }}>Nenhum evento nas ultimas 24h</p>
         ) : (
           <div className="relative pl-5 space-y-3">
-            <div className="absolute left-[7px] top-1 bottom-1 w-px" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+            <div className="absolute left-[7px] top-1 bottom-1 w-px" style={{ backgroundColor: 'rgba(32,29,23,0.05)' }} />
             {eventos.map(e => {
               const Icon = ORIGEM_ICONE[e.origem] ?? Terminal
               const cor = corNivel(e.nivel)

@@ -50,7 +50,7 @@ export function TicketsInProgressCard() {
         ) : (
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-left border-b" style={{ borderColor: 'rgba(255,255,255,0.05)', color: NOC.cinza }}>
+              <tr className="text-left border-b" style={{ borderColor: 'rgba(32,29,23,0.05)', color: NOC.cinza }}>
                 <th className="py-2 pr-2 font-medium">Cliente</th>
                 <th className="py-2 pr-2 font-medium">Prioridade</th>
                 <th className="py-2 pr-2 font-medium">SLA</th>
@@ -61,7 +61,7 @@ export function TicketsInProgressCard() {
             </thead>
             <tbody>
               {chamados.map(c => (
-                <tr key={c.id} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                <tr key={c.id} className="border-b" style={{ borderColor: 'rgba(32,29,23,0.04)' }}>
                   <td className="py-2 pr-2">
                     <div className="flex items-center gap-1.5">
                       {c.reincidente && <Repeat className="w-3 h-3 flex-shrink-0" style={{ color: NOC.alerta }} />}
@@ -75,7 +75,7 @@ export function TicketsInProgressCard() {
                     </span>
                   </td>
                   <td className="py-2 pr-2">
-                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(32,29,23,0.08)' }}>
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${Math.min(100, c.percentualSla)}%`, backgroundColor: c.slaEstourado ? NOC.critico : c.percentualSla >= 70 ? NOC.alerta : NOC.sucesso }}
@@ -87,7 +87,7 @@ export function TicketsInProgressCard() {
                     {formatarTempoDecorrido(c.minutosDecorridos)}
                   </td>
                   <td className="py-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: NOC.textoSecundario }}>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(32,29,23,0.08)', color: NOC.textoSecundario }}>
                       {c.status === 'ABERTO' ? 'Aberto' : 'Em Andamento'}
                     </span>
                   </td>

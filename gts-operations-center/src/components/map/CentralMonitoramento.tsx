@@ -18,8 +18,8 @@ type Aba = 'mapa' | 'lista' | 'alertas'
 const MapView = dynamic(() => import('./MapView'), {
   ssr: false,
   loading: () => (
-    <div className="h-full bg-[#0B1120] flex items-center justify-center">
-      <p className="text-gray-500 text-sm">Carregando mapa...</p>
+    <div className="h-full bg-[#FAF9F6] flex items-center justify-center">
+      <p className="text-[#A69E8F] text-sm">Carregando mapa...</p>
     </div>
   ),
 })
@@ -91,16 +91,16 @@ export function CentralMonitoramento() {
         title="Central de Monitoramento"
         subtitle={
           <>
-            <span className="text-emerald-400 font-medium">{online} online</span>
+            <span className="text-emerald-700 font-medium">{online} online</span>
             {' · '}
-            <span className="text-gray-400">{offline} offline</span>
+            <span className="text-[#7A7266]">{offline} offline</span>
             {emAlerta > 0 && (
-              <span className="ml-2 text-red-400 font-medium animate-pulse">
+              <span className="ml-2 text-red-700 font-medium animate-pulse">
                 · {emAlerta} em alerta de velocidade
               </span>
             )}
             {dataUpdatedAt && (
-              <span className="ml-2 text-gray-600 text-xs">
+              <span className="ml-2 text-[#A69E8F] text-xs">
                 · Atualizado {timeAgo(new Date(dataUpdatedAt))}
               </span>
             )}
@@ -123,18 +123,18 @@ export function CentralMonitoramento() {
       {/* Alerta de velocidade */}
       {emAlerta > 0 && (
         <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 animate-pulse" />
+          <AlertTriangle className="w-5 h-5 text-red-700 flex-shrink-0 animate-pulse" />
           <div>
-            <p className="text-red-400 font-medium text-sm">
+            <p className="text-red-700 font-medium text-sm">
               {veiculosEnriquecidos.filter(v => v.alerta).map(v => v.equipe?.nome || v.nome).join(', ')} — velocidade acima de {VELOCIDADE_ALERTA} km/h!
             </p>
-            <p className="text-gray-500 text-xs mt-0.5">Verifique com o motorista imediatamente</p>
+            <p className="text-[#A69E8F] text-xs mt-0.5">Verifique com o motorista imediatamente</p>
           </div>
         </div>
       )}
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-white/5">
+      <div className="flex items-center gap-1 border-b border-[#E6E1D6]">
         {abas.map(a => {
           const Icon = a.icon
           return (
@@ -144,8 +144,8 @@ export function CentralMonitoramento() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 aba === a.id
-                  ? 'border-orange-400 text-orange-400'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'border-orange-600 text-orange-600'
+                  : 'border-transparent text-[#7A7266] hover:text-[#201D17]'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -172,7 +172,7 @@ export function CentralMonitoramento() {
         <div className="space-y-4">
           {/* Filtros */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
+            <Filter className="w-4 h-4 text-[#A69E8F]" />
             {[
               { value: 'todos',   label: `Todos (${veiculos.length})` },
               { value: 'online',  label: `Online (${online})` },
@@ -185,8 +185,8 @@ export function CentralMonitoramento() {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                   filtroStatus === f.value
-                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                    : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                    ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                    : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
                 )}
               >
                 {f.label}
@@ -208,9 +208,9 @@ export function CentralMonitoramento() {
                     <div
                       key={v.id}
                       className={cn(
-                        'bg-[#111827] border rounded-xl overflow-hidden transition-all',
+                        'bg-white border rounded-xl overflow-hidden transition-all shadow-sm shadow-black/[0.03]',
                         v.alerta ? 'border-red-500/50' :
-                        v.online ? 'border-emerald-500/20' : 'border-white/5'
+                        v.online ? 'border-emerald-500/20' : 'border-[#E6E1D6]'
                       )}
                     >
                       {/* Header colorido */}
@@ -220,13 +220,13 @@ export function CentralMonitoramento() {
                       >
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: equipe?.cor || '#6B7280' }} />
-                          <span className="text-white font-bold text-sm">{equipe?.nome || v.nome}</span>
+                          <span className="text-[#201D17] font-bold text-sm">{equipe?.nome || v.nome}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {v.alerta && <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />}
+                          {v.alerta && <AlertTriangle className="w-4 h-4 text-red-700 animate-pulse" />}
                           <span className={cn(
                             'text-xs px-2 py-0.5 rounded-full font-medium',
-                            v.online ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'
+                            v.online ? 'bg-emerald-500/15 text-emerald-700' : 'bg-black/[0.05] text-[#7A7266]'
                           )}>
                             {v.online ? 'Online' : 'Offline'}
                           </span>
@@ -237,19 +237,19 @@ export function CentralMonitoramento() {
                         {/* Equipe info */}
                         {equipe && (
                           <div>
-                            <p className="text-xs text-gray-500">{equipe.subNome}</p>
-                            <p className="text-xs text-gray-600">{equipe.modelo} · {equipe.placa}</p>
+                            <p className="text-xs text-[#A69E8F]">{equipe.subNome}</p>
+                            <p className="text-xs text-[#A69E8F]">{equipe.modelo} · {equipe.placa}</p>
                           </div>
                         )}
 
                         {/* Velocidade */}
-                        <div className="bg-white/[0.03] rounded-xl p-3 text-center">
+                        <div className="bg-black/[0.02] rounded-xl p-3 text-center">
                           <p className="text-3xl font-black font-mono" style={{ color: cor }}>
                             {Math.round(v.velocidade)}
                           </p>
-                          <p className="text-xs text-gray-500">km/h</p>
+                          <p className="text-xs text-[#A69E8F]">km/h</p>
                           {v.alerta && (
-                            <p className="text-xs text-red-400 font-bold mt-1 animate-pulse flex items-center justify-center gap-1">
+                            <p className="text-xs text-red-700 font-bold mt-1 animate-pulse flex items-center justify-center gap-1">
                               <AlertTriangle className="w-3 h-3" /> ACIMA DO LIMITE
                             </p>
                           )}
@@ -257,31 +257,31 @@ export function CentralMonitoramento() {
 
                         {/* Detalhes */}
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="bg-white/[0.03] rounded-lg p-2">
-                            <div className="flex items-center gap-1 text-gray-500 mb-0.5">
-                              {v.ignicao ? <Zap className="w-3 h-3 text-yellow-400" /> : <ZapOff className="w-3 h-3" />}
+                          <div className="bg-black/[0.02] rounded-lg p-2">
+                            <div className="flex items-center gap-1 text-[#A69E8F] mb-0.5">
+                              {v.ignicao ? <Zap className="w-3 h-3 text-amber-700" /> : <ZapOff className="w-3 h-3" />}
                               <span>Ignicao</span>
                             </div>
-                            <p className={cn('font-medium', v.ignicao ? 'text-yellow-400' : 'text-gray-500')}>
+                            <p className={cn('font-medium', v.ignicao ? 'text-amber-700' : 'text-[#A69E8F]')}>
                               {v.ignicao ? 'Ligada' : 'Desligada'}
                             </p>
                           </div>
-                          <div className="bg-white/[0.03] rounded-lg p-2">
-                            <div className="flex items-center gap-1 text-gray-500 mb-0.5">
+                          <div className="bg-black/[0.02] rounded-lg p-2">
+                            <div className="flex items-center gap-1 text-[#A69E8F] mb-0.5">
                               <Navigation className="w-3 h-3" />
                               <span>Direcao</span>
                             </div>
-                            <p className="text-white font-medium">{v.direcao}°</p>
+                            <p className="text-[#201D17] font-medium">{v.direcao}°</p>
                           </div>
                         </div>
 
                         {/* Endereco */}
                         {v.endereco && (
-                          <p className="text-xs text-gray-500 truncate">{v.endereco}</p>
+                          <p className="text-xs text-[#A69E8F] truncate">{v.endereco}</p>
                         )}
 
                         {/* Ultima atualizacao */}
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-1 text-xs text-[#A69E8F]">
                           <Clock className="w-3 h-3" />
                           {timeAgo(v.ultimaAtualizacao)}
                         </div>
@@ -298,34 +298,34 @@ export function CentralMonitoramento() {
         <div className="space-y-4">
           {emAlerta === 0 ? (
             <div className="gts-card text-center py-16">
-              <Activity className="w-10 h-10 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Nenhum alerta de velocidade ativo</p>
-              <p className="text-gray-600 text-sm mt-1">Todos os veiculos estao dentro do limite de {VELOCIDADE_ALERTA} km/h</p>
+              <Activity className="w-10 h-10 text-emerald-600/50 mx-auto mb-3" />
+              <p className="text-[#7A7266] font-medium">Nenhum alerta de velocidade ativo</p>
+              <p className="text-[#A69E8F] text-sm mt-1">Todos os veiculos estao dentro do limite de {VELOCIDADE_ALERTA} km/h</p>
             </div>
           ) : (
             <div className="space-y-3">
               {veiculosEnriquecidos.filter(v => v.alerta).map(v => {
                 const cor = getSpeedColor(v.velocidade, VELOCIDADE_ALERTA)
                 return (
-                  <div key={v.id} className="bg-[#111827] border border-red-500/40 rounded-xl p-4">
+                  <div key={v.id} className="bg-white border border-red-500/40 rounded-xl p-4 shadow-sm shadow-black/[0.03]">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                        <Truck className="w-6 h-6 text-red-400" />
+                        <Truck className="w-6 h-6 text-red-700" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-white font-bold">{v.equipe?.nome || v.nome}</p>
-                          <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
+                          <p className="text-[#201D17] font-bold">{v.equipe?.nome || v.nome}</p>
+                          <AlertTriangle className="w-4 h-4 text-red-700 animate-pulse" />
                         </div>
-                        <p className="text-xs text-gray-400">{v.equipe?.subNome} · {v.equipe?.placa}</p>
-                        {v.endereco && <p className="text-xs text-gray-500 mt-0.5">{v.endereco}</p>}
+                        <p className="text-xs text-[#7A7266]">{v.equipe?.subNome} · {v.equipe?.placa}</p>
+                        {v.endereco && <p className="text-xs text-[#A69E8F] mt-0.5">{v.endereco}</p>}
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-3xl font-black font-mono" style={{ color: cor }}>
                           {Math.round(v.velocidade)}
                         </p>
-                        <p className="text-xs text-gray-500">km/h</p>
-                        <p className="text-xs text-red-400 font-bold">
+                        <p className="text-xs text-[#A69E8F]">km/h</p>
+                        <p className="text-xs text-red-700 font-bold">
                           +{Math.round(v.velocidade - VELOCIDADE_ALERTA)} acima
                         </p>
                       </div>
@@ -338,23 +338,23 @@ export function CentralMonitoramento() {
 
           {/* Historico de todos os veiculos */}
           <div className="gts-card">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-orange-400" />
+            <h3 className="text-sm font-semibold text-[#201D17] mb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-orange-600" />
               Status Atual de Todos os Veiculos
             </h3>
             <div className="space-y-2">
               {veiculosEnriquecidos.map(v => {
                 const cor = getSpeedColor(v.velocidade, VELOCIDADE_ALERTA)
                 return (
-                  <div key={v.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                  <div key={v.id} className="flex items-center justify-between py-2 border-b border-[#E6E1D6] last:border-0">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-2.5 h-2.5 rounded-full"
                         style={{ backgroundColor: v.equipe?.cor || '#6B7280' }}
                       />
                       <div>
-                        <p className="text-sm text-white font-medium">{v.equipe?.nome || v.nome}</p>
-                        <p className="text-xs text-gray-500">{v.equipe?.placa || v.placa}</p>
+                        <p className="text-sm text-[#201D17] font-medium">{v.equipe?.nome || v.nome}</p>
+                        <p className="text-xs text-[#A69E8F]">{v.equipe?.placa || v.placa}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -363,11 +363,11 @@ export function CentralMonitoramento() {
                       </span>
                       <span className={cn(
                         'text-xs px-2 py-0.5 rounded-full',
-                        v.online ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400'
+                        v.online ? 'bg-emerald-500/10 text-emerald-700' : 'bg-black/[0.04] text-[#7A7266]'
                       )}>
                         {v.online ? 'Online' : 'Offline'}
                       </span>
-                      <span className="text-xs text-gray-600">{timeAgo(v.ultimaAtualizacao)}</span>
+                      <span className="text-xs text-[#A69E8F]">{timeAgo(v.ultimaAtualizacao)}</span>
                     </div>
                   </div>
                 )

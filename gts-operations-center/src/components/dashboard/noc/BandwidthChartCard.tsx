@@ -44,7 +44,7 @@ export function BandwidthChartCard() {
                   <stop offset="100%" stopColor={NOC.laranja} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(32,29,23,0.05)" />
               <XAxis dataKey="hora" stroke={NOC.cinza} fontSize={11} />
               <YAxis stroke={NOC.cinza} fontSize={11} unit=" Mbps" />
               <Tooltip contentStyle={{ backgroundColor: NOC.sidebar, border: `1px solid ${NOC.cinzaEscuro}`, borderRadius: 8 }} labelStyle={{ color: NOC.texto }} />

@@ -32,21 +32,21 @@ export function Drawer({ open, onClose, title, subtitle, children, widthClassNam
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       <div className={cn(
-        'relative w-full bg-[#0B1120] border-l border-white/10 h-full flex flex-col shadow-2xl animate-drawer-in',
+        'relative w-full bg-white border-l border-[#E6E1D6] h-full flex flex-col shadow-2xl animate-drawer-in',
         widthClassName
       )}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E1D6] flex-shrink-0">
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-white truncate">{title}</h2>
-            {subtitle && <p className="text-xs text-gray-500 truncate mt-0.5">{subtitle}</p>}
+            <h2 className="text-base font-bold text-[#201D17] truncate">{title}</h2>
+            {subtitle && <p className="text-xs text-[#A69E8F] truncate mt-0.5">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 -m-1 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex-shrink-0"
+            className="p-2 -m-1 text-[#A69E8F] hover:text-[#201D17] hover:bg-black/[0.04] rounded-lg transition-colors flex-shrink-0"
           >
             <X className="w-4 h-4" />
           </button>

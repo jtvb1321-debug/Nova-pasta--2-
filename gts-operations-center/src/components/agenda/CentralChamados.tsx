@@ -265,17 +265,17 @@ export function CentralChamados({ session }: { session: Session }) {
 
   // KPIs gerais
   const kpis = [
-    { label: 'Na Fila',       value: totalAbertos,  cor: 'text-blue-400',    bg: 'bg-blue-500/10',    icon: Clock },
-    { label: 'Em Andamento',  value: totalAtivos,   cor: 'text-yellow-400',  bg: 'bg-yellow-500/10',  icon: Zap },
-    { label: 'Criticos',      value: totalCriticos, cor: 'text-red-400',     bg: 'bg-red-500/10',     icon: AlertTriangle },
-    { label: 'Reincidentes',  value: totalReincidentes, cor: 'text-orange-400', bg: 'bg-orange-500/10', icon: Repeat },
-    { label: 'Finalizados Hoje', value: historicoData?.totalHoje ?? 0, cor: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle },
+    { label: 'Na Fila',       value: totalAbertos,  cor: 'text-blue-700',    bg: 'bg-blue-500/10',    icon: Clock },
+    { label: 'Em Andamento',  value: totalAtivos,   cor: 'text-amber-700',  bg: 'bg-amber-500/10',  icon: Zap },
+    { label: 'Criticos',      value: totalCriticos, cor: 'text-red-700',     bg: 'bg-red-500/10',     icon: AlertTriangle },
+    { label: 'Reincidentes',  value: totalReincidentes, cor: 'text-orange-700', bg: 'bg-orange-500/10', icon: Repeat },
+    { label: 'Finalizados Hoje', value: historicoData?.totalHoje ?? 0, cor: 'text-emerald-700', bg: 'bg-emerald-500/10', icon: CheckCircle },
   ]
 
   const abas = [
     { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
     { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length, badgeCor: 'bg-orange-500' },
-    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-yellow-500' },
+    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-amber-500' },
     { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes, badgeCor: 'bg-orange-500' },
     { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks, badgeCor: 'bg-purple-500' },
     { id: 'historico'    as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
@@ -320,14 +320,14 @@ export function CentralChamados({ session }: { session: Session }) {
                 <Icon className={cn('w-4 h-4', kpi.cor)} />
               </div>
               <p className={cn('text-2xl font-bold', kpi.cor)}>{kpi.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
+              <p className="text-xs text-[#A69E8F] mt-1">{kpi.label}</p>
             </div>
           )
         })}
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto -mx-1 px-1">
+      <div className="flex items-center gap-1 border-b border-[#E6E1D6] overflow-x-auto -mx-1 px-1">
         {abas.map(a => (
           <button
             key={a.id}
@@ -335,8 +335,8 @@ export function CentralChamados({ session }: { session: Session }) {
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
               aba === a.id
-                ? 'border-orange-400 text-orange-400'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-orange-600 text-orange-600'
+                : 'border-transparent text-[#7A7266] hover:text-[#201D17]'
             )}
           >
             {a.label}
@@ -352,7 +352,7 @@ export function CentralChamados({ session }: { session: Session }) {
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
           <input
             type="search"
             value={busca}
@@ -385,7 +385,7 @@ export function CentralChamados({ session }: { session: Session }) {
           </select>
         )}
         {(busca || filtroTipo || filtroStatus) && (
-          <button onClick={() => { setBusca(''); setFiltroTipo(''); setFiltroStatus(''); setPage(1) }} className="text-xs text-gray-400 hover:text-white">
+          <button onClick={() => { setBusca(''); setFiltroTipo(''); setFiltroStatus(''); setPage(1) }} className="text-xs text-[#7A7266] hover:text-[#201D17]">
             Limpar
           </button>
         )}
@@ -399,8 +399,8 @@ export function CentralChamados({ session }: { session: Session }) {
             : filtrar(agenda).length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <Calendar className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum chamado na fila</p>
+                <Calendar className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum chamado na fila</p>
                 <button onClick={() => { setDespachoInicialEace(false); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
                   <Plus className="w-4 h-4" /> Novo Despacho
                 </button>
@@ -434,8 +434,8 @@ export function CentralChamados({ session }: { session: Session }) {
             : filtrar(ativos).length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <CheckCircle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum chamado em andamento</p>
+                <CheckCircle className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum chamado em andamento</p>
               </div>
             )
             : filtrar(ativos).map((c: any) => (
@@ -460,15 +460,15 @@ export function CentralChamados({ session }: { session: Session }) {
       {/* REINCIDENTES */}
       {aba === 'reincidentes' && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-            <Repeat className="w-4 h-4 text-orange-400 flex-shrink-0" />
-            <p className="text-sm text-orange-300">
+          <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/25 rounded-xl">
+            <Repeat className="w-4 h-4 text-orange-600 flex-shrink-0" />
+            <p className="text-sm text-orange-800">
               Chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente.
             </p>
           </div>
 
           {totalReincidentes > 0 && (
-            <p className="text-xs text-gray-500">{totalReincidentes} chamado(s) reincidente(s) encontrado(s)</p>
+            <p className="text-xs text-[#A69E8F]">{totalReincidentes} chamado(s) reincidente(s) encontrado(s)</p>
           )}
 
           {loadingReincidentes
@@ -476,9 +476,9 @@ export function CentralChamados({ session }: { session: Session }) {
             : filtrar(reincidentes).length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <CheckCircle className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum chamado reincidente</p>
-                <p className="text-gray-600 text-sm mt-1">Nenhum cliente reabriu chamado dentro da janela de 7 dias</p>
+                <CheckCircle className="w-10 h-10 text-emerald-600/40 mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum chamado reincidente</p>
+                <p className="text-[#A69E8F] text-sm mt-1">Nenhum cliente reabriu chamado dentro da janela de 7 dias</p>
               </div>
             )
             : filtrar(reincidentes).map((c: any) => (
@@ -501,7 +501,7 @@ export function CentralChamados({ session }: { session: Session }) {
 
           {reincidentesTotalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-500">Pagina {page} de {reincidentesTotalPages}</p>
+              <p className="text-xs text-[#A69E8F]">Pagina {page} de {reincidentesTotalPages}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -526,15 +526,15 @@ export function CentralChamados({ session }: { session: Session }) {
       {/* FEEDBACK */}
       {aba === 'feedback' && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-            <MessageCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
-            <p className="text-sm text-purple-300">
+          <div className="flex items-center gap-2 p-3 bg-purple-500/10 border border-purple-500/25 rounded-xl">
+            <MessageCircle className="w-4 h-4 text-purple-700 flex-shrink-0" />
+            <p className="text-sm text-purple-800">
               Chamados finalizados com pedido de feedback enviado ao cliente via WhatsApp. Confirme apos ler a resposta.
             </p>
           </div>
 
           {totalFeedbacks > 0 && (
-            <p className="text-xs text-gray-500">{totalFeedbacks} pedido(s) de feedback encontrado(s)</p>
+            <p className="text-xs text-[#A69E8F]">{totalFeedbacks} pedido(s) de feedback encontrado(s)</p>
           )}
 
           {loadingFeedbacks
@@ -542,43 +542,43 @@ export function CentralChamados({ session }: { session: Session }) {
             : feedbacks.length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <MessageCircle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum pedido de feedback enviado ainda</p>
+                <MessageCircle className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum pedido de feedback enviado ainda</p>
               </div>
             )
             : feedbacks.map((c: any) => (
               <div key={c.id} className="gts-card space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white">{c.cliente}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="font-medium text-[#201D17]">{c.cliente}</p>
+                    <p className="text-xs text-[#A69E8F] mt-0.5">
                       {TIPO_CHAMADO_LABELS[c.tipo as TipoChamado] || c.tipo} - {c.cidade}
                     </p>
                     {c.telefone && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                      <p className="text-xs text-[#A69E8F] flex items-center gap-1 mt-0.5">
                         <Phone className="w-3 h-3" /> {c.telefone}
                       </p>
                     )}
                   </div>
                   {c.feedbackConfirmado ? (
-                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium flex-shrink-0">
+                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-700 font-medium flex-shrink-0">
                       Confirmado
                     </span>
                   ) : (
-                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 font-medium flex-shrink-0">
+                    <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-700 font-medium flex-shrink-0">
                       Aguardando
                     </span>
                   )}
                 </div>
 
-                <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-                  <p className="text-[11px] text-gray-500 mb-1">
+                <div className="bg-black/[0.02] rounded-lg p-3 border border-[#E6E1D6]">
+                  <p className="text-[11px] text-[#A69E8F] mb-1">
                     Pedido enviado {c.feedbackEnviadoEm ? timeAgo(c.feedbackEnviadoEm) : ''}
                   </p>
                   {c.feedbackResposta ? (
-                    <p className="text-sm text-gray-200 whitespace-pre-line">{c.feedbackResposta}</p>
+                    <p className="text-sm text-[#3F3A32] whitespace-pre-line">{c.feedbackResposta}</p>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">Aguardando resposta do cliente...</p>
+                    <p className="text-sm text-[#A69E8F] italic">Aguardando resposta do cliente...</p>
                   )}
                 </div>
 
@@ -593,7 +593,7 @@ export function CentralChamados({ session }: { session: Session }) {
                   </button>
                 )}
                 {c.feedbackConfirmado && c.feedbackConfirmadoPor && (
-                  <p className="text-[11px] text-gray-600">
+                  <p className="text-[11px] text-[#A69E8F]">
                     Confirmado por {c.feedbackConfirmadoPor}{c.feedbackConfirmadoEm ? ` em ${formatDateTime(c.feedbackConfirmadoEm)}` : ''}
                   </p>
                 )}
@@ -603,7 +603,7 @@ export function CentralChamados({ session }: { session: Session }) {
 
           {feedbacksTotalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-500">Pagina {page} de {feedbacksTotalPages}</p>
+              <p className="text-xs text-[#A69E8F]">Pagina {page} de {feedbacksTotalPages}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -630,7 +630,7 @@ export function CentralChamados({ session }: { session: Session }) {
         <div className="space-y-3">
           {/* Info total */}
           {totalHistorico > 0 && (
-            <p className="text-xs text-gray-500">{totalHistorico} chamado(s) encontrado(s)</p>
+            <p className="text-xs text-[#A69E8F]">{totalHistorico} chamado(s) encontrado(s)</p>
           )}
 
           {loadingHistorico
@@ -638,8 +638,8 @@ export function CentralChamados({ session }: { session: Session }) {
             : historico.length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <ClipboardList className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum chamado no historico</p>
+                <ClipboardList className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum chamado no historico</p>
               </div>
             )
             : historico.map((c: any) => (
@@ -657,7 +657,7 @@ export function CentralChamados({ session }: { session: Session }) {
           {/* Paginacao */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-500">Pagina {page} de {totalPages}</p>
+              <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -700,8 +700,8 @@ export function CentralChamados({ session }: { session: Session }) {
             : filtrar(eace).length === 0
             ? (
               <div className="gts-card text-center py-16">
-                <GraduationCap className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">Nenhum chamado EACE encontrado</p>
+                <GraduationCap className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+                <p className="text-[#7A7266] font-medium">Nenhum chamado EACE encontrado</p>
                 <button onClick={() => { setDespachoInicialEace(true); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
                   <GraduationCap className="w-4 h-4" /> Novo Despacho EACE
                 </button>

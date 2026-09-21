@@ -62,7 +62,7 @@ export function CriticalAlertsCard() {
             onClick={() => setFiltro(f.key)}
             className="text-[11px] px-2.5 py-1 rounded-full font-medium transition-colors"
             style={{
-              backgroundColor: filtro === f.key ? NOC.azulPrimario : 'rgba(255,255,255,0.05)',
+              backgroundColor: filtro === f.key ? NOC.azulPrimario : 'rgba(32,29,23,0.05)',
               color: filtro === f.key ? '#fff' : NOC.textoSecundario,
             }}
           >

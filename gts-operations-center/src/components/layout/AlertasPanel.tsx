@@ -14,10 +14,10 @@ interface Alerta {
 }
 
 const TIPO_CONFIG = {
-  critico:     { cor: 'text-red-400 bg-red-500/10 border-red-500/20',       label: 'Critico' },
-  alto:        { cor: 'text-orange-400 bg-orange-500/10 border-orange-500/20', label: 'Alto' },
-  medio:       { cor: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20', label: 'Medio' },
-  informativo: { cor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',     label: 'Info' },
+  critico:     { cor: 'text-red-700 bg-red-500/10 border-red-500/25',       label: 'Critico' },
+  alto:        { cor: 'text-orange-700 bg-orange-500/10 border-orange-500/25', label: 'Alto' },
+  medio:       { cor: 'text-amber-700 bg-amber-500/10 border-amber-500/25', label: 'Medio' },
+  informativo: { cor: 'text-blue-700 bg-blue-500/10 border-blue-500/25',     label: 'Info' },
 }
 
 async function fetchAlertas() {
@@ -38,25 +38,25 @@ export function AlertasPanel({ onClose }: Props) {
   })
 
   return (
-    <div className="fixed top-0 right-0 h-full w-80 bg-[#111827] border-l border-white/10 shadow-2xl z-50 flex flex-col">
+    <div className="fixed top-0 right-0 h-full w-80 bg-white border-l border-[#E6E1D6] shadow-2xl z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6]">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-yellow-400" />
-          <h2 className="text-sm font-semibold text-white">Central de Alertas</h2>
+          <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <h2 className="text-sm font-semibold text-[#201D17]">Central de Alertas</h2>
           {alertas.length > 0 && (
-            <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-red-600 text-white px-1.5 py-0.5 rounded-full font-bold">
               {alertas.length}
             </span>
           )}
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+        <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Filtros por tipo */}
-      <div className="flex gap-1 p-3 border-b border-white/5">
+      <div className="flex gap-1 p-3 border-b border-[#E6E1D6]">
         {Object.entries(TIPO_CONFIG).map(([tipo, cfg]) => (
           <span
             key={tipo}
@@ -77,8 +77,8 @@ export function AlertasPanel({ onClose }: Props) {
           </div>
         ) : alertas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 gap-3">
-            <CheckCircle className="w-8 h-8 text-emerald-500/50" />
-            <p className="text-gray-500 text-sm">Nenhum alerta no momento</p>
+            <CheckCircle className="w-8 h-8 text-emerald-600/60" />
+            <p className="text-[#A69E8F] text-sm">Nenhum alerta no momento</p>
           </div>
         ) : (
           <div className="space-y-2 p-3">
@@ -102,9 +102,9 @@ export function AlertasPanel({ onClose }: Props) {
                   <div className="flex items-start gap-2">
                     <IconComp className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white leading-tight">{alerta.titulo}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 leading-tight">{alerta.descricao}</p>
-                      <p className="text-xs text-gray-600 mt-1">{alerta.tempo}</p>
+                      <p className="text-xs font-semibold text-[#201D17] leading-tight">{alerta.titulo}</p>
+                      <p className="text-xs text-[#7A7266] mt-0.5 leading-tight">{alerta.descricao}</p>
+                      <p className="text-xs text-[#A69E8F] mt-1">{alerta.tempo}</p>
                     </div>
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export function AlertasPanel({ onClose }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3 border-t border-[#E6E1D6]">
         <button className="w-full gts-btn-secondary justify-center text-xs py-2">
           Ver todos os alertas
         </button>

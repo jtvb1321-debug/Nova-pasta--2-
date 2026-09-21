@@ -28,11 +28,11 @@ interface Etapa {
 }
 
 const CLASSIFICACAO_CFG: Record<string, { label: string; cor: string; icone: React.ElementType }> = {
-  NORMAL:             { label: 'Conexao Normal',        cor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', icone: CheckCircle },
-  ATENCAO:            { label: 'Atencao',               cor: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',   icone: AlertTriangle },
-  POSSIVEL_PROBLEMA:  { label: 'Possivel Problema',     cor: 'text-orange-400 bg-orange-500/10 border-orange-500/30',  icone: AlertTriangle },
-  PROBLEMA:           { label: 'Problema Identificado', cor: 'text-red-400 bg-red-500/10 border-red-500/30',           icone: XCircle },
-  INDETERMINADO:      { label: 'Nao foi possivel determinar', cor: 'text-gray-400 bg-gray-500/10 border-gray-500/30',  icone: AlertTriangle },
+  NORMAL:             { label: 'Conexao Normal',        cor: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/30', icone: CheckCircle },
+  ATENCAO:            { label: 'Atencao',               cor: 'text-amber-700 bg-amber-500/10 border-amber-500/30',   icone: AlertTriangle },
+  POSSIVEL_PROBLEMA:  { label: 'Possivel Problema',     cor: 'text-orange-700 bg-orange-500/10 border-orange-500/30',  icone: AlertTriangle },
+  PROBLEMA:           { label: 'Problema Identificado', cor: 'text-red-700 bg-red-500/10 border-red-500/30',           icone: XCircle },
+  INDETERMINADO:      { label: 'Nao foi possivel determinar', cor: 'text-[#7A7266] bg-black/[0.03] border-[#D8D2C3]',  icone: AlertTriangle },
 }
 
 const ORIGEM_LABEL: Record<string, string> = {
@@ -42,13 +42,13 @@ const ORIGEM_LABEL: Record<string, string> = {
 }
 
 const STATUS_COR: Record<StatusEtapa, string> = {
-  pendente:     'text-gray-600',
-  rodando:      'text-blue-400',
-  ok:           'text-emerald-400',
-  atencao:      'text-yellow-400',
-  problema:     'text-red-400',
-  indisponivel: 'text-gray-500',
-  erro:         'text-red-400',
+  pendente:     'text-[#D8D2C3]',
+  rodando:      'text-blue-700',
+  ok:           'text-emerald-700',
+  atencao:      'text-amber-700',
+  problema:     'text-red-700',
+  indisponivel: 'text-[#A69E8F]',
+  erro:         'text-red-700',
 }
 
 function comTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -310,15 +310,15 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
   const anterior = resultado?.diagnosticoAnterior
 
   return (
-    <div className="fixed inset-0 bg-black/85 z-[60] flex items-end sm:items-center justify-center">
-      <div className="bg-[#0B1120] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/40 z-[60] flex items-end sm:items-center justify-center">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
 
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#111827] flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6] bg-white flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-cyan-400" />
-            <h2 className="text-white font-bold">Diagnostico Tecnico</h2>
+            <Activity className="w-4 h-4 text-cyan-700" />
+            <h2 className="text-[#201D17] font-bold">Diagnostico Tecnico</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2.5 -m-1 rounded-lg hover:bg-white/5 transition-colors">
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2.5 -m-1 rounded-lg hover:bg-black/[0.03] transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -327,31 +327,31 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
           {fase === 'inicio' && (
             <>
-              <div className="bg-[#111827] border border-white/5 rounded-xl p-4 space-y-1.5">
-                <p className="text-white font-semibold">{chamado.cliente}</p>
-                <p className="text-sm text-gray-400 flex items-start gap-2">
+              <div className="bg-white border border-[#E6E1D6] rounded-xl p-4 space-y-1.5">
+                <p className="text-[#201D17] font-semibold">{chamado.cliente}</p>
+                <p className="text-sm text-[#7A7266] flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                   {formatarEnderecoCompleto(chamado)}
                 </p>
-                <p className="text-xs text-gray-500">Tecnico: {session?.user?.name || '-'}</p>
-                <p className="text-xs text-gray-500">OS: {chamado.id.slice(0, 8)}</p>
+                <p className="text-xs text-[#A69E8F]">Tecnico: {session?.user?.name || '-'}</p>
+                <p className="text-xs text-[#A69E8F]">OS: {chamado.id.slice(0, 8)}</p>
               </div>
 
               {diagnosticoRemoto && (
-                <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-1">
-                  <p className="text-xs text-cyan-400 font-bold">Diagnostico do NOC (antes do despacho)</p>
-                  <p className="text-sm text-gray-200">
+                <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-1">
+                  <p className="text-xs text-cyan-700 font-bold">Diagnostico do NOC (antes do despacho)</p>
+                  <p className="text-sm text-[#3F3A32]">
                     {CLASSIFICACAO_CFG[diagnosticoRemoto.classificacao]?.label ?? diagnosticoRemoto.classificacao}
                     {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
                   </p>
-                  {diagnosticoRemoto.hipotese && <p className="text-xs text-gray-400">{diagnosticoRemoto.hipotese}</p>}
+                  {diagnosticoRemoto.hipotese && <p className="text-xs text-[#7A7266]">{diagnosticoRemoto.hipotese}</p>}
                 </div>
               )}
 
               {!carregandoHistorico && temAnteriorPendente && (
-                <div className="flex items-center gap-2 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
-                  <RotateCcw className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                  <p className="text-xs text-cyan-300">
+                <div className="flex items-center gap-2 p-3 bg-cyan-600/10 border border-cyan-600/25 rounded-xl">
+                  <RotateCcw className="w-4 h-4 text-cyan-700 flex-shrink-0" />
+                  <p className="text-xs text-cyan-800">
                     Ja existe um diagnostico ANTES para esta OS. Este novo diagnostico sera registrado como DEPOIS e comparado automaticamente.
                   </p>
                 </div>
@@ -369,24 +369,24 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
           {fase === 'rodando' && (
             <div className="space-y-2">
-              <p className="text-sm text-gray-400 mb-2">Analisando conexao...</p>
+              <p className="text-sm text-[#7A7266] mb-2">Analisando conexao...</p>
               {etapas.map(etapa => {
                 const Icon = etapa.icone
                 return (
-                  <div key={etapa.id} className="flex items-center gap-3 p-3 bg-[#111827] border border-white/5 rounded-xl">
+                  <div key={etapa.id} className="flex items-center gap-3 p-3 bg-white border border-[#E6E1D6] rounded-xl">
                     {etapa.status === 'rodando'
-                      ? <Loader2 className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
+                      ? <Loader2 className="w-4 h-4 text-blue-700 animate-spin flex-shrink-0" />
                       : etapa.status === 'pendente'
-                      ? <Icon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                      ? <Icon className="w-4 h-4 text-[#D8D2C3] flex-shrink-0" />
                       : etapa.status === 'ok'
-                      ? <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      ? <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0" />
                       : etapa.status === 'indisponivel'
-                      ? <AlertTriangle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      ? <AlertTriangle className="w-4 h-4 text-[#A69E8F] flex-shrink-0" />
                       : <AlertTriangle className={cn('w-4 h-4 flex-shrink-0', STATUS_COR[etapa.status])} />
                     }
                     <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm', etapa.status === 'pendente' ? 'text-gray-500' : 'text-white')}>{etapa.label}</p>
-                      {etapa.resumo && <p className="text-xs text-gray-500 truncate">{etapa.resumo}</p>}
+                      <p className={cn('text-sm', etapa.status === 'pendente' ? 'text-[#A69E8F]' : 'text-[#201D17]')}>{etapa.label}</p>
+                      {etapa.resumo && <p className="text-xs text-[#A69E8F] truncate">{etapa.resumo}</p>}
                     </div>
                   </div>
                 )
@@ -407,21 +407,21 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               {resultado.resumo && (
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {resultado.resumo.downloadMbps != null && (
-                    <div className="bg-[#111827] border border-white/5 rounded-lg p-2">
-                      <p className="text-lg font-bold text-white">{resultado.resumo.downloadMbps.toFixed(0)}</p>
-                      <p className="text-[10px] text-gray-500">Mbps Download</p>
+                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
+                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.downloadMbps.toFixed(0)}</p>
+                      <p className="text-[10px] text-[#A69E8F]">Mbps Download</p>
                     </div>
                   )}
                   {resultado.resumo.latenciaGtsnetMs != null && (
-                    <div className="bg-[#111827] border border-white/5 rounded-lg p-2">
-                      <p className="text-lg font-bold text-white">{resultado.resumo.latenciaGtsnetMs.toFixed(0)}</p>
-                      <p className="text-[10px] text-gray-500">ms Latencia</p>
+                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
+                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.latenciaGtsnetMs.toFixed(0)}</p>
+                      <p className="text-[10px] text-[#A69E8F]">ms Latencia</p>
                     </div>
                   )}
                   {resultado.resumo.perdaPct != null && (
-                    <div className="bg-[#111827] border border-white/5 rounded-lg p-2">
-                      <p className="text-lg font-bold text-white">{resultado.resumo.perdaPct.toFixed(1)}%</p>
-                      <p className="text-[10px] text-gray-500">Perda</p>
+                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
+                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.perdaPct.toFixed(1)}%</p>
+                      <p className="text-[10px] text-[#A69E8F]">Perda</p>
                     </div>
                   )}
                 </div>
@@ -429,21 +429,21 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
               {resultado.recomendacoes?.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-gray-300 mb-2">Recomendacoes</p>
+                  <p className="text-sm font-medium text-[#3F3A32] mb-2">Recomendacoes</p>
                   <div className="space-y-1.5">
                     {resultado.recomendacoes.map((rec: string, i: number) => (
                       <button
                         key={i}
                         onClick={() => setAcoesMarcadas(prev => ({ ...prev, [i]: !prev[i] }))}
-                        className="w-full flex items-start gap-2 p-2.5 bg-[#111827] border border-white/5 rounded-lg text-left"
+                        className="w-full flex items-start gap-2 p-2.5 bg-white border border-[#E6E1D6] rounded-lg text-left"
                       >
                         <div className={cn(
                           'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5',
-                          acoesMarcadas[i] ? 'bg-cyan-500 border-cyan-500' : 'border-gray-600'
+                          acoesMarcadas[i] ? 'bg-cyan-600 border-cyan-600' : 'border-[#D8D2C3]'
                         )}>
-                          {acoesMarcadas[i] && <CheckCircle className="w-3 h-3 text-black" />}
+                          {acoesMarcadas[i] && <CheckCircle className="w-3 h-3 text-white" />}
                         </div>
-                        <span className={cn('text-xs', acoesMarcadas[i] ? 'text-gray-500 line-through' : 'text-gray-300')}>{rec}</span>
+                        <span className={cn('text-xs', acoesMarcadas[i] ? 'text-[#A69E8F] line-through' : 'text-[#3F3A32]')}>{rec}</span>
                       </button>
                     ))}
                   </div>
@@ -452,17 +452,17 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
               {anterior && (
                 <div>
-                  <p className="text-sm font-medium text-gray-300 mb-2">Antes x Depois</p>
+                  <p className="text-sm font-medium text-[#3F3A32] mb-2">Antes x Depois</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-gray-500">
+                        <tr className="text-[#A69E8F]">
                           <th className="text-left pb-1">Metrica</th>
                           <th className="text-right pb-1">Antes</th>
                           <th className="text-right pb-1">Depois</th>
                         </tr>
                       </thead>
-                      <tbody className="text-white">
+                      <tbody className="text-[#201D17]">
                         {[
                           { label: 'Download', campo: 'downloadMbps', unidade: ' Mbps', maior: true },
                           { label: 'Latencia GTSNET', campo: 'latenciaGtsnetMs', unidade: ' ms', maior: false },
@@ -475,13 +475,13 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                             ? (m.maior ? depoisV >= antesV : depoisV <= antesV)
                             : null
                           return (
-                            <tr key={m.campo} className="border-t border-white/5">
+                            <tr key={m.campo} className="border-t border-[#E6E1D6]">
                               <td className="py-1.5">{m.label}</td>
                               <td className="text-right py-1.5">{antesV != null ? `${antesV.toFixed(1)}${m.unidade}` : '-'}</td>
                               <td className="text-right py-1.5 flex items-center justify-end gap-1">
                                 {depoisV != null ? `${depoisV.toFixed(1)}${m.unidade}` : '-'}
-                                {melhorou === true && <span className="text-emerald-400">✓</span>}
-                                {melhorou === false && <span className="text-red-400">!</span>}
+                                {melhorou === true && <span className="text-emerald-700">✓</span>}
+                                {melhorou === false && <span className="text-red-700">!</span>}
                               </td>
                             </tr>
                           )
@@ -496,7 +496,7 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                 {faseAtual === 'ANTES' && (
                   <button
                     onClick={executarNovamente}
-                    className="flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-white transition-colors"
+                    className="flex items-center justify-center gap-2 py-3 bg-black/[0.02] hover:bg-black/[0.05] border border-[#E6E1D6] rounded-xl text-sm text-[#201D17] transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Executar Depois
@@ -516,8 +516,8 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
           {fase === 'atendimento' && (
             <div className="space-y-4">
               {diagnosticoRemoto && (
-                <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-3">
-                  <p className="text-xs text-cyan-400 font-bold">O diagnostico do NOC estava correto?</p>
+                <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-3">
+                  <p className="text-xs text-cyan-700 font-bold">O diagnostico do NOC estava correto?</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { valor: 'CONFIRMADO', label: 'Confirmado' },
@@ -532,8 +532,8 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                         className={cn(
                           'py-2 rounded-lg text-xs font-medium border transition-colors',
                           validacaoTecnico === op.valor
-                            ? 'bg-cyan-500 border-cyan-500 text-black'
-                            : 'bg-[#111827] border-white/10 text-gray-300'
+                            ? 'bg-cyan-600 border-cyan-600 text-white'
+                            : 'bg-white border-[#D8D2C3] text-[#3F3A32]'
                         )}
                       >
                         {op.label}
@@ -541,11 +541,11 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                     ))}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Causa real</label>
+                    <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Causa real</label>
                     <select
                       value={causaReal}
                       onChange={e => setCausaReal(e.target.value)}
-                      className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                      className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-sm text-[#201D17]"
                     >
                       <option value="">Selecione...</option>
                       <option value="WIFI">Wi-Fi</option>
@@ -562,11 +562,11 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Problema encontrado *</label>
+                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Problema encontrado *</label>
                 <select
                   value={problemaEncontrado}
                   onChange={e => setProblemaEncontrado(e.target.value)}
-                  className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white"
+                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17]"
                 >
                   <option value="">Selecione...</option>
                   <option value="WIFI">Wi-Fi</option>
@@ -581,18 +581,18 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Acao realizada *</label>
+                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Acao realizada *</label>
                 <textarea
                   value={acaoRealizada}
                   onChange={e => setAcaoRealizada(e.target.value)}
                   rows={3}
                   placeholder="Descreva o que foi feito..."
-                  className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-gray-600 resize-none"
+                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17] placeholder:text-[#A69E8F] resize-none"
                 />
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm text-gray-300 mb-2">
+                <label className="flex items-center gap-2 text-sm text-[#3F3A32] mb-2">
                   <input
                     type="checkbox"
                     checked={equipamentoSubstituido}
@@ -607,24 +607,24 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                       value={equipamentoAntigoDesc}
                       onChange={e => setEquipamentoAntigoDesc(e.target.value)}
                       placeholder="Equipamento antigo"
-                      className="bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-gray-600"
+                      className="bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-xs text-[#201D17] placeholder:text-[#A69E8F]"
                     />
                     <input
                       value={equipamentoNovoDesc}
                       onChange={e => setEquipamentoNovoDesc(e.target.value)}
                       placeholder="Equipamento novo"
-                      className="bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-gray-600"
+                      className="bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-xs text-[#201D17] placeholder:text-[#A69E8F]"
                     />
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Resultado *</label>
+                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Resultado *</label>
                 <select
                   value={resultadoFinal}
                   onChange={e => setResultadoFinal(e.target.value)}
-                  className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white"
+                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17]"
                 >
                   <option value="">Selecione...</option>
                   <option value="RESOLVIDO">Resolvido</option>

@@ -33,14 +33,14 @@ interface HorariosDia {
 const VAZIO: HorariosDia = { entrada: '', saidaAlmoco: '', retornoAlmoco: '', saida: '', tipoRegistro: 'TRABALHADO', observacao: '' }
 
 const TIPO_CFG: Record<TipoRegistroUI, { label: string; cor: string; bg: string }> = {
-  TRABALHADO:               { label: 'Trabalhado',               cor: 'text-gray-500',    bg: '' },
-  SAIDA_ANTECIPADA:         { label: 'Saida Antecipada',         cor: 'text-amber-300',   bg: 'bg-amber-500/[0.06] border-amber-500/20' },
-  FALTA:                    { label: 'Falta',                    cor: 'text-red-300',     bg: 'bg-red-500/[0.06] border-red-500/20' },
-  ATESTADO:                 { label: 'Atestado',                 cor: 'text-purple-300',  bg: 'bg-purple-500/[0.06] border-purple-500/20' },
-  FOLGA:                    { label: 'Folga',                    cor: 'text-sky-300',     bg: 'bg-sky-500/[0.06] border-sky-500/20' },
-  FERIADO:                  { label: 'Feriado',                  cor: 'text-emerald-300', bg: 'bg-emerald-500/[0.06] border-emerald-500/20' },
-  AUSENCIA_JUSTIFICADA:     { label: 'Ausencia Justificada',      cor: 'text-teal-300',    bg: 'bg-teal-500/[0.06] border-teal-500/20' },
-  AUSENCIA_NAO_JUSTIFICADA: { label: 'Ausencia Nao Justificada',  cor: 'text-orange-300',  bg: 'bg-orange-500/[0.06] border-orange-500/20' },
+  TRABALHADO:               { label: 'Trabalhado',               cor: 'text-[#A69E8F]',    bg: '' },
+  SAIDA_ANTECIPADA:         { label: 'Saida Antecipada',         cor: 'text-amber-700',   bg: 'bg-amber-500/10 border-amber-500/25' },
+  FALTA:                    { label: 'Falta',                    cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25' },
+  ATESTADO:                 { label: 'Atestado',                 cor: 'text-purple-700',  bg: 'bg-purple-500/10 border-purple-500/25' },
+  FOLGA:                    { label: 'Folga',                    cor: 'text-sky-700',     bg: 'bg-sky-500/10 border-sky-500/25' },
+  FERIADO:                  { label: 'Feriado',                  cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  AUSENCIA_JUSTIFICADA:     { label: 'Ausencia Justificada',      cor: 'text-teal-700',    bg: 'bg-teal-500/10 border-teal-500/25' },
+  AUSENCIA_NAO_JUSTIFICADA: { label: 'Ausencia Nao Justificada',  cor: 'text-orange-700',  bg: 'bg-orange-500/10 border-orange-500/25' },
 }
 
 function dataISO(d: Date) {
@@ -185,19 +185,19 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
   const dataLabel = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 pb-4 border-b border-white/5">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 pb-4 border-b border-[#E6E1D6]">
           <div className="flex items-center gap-2">
             <button onClick={() => trocarDia(-1)} className="gts-btn-secondary py-1.5 px-2">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h3 className="text-lg font-semibold text-white capitalize w-64 text-center">{dataLabel}</h3>
+            <h3 className="text-lg font-semibold text-[#201D17] capitalize w-64 text-center">{dataLabel}</h3>
             <button onClick={() => trocarDia(1)} className="gts-btn-secondary py-1.5 px-2">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17]">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -215,17 +215,17 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 skeleton rounded-lg" />)
           ) : funcionarios.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">Nenhum funcionario encontrado</p>
+            <p className="text-sm text-[#A69E8F] text-center py-8">Nenhum funcionario encontrado</p>
           ) : (
             funcionarios.map((f: any) => {
               const v = valores[f.id] ?? VAZIO
               const cfgAtual = TIPO_CFG[v.tipoRegistro]
               return (
-                <div key={f.id} className={cn('p-3 border rounded-lg space-y-2', v.tipoRegistro !== 'TRABALHADO' ? cfgAtual.bg : 'bg-white/[0.02] border-white/5')}>
+                <div key={f.id} className={cn('p-3 border rounded-lg space-y-2', v.tipoRegistro !== 'TRABALHADO' ? cfgAtual.bg : 'bg-black/[0.02] border-[#E6E1D6]')}>
                   <div className="flex items-center gap-3">
                     <div className="w-40 flex-shrink-0">
-                      <p className="text-sm text-white font-medium truncate">{f.nome}</p>
-                      <p className="text-xs text-gray-500 truncate">{f.equipeNome}</p>
+                      <p className="text-sm text-[#201D17] font-medium truncate">{f.nome}</p>
+                      <p className="text-xs text-[#A69E8F] truncate">{f.equipeNome}</p>
                     </div>
 
                     {v.tipoRegistro === 'TRABALHADO' || v.tipoRegistro === 'SAIDA_ANTECIPADA' ? (
@@ -271,11 +271,11 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
           )}
         </div>
 
-        <div className="p-5 pt-3 border-t border-white/5 space-y-3">
+        <div className="p-5 pt-3 border-t border-[#E6E1D6] space-y-3">
           {erro && (
             <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <p className="text-xs text-red-400">{erro}</p>
+              <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+              <p className="text-xs text-red-700">{erro}</p>
             </div>
           )}
           <div className="flex gap-3">

@@ -13,8 +13,8 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        {subtitle && <p className="text-gray-500 text-sm mt-1">{subtitle}</p>}
+        <h1 className="text-2xl font-bold text-[#201D17]">{title}</h1>
+        {subtitle && <p className="text-[#A69E8F] text-sm mt-1">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>

@@ -18,25 +18,25 @@ import { medirVelocidadeGts } from '@/lib/speedtestClient'
 const STATUS_ONU_QUEDA = new Set(['Offline', 'LOS', 'Power failure'])
 
 export const PRIORIDADE_COR: Record<string, string> = {
-  CRITICO: 'text-red-400 bg-red-500/10 border-red-500/30',
-  URGENTE: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-  NORMAL:  'text-blue-400 bg-blue-500/10 border-blue-500/30',
+  CRITICO: 'text-red-700 bg-red-500/10 border-red-500/30',
+  URGENTE: 'text-amber-700 bg-amber-500/10 border-amber-500/30',
+  NORMAL:  'text-blue-700 bg-blue-500/10 border-blue-500/30',
 }
 
 export const STATUS_CONFIG: Record<StatusChamado, { label: string; icon: React.ElementType; cls: string }> = {
-  AGENDADO:     { label: 'Agendado', icon: Calendar,      cls: 'text-purple-400 bg-purple-500/10' },
-  ABERTO:       { label: 'Aguardando', icon: Clock,         cls: 'text-blue-400 bg-blue-500/10' },
-  EM_ANDAMENTO: { label: 'Em Andamento', icon: Zap,         cls: 'text-yellow-400 bg-yellow-500/10' },
-  FINALIZADO:   { label: 'Finalizado', icon: CheckCircle,   cls: 'text-emerald-400 bg-emerald-500/10' },
-  CANCELADO:    { label: 'Cancelado', icon: XCircle,        cls: 'text-gray-400 bg-gray-500/10' },
+  AGENDADO:     { label: 'Agendado', icon: Calendar,      cls: 'text-purple-700 bg-purple-500/10' },
+  ABERTO:       { label: 'Aguardando', icon: Clock,         cls: 'text-blue-700 bg-blue-500/10' },
+  EM_ANDAMENTO: { label: 'Em Andamento', icon: Zap,         cls: 'text-amber-700 bg-amber-500/10' },
+  FINALIZADO:   { label: 'Finalizado', icon: CheckCircle,   cls: 'text-emerald-700 bg-emerald-500/10' },
+  CANCELADO:    { label: 'Cancelado', icon: XCircle,        cls: 'text-[#7A7266] bg-black/[0.04]' },
 }
 
 export const TIPO_COR: Record<TipoChamado, string> = {
-  INSTALACAO: 'text-blue-400',
-  MANUTENCAO: 'text-yellow-400',
-  RETIRADA:   'text-red-400',
-  SUPORTE:    'text-purple-400',
-  ROMPIMENTO_MASSIVO: 'text-red-500',
+  INSTALACAO: 'text-blue-700',
+  MANUTENCAO: 'text-amber-700',
+  RETIRADA:   'text-red-700',
+  SUPORTE:    'text-purple-700',
+  ROMPIMENTO_MASSIVO: 'text-red-800',
 }
 
 export function detectarPrioridade(obs: string) {
@@ -144,10 +144,10 @@ export function CardChamado({
 
   return (
     <div className={cn(
-      'bg-[#111827] border rounded-xl transition-all',
+      'bg-white border rounded-xl transition-all shadow-sm shadow-black/[0.03]',
       prioridade === 'CRITICO' ? 'border-red-500/30' :
-      prioridade === 'URGENTE' ? 'border-yellow-500/20' :
-      'border-white/5 hover:border-white/10'
+      prioridade === 'URGENTE' ? 'border-amber-500/25' :
+      'border-[#E6E1D6] hover:border-[#D8D2C3]'
     )}>
       {/* Header clicavel */}
       <div
@@ -157,15 +157,15 @@ export function CardChamado({
         <div className={cn(
           'w-1 rounded-full flex-shrink-0 self-stretch',
           prioridade === 'CRITICO' ? 'bg-red-500' :
-          prioridade === 'URGENTE' ? 'bg-yellow-500' : 'bg-blue-500'
+          prioridade === 'URGENTE' ? 'bg-amber-500' : 'bg-blue-500'
         )} style={{ minHeight: 40 }} />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-white font-bold">{chamado.cliente}</h3>
+              <h3 className="text-[#201D17] font-bold">{chamado.cliente}</h3>
               {chamado.eace && (
-                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 font-bold">
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-700 font-bold">
                   <GraduationCap className="w-3 h-3" />
                   EACE
                 </span>
@@ -177,7 +177,7 @@ export function CardChamado({
               )}
               {chamado.reincidente && (
                 <span
-                  className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 font-bold"
+                  className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-700 font-bold"
                   title="Este cliente abriu outro chamado recentemente"
                 >
                   <Repeat className="w-3 h-3" />
@@ -193,22 +193,22 @@ export function CardChamado({
               </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-xs text-gray-600">{timeAgo(chamado.createdAt)}</span>
+              <span className="text-xs text-[#A69E8F]">{timeAgo(chamado.createdAt)}</span>
               {onToggle && (
                 expandido
-                  ? <ChevronUp className="w-4 h-4 text-gray-500" />
-                  : <ChevronDown className="w-4 h-4 text-gray-500" />
+                  ? <ChevronUp className="w-4 h-4 text-[#A69E8F]" />
+                  : <ChevronDown className="w-4 h-4 text-[#A69E8F]" />
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-400">
+          <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-[#7A7266]">
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {chamado.cidade}
             </span>
             {chamado.equipe && (
-              <span className="flex items-center gap-1 text-orange-400">
+              <span className="flex items-center gap-1 text-orange-600">
                 <User className="w-3 h-3" />
                 {chamado.equipe.nome}
               </span>
@@ -216,7 +216,7 @@ export function CardChamado({
             {isAdmin && chamado.status !== 'FINALIZADO' && chamado.status !== 'CANCELADO' && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowTrocarEquipe(true) }}
-                className="flex items-center gap-1 text-purple-400 hover:text-purple-300 underline decoration-dotted"
+                className="flex items-center gap-1 text-purple-700 hover:text-purple-800 underline decoration-dotted"
               >
                 Trocar equipe
               </button>
@@ -226,7 +226,7 @@ export function CardChamado({
                 value={chamado.tipo}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => { e.stopPropagation(); onAlterarTipo(chamado.id, e.target.value) }}
-                className="bg-white/5 border border-orange-500/20 text-orange-400 text-xs rounded px-1.5 py-0.5 focus:outline-none"
+                className="bg-black/[0.03] border border-orange-500/25 text-orange-700 text-xs rounded px-1.5 py-0.5 focus:outline-none"
                 title="Alterar tipo do chamado (antes da equipe iniciar)"
               >
                 {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
@@ -237,7 +237,7 @@ export function CardChamado({
             {(isAdmin || isOperador) && (chamado.status === 'ABERTO' || chamado.status === 'AGENDADO') && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowReagendar(true) }}
-                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 underline decoration-dotted"
+                className="flex items-center gap-1 text-blue-700 hover:text-blue-800 underline decoration-dotted"
                 title="Define um horario para o atendimento - ele sai da fila de despacho imediato e aparece na agenda"
               >
                 <CalendarClock className="w-3 h-3" />
@@ -245,7 +245,7 @@ export function CardChamado({
               </button>
             )}
             {materiaisCount > 0 && (
-              <span className="flex items-center gap-1 text-blue-400">
+              <span className="flex items-center gap-1 text-blue-700">
                 <Package className="w-3 h-3" />
                 {materiaisCount} material(is)
               </span>
@@ -255,7 +255,7 @@ export function CardChamado({
           {acaoRapidaEncerrar && isAdmin && podeEncerrarAdmin && onEncerrarAdmin && (
             <button
               onClick={(e) => { e.stopPropagation(); onEncerrarAdmin(chamado.id) }}
-              className="flex items-center gap-1.5 mt-3 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-bold text-red-400 transition-colors"
+              className="flex items-center gap-1.5 mt-3 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 rounded-lg text-xs font-bold text-red-700 transition-colors"
               title="Encerra o chamado direto, sem passar por atendimento. Nao notifica Telegram nem entra em relatorios."
             >
               <Ban className="w-3.5 h-3.5" />
@@ -267,30 +267,30 @@ export function CardChamado({
 
       {/* Detalhes expandidos */}
       {expandido && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/5 pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-[#E6E1D6] pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {chamado.eace && chamado.escolaResponsavel && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Responsavel pela escola</p>
-                <p className="text-sm text-white">{chamado.escolaResponsavel}</p>
+                <p className="text-xs text-[#A69E8F] mb-1">Responsavel pela escola</p>
+                <p className="text-sm text-[#201D17]">{chamado.escolaResponsavel}</p>
               </div>
             )}
             {chamado.eace && chamado.escolaCodigoInep && (
               <div>
-                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Codigo INEP</p>
-                <p className="text-sm text-white font-mono">{chamado.escolaCodigoInep}</p>
+                <p className="text-xs text-[#A69E8F] mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Codigo INEP</p>
+                <p className="text-sm text-[#201D17] font-mono">{chamado.escolaCodigoInep}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-gray-500 mb-1">{chamado.eace ? 'Localizacao' : 'Endereco completo'}</p>
-              <p className="text-sm text-white">{formatarEnderecoCompleto(chamado)}</p>
+              <p className="text-xs text-[#A69E8F] mb-1">{chamado.eace ? 'Localizacao' : 'Endereco completo'}</p>
+              <p className="text-sm text-[#201D17]">{formatarEnderecoCompleto(chamado)}</p>
               {chamado.eace && chamado.latitude != null && chamado.longitude != null && (
                 <a
                   href={`https://www.google.com/maps?q=${chamado.latitude},${chamado.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs text-blue-400 hover:text-blue-300 underline decoration-dotted"
+                  className="text-xs text-blue-700 hover:text-blue-800 underline decoration-dotted"
                 >
                   Ver coordenadas no mapa
                 </a>
@@ -298,46 +298,46 @@ export function CardChamado({
             </div>
             {chamado.telefone && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Telefone</p>
-                <p className="text-sm text-white">{chamado.telefone}</p>
+                <p className="text-xs text-[#A69E8F] mb-1">Telefone</p>
+                <p className="text-sm text-[#201D17]">{chamado.telefone}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Abertura</p>
-              <p className="text-sm text-white">{formatDateTime(chamado.dataAbertura)}</p>
+              <p className="text-xs text-[#A69E8F] mb-1">Abertura</p>
+              <p className="text-sm text-[#201D17]">{formatDateTime(chamado.dataAbertura)}</p>
             </div>
             {chamado.dataInicio && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Inicio Atividade</p>
-                <p className="text-sm text-white">{formatDateTime(chamado.dataInicio)}</p>
+                <p className="text-xs text-[#A69E8F] mb-1">Inicio Atividade</p>
+                <p className="text-sm text-[#201D17]">{formatDateTime(chamado.dataInicio)}</p>
               </div>
             )}
             {chamado.dataFim && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">Finalizacao</p>
-                <p className="text-sm text-emerald-400">{formatDateTime(chamado.dataFim)}</p>
+                <p className="text-xs text-[#A69E8F] mb-1">Finalizacao</p>
+                <p className="text-sm text-emerald-700">{formatDateTime(chamado.dataFim)}</p>
               </div>
             )}
           </div>
 
           {obs && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Observacao</p>
-              <p className="text-sm text-gray-300 bg-white/[0.02] rounded-lg px-3 py-2 italic">{obs}</p>
+              <p className="text-xs text-[#A69E8F] mb-1">Observacao</p>
+              <p className="text-sm text-[#3F3A32] bg-black/[0.02] rounded-lg px-3 py-2 italic">{obs}</p>
             </div>
           )}
 
           {/* Materiais reservados */}
           {chamado.materiaisReservados?.length > 0 && (
             <div>
-              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+              <p className="text-xs text-[#A69E8F] mb-2 flex items-center gap-1">
                 <Package className="w-3 h-3" /> Materiais Reservados
               </p>
               <div className="space-y-1">
                 {chamado.materiaisReservados.map((m: any) => (
-                  <div key={m.id} className="flex items-center justify-between text-xs bg-white/[0.02] rounded px-2 py-1">
-                    <span className="text-gray-300">{m.item?.descricao}</span>
-                    <span className="text-blue-400 font-mono">{m.quantidade} {m.item?.unidade}</span>
+                  <div key={m.id} className="flex items-center justify-between text-xs bg-black/[0.02] rounded px-2 py-1">
+                    <span className="text-[#3F3A32]">{m.item?.descricao}</span>
+                    <span className="text-blue-700 font-mono">{m.quantidade} {m.item?.unidade}</span>
                   </div>
                 ))}
               </div>
@@ -347,14 +347,14 @@ export function CardChamado({
           {/* Materiais utilizados */}
           {chamado.materiaisUtilizados?.length > 0 && (
             <div>
-              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+              <p className="text-xs text-[#A69E8F] mb-2 flex items-center gap-1">
                 <Wrench className="w-3 h-3" /> Materiais Utilizados
               </p>
               <div className="space-y-1">
                 {chamado.materiaisUtilizados.map((m: any) => (
                   <div key={m.id} className="flex items-center justify-between text-xs bg-emerald-500/5 rounded px-2 py-1">
-                    <span className="text-gray-300">{m.item?.descricao}</span>
-                    <span className="text-emerald-400 font-mono">{m.quantidade} {m.item?.unidade}</span>
+                    <span className="text-[#3F3A32]">{m.item?.descricao}</span>
+                    <span className="text-emerald-700 font-mono">{m.quantidade} {m.item?.unidade}</span>
                   </div>
                 ))}
               </div>
@@ -364,16 +364,16 @@ export function CardChamado({
           {/* Diagnostico remoto do NOC - nunca um card separado, so um painel
               dentro do proprio chamado (regra explicita do produto). */}
           {diagnosticoRemoto && (
-            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-3 space-y-2">
+            <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-gray-500 flex items-center gap-1">
+                <p className="text-xs text-[#A69E8F] flex items-center gap-1">
                   <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
                 </p>
                 {diagnosticoRemoto.confianca != null && (
-                  <span className="text-xs font-mono text-gray-400">{diagnosticoRemoto.confianca}%</span>
+                  <span className="text-xs font-mono text-[#7A7266]">{diagnosticoRemoto.confianca}%</span>
                 )}
               </div>
-              <p className="text-sm text-white">
+              <p className="text-sm text-[#201D17]">
                 {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
                 {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
                 {diagnosticoRemoto.origemProvavel
@@ -381,44 +381,44 @@ export function CardChamado({
                   : ''}
               </p>
               {diagnosticoRemoto.hipotese && (
-                <p className="text-xs text-gray-400">{diagnosticoRemoto.hipotese}</p>
+                <p className="text-xs text-[#7A7266]">{diagnosticoRemoto.hipotese}</p>
               )}
               {diagnosticoRemoto.resumo?.downloadMbps != null && (
-                <p className="text-xs text-gray-500">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
+                <p className="text-xs text-[#A69E8F]">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
               )}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setMostrarDiagnosticoCompleto(v => !v) }}
-                className="text-xs text-blue-400 hover:text-blue-300 underline decoration-dotted"
+                className="text-xs text-blue-700 hover:text-blue-800 underline decoration-dotted"
               >
                 {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
               </button>
 
               {mostrarDiagnosticoCompleto && (
-                <div className="pt-2 border-t border-white/5 space-y-2">
+                <div className="pt-2 border-t border-[#E6E1D6] space-y-2">
                   {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
                     <div>
-                      <p className="text-[11px] text-gray-500 mb-1">Evidencias</p>
+                      <p className="text-[11px] text-[#A69E8F] mb-1">Evidencias</p>
                       <ul className="space-y-0.5">
                         {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
-                          <li key={i} className="text-xs text-gray-300">• {ev}</li>
+                          <li key={i} className="text-xs text-[#3F3A32]">• {ev}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
                     <div>
-                      <p className="text-[11px] text-gray-500 mb-1">Recomendacoes</p>
+                      <p className="text-[11px] text-[#A69E8F] mb-1">Recomendacoes</p>
                       <ul className="space-y-0.5">
                         {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
-                          <li key={i} className="text-xs text-gray-300">• {r}</li>
+                          <li key={i} className="text-xs text-[#3F3A32]">• {r}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {diagnosticoRemoto.resumo?.onuStatus && (
-                    <p className="text-xs text-gray-500">
-                      ONU: <span className="text-gray-300">{diagnosticoRemoto.resumo.onuStatus}</span>
+                    <p className="text-xs text-[#A69E8F]">
+                      ONU: <span className="text-[#3F3A32]">{diagnosticoRemoto.resumo.onuStatus}</span>
                       {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
                     </p>
                   )}
@@ -433,7 +433,7 @@ export function CardChamado({
                           }
                         }}
                         disabled={reiniciarOnuMutation.isPending}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg text-xs font-medium text-orange-400 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/25 rounded-lg text-xs font-medium text-orange-700 transition-colors disabled:opacity-50"
                       >
                         <RotateCw className="w-3.5 h-3.5" />
                         {reiniciarOnuMutation.isPending ? 'Reiniciando...' : 'Reiniciar ONU'}
@@ -445,7 +445,7 @@ export function CardChamado({
                         e.stopPropagation()
                         import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'salvar'))
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/[0.03] hover:bg-black/[0.06] border border-[#E6E1D6] rounded-lg text-xs font-medium text-[#3F3A32] transition-colors"
                     >
                       Gerar Relatorio
                     </button>
@@ -455,7 +455,7 @@ export function CardChamado({
                         e.stopPropagation()
                         import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/[0.03] hover:bg-black/[0.06] border border-[#E6E1D6] rounded-lg text-xs font-medium text-[#3F3A32] transition-colors"
                     >
                       Imprimir
                     </button>
@@ -472,7 +472,7 @@ export function CardChamado({
                 <button
                   onClick={(e) => { e.stopPropagation(); diagnosticoRemotoMutation.mutate() }}
                   disabled={diagnosticoRemotoMutation.isPending}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg text-xs font-bold text-cyan-400 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-600/25 rounded-lg text-xs font-bold text-cyan-700 transition-colors disabled:opacity-50"
                 >
                   <Brain className="w-3.5 h-3.5" />
                   {diagnosticoRemotoMutation.isPending ? 'Diagnosticando...' : 'Iniciar Diagnostico Remoto'}
@@ -481,7 +481,7 @@ export function CardChamado({
               {chamado.telefone && (
                 <button
                   onClick={() => window.open(`https://wa.me/55${chamado.telefone.replace(/\D/g, '')}`, '_blank')}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-xs font-medium text-green-400 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/25 rounded-lg text-xs font-medium text-green-700 transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   WhatsApp
@@ -489,7 +489,7 @@ export function CardChamado({
               )}
               <button
                 onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(formatarEnderecoCompleto(chamado))}`, '_blank')}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg text-xs font-medium text-blue-400 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 rounded-lg text-xs font-medium text-blue-700 transition-colors"
               >
                 <Navigation className="w-3.5 h-3.5" />
                 Abrir no Mapa
@@ -497,7 +497,7 @@ export function CardChamado({
               {chamado.status === 'AGENDADO' && (isAdmin || isOperador) && onEncaminhar && (
                 <button
                   onClick={() => onEncaminhar(chamado.id)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg text-xs font-bold text-purple-400 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 rounded-lg text-xs font-bold text-purple-700 transition-colors"
                   title="Ativa o chamado agora, sem esperar a data/hora agendada"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -507,7 +507,7 @@ export function CardChamado({
               {emDeslocamento && onIniciar && (
                 <button
                   onClick={() => onIniciar(chamado.id)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500 hover:bg-yellow-400 rounded-lg text-xs font-bold text-black transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-400 rounded-lg text-xs font-bold text-[#201D17] transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   Iniciar Atividade
@@ -525,7 +525,7 @@ export function CardChamado({
               {isAdmin && podeEncerrarAdmin && onEncerrarAdmin && (
                 <button
                   onClick={() => onEncerrarAdmin(chamado.id)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-bold text-red-400 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 rounded-lg text-xs font-bold text-red-700 transition-colors"
                   title="Encerra o chamado direto, sem passar por atendimento. Nao notifica Telegram nem entra em relatorios."
                 >
                   <Ban className="w-3.5 h-3.5" />
@@ -539,17 +539,17 @@ export function CardChamado({
           {chamado.status === 'FINALIZADO' && (
             <div className="flex flex-wrap gap-2 pt-1">
               {chamado.feedbackEnviado ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
                   <CheckCircle className="w-3.5 h-3.5" />
                   Feedback enviado {chamado.feedbackEnviadoEm ? `em ${formatDateTime(chamado.feedbackEnviadoEm)}` : ''}
                 </span>
               ) : !chamado.telefone ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
                   <MessageCircle className="w-3.5 h-3.5" />
                   Sem telefone cadastrado - feedback nao sera enviado
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-xs text-gray-500">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
                   <MessageCircle className="w-3.5 h-3.5" />
                   Feedback sera enviado automaticamente 1h apos o encerramento
                 </span>

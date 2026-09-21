@@ -5,7 +5,6 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { AlertasPanel } from './AlertasPanel'
 import { useQuery } from '@tanstack/react-query'
-import { MissionControlBackground } from '@/components/noc/MissionControlBackground'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -28,10 +27,9 @@ export function AppShell({ children, title }: AppShellProps) {
   })
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0B1120]">
+    <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
       <Sidebar />
       <div className="relative flex-1 flex flex-col overflow-hidden min-w-0">
-        <MissionControlBackground />
         <div className="relative z-10">
           <TopBar
             title={title}

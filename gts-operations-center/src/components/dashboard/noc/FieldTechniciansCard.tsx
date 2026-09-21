@@ -57,7 +57,7 @@ export function FieldTechniciansCard() {
               animate={{ opacity: 1 }}
               transition={{ delay: i * 0.05 }}
               className="flex items-center gap-3 p-2.5 rounded-xl border"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}
+              style={{ backgroundColor: 'rgba(32,29,23,0.03)', borderColor: 'rgba(32,29,23,0.06)' }}
             >
               <div className="relative flex-shrink-0">
                 {funcionario?.avatar ? (

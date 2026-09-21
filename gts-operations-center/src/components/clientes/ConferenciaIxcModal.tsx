@@ -28,26 +28,26 @@ export function ConferenciaIxcModal({ onClose }: Props) {
   const linhas = data?.linhas ?? []
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col shadow-xl">
+        <div className="flex items-center justify-between p-6 border-b border-[#E6E1D6]">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center">
-              <GitCompare className="w-4.5 h-4.5 text-orange-400" />
+              <GitCompare className="w-4.5 h-4.5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Conferencia IXC x GTS</h3>
-              <p className="text-xs text-gray-500">Batimento entre o status baixado no IXC e o nosso registro manual</p>
+              <h3 className="text-lg font-semibold text-[#201D17]">Conferencia IXC x GTS</h3>
+              <p className="text-xs text-[#A69E8F]">Batimento entre o status baixado no IXC e o nosso registro manual</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer py-1">
+            <label className="flex items-center gap-2 text-sm text-[#3F3A32] cursor-pointer py-1">
               <input
                 type="checkbox"
                 checked={somenteDivergencias}
@@ -57,18 +57,18 @@ export function ConferenciaIxcModal({ onClose }: Props) {
               Mostrar somente divergencias
             </label>
             {data && (
-              <p className="text-sm text-gray-400">
-                <span className="text-orange-400 font-bold">{data.totalDivergencias}</span> divergencia(s) de {data.totalGeral} titulo(s) sincronizados
+              <p className="text-sm text-[#7A7266]">
+                <span className="text-orange-700 font-bold">{data.totalDivergencias}</span> divergencia(s) de {data.totalGeral} titulo(s) sincronizados
               </p>
             )}
           </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#A69E8F]" />
             </div>
           ) : linhas.length === 0 ? (
-            <p className="text-center text-gray-500 text-sm py-10">
+            <p className="text-center text-[#A69E8F] text-sm py-10">
               {somenteDivergencias ? 'Nenhuma divergencia encontrada. Tudo batendo certinho!' : 'Nenhum titulo sincronizado ainda.'}
             </p>
           ) : (
@@ -78,38 +78,38 @@ export function ConferenciaIxcModal({ onClose }: Props) {
                   key={l.id}
                   className={cn(
                     'p-3 rounded-lg border',
-                    l.divergente ? 'bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10'
+                    l.divergente ? 'bg-orange-500/10 border-orange-500/30' : 'bg-black/[0.02] border-[#E6E1D6]'
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium text-white flex items-center gap-2">
-                        {l.divergente && <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />}
+                      <p className="text-sm font-medium text-[#201D17] flex items-center gap-2">
+                        {l.divergente && <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />}
                         {l.cliente}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A69E8F]">
                         Vencimento: {l.vencimento ? new Date(l.vencimento).toLocaleDateString('pt-BR') : '-'} - Valor: R$ {Number(l.valor).toFixed(2)}
                       </p>
                     </div>
-                    <p className="text-sm font-bold text-white">R$ {Number(l.valor).toFixed(2)}</p>
+                    <p className="text-sm font-bold text-[#201D17]">R$ {Number(l.valor).toFixed(2)}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-2 text-xs">
-                    <div className="bg-black/20 rounded p-2">
-                      <p className="text-gray-500 mb-0.5">Status no GTS (nosso)</p>
-                      <p className={cn('font-medium', l.statusGts === 'PAGO' ? 'text-emerald-400' : 'text-gray-300')}>
+                    <div className="bg-black/[0.03] rounded p-2">
+                      <p className="text-[#A69E8F] mb-0.5">Status no GTS (nosso)</p>
+                      <p className={cn('font-medium', l.statusGts === 'PAGO' ? 'text-emerald-700' : 'text-[#3F3A32]')}>
                         {l.statusGts === 'PAGO' ? 'Pago' : 'Pendente'}
                         {l.statusGts === 'PAGO' && l.dataPagamentoGts && (
-                          <span className="text-gray-500 font-normal">
+                          <span className="text-[#A69E8F] font-normal">
                             {' '}- Baixado manualmente por {l.usuarioBaixaGts || l.recebidoPorGts || 'nao identificado'} em{' '}
                             {new Date(l.dataPagamentoGts).toLocaleString('pt-BR')}
                           </span>
                         )}
                       </p>
                     </div>
-                    <div className="bg-black/20 rounded p-2">
-                      <p className="text-gray-500 mb-0.5">Status no IXC (observacao)</p>
-                      <p className={cn('font-medium', l.statusIxc === 'BAIXADO' ? 'text-emerald-400' : 'text-gray-300')}>
+                    <div className="bg-black/[0.03] rounded p-2">
+                      <p className="text-[#A69E8F] mb-0.5">Status no IXC (observacao)</p>
+                      <p className={cn('font-medium', l.statusIxc === 'BAIXADO' ? 'text-emerald-700' : 'text-[#3F3A32]')}>
                         {l.statusIxc === 'BAIXADO'
                           ? `Baixado em ${l.dataBaixaIxc ? new Date(l.dataBaixaIxc).toLocaleDateString('pt-BR') : '-'}`
                           : 'Pendente no IXC'}
@@ -118,7 +118,7 @@ export function ConferenciaIxcModal({ onClose }: Props) {
                   </div>
 
                   {l.divergente && (
-                    <p className="text-xs text-orange-400 mt-2 font-medium">{l.tipoDivergencia}</p>
+                    <p className="text-xs text-orange-700 mt-2 font-medium">{l.tipoDivergencia}</p>
                   )}
                 </div>
               ))}

@@ -25,7 +25,7 @@ export function NetworkMapCard() {
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.sucesso }} /> Caixa OK</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.alerta }} /> Atencao</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.critico }} /> Critico</span>
-        <span className="w-px h-3" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+        <span className="w-px h-3" style={{ backgroundColor: 'rgba(32,29,23,0.1)' }} />
         <span className="flex items-center gap-1"><span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: NOC.azulPrimario }} /> Tronco (Backbone)</span>
         <span className="flex items-center gap-1"><span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: NOC.sucesso }} /> Distribuicao</span>
         <span className="flex items-center gap-1"><span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: NOC.critico }} /> Falha</span>

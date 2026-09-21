@@ -49,24 +49,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#0B1120]">
+    <div className="min-h-screen flex bg-[#FAF9F6]">
 
       {/* Lado esquerdo */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#0B1120] to-[#111827] border-r border-white/5">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#FDEDDD]/60 via-[#FAF9F6] to-[#FFE9D2]/40 border-r border-[#E6E1D6]">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-500/3 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-400/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-400/8 rounded-full blur-3xl" />
           <div
-            className="absolute inset-0 opacity-[0.02]"
+            className="absolute inset-0 opacity-[0.35]"
             style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(rgba(32,29,23,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(32,29,23,0.05) 1px, transparent 1px)`,
               backgroundSize: '40px 40px',
+              maskImage: 'radial-gradient(circle at 50% 40%, black, transparent 75%)',
             }}
           />
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center px-12 animate-fade-in-up">
-          <div className="w-56 h-56 mb-6 drop-shadow-2xl">
+          <div className="w-56 h-56 mb-6 drop-shadow-xl">
             <img
               src="/images/logo.png"
               alt="GTSNet"
@@ -75,11 +76,11 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-5xl font-black mb-3 tracking-tight">
-            <span className="text-white">GTS</span>
-            <span className="bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">net</span>
-            <span className="text-white"> Operations Center</span>
+            <span className="text-[#201D17]">GTS</span>
+            <span className="bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">net</span>
+            <span className="text-[#201D17]"> Operations Center</span>
           </h1>
-          <p className="text-gray-400 text-lg mb-10">
+          <p className="text-[#7A7266] text-lg mb-10">
             Centro de Operacoes Inteligente
           </p>
 
@@ -94,17 +95,17 @@ export default function LoginPage() {
               <div
                 key={i}
                 className={cn(
-                  'flex items-center gap-3 p-3 bg-white/[0.03] border rounded-xl',
-                  'transition-all duration-200 hover:bg-white/[0.06] hover:border-orange-500/20 hover:-translate-y-0.5',
+                  'flex items-center gap-3 p-3 bg-white border rounded-xl shadow-sm shadow-black/[0.03]',
+                  'transition-all duration-200 hover:shadow-md hover:border-orange-500/30 hover:-translate-y-0.5',
                   'animate-fade-in-up',
-                  f.destaque ? 'border-orange-500/25 gts-hud-corner' : 'border-white/5'
+                  f.destaque ? 'border-orange-500/30 gts-hud-corner' : 'border-[#E6E1D6]'
                 )}
                 style={{ animationDelay: `${120 + i * 70}ms` }}
               >
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-500/5 flex items-center justify-center flex-shrink-0">
-                  <f.icon className="w-4 h-4 text-orange-400" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/15 to-orange-500/5 flex items-center justify-center flex-shrink-0">
+                  <f.icon className="w-4 h-4 text-orange-600" />
                 </div>
-                <p className="text-sm text-gray-300">{f.text}</p>
+                <p className="text-sm text-[#3F3A32]">{f.text}</p>
               </div>
             ))}
           </div>
@@ -112,17 +113,17 @@ export default function LoginPage() {
 
         <div className="absolute bottom-6 flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-xs font-mono tracking-wider">SISTEMA ONLINE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#187A45] animate-pulse" />
+            <span className="text-[#187A45] text-xs font-mono tracking-wider">SISTEMA ONLINE</span>
           </div>
-          <p className="text-gray-600 text-xs">GTSNet — Provedor de Internet</p>
+          <p className="text-[#A69E8F] text-xs">GTSNet — Provedor de Internet</p>
         </div>
       </div>
 
       {/* Lado direito */}
-      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center px-8 relative">
+      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center px-8 relative bg-[#FCFBF8]">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/3 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-400/5 rounded-full blur-3xl" />
         </div>
 
         <div className="w-full max-w-sm relative animate-fade-in-up">
@@ -136,17 +137,17 @@ export default function LoginPage() {
               />
             </div>
             <h1 className="text-xl font-bold">
-              <span className="text-white">GTS</span>
-              <span className="text-orange-400">net</span>
-              <span className="text-white"> Operations</span>
+              <span className="text-[#201D17]">GTS</span>
+              <span className="text-orange-600">net</span>
+              <span className="text-[#201D17]"> Operations</span>
             </h1>
           </div>
 
           {/* Card */}
-          <div className="relative bg-[#111827] border border-white/10 rounded-xl p-8 shadow-2xl overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
+          <div className="relative bg-white border border-[#E6E1D6] rounded-xl p-8 shadow-xl shadow-black/[0.04] overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#0B1120] p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
+              <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#FDEDDD] p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
                 <img
                   src="/images/icon.png"
                   alt="GTSNet"
@@ -154,68 +155,68 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Bem-vindo!</h2>
-                <p className="text-gray-500 text-xs">Entre com suas credenciais</p>
+                <h2 className="text-xl font-bold text-[#201D17]">Bem-vindo!</h2>
+                <p className="text-[#A69E8F] text-xs">Entre com suas credenciais</p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} method="post" className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">E-mail</label>
+                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">E-mail</label>
                 <input
                   {...register('email')}
                   type="email"
                   placeholder="seu@email.com"
                   autoComplete="email"
-                  className={`w-full bg-[#0B1120] border rounded-lg px-3 py-2.5 text-sm text-white
-                    placeholder:text-gray-600 focus:outline-none focus:ring-1 transition-colors
+                  className={`w-full bg-[#FCFBF8] border rounded-lg px-3 py-2.5 text-sm text-[#201D17]
+                    placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 transition-colors
                     ${errors.email
                       ? 'border-red-500/50 focus:ring-red-500'
-                      : 'border-white/10 focus:ring-orange-500 focus:border-orange-500'
+                      : 'border-[#D8D2C3] focus:ring-orange-600 focus:border-orange-600'
                     }`}
                 />
-                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+                {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
+                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Senha</label>
                 <div className="relative">
                   <input
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className={`w-full bg-[#0B1120] border rounded-lg px-3 py-2.5 pr-10 text-sm text-white
-                      placeholder:text-gray-600 focus:outline-none focus:ring-1 transition-colors
+                    className={`w-full bg-[#FCFBF8] border rounded-lg px-3 py-2.5 pr-10 text-sm text-[#201D17]
+                      placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 transition-colors
                       ${errors.password
                         ? 'border-red-500/50 focus:ring-red-500'
-                        : 'border-white/10 focus:ring-orange-500 focus:border-orange-500'
+                        : 'border-[#D8D2C3] focus:ring-orange-600 focus:border-orange-600'
                       }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A69E8F] hover:text-[#201D17] transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>}
+                {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
               </div>
 
               {error && (
                 <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                  <p className="text-sm text-red-400">{error}</p>
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-orange-500 hover:bg-orange-400 text-white font-semibold py-3 rounded-lg
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 rounded-lg
                   transition-all duration-200 flex items-center justify-center gap-2
-                  shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30
+                  shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30
                   disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98] mt-2"
               >
                 {loading
@@ -227,10 +228,10 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center justify-center gap-2 mt-6">
-            <Wifi className="w-3.5 h-3.5 text-orange-400" />
-            <span className="text-xs text-orange-400">Sistema Online</span>
-            <span className="text-gray-600 text-xs mx-2">·</span>
-            <span className="text-gray-600 text-xs">GTSNet © {new Date().getFullYear()}</span>
+            <Wifi className="w-3.5 h-3.5 text-orange-600" />
+            <span className="text-xs text-orange-700">Sistema Online</span>
+            <span className="text-[#A69E8F] text-xs mx-2">·</span>
+            <span className="text-[#A69E8F] text-xs">GTSNet © {new Date().getFullYear()}</span>
           </div>
         </div>
       </div>

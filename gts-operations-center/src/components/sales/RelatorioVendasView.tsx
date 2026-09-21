@@ -24,9 +24,9 @@ async function fetchRelatorio(dataInicio: string, dataFim: string) {
 }
 
 const STATUS_CFG: Record<string, { label: string; cor: string }> = {
-  APROVADO:  { label: 'Aprovado',  cor: 'text-emerald-400 bg-emerald-500/10' },
-  PENDENTE:  { label: 'Pendente',  cor: 'text-yellow-400 bg-yellow-500/10' },
-  REPROVADO: { label: 'Reprovado', cor: 'text-red-400 bg-red-500/10' },
+  APROVADO:  { label: 'Aprovado',  cor: 'text-emerald-700 bg-emerald-500/10' },
+  PENDENTE:  { label: 'Pendente',  cor: 'text-amber-700 bg-amber-500/10' },
+  REPROVADO: { label: 'Reprovado', cor: 'text-red-700 bg-red-500/10' },
 }
 
 export function RelatorioVendasView() {
@@ -91,8 +91,8 @@ export function RelatorioVendasView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Relatorio de Vendas por Vendedor</h1>
-          <p className="text-gray-500 text-sm mt-1">Periodo: {periodoLabel}</p>
+          <h1 className="text-2xl font-bold text-[#201D17]">Relatorio de Vendas por Vendedor</h1>
+          <p className="text-[#A69E8F] text-sm mt-1">Periodo: {periodoLabel}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => refetch()} className="gts-btn-secondary">
@@ -126,8 +126,8 @@ export function RelatorioVendasView() {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 periodoRapido === p.value
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                  ? 'bg-orange-500/10 text-orange-700 border-orange-500/30'
+                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
               )}
             >
               {p.label}
@@ -137,8 +137,8 @@ export function RelatorioVendasView() {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-500" />
-            <label className="text-xs text-gray-400">De:</label>
+            <Calendar className="w-4 h-4 text-[#A69E8F]" />
+            <label className="text-xs text-[#7A7266]">De:</label>
             <input
               type="date"
               value={dataInicio}
@@ -147,7 +147,7 @@ export function RelatorioVendasView() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400">Ate:</label>
+            <label className="text-xs text-[#7A7266]">Ate:</label>
             <input
               type="date"
               value={dataFim}
@@ -172,8 +172,8 @@ export function RelatorioVendasView() {
 
       {/* Lista por vendedor */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-orange-400" />
+        <h2 className="text-sm font-semibold text-[#201D17] flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-orange-600" />
           Desempenho por Vendedor
         </h2>
 
@@ -182,68 +182,68 @@ export function RelatorioVendasView() {
           : porVendedor.length === 0
           ? (
             <div className="gts-card text-center py-16">
-              <FileText className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Nenhuma venda no periodo selecionado</p>
+              <FileText className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+              <p className="text-[#7A7266] font-medium">Nenhuma venda no periodo selecionado</p>
             </div>
           )
           : porVendedor.map((v: any, i: number) => (
-            <div key={v.vendedorId} className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+            <div key={v.vendedorId} className="bg-white border border-[#E6E1D6] rounded-xl overflow-hidden shadow-sm shadow-black/[0.03]">
               {/* Header clicavel */}
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.02]"
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/[0.02]"
                 onClick={() => setExpandido(expandido === v.vendedorId ? null : v.vendedorId)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-700 font-bold flex-shrink-0">
                     {i === 0 ? <Trophy className="w-4 h-4" /> : v.vendedorNome[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-white font-bold">{v.vendedorNome}</p>
-                    <p className="text-xs text-gray-500">{v.totalVendas} venda(s) no periodo</p>
+                    <p className="text-[#201D17] font-bold">{v.vendedorNome}</p>
+                    <p className="text-xs text-[#A69E8F]">{v.totalVendas} venda(s) no periodo</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Aprovadas</p>
-                    <p className="text-sm font-bold text-emerald-400">{v.totalAprovadas}</p>
+                    <p className="text-xs text-[#A69E8F]">Aprovadas</p>
+                    <p className="text-sm font-bold text-emerald-700">{v.totalAprovadas}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Pendentes</p>
-                    <p className="text-sm font-bold text-yellow-400">{v.totalPendentes}</p>
+                    <p className="text-xs text-[#A69E8F]">Pendentes</p>
+                    <p className="text-sm font-bold text-amber-700">{v.totalPendentes}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Valor Total</p>
-                    <p className="text-sm font-bold text-white">{formatCurrency(v.valorTotal)}</p>
+                    <p className="text-xs text-[#A69E8F]">Valor Total</p>
+                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(v.valorTotal)}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Comissao</p>
-                    <p className="text-sm font-bold text-yellow-400">{formatCurrency(v.comissaoTotal)}</p>
+                    <p className="text-xs text-[#A69E8F]">Comissao</p>
+                    <p className="text-sm font-bold text-amber-700">{formatCurrency(v.comissaoTotal)}</p>
                   </div>
                   {expandido === v.vendedorId
-                    ? <ChevronUp className="w-4 h-4 text-gray-500" />
-                    : <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ? <ChevronUp className="w-4 h-4 text-[#A69E8F]" />
+                    : <ChevronDown className="w-4 h-4 text-[#A69E8F]" />
                   }
                 </div>
               </div>
 
               {/* Detalhes das vendas */}
               {expandido === v.vendedorId && (
-                <div className="border-t border-white/5 p-4 space-y-2">
+                <div className="border-t border-[#E6E1D6] p-4 space-y-2">
                   {v.vendas.map((venda: any) => {
                     const cfg = STATUS_CFG[venda.status] || STATUS_CFG.PENDENTE
                     return (
-                      <div key={venda.id} className="flex items-center justify-between p-2.5 bg-white/[0.02] rounded-lg">
+                      <div key={venda.id} className="flex items-center justify-between p-2.5 bg-black/[0.02] rounded-lg">
                         <div>
-                          <p className="text-sm text-white">{venda.clienteNome}</p>
-                          <p className="text-xs text-gray-500">{venda.planoVendido} — {venda.cidade}</p>
+                          <p className="text-sm text-[#201D17]">{venda.clienteNome}</p>
+                          <p className="text-xs text-[#A69E8F]">{venda.planoVendido} — {venda.cidade}</p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', cfg.cor)}>
                             {cfg.label}
                           </span>
-                          <span className="text-sm font-medium text-emerald-400">{formatCurrency(venda.valor)}</span>
-                          <span className="text-xs text-gray-600">{formatDateTime(venda.data)}</span>
+                          <span className="text-sm font-medium text-emerald-700">{formatCurrency(venda.valor)}</span>
+                          <span className="text-xs text-[#A69E8F]">{formatDateTime(venda.data)}</span>
                         </div>
                       </div>
                     )

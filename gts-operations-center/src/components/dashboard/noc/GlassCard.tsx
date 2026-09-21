@@ -20,7 +20,7 @@ export function GlassCard({ children, className = '', noPadding = false, delay =
       className={`rounded-xl border backdrop-blur-md shadow-lg ${noPadding ? '' : 'p-4'} ${className}`}
       style={{
         backgroundColor: `${NOC.card}CC`,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(32,29,23,0.05)',
       }}
     >
       {children}

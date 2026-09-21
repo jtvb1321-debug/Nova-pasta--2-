@@ -206,18 +206,18 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 sticky top-0 bg-[#111827] z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-              <PackageMinus className="w-4 h-4 text-red-400" />
+            <div className="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
+              <PackageMinus className="w-4 h-4 text-red-700" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Retirar Material do Estoque</h2>
+            <h2 className="text-lg font-semibold text-[#201D17]">Retirar Material do Estoque</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -227,7 +227,7 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
             {/* Destino / Finalidade / Retirado por */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Destino *</label>
+                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Destino *</label>
                 <input
                   value={destino}
                   onChange={e => setDestino(e.target.value)}
@@ -236,7 +236,7 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Finalidade *</label>
+                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Finalidade *</label>
                 <input
                   value={finalidade}
                   onChange={e => setFinalidade(e.target.value)}
@@ -246,7 +246,7 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Retirado por *</label>
+              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Retirado por *</label>
               <input
                 value={retiradoPor}
                 onChange={e => setRetiradoPor(e.target.value)}
@@ -257,9 +257,9 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
 
             {/* Busca de itens */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Adicionar item</label>
+              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Adicionar item</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
                 <input
                   value={busca}
                   onChange={e => setBusca(e.target.value)}
@@ -268,18 +268,18 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
                 />
               </div>
               {busca.length >= 2 && resultadosBusca?.data?.length > 0 && (
-                <div className="mt-2 border border-white/10 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                <div className="mt-2 border border-[#E6E1D6] rounded-lg overflow-hidden max-h-48 overflow-y-auto">
                   {resultadosBusca.data.map((item: any) => (
                     <button
                       key={item.id}
                       onClick={() => adicionarItem(item)}
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 text-left border-b border-white/5 last:border-0"
+                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-black/[0.02] text-left border-b border-[#E6E1D6] last:border-0"
                     >
                       <div>
-                        <p className="text-sm text-white">{item.descricao}</p>
-                        <p className="text-xs text-gray-500 font-mono">{item.codigo}</p>
+                        <p className="text-sm text-[#201D17]">{item.descricao}</p>
+                        <p className="text-xs text-[#A69E8F] font-mono">{item.codigo}</p>
                       </div>
-                      <span className="text-xs text-gray-400">Disp: {item.quantidadeAtual} {item.unidade}</span>
+                      <span className="text-xs text-[#7A7266]">Disp: {item.quantidadeAtual} {item.unidade}</span>
                     </button>
                   ))}
                 </div>
@@ -289,12 +289,12 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
             {/* Itens selecionados */}
             {itensSelecionados.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-300">Itens para retirada</p>
+                <p className="text-sm font-medium text-[#7A7266]">Itens para retirada</p>
                 {itensSelecionados.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
+                  <div key={item.id} className="flex items-center gap-3 bg-black/[0.02] rounded-lg p-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{item.descricao}</p>
-                      <p className="text-xs text-gray-500">Disponivel: {item.disponivel} {item.unidade}</p>
+                      <p className="text-sm text-[#201D17] truncate">{item.descricao}</p>
+                      <p className="text-xs text-[#A69E8F]">Disponivel: {item.disponivel} {item.unidade}</p>
                     </div>
                     <input
                       type="number"
@@ -307,7 +307,7 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
                     />
                     <button
                       onClick={() => removerItem(item.id)}
-                      className="text-gray-500 hover:text-red-400 flex-shrink-0"
+                      className="text-[#A69E8F] hover:text-red-700 flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -318,9 +318,9 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
 
             {/* Erro */}
             {erro && (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <p className="text-sm text-red-400">{erro}</p>
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+                <p className="text-sm text-red-700">{erro}</p>
               </div>
             )}
 
@@ -343,12 +343,12 @@ export function RetirarMaterialModal({ onClose, onSuccess }: Props) {
           </div>
         ) : (
           <div className="p-6 space-y-5 text-center">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-7 h-7 text-emerald-400" />
+            <div className="w-14 h-14 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-7 h-7 text-emerald-700" />
             </div>
             <div>
-              <p className="text-white font-semibold text-lg">Retirada registrada com sucesso!</p>
-              <p className="text-gray-500 text-sm mt-1">O estoque ja foi atualizado. Gere o comprovante para assinatura.</p>
+              <p className="text-[#201D17] font-semibold text-lg">Retirada registrada com sucesso!</p>
+              <p className="text-[#A69E8F] text-sm mt-1">O estoque ja foi atualizado. Gere o comprovante para assinatura.</p>
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={onClose} className="flex-1 gts-btn-secondary justify-center">

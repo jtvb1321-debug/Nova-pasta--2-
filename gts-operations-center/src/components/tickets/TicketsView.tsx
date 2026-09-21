@@ -19,19 +19,19 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 const STATUS_STYLE: Record<StatusChamado, { icon: React.ElementType; cls: string }> = {
-  ABERTO:       { icon: AlertCircle,  cls: 'text-blue-400 bg-blue-500/10' },
-  EM_ANDAMENTO: { icon: Clock,        cls: 'text-yellow-400 bg-yellow-500/10' },
-  FINALIZADO:   { icon: CheckCircle,  cls: 'text-emerald-400 bg-emerald-500/10' },
-  CANCELADO:    { icon: XCircle,      cls: 'text-gray-400 bg-gray-500/10' },
-  AGENDADO:     { icon: Calendar,     cls: 'text-purple-400 bg-purple-500/10' },
+  ABERTO:       { icon: AlertCircle,  cls: 'text-blue-700 bg-blue-500/10' },
+  EM_ANDAMENTO: { icon: Clock,        cls: 'text-amber-700 bg-amber-500/10' },
+  FINALIZADO:   { icon: CheckCircle,  cls: 'text-emerald-700 bg-emerald-500/10' },
+  CANCELADO:    { icon: XCircle,      cls: 'text-[#7A7266] bg-black/[0.04]' },
+  AGENDADO:     { icon: Calendar,     cls: 'text-purple-700 bg-purple-500/10' },
 }
 
 const TIPO_COR: Record<TipoChamado, string> = {
-  INSTALACAO: 'text-blue-400',
-  MANUTENCAO: 'text-yellow-400',
-  RETIRADA:   'text-red-400',
-  SUPORTE:    'text-purple-400',
-  ROMPIMENTO_MASSIVO: 'text-red-500',
+  INSTALACAO: 'text-blue-700',
+  MANUTENCAO: 'text-amber-700',
+  RETIRADA:   'text-red-700',
+  SUPORTE:    'text-purple-700',
+  ROMPIMENTO_MASSIVO: 'text-red-800',
 }
 
 async function fetchTickets(params: { status: string; page: number }) {
@@ -91,8 +91,8 @@ export function TicketsView() {
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
               status === f.value
-                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
             )}
           >
             {f.label}
@@ -117,7 +117,7 @@ export function TicketsView() {
               return (
                 <div
                   key={chamado.id}
-                  className="gts-card hover:border-white/10 transition-all group"
+                  className="gts-card hover:border-[#D8D2C3] transition-all group"
                 >
                   <div className="flex items-start gap-4">
                     <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', statusCfg.cls)}>
@@ -128,7 +128,7 @@ export function TicketsView() {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-white font-semibold">{chamado.cliente}</h3>
+                            <h3 className="text-[#201D17] font-semibold">{chamado.cliente}</h3>
                             <span className={cn('text-xs font-medium', TIPO_COR[chamado.tipo as TipoChamado])}>
                               {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
                             </span>
@@ -138,18 +138,18 @@ export function TicketsView() {
                           </div>
 
                           <div className="flex items-center gap-4 mt-1.5 flex-wrap">
-                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1 text-xs text-[#A69E8F]">
                               <MapPin className="w-3 h-3" />
                               {chamado.endereco}, {chamado.cidade}
                             </span>
                             {chamado.telefone && (
-                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1 text-xs text-[#A69E8F]">
                                 <Phone className="w-3 h-3" />
                                 {chamado.telefone}
                               </span>
                             )}
                             {chamado.equipe && (
-                              <span className="flex items-center gap-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1 text-xs text-[#A69E8F]">
                                 <User className="w-3 h-3" />
                                 {chamado.equipe.nome}
                               </span>
@@ -157,27 +157,27 @@ export function TicketsView() {
                           </div>
 
                           {chamado.observacao && (
-                            <p className="text-xs text-gray-600 mt-1.5 italic">
+                            <p className="text-xs text-[#A69E8F] mt-1.5 italic">
                               {truncate(chamado.observacao, 80)}
                             </p>
                           )}
                         </div>
 
                         <div className="flex-shrink-0 text-right">
-                          <p className="text-xs text-gray-600">{timeAgo(chamado.dataAbertura)}</p>
+                          <p className="text-xs text-[#A69E8F]">{timeAgo(chamado.dataAbertura)}</p>
                           <div className="flex items-center gap-1 mt-2">
                             {/* Botao Finalizar - so aparece em chamados abertos ou em andamento */}
                             {(chamado.status === 'ABERTO' || chamado.status === 'EM_ANDAMENTO') && (
                               <button
                                 onClick={() => setChamadoFinalizar(chamado)}
-                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition-colors"
+                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg transition-colors"
                                 title="Finalizar Chamado"
                               >
                                 <StopCircle className="w-3.5 h-3.5" />
                                 Finalizar
                               </button>
                             )}
-                            <button className="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                            <button className="p-1.5 text-[#A69E8F] hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                               <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -200,7 +200,7 @@ export function TicketsView() {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-[#7A7266]">
             Pagina {page} de {totalPages}
           </span>
           <button

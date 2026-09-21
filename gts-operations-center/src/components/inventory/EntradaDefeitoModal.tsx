@@ -72,25 +72,25 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center">
-              <PackageX className="w-4.5 h-4.5 text-red-400" />
+              <PackageX className="w-4.5 h-4.5 text-red-700" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Entrada Defeituosa (ManINFO)</h3>
-              <p className="text-xs text-gray-500">Equipamento/produto avariado</p>
+              <h3 className="text-lg font-semibold text-[#201D17]">Entrada Defeituosa (ManINFO)</h3>
+              <p className="text-xs text-[#A69E8F]">Equipamento/produto avariado</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Item / Equipamento</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Item / Equipamento</label>
           <input
             type="search"
             value={busca}
@@ -112,7 +112,7 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Quantidade</label>
+            <label className="block text-xs text-[#7A7266] mb-1.5">Quantidade</label>
             <input
               type="number"
               value={quantidade}
@@ -123,7 +123,7 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Numero de Serie / Patrimonio</label>
+            <label className="block text-xs text-[#7A7266] mb-1.5">Numero de Serie / Patrimonio</label>
             <input
               type="text"
               value={numeroSerie}
@@ -135,7 +135,7 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Descricao Detalhada do Defeito</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Descricao Detalhada do Defeito</label>
           <textarea
             value={defeito}
             onChange={e => setDefeito(e.target.value)}
@@ -146,7 +146,7 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Origem da Entrada</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Origem da Entrada</label>
           <div className="grid grid-cols-3 gap-2 mb-2">
             {(['DIRETA', 'TECNICO', 'CLIENTE'] as const).map(o => (
               <button
@@ -155,8 +155,8 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
                 onClick={() => setOrigem(o)}
                 className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
                   origem === o
-                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                    : 'bg-white/5 text-gray-400 border-transparent hover:text-white'
+                    ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
+                    : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
                 }`}
               >
                 {o === 'DIRETA' ? 'Entrada Direta' : o === 'TECNICO' ? 'Tecnico' : 'Cliente'}
@@ -173,7 +173,7 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
             />
           )}
           {origem !== 'DIRETA' && (
-            <p className="text-xs text-yellow-400 mt-1.5 flex items-center gap-1">
+            <p className="text-xs text-amber-700 mt-1.5 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               Ficara "Pendente de Aceite" ate a confirmacao de recebimento no central
             </p>
@@ -181,9 +181,9 @@ export function EntradaDefeitoModal({ onClose, onSuccess }: Props) {
         </div>
 
         {erro && (
-          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-xs text-red-400">{erro}</p>
+          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/25 rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+            <p className="text-xs text-red-700">{erro}</p>
           </div>
         )}
 

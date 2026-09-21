@@ -118,18 +118,18 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
   })
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 sticky top-0 bg-[#111827] z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <FileUp className="w-4 h-4 text-blue-400" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+              <FileUp className="w-4 h-4 text-blue-700" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Importar Nota Fiscal (XML/JSON)</h2>
+            <h2 className="text-lg font-semibold text-[#201D17]">Importar Nota Fiscal (XML/JSON)</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -140,7 +140,7 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
           {itens.length === 0 && (
             <div
               onClick={() => inputRef.current?.click()}
-              className="border-2 border-dashed border-white/10 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500/40 transition-colors"
+              className="border-2 border-dashed border-[#D8D2C3] rounded-xl p-10 text-center cursor-pointer hover:border-blue-500/40 transition-colors"
             >
               <input
                 ref={inputRef}
@@ -155,14 +155,14 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
               />
               {analisando ? (
                 <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-                  <p className="text-gray-400">Analisando arquivo da nota fiscal...</p>
+                  <Loader2 className="w-8 h-8 text-blue-700 animate-spin" />
+                  <p className="text-[#7A7266]">Analisando arquivo da nota fiscal...</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                  <FileUp className="w-8 h-8 text-gray-500" />
-                  <p className="text-white font-medium">Clique para selecionar o arquivo da nota</p>
-                  <p className="text-sm text-gray-500">Aceita XML (NF-e) ou JSON</p>
+                  <FileUp className="w-8 h-8 text-[#A69E8F]" />
+                  <p className="text-[#201D17] font-medium">Clique para selecionar o arquivo da nota</p>
+                  <p className="text-sm text-[#A69E8F]">Aceita XML (NF-e) ou JSON</p>
                 </div>
               )}
             </div>
@@ -171,8 +171,8 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
           {/* Preview dos itens */}
           {itens.length > 0 && (
             <>
-              <div className="flex items-center justify-between bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
-                <p className="text-sm text-blue-300">
+              <div className="flex items-center justify-between bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-3">
+                <p className="text-sm text-blue-700">
                   Nota Fiscal <strong>{notaFiscal}</strong> — {itens.length} item(ns) encontrados no arquivo
                 </p>
               </div>
@@ -184,51 +184,51 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
                     className={cn(
                       'rounded-xl border p-4 space-y-3',
                       item.encontrado
-                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        ? 'bg-emerald-500/5 border-emerald-500/25'
                         : item.resolvido
-                          ? 'bg-blue-500/5 border-blue-500/20'
+                          ? 'bg-blue-500/5 border-blue-500/25'
                           : 'bg-red-500/5 border-red-500/30'
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {item.encontrado ? (
-                          <PackageCheck className="w-4 h-4 text-emerald-400" />
+                          <PackageCheck className="w-4 h-4 text-emerald-700" />
                         ) : (
-                          <PackageX className="w-4 h-4 text-red-400" />
+                          <PackageX className="w-4 h-4 text-red-700" />
                         )}
-                        <span className="font-medium text-white">{item.descricao}</span>
+                        <span className="font-medium text-[#201D17]">{item.descricao}</span>
                       </div>
                       <span className={cn(
                         'text-xs px-2 py-0.5 rounded-full font-medium',
-                        item.encontrado ? 'bg-emerald-500/20 text-emerald-400' :
-                        item.resolvido ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'
+                        item.encontrado ? 'bg-emerald-500/15 text-emerald-700' :
+                        item.resolvido ? 'bg-blue-500/15 text-blue-700' : 'bg-red-500/15 text-red-700'
                       )}>
                         {item.encontrado ? 'Item localizado' : item.resolvido ? 'Novo SKU definido' : 'Item nao localizado'}
                       </span>
                     </div>
 
-                    <div className="text-sm text-gray-400 flex gap-4">
-                      <span>Cod. na nota: <strong className="text-gray-300">{item.codigoNF}</strong></span>
-                      <span>Qtd: <strong className="text-gray-300">{item.quantidade} {item.unidade}</strong></span>
-                      <span>Valor unit.: <strong className="text-gray-300">R$ {item.valorUnitario.toFixed(2)}</strong></span>
+                    <div className="text-sm text-[#7A7266] flex gap-4">
+                      <span>Cod. na nota: <strong className="text-[#7A7266]">{item.codigoNF}</strong></span>
+                      <span>Qtd: <strong className="text-[#7A7266]">{item.quantidade} {item.unidade}</strong></span>
+                      <span>Valor unit.: <strong className="text-[#7A7266]">R$ {item.valorUnitario.toFixed(2)}</strong></span>
                     </div>
 
                     {item.encontrado && (
-                      <p className="text-xs text-emerald-400/80">
+                      <p className="text-xs text-emerald-700/80">
                         Vinculado ao item ja cadastrado: {item.itemExistente?.codigo} — {item.itemExistente?.descricao}
                       </p>
                     )}
 
                     {!item.encontrado && !item.resolvido && (
-                      <div className="bg-red-500/5 border border-red-500/10 rounded-lg p-3 space-y-3">
-                        <div className="flex items-center gap-2 text-red-400 text-sm">
+                      <div className="bg-red-500/5 border border-red-500/15 rounded-lg p-3 space-y-3">
+                        <div className="flex items-center gap-2 text-red-700 text-sm">
                           <AlertTriangle className="w-4 h-4" />
                           Este item nao existe no estoque. Defina um codigo (SKU) para cadastra-lo.
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs text-gray-400 mb-1">Codigo (SKU) *</label>
+                            <label className="block text-xs text-[#7A7266] mb-1">Codigo (SKU) *</label>
                             <input
                               value={item.codigoFinal}
                               onChange={e => atualizarItem(index, 'codigoFinal', e.target.value.toUpperCase())}
@@ -236,7 +236,7 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs text-gray-400 mb-1">Categoria *</label>
+                            <label className="block text-xs text-[#7A7266] mb-1">Categoria *</label>
                             <select
                               value={item.categoriaFinal}
                               onChange={e => atualizarItem(index, 'categoriaFinal', e.target.value)}
@@ -250,7 +250,7 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">Descricao</label>
+                          <label className="block text-xs text-[#7A7266] mb-1">Descricao</label>
                           <input
                             value={item.descricaoFinal}
                             onChange={e => atualizarItem(index, 'descricaoFinal', e.target.value)}
@@ -259,7 +259,7 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
                         </div>
                         <button
                           onClick={() => confirmarNovoSku(index)}
-                          className="flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-300"
+                          className="flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800"
                         >
                           Confirmar novo item <ArrowRight className="w-3.5 h-3.5" />
                         </button>
@@ -273,9 +273,9 @@ export function ImportarNotaFiscalModal({ onClose, onSuccess }: Props) {
 
           {/* Erro */}
           {erro && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <p className="text-sm text-red-400">{erro}</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+              <p className="text-sm text-red-700">{erro}</p>
             </div>
           )}
 

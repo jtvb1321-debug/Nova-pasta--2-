@@ -48,7 +48,7 @@ export function DashboardNOC() {
           <UnifiedTimelineCard />
         </div>
 
-        <div className="rounded-xl border" style={{ backgroundColor: `${NOC.card}CC`, borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-xl border" style={{ backgroundColor: `${NOC.card}CC`, borderColor: '#E6E1D6' }}>
           <DashboardFooterBar />
         </div>
       </div>

@@ -8,12 +8,12 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import {
   Truck, Users, ClipboardList, Package,
   DollarSign, Wifi, Clock,
-  AlertTriangle, CheckCircle, Zap, Activity, Sparkles,
+  AlertTriangle, CheckCircle, Activity, Sparkles,
   ShieldCheck, Award, Rocket, Radio, Headphones, Signal, Globe,
   Camera, Handshake, WifiOff, ShieldAlert, Server, PlugZap, Gauge, Navigation2
 } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
-import { formatarTempoDecorrido as formatarTempo } from '@/components/dashboard/noc/theme'
+import { formatarTempoDecorrido as formatarTempo } from '@/lib/tempoDecorrido'
 import { toast } from '@/hooks/use-toast'
 import { TVNetworkAlternator } from './TVNetworkAlternator'
 import { MissionControlBackground } from './MissionControlBackground'
@@ -251,8 +251,8 @@ export function TVDashboard() {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-10 py-5 border-b border-white/10 bg-[#111827]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-            <Zap className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] bg-gradient-to-br from-orange-500/25 to-orange-500/10 ring-1 ring-orange-500/30 p-2">
+            <img src="/images/icon.png" alt="GTSNet" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-3xl font-black text-white">

@@ -38,13 +38,13 @@ async function fetchEquipesComChamado() {
 }
 
 const STATUS_CFG: Record<StatusHoje, { label: string; cor: string; bg: string; dot: string }> = {
-  INATIVO:         { label: 'Inativo',         cor: 'text-gray-400',    bg: 'bg-white/5 border-white/10',           dot: 'bg-gray-400' },
-  ATESTADO:        { label: 'Atestado',        cor: 'text-purple-300',  bg: 'bg-purple-500/10 border-purple-500/20', dot: 'bg-purple-400' },
-  FALTA:           { label: 'Falta',           cor: 'text-red-300',     bg: 'bg-red-500/10 border-red-500/20',       dot: 'bg-red-400' },
-  FOLGA:           { label: 'Folga',           cor: 'text-sky-300',     bg: 'bg-sky-500/10 border-sky-500/20',       dot: 'bg-sky-400' },
-  EM_ATENDIMENTO:  { label: 'Em Atendimento',  cor: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20', dot: 'bg-yellow-400 animate-pulse' },
-  DISPONIVEL:      { label: 'Disponivel',      cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
-  SEM_INFO:        { label: 'Sem informacao',  cor: 'text-gray-500',    bg: 'bg-white/5 border-white/10',           dot: 'bg-gray-500' },
+  INATIVO:         { label: 'Inativo',         cor: 'text-[#7A7266]',   bg: 'bg-black/[0.03] border-[#E6E1D6]',      dot: 'bg-[#A69E8F]' },
+  ATESTADO:        { label: 'Atestado',        cor: 'text-purple-700',  bg: 'bg-purple-500/10 border-purple-500/20', dot: 'bg-purple-500' },
+  FALTA:           { label: 'Falta',           cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/20',       dot: 'bg-red-500' },
+  FOLGA:           { label: 'Folga',           cor: 'text-sky-700',     bg: 'bg-sky-500/10 border-sky-500/20',       dot: 'bg-sky-500' },
+  EM_ATENDIMENTO:  { label: 'Em Atendimento',  cor: 'text-amber-700',   bg: 'bg-amber-500/10 border-amber-500/20',   dot: 'bg-amber-500 animate-pulse' },
+  DISPONIVEL:      { label: 'Disponivel',      cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-500' },
+  SEM_INFO:        { label: 'Sem informacao',  cor: 'text-[#A69E8F]',   bg: 'bg-black/[0.03] border-[#E6E1D6]',      dot: 'bg-[#A69E8F]' },
 }
 
 const STATUS_FILTRO_OPTIONS: { valor: string; label: string }[] = [
@@ -63,7 +63,7 @@ function Avatar({ tecnico, tamanho = 'md' }: { tecnico: Tecnico; tamanho?: 'md' 
     return <img src={tecnico.avatar} alt={tecnico.nome} className={cn('rounded-full object-cover flex-shrink-0', dimensao)} />
   }
   return (
-    <div className={cn('rounded-full bg-orange-500/15 text-orange-400 font-bold flex items-center justify-center flex-shrink-0', dimensao)}>
+    <div className={cn('rounded-full bg-orange-500/15 text-orange-600 font-bold flex items-center justify-center flex-shrink-0', dimensao)}>
       {getInitials(tecnico.nome)}
     </div>
   )
@@ -122,8 +122,8 @@ export function TecnicosView() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gestao de Tecnicos</h1>
-          <p className="text-gray-500 text-sm mt-1">Visao geral da equipe de campo - status, equipe e horas do mes</p>
+          <h1 className="text-2xl font-bold text-[#201D17]">Gestao de Tecnicos</h1>
+          <p className="text-[#A69E8F] text-sm mt-1">Visao geral da equipe de campo - status, equipe e horas do mes</p>
         </div>
         <button onClick={() => refetch()} className="gts-btn-secondary" disabled={isFetching}>
           <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} />
@@ -134,17 +134,17 @@ export function TecnicosView() {
       {/* Cards de resumo */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total', valor: totais.total, icon: Users, cor: 'text-white' },
-          { label: 'Ativos', valor: totais.ativos, icon: UserCheck, cor: 'text-emerald-400' },
-          { label: 'Inativos', valor: totais.inativos, icon: UserX, cor: 'text-gray-400' },
-          { label: 'Em Atendimento', valor: totais.emAtendimento, icon: Activity, cor: 'text-yellow-400' },
-          { label: 'Disponiveis', valor: totais.disponiveis, icon: CheckCircle2, cor: 'text-emerald-400' },
-          { label: 'Afastados', valor: totais.afastados, icon: CalendarOff, cor: 'text-purple-300' },
+          { label: 'Total', valor: totais.total, icon: Users, cor: 'text-[#201D17]' },
+          { label: 'Ativos', valor: totais.ativos, icon: UserCheck, cor: 'text-emerald-700' },
+          { label: 'Inativos', valor: totais.inativos, icon: UserX, cor: 'text-[#7A7266]' },
+          { label: 'Em Atendimento', valor: totais.emAtendimento, icon: Activity, cor: 'text-amber-700' },
+          { label: 'Disponiveis', valor: totais.disponiveis, icon: CheckCircle2, cor: 'text-emerald-700' },
+          { label: 'Afastados', valor: totais.afastados, icon: CalendarOff, cor: 'text-purple-700' },
         ].map(card => {
           const Icon = card.icon
           return (
             <div key={card.label} className="gts-card">
-              <p className="text-xs text-gray-500 flex items-center gap-1"><Icon className="w-3.5 h-3.5" /> {card.label}</p>
+              <p className="text-xs text-[#A69E8F] flex items-center gap-1"><Icon className="w-3.5 h-3.5" /> {card.label}</p>
               <p className={cn('text-2xl font-black mt-1', card.cor)}>{card.valor}</p>
             </div>
           )
@@ -154,7 +154,7 @@ export function TecnicosView() {
       {/* Busca e filtros */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#A69E8F] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={busca}
@@ -184,18 +184,18 @@ export function TecnicosView() {
       ) : isError ? (
         <div className="gts-card text-center py-16">
           <UserX className="w-10 h-10 text-red-500 mx-auto mb-3" />
-          <p className="text-gray-400 font-medium">Erro ao carregar tecnicos</p>
+          <p className="text-[#7A7266] font-medium">Erro ao carregar tecnicos</p>
           <button onClick={() => refetch()} className="gts-btn-secondary mt-4 mx-auto">Tentar novamente</button>
         </div>
       ) : tecnicos.length === 0 ? (
         <div className="gts-card text-center py-16">
-          <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 font-medium">Nenhum tecnico cadastrado</p>
+          <Users className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+          <p className="text-[#7A7266] font-medium">Nenhum tecnico cadastrado</p>
         </div>
       ) : tecnicosFiltrados.length === 0 ? (
         <div className="gts-card text-center py-16">
-          <Search className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 font-medium">Nenhum tecnico encontrado para esses filtros</p>
+          <Search className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
+          <p className="text-[#7A7266] font-medium">Nenhum tecnico encontrado para esses filtros</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -205,14 +205,14 @@ export function TecnicosView() {
               <button
                 key={t.id}
                 onClick={() => setTecnicoSelecionado(t)}
-                className="gts-card text-left hover:border-orange-400/30 transition-colors"
+                className="gts-card text-left hover:border-orange-600/30 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <Avatar tecnico={t} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-white font-semibold truncate">{t.nome}</p>
-                    <p className="text-xs text-gray-500 truncate">{t.cargo || 'Cargo nao informado'}</p>
-                    <p className="text-xs text-orange-400 truncate mt-0.5">{t.equipe?.nome || 'Sem equipe'}</p>
+                    <p className="text-[#201D17] font-semibold truncate">{t.nome}</p>
+                    <p className="text-xs text-[#A69E8F] truncate">{t.cargo || 'Cargo nao informado'}</p>
+                    <p className="text-xs text-orange-600 truncate mt-0.5">{t.equipe?.nome || 'Sem equipe'}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-3">
@@ -221,15 +221,15 @@ export function TecnicosView() {
                     {cfg.label}
                   </span>
                   {t.telefone && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <span className="flex items-center gap-1 text-xs text-[#A69E8F]">
                       <Phone className="w-3 h-3" /> {t.telefone}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-xs text-gray-400">
-                  <span>{formatarHorasHM(t.mesAtual.horasTrabalhadas)} <span className="text-gray-600">este mes</span></span>
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#E6E1D6] text-xs text-[#7A7266]">
+                  <span>{formatarHorasHM(t.mesAtual.horasTrabalhadas)} <span className="text-[#A69E8F]">este mes</span></span>
                   {t.mesAtual.horasExtras > 0 && (
-                    <span className="text-yellow-400 font-bold">{formatarHorasHM(t.mesAtual.horasExtras)} extras</span>
+                    <span className="text-amber-700 font-bold">{formatarHorasHM(t.mesAtual.horasExtras)} extras</span>
                   )}
                 </div>
               </button>
@@ -252,66 +252,66 @@ export function TecnicosView() {
 function DetalheTecnicoModal({ tecnico, chamadoAtivo, onClose }: { tecnico: Tecnico; chamadoAtivo: any; onClose: () => void }) {
   const cfg = STATUS_CFG[tecnico.statusHoje]
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 pb-4 border-b border-white/5 sticky top-0 bg-[#111827]">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-xl">
+        <div className="flex items-center justify-between p-5 pb-4 border-b border-[#E6E1D6] sticky top-0 bg-white">
           <div className="flex items-center gap-3">
             <Avatar tecnico={tecnico} tamanho="lg" />
             <div>
-              <h3 className="text-lg font-semibold text-white">{tecnico.nome}</h3>
+              <h3 className="text-lg font-semibold text-[#201D17]">{tecnico.nome}</h3>
               <span className={cn('flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-full border mt-1 w-fit', cfg.cor, cfg.bg)}>
                 <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />
                 {cfg.label}
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white flex-shrink-0">
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-5 space-y-5">
           <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Informacoes Pessoais</h4>
+            <h4 className="text-xs font-semibold text-[#A69E8F] uppercase mb-2">Informacoes Pessoais</h4>
             <div className="space-y-1.5 text-sm">
-              <p className="flex items-center gap-2 text-gray-300"><Phone className="w-3.5 h-3.5 text-gray-500" /> {tecnico.telefone || 'Telefone nao informado'}</p>
+              <p className="flex items-center gap-2 text-[#3F3A32]"><Phone className="w-3.5 h-3.5 text-[#A69E8F]" /> {tecnico.telefone || 'Telefone nao informado'}</p>
             </div>
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Informacoes Profissionais</h4>
+            <h4 className="text-xs font-semibold text-[#A69E8F] uppercase mb-2">Informacoes Profissionais</h4>
             <div className="space-y-1.5 text-sm">
-              <p className="flex items-center gap-2 text-gray-300"><Briefcase className="w-3.5 h-3.5 text-gray-500" /> {tecnico.cargo || 'Cargo nao informado'}</p>
-              <p className="flex items-center gap-2 text-gray-300"><Users className="w-3.5 h-3.5 text-gray-500" /> {tecnico.equipe?.nome || 'Sem equipe'}</p>
+              <p className="flex items-center gap-2 text-[#3F3A32]"><Briefcase className="w-3.5 h-3.5 text-[#A69E8F]" /> {tecnico.cargo || 'Cargo nao informado'}</p>
+              <p className="flex items-center gap-2 text-[#3F3A32]"><Users className="w-3.5 h-3.5 text-[#A69E8F]" /> {tecnico.equipe?.nome || 'Sem equipe'}</p>
               {tecnico.usuario ? (
-                <p className="flex items-center gap-2 text-gray-300">
-                  <Mail className="w-3.5 h-3.5 text-gray-500" /> {tecnico.usuario.email}
-                  <span className={cn('text-xs px-1.5 py-0.5 rounded font-bold', tecnico.usuario.ativo ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10')}>
+                <p className="flex items-center gap-2 text-[#3F3A32]">
+                  <Mail className="w-3.5 h-3.5 text-[#A69E8F]" /> {tecnico.usuario.email}
+                  <span className={cn('text-xs px-1.5 py-0.5 rounded font-bold', tecnico.usuario.ativo ? 'text-emerald-700 bg-emerald-500/10' : 'text-red-700 bg-red-500/10')}>
                     {tecnico.usuario.ativo ? 'login ativo' : 'login inativo'}
                   </span>
                 </p>
               ) : (
-                <p className="flex items-center gap-2 text-gray-500"><ShieldCheck className="w-3.5 h-3.5" /> Sem conta de login vinculada</p>
+                <p className="flex items-center gap-2 text-[#A69E8F]"><ShieldCheck className="w-3.5 h-3.5" /> Sem conta de login vinculada</p>
               )}
             </div>
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Informacoes Operacionais do Mes</h4>
+            <h4 className="text-xs font-semibold text-[#A69E8F] uppercase mb-2">Informacoes Operacionais do Mes</h4>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/[0.02] rounded-lg p-3">
-                <p className="text-lg font-black text-white">{formatarHorasHM(tecnico.mesAtual.horasTrabalhadas)}</p>
-                <p className="text-xs text-gray-500">Horas trabalhadas ({tecnico.mesAtual.dias} dia(s))</p>
+              <div className="bg-black/[0.02] rounded-lg p-3">
+                <p className="text-lg font-black text-[#201D17]">{formatarHorasHM(tecnico.mesAtual.horasTrabalhadas)}</p>
+                <p className="text-xs text-[#A69E8F]">Horas trabalhadas ({tecnico.mesAtual.dias} dia(s))</p>
               </div>
-              <div className="bg-white/[0.02] rounded-lg p-3">
-                <p className="text-lg font-black text-yellow-400">{formatarHorasHM(tecnico.mesAtual.horasExtras)}</p>
-                <p className="text-xs text-gray-500">Horas extras</p>
+              <div className="bg-black/[0.02] rounded-lg p-3">
+                <p className="text-lg font-black text-amber-700">{formatarHorasHM(tecnico.mesAtual.horasExtras)}</p>
+                <p className="text-xs text-[#A69E8F]">Horas extras</p>
               </div>
               {(tecnico.mesAtual.atestados > 0 || tecnico.mesAtual.faltas > 0 || tecnico.mesAtual.folgas > 0) && (
-                <div className="col-span-2 flex items-center gap-4 text-xs text-gray-400 pt-1">
-                  {tecnico.mesAtual.atestados > 0 && <span className="text-purple-300">{tecnico.mesAtual.atestados} atestado(s)</span>}
-                  {tecnico.mesAtual.faltas > 0 && <span className="text-red-300">{tecnico.mesAtual.faltas} falta(s)</span>}
-                  {tecnico.mesAtual.folgas > 0 && <span className="text-sky-300">{tecnico.mesAtual.folgas} folga(s)</span>}
+                <div className="col-span-2 flex items-center gap-4 text-xs text-[#7A7266] pt-1">
+                  {tecnico.mesAtual.atestados > 0 && <span className="text-purple-700">{tecnico.mesAtual.atestados} atestado(s)</span>}
+                  {tecnico.mesAtual.faltas > 0 && <span className="text-red-700">{tecnico.mesAtual.faltas} falta(s)</span>}
+                  {tecnico.mesAtual.folgas > 0 && <span className="text-sky-700">{tecnico.mesAtual.folgas} folga(s)</span>}
                 </div>
               )}
             </div>
@@ -319,10 +319,10 @@ function DetalheTecnicoModal({ tecnico, chamadoAtivo, onClose }: { tecnico: Tecn
 
           {chamadoAtivo && (
             <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Atendimento Ativo da Equipe</h4>
-              <div className="bg-white/[0.02] rounded-lg p-3 text-sm">
-                <p className="text-white font-medium">{chamadoAtivo.cliente}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{chamadoAtivo.endereco}</p>
+              <h4 className="text-xs font-semibold text-[#A69E8F] uppercase mb-2">Atendimento Ativo da Equipe</h4>
+              <div className="bg-black/[0.02] rounded-lg p-3 text-sm">
+                <p className="text-[#201D17] font-medium">{chamadoAtivo.cliente}</p>
+                <p className="text-xs text-[#A69E8F] mt-0.5">{chamadoAtivo.endereco}</p>
               </div>
             </div>
           )}

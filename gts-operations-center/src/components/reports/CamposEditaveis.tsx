@@ -20,7 +20,7 @@ export function CampoTexto({ value, onChange, className, placeholder }: CampoTex
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       className={cn(
-        'bg-transparent border-b border-transparent hover:border-white/15 focus:border-orange-500 outline-none w-full transition-colors',
+        'bg-transparent border-b border-transparent hover:border-[#D8D2C3] focus:border-orange-500 outline-none w-full transition-colors',
         className
       )}
     />
@@ -42,7 +42,7 @@ export function CampoNumero({ value, onChange, className, step }: CampoNumeroPro
       value={value ?? 0}
       onChange={e => onChange(Number(e.target.value))}
       className={cn(
-        'bg-transparent border-b border-transparent hover:border-white/15 focus:border-orange-500 outline-none w-full transition-colors',
+        'bg-transparent border-b border-transparent hover:border-[#D8D2C3] focus:border-orange-500 outline-none w-full transition-colors',
         className
       )}
     />
@@ -54,7 +54,7 @@ export function BotaoRemoverLinha({ onClick, title = 'Remover do relatorio' }: {
     <button
       onClick={onClick}
       title={title}
-      className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0 p-0.5"
+      className="text-[#A69E8F] hover:text-red-700 transition-colors flex-shrink-0 p-0.5"
     >
       <X className="w-3.5 h-3.5" />
     </button>

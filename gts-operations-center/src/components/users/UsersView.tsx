@@ -14,11 +14,11 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const ROLES = [
-  { value: 'ADMIN',    label: 'Administrador', cor: 'text-red-400 bg-red-500/10',         desc: 'Acesso total ao sistema' },
-  { value: 'GESTOR',   label: 'Gestor',        cor: 'text-orange-400 bg-orange-500/10',   desc: 'Aprova vendas e devolucoes' },
-  { value: 'OPERADOR', label: 'Operador NOC',  cor: 'text-blue-400 bg-blue-500/10',       desc: 'Gerencia chamados e equipes' },
-  { value: 'TECNICO',  label: 'Tecnico',       cor: 'text-yellow-400 bg-yellow-500/10',   desc: 'Executa chamados em campo' },
-  { value: 'VENDEDOR', label: 'Vendedor',      cor: 'text-emerald-400 bg-emerald-500/10', desc: 'Cadastra e acompanha vendas' },
+  { value: 'ADMIN',    label: 'Administrador', cor: 'text-red-700 bg-red-500/10',         desc: 'Acesso total ao sistema' },
+  { value: 'GESTOR',   label: 'Gestor',        cor: 'text-orange-700 bg-orange-500/10',   desc: 'Aprova vendas e devolucoes' },
+  { value: 'OPERADOR', label: 'Operador NOC',  cor: 'text-blue-700 bg-blue-500/10',       desc: 'Gerencia chamados e equipes' },
+  { value: 'TECNICO',  label: 'Tecnico',       cor: 'text-amber-700 bg-amber-500/10',     desc: 'Executa chamados em campo' },
+  { value: 'VENDEDOR', label: 'Vendedor',      cor: 'text-emerald-700 bg-emerald-500/10', desc: 'Cadastra e acompanha vendas' },
 ]
 
 function getRoleCfg(role: string) {
@@ -78,23 +78,23 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
-              <User className="w-4 h-4 text-orange-400" />
+              <User className="w-4 h-4 text-orange-600" />
             </div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-[#201D17]">
               {usuario ? 'Editar Usuario' : 'Novo Usuario'}
             </h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17]">✕</button>
         </div>
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Nome completo *</label>
+            <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Nome completo *</label>
             <input
               value={form.nome}
               onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
@@ -104,7 +104,7 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">E-mail *</label>
+            <label className="block text-xs font-medium text-[#7A7266] mb-1.5">E-mail *</label>
             <input
               type="email"
               value={form.email}
@@ -115,7 +115,7 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+            <label className="block text-xs font-medium text-[#7A7266] mb-1.5">
               {usuario ? 'Nova Senha (deixe vazio para nao alterar)' : 'Senha *'}
             </label>
             <div className="relative">
@@ -129,7 +129,7 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
               <button
                 type="button"
                 onClick={() => setShowSenha(!showSenha)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A69E8F] hover:text-[#201D17]"
               >
                 {showSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -137,7 +137,7 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2">Perfil de Acesso *</label>
+            <label className="block text-xs font-medium text-[#7A7266] mb-2">Perfil de Acesso *</label>
             <div className="space-y-2">
               {ROLES.map(r => (
                 <label key={r.value} className="cursor-pointer">
@@ -153,14 +153,14 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
                     'flex items-center gap-3 p-3 rounded-lg border transition-all',
                     form.role === r.value
                       ? 'border-orange-500/40 bg-orange-500/10'
-                      : 'border-white/5 hover:border-white/10 bg-white/[0.02]'
+                      : 'border-[#E6E1D6] hover:border-[#D8D2C3] bg-black/[0.02]'
                   )}>
                     <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', r.cor)}>
                       {r.label}
                     </span>
-                    <p className="text-xs text-gray-500 flex-1">{r.desc}</p>
+                    <p className="text-xs text-[#A69E8F] flex-1">{r.desc}</p>
                     {form.role === r.value && (
-                      <CheckCircle className="w-3.5 h-3.5 text-orange-400" />
+                      <CheckCircle className="w-3.5 h-3.5 text-orange-600" />
                     )}
                   </div>
                 </label>
@@ -168,16 +168,16 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/5">
+          <div className="flex items-center justify-between p-3 bg-black/[0.02] rounded-lg border border-[#E6E1D6]">
             <div>
-              <p className="text-sm text-white">Usuario ativo</p>
-              <p className="text-xs text-gray-500">Usuarios inativos nao conseguem fazer login</p>
+              <p className="text-sm text-[#201D17]">Usuario ativo</p>
+              <p className="text-xs text-[#A69E8F]">Usuarios inativos nao conseguem fazer login</p>
             </div>
             <button
               onClick={() => setForm(f => ({ ...f, ativo: !f.ativo }))}
               className={cn(
                 'relative w-11 h-6 rounded-full transition-colors',
-                form.ativo ? 'bg-orange-500' : 'bg-gray-700'
+                form.ativo ? 'bg-orange-500' : 'bg-[#D8D2C3]'
               )}
             >
               <span className={cn(
@@ -188,9 +188,9 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
           </div>
 
           {erro && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <p className="text-sm text-red-400">{erro}</p>
+            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-700" />
+              <p className="text-sm text-red-700">{erro}</p>
             </div>
           )}
 
@@ -201,7 +201,7 @@ function UsuarioModal({ usuario, onClose, onSuccess }: ModalProps) {
             <button
               onClick={salvar}
               disabled={loading}
-              className="flex-1 gts-btn-primary justify-center bg-orange-500 hover:bg-orange-400"
+              className="flex-1 gts-btn-primary justify-center"
             >
               {loading
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
@@ -264,11 +264,11 @@ export function UsersView() {
       />
 
       {/* Info permissoes */}
-      <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/25 rounded-xl">
+        <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-blue-400 font-medium text-sm">Area Restrita — Apenas Administrador</p>
-          <p className="text-gray-500 text-xs mt-0.5">
+          <p className="text-blue-700 font-medium text-sm">Area Restrita — Apenas Administrador</p>
+          <p className="text-[#A69E8F] text-xs mt-0.5">
             Gerencie os usuarios do sistema, seus perfis de acesso e permissoes. Usuarios inativos nao conseguem fazer login.
           </p>
         </div>
@@ -284,7 +284,7 @@ export function UsersView() {
                 {r.label}
               </span>
               <p className={cn('text-2xl font-bold', r.cor.split(' ')[0])}>{count}</p>
-              <p className="text-xs text-gray-600 mt-1">{r.desc}</p>
+              <p className="text-xs text-[#A69E8F] mt-1">{r.desc}</p>
             </div>
           )
         })}
@@ -317,14 +317,14 @@ export function UsersView() {
                       <tr key={u.id}>
                         <td className="px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-xs font-bold flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-700 text-xs font-bold flex-shrink-0">
                               {u.nome?.[0]?.toUpperCase() || '?'}
                             </div>
-                            <p className="text-sm text-white font-medium">{u.nome}</p>
+                            <p className="text-sm text-[#201D17] font-medium">{u.nome}</p>
                           </div>
                         </td>
                         <td className="px-4">
-                          <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                          <div className="flex items-center gap-1.5 text-sm text-[#7A7266]">
                             <Mail className="w-3.5 h-3.5" />
                             {u.email}
                           </div>
@@ -337,7 +337,7 @@ export function UsersView() {
                         <td className="px-4">
                           <span className={cn(
                             'flex items-center gap-1 text-xs font-medium w-fit',
-                            u.ativo ? 'text-emerald-400' : 'text-gray-500'
+                            u.ativo ? 'text-emerald-700' : 'text-[#A69E8F]'
                           )}>
                             {u.ativo
                               ? <><CheckCircle className="w-3.5 h-3.5" /> Ativo</>
@@ -345,21 +345,21 @@ export function UsersView() {
                             }
                           </span>
                         </td>
-                        <td className="px-4 text-xs text-gray-500">
+                        <td className="px-4 text-xs text-[#A69E8F]">
                           {formatDateTime(u.createdAt)}
                         </td>
                         <td className="px-4">
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => { setEditando(u); setShowModal(true) }}
-                              className="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-[#A69E8F] hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors"
                               title="Editar"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => setConfirmDelete(u)}
-                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-[#A69E8F] hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors"
                               title="Excluir"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -392,7 +392,7 @@ export function UsersView() {
         <ConfirmDialog
           titulo="Excluir usuario?"
           mensagem={
-            <>Tem certeza que deseja excluir o usuario <strong className="text-white">{confirmDelete.nome}</strong>? Esta acao nao pode ser desfeita.</>
+            <>Tem certeza que deseja excluir o usuario <strong className="text-[#201D17]">{confirmDelete.nome}</strong>? Esta acao nao pode ser desfeita.</>
           }
           confirmarLabel="Excluir"
           carregando={deleteMutation.isPending}

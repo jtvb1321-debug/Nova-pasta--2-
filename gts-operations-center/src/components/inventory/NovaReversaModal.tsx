@@ -64,33 +64,33 @@ export function NovaReversaModal({ onClose, onSuccess, preItemId, preQuantidade,
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-pink-500/15 flex items-center justify-center">
-              <RotateCcw className="w-4.5 h-4.5 text-pink-400" />
+              <RotateCcw className="w-4.5 h-4.5 text-pink-700" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Nova Reversa ManINFO</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="text-lg font-semibold text-[#201D17]">Nova Reversa ManINFO</h3>
+              <p className="text-xs text-[#A69E8F]">
                 {preLocalNome ? `Enviando de: ${preLocalNome}` : 'Material enviado para troca'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {bloqueado ? (
-          <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-sm text-white font-medium">{preItemDescricao || itemSelecionado?.descricao || 'Item selecionado'}</p>
-            <p className="text-xs text-gray-500 font-mono">{preItemCodigo || itemSelecionado?.codigo}</p>
+          <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+            <p className="text-sm text-[#201D17] font-medium">{preItemDescricao || itemSelecionado?.descricao || 'Item selecionado'}</p>
+            <p className="text-xs text-[#A69E8F] font-mono">{preItemCodigo || itemSelecionado?.codigo}</p>
           </div>
         ) : (
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Item</label>
+            <label className="block text-xs text-[#7A7266] mb-1.5">Item</label>
             <select
               value={itemId}
               onChange={e => setItemId(e.target.value)}
@@ -102,15 +102,15 @@ export function NovaReversaModal({ onClose, onSuccess, preItemId, preQuantidade,
               ))}
             </select>
             {itemSelecionado && (
-              <p className="text-xs text-gray-500 mt-1">
-                Disponivel: <span className="text-white font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
+              <p className="text-xs text-[#A69E8F] mt-1">
+                Disponivel: <span className="text-[#201D17] font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
               </p>
             )}
           </div>
         )}
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Quantidade</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Quantidade</label>
           <input
             type="number"
             value={quantidade}
@@ -122,7 +122,7 @@ export function NovaReversaModal({ onClose, onSuccess, preItemId, preQuantidade,
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Observacoes / Cobranca</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Observacoes / Cobranca</label>
           <textarea
             value={observacao}
             onChange={e => setObservacao(e.target.value)}
@@ -133,9 +133,9 @@ export function NovaReversaModal({ onClose, onSuccess, preItemId, preQuantidade,
         </div>
 
         {erro && (
-          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-xs text-red-400">{erro}</p>
+          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/25 rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+            <p className="text-xs text-red-700">{erro}</p>
           </div>
         )}
 

@@ -39,7 +39,7 @@ export function MikrotikStatusCard() {
       ) : (
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-left border-b" style={{ borderColor: 'rgba(255,255,255,0.05)', color: NOC.cinza }}>
+            <tr className="text-left border-b" style={{ borderColor: 'rgba(32,29,23,0.05)', color: NOC.cinza }}>
               <th className="py-2 pr-2 font-medium">Dispositivo</th>
               <th className="py-2 pr-2 font-medium">CPU</th>
               <th className="py-2 pr-2 font-medium">RAM</th>
@@ -50,7 +50,7 @@ export function MikrotikStatusCard() {
           </thead>
           <tbody>
             {dispositivos.map(d => (
-              <tr key={d.nome} className="border-b" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+              <tr key={d.nome} className="border-b" style={{ borderColor: 'rgba(32,29,23,0.04)' }}>
                 <td className="py-2 pr-2" style={{ color: NOC.texto }}>{d.nome}</td>
                 <td className="py-2 pr-2" style={{ color: NOC.textoSecundario }}>{d.cpu}%</td>
                 <td className="py-2 pr-2" style={{ color: NOC.textoSecundario }}>{d.ram}%</td>

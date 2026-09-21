@@ -42,10 +42,10 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
 
   const conteudo = (
     <div className={cn(
-      'relative rounded-lg border bg-[#111827]/90 overflow-hidden',
+      'relative rounded-lg border bg-white shadow-sm shadow-black/[0.03] overflow-hidden',
       compact ? 'p-3' : 'p-4',
-      alert ? 'border-red-500/40 shadow-lg shadow-red-500/5' : 'border-white/10',
-      href && 'transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20',
+      alert ? 'border-red-500/40 shadow-lg shadow-red-500/5' : 'border-[#E6E1D6]',
+      href && 'transition-all duration-200 hover:-translate-y-0.5 hover:border-[#D8D2C3]',
       className
     )}>
       {!compact && (
@@ -63,7 +63,7 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
         </div>
         {trend != null ? (
           <div className={cn('flex items-center gap-0.5 text-[11px] font-medium font-mono',
-            trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-red-400' : 'text-gray-500'
+            trend > 0 ? 'text-emerald-700' : trend < 0 ? 'text-red-700' : 'text-[#A69E8F]'
           )}>
             {trend > 0 ? <TrendingUp className="w-3 h-3" /> : trend < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
             {Math.abs(trend)}%
@@ -72,9 +72,9 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
         )}
       </div>
-      <p className={cn('text-gray-400 leading-tight mb-1', compact ? 'text-xs' : 'text-xs text-gray-500')}>{label}</p>
-      <p className={cn('font-bold text-white font-mono tracking-tight leading-none', compact ? 'text-xl' : 'text-3xl')} style={compact ? { color } : undefined}>{value}</p>
-      {sublabel && <p className="text-xs text-gray-600 mt-1">{sublabel}</p>}
+      <p className={cn('text-[#7A7266] leading-tight mb-1', compact ? 'text-xs' : 'text-xs text-[#A69E8F]')}>{label}</p>
+      <p className={cn('font-bold text-[#201D17] font-mono tracking-tight leading-none', compact ? 'text-xl' : 'text-3xl')} style={compact ? { color } : undefined}>{value}</p>
+      {sublabel && <p className="text-xs text-[#A69E8F] mt-1">{sublabel}</p>}
       {sparkline && <div className="mt-2"><Sparkline data={sparkline} color={color} /></div>}
     </div>
   )

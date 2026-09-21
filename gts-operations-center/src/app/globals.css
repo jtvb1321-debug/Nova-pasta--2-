@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 220 30% 8%;
-    --foreground: 210 40% 95%;
-    --card: 220 25% 11%;
-    --card-foreground: 210 40% 95%;
-    --popover: 220 25% 11%;
-    --popover-foreground: 210 40% 95%;
-    --primary: 24 95% 53%;
+    --background: 40 25% 97%;
+    --foreground: 25 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 25 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 20% 10%;
+    --primary: 24 82% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 20% 16%;
-    --secondary-foreground: 210 40% 90%;
-    --muted: 220 20% 16%;
-    --muted-foreground: 215 15% 55%;
-    --accent: 220 20% 18%;
-    --accent-foreground: 210 40% 95%;
-    --destructive: 0 84% 60%;
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 25 15% 20%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 25 10% 45%;
+    --accent: 40 20% 92%;
+    --accent-foreground: 25 20% 10%;
+    --destructive: 5 70% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 24 95% 53%;
+    --border: 35 20% 87%;
+    --input: 35 20% 87%;
+    --ring: 24 82% 48%;
     --radius: 0.5rem;
   }
 }
@@ -33,14 +33,14 @@
   }
 
   html {
-  
+
   }
 
   body {
-    @apply bg-[#0B1120] text-foreground antialiased font-sans;
+    @apply bg-[#FAF9F6] text-foreground antialiased font-sans;
     background-image:
-      radial-gradient(ellipse at top, rgba(249, 115, 22, 0.06) 0%, transparent 60%),
-      radial-gradient(ellipse at bottom right, rgba(16, 185, 129, 0.03) 0%, transparent 60%);
+      radial-gradient(ellipse at top, rgba(232, 114, 12, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(14, 143, 143, 0.03) 0%, transparent 60%);
     background-attachment: fixed;
   }
 
@@ -53,22 +53,22 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-[#6B7280]/30 rounded-full;
+    @apply bg-[#A69E8F]/30 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-[#6B7280]/50;
+    @apply bg-[#A69E8F]/50;
   }
 }
 
 @layer components {
   .gts-card {
-    @apply bg-[#111827]/90 backdrop-blur-md border border-white/5 rounded-xl p-4 shadow-lg shadow-black/20
+    @apply bg-white/95 backdrop-blur-md border border-[#E6E1D6] rounded-xl p-4 shadow-sm shadow-black/[0.03]
            transition-colors duration-200;
   }
 
   .gts-card-alert {
-    @apply bg-[#111827]/90 backdrop-blur-md border border-red-500/40 rounded-xl p-4 shadow-lg shadow-red-500/5;
+    @apply bg-white/95 backdrop-blur-md border border-red-500/40 rounded-xl p-4 shadow-sm shadow-red-500/5;
   }
 
   .status-badge {
@@ -84,23 +84,23 @@
   }
 
   .gts-badge-success {
-    @apply gts-badge bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+    @apply gts-badge bg-emerald-500/10 text-emerald-700 border-emerald-500/25;
   }
 
   .gts-badge-warning {
-    @apply gts-badge bg-amber-500/10 text-amber-400 border-amber-500/20;
+    @apply gts-badge bg-amber-500/10 text-amber-700 border-amber-500/25;
   }
 
   .gts-badge-danger {
-    @apply gts-badge bg-red-500/10 text-red-400 border-red-500/20;
+    @apply gts-badge bg-red-500/10 text-red-700 border-red-500/25;
   }
 
   .gts-badge-info {
-    @apply gts-badge bg-[#22D3EE]/10 text-[#22D3EE] border-[#22D3EE]/25;
+    @apply gts-badge bg-cyan-600/10 text-cyan-700 border-cyan-600/25;
   }
 
   .gts-badge-neutral {
-    @apply gts-badge bg-white/5 text-gray-400 border-white/10;
+    @apply gts-badge bg-black/[0.03] text-[#7A7266] border-[#E6E1D6];
   }
 
   .status-dot {
@@ -108,44 +108,44 @@
   }
 
   .status-dot-online {
-    @apply bg-[#10B981] animate-pulse;
+    @apply bg-[#187A45] animate-pulse;
   }
 
   .status-dot-offline {
-    @apply bg-[#6B7280];
+    @apply bg-[#A69E8F];
   }
 
   .status-dot-alert {
-    @apply bg-[#EF4444] animate-pulse;
+    @apply bg-[#C4291E] animate-pulse;
   }
 
   .skeleton {
-    @apply bg-white/5 rounded animate-pulse;
+    @apply bg-black/[0.04] rounded animate-pulse;
   }
 
   .gts-input {
-    @apply bg-[#0B1120] border border-white/10 rounded-lg px-3 py-2 text-sm text-white
-           placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500
-           focus:border-orange-500 transition-colors;
+    @apply bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-sm text-[#201D17]
+           placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 focus:ring-orange-600
+           focus:border-orange-600 transition-colors;
   }
 
   .gts-btn-primary {
-    @apply bg-orange-500 hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-lg
+    @apply bg-orange-600 hover:bg-orange-500 text-white font-medium px-4 py-2 rounded-lg
            transition-all duration-200 flex items-center gap-2 text-sm
-           shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30
+           shadow-md shadow-orange-600/20 hover:shadow-orange-600/30
            active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
   }
 
   .gts-btn-secondary {
-    @apply bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-medium
+    @apply bg-black/[0.03] hover:bg-black/[0.06] text-[#201D17]/80 hover:text-[#201D17] font-medium
            px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2
-           text-sm border border-white/10 active:scale-95;
+           text-sm border border-[#D8D2C3] active:scale-95;
   }
 
   .gts-btn-danger {
-    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300
+    @apply bg-red-500/10 hover:bg-red-500/20 text-red-700 hover:text-red-800
            font-medium px-4 py-2 rounded-lg transition-all duration-200
-           flex items-center gap-2 text-sm border border-red-500/20 active:scale-95;
+           flex items-center gap-2 text-sm border border-red-500/25 active:scale-95;
   }
 
   .gts-table {
@@ -153,20 +153,20 @@
   }
 
   .gts-table th {
-    @apply text-left text-xs font-medium text-gray-400 uppercase tracking-wider
-           pb-3 border-b border-white/5;
+    @apply text-left text-xs font-medium text-[#7A7266] uppercase tracking-wider
+           pb-3 border-b border-[#E6E1D6];
   }
 
   .gts-table td {
-    @apply py-3 border-b border-white/5 text-gray-300;
+    @apply py-3 border-b border-[#E6E1D6] text-[#3F3A32];
   }
 
   .gts-table tr:hover td {
-    @apply bg-white/[0.02];
+    @apply bg-black/[0.02];
   }
 
   .text-gradient {
-    @apply bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent;
   }
 
   /* Moldura tipo HUD - reserva-se para elementos de destaque (o cartao mais
@@ -217,27 +217,24 @@
 }
 
 .leaflet-container {
-  background: #0B1120 !important;
-}
-
-.leaflet-tile {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+  background: #FAF9F6 !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #111827 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E6E1D6 !important;
   border-radius: 12px !important;
-  color: white !important;
+  color: #201D17 !important;
 }
 
 .leaflet-popup-tip {
-  background: #111827 !important;
+  background: #FFFFFF !important;
 }
 
 .leaflet-control-zoom a {
-  background: #111827 !important;
-  color: white !important;
+  background: #FFFFFF !important;
+  color: #201D17 !important;
+  border-color: #E6E1D6 !important;
 }
 
 @keyframes velocityAlert {

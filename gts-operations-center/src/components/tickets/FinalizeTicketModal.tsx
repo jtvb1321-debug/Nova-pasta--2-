@@ -106,21 +106,21 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
   const devolvidos = calcularDevolvidos()
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-lg shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <StopCircle className="w-4 h-4 text-emerald-400" />
+              <StopCircle className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Finalizar Chamado</h2>
-              <p className="text-xs text-gray-500">A equipe voltara automaticamente para Disponivel</p>
+              <h2 className="text-lg font-semibold text-[#201D17]">Finalizar Chamado</h2>
+              <p className="text-xs text-[#A69E8F]">A equipe voltara automaticamente para Disponivel</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -128,16 +128,16 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
         <div className="p-6 space-y-5">
 
           {/* Aviso automatico */}
-          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <p className="text-emerald-400 text-xs">
+          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+            <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+            <p className="text-emerald-700 text-xs">
               Ao finalizar, a equipe sera automaticamente marcada como <strong>Disponivel</strong> no sistema.
             </p>
           </div>
 
           {/* Relato */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-sm font-medium text-[#7A7266] mb-1.5 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" />
               Relato do Atendimento
             </label>
@@ -154,9 +154,9 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
           {materiaisReservados.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Package className="w-4 h-4 text-blue-400" />
-                <h3 className="text-sm font-medium text-white">Materiais Utilizados</h3>
-                <span className="text-xs text-gray-500">(ajuste as quantidades reais)</span>
+                <Package className="w-4 h-4 text-blue-700" />
+                <h3 className="text-sm font-medium text-[#201D17]">Materiais Utilizados</h3>
+                <span className="text-xs text-[#A69E8F]">(ajuste as quantidades reais)</span>
               </div>
 
               <div className="space-y-2">
@@ -164,22 +164,22 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                   const qtdUtilizada  = utilizados[m.itemId] ?? 0
                   const qtdDevolvida  = m.quantidade - qtdUtilizada
                   return (
-                    <div key={m.itemId} className="p-3 bg-white/[0.03] border border-white/5 rounded-xl">
+                    <div key={m.itemId} className="p-3 bg-black/[0.02] border border-[#E6E1D6] rounded-xl">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium truncate">{m.item.descricao}</p>
-                          <p className="text-xs text-gray-500 font-mono">{m.item.codigo}</p>
-                          <p className="text-xs text-gray-600 mt-0.5">
+                          <p className="text-sm text-[#201D17] font-medium truncate">{m.item.descricao}</p>
+                          <p className="text-xs text-[#A69E8F] font-mono">{m.item.codigo}</p>
+                          <p className="text-xs text-[#A69E8F] mt-0.5">
                             Reservado: {formatNumber(m.quantidade)} {m.item.unidade}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-center">
-                            <p className="text-xs text-gray-500 mb-1">Utilizado</p>
+                            <p className="text-xs text-[#A69E8F] mb-1">Utilizado</p>
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada - 1)}
-                                className="w-8 h-8 rounded bg-white/10 hover:bg-white/20 text-white text-sm transition-colors flex-shrink-0"
+                                className="w-8 h-8 rounded bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] text-sm transition-colors flex-shrink-0"
                               >
                                 -
                               </button>
@@ -193,7 +193,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                               />
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada + 1)}
-                                className="w-8 h-8 rounded bg-white/10 hover:bg-white/20 text-white text-sm transition-colors flex-shrink-0"
+                                className="w-8 h-8 rounded bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] text-sm transition-colors flex-shrink-0"
                               >
                                 +
                               </button>
@@ -203,7 +203,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                       </div>
 
                       {qtdDevolvida > 0 && (
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 rounded-lg px-2 py-1">
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-700 bg-blue-500/10 rounded-lg px-2 py-1">
                           <ArrowLeftRight className="w-3 h-3" />
                           {formatNumber(qtdDevolvida)} {m.item.unidade} sera(o) devolvido(s) ao estoque
                         </div>
@@ -217,14 +217,14 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
 
           {/* Resumo devolucoes */}
           {devolvidos.length > 0 && (
-            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+            <div className="p-3 bg-blue-500/10 border border-blue-500/25 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
-                <ArrowLeftRight className="w-3.5 h-3.5 text-blue-400" />
-                <p className="text-xs font-medium text-blue-400">
+                <ArrowLeftRight className="w-3.5 h-3.5 text-blue-700" />
+                <p className="text-xs font-medium text-blue-700">
                   {devolvidos.length} item(ns) sera(o) registrado(s) como devolucao pendente
                 </p>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#A69E8F]">
                 Aguardam aprovacao do Administrador para retornar ao estoque
               </p>
             </div>

@@ -18,12 +18,12 @@ async function fetchSolicitacoes() {
 }
 
 const STATUS_CFG: Record<string, { label: string; cor: string; bg: string }> = {
-  PENDENTE:     { label: 'Pendente',     cor: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  EM_ANDAMENTO: { label: 'Em Andamento', cor: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20' },
-  CONCLUIDA:    { label: 'Concluida',    cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  CANCELADA:    { label: 'Cancelada',    cor: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
-  APROVADA:     { label: 'Aprovada',     cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  REJEITADA:    { label: 'Rejeitada',    cor: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
+  PENDENTE:     { label: 'Pendente',     cor: 'text-amber-700',   bg: 'bg-amber-500/10 border-amber-500/25' },
+  EM_ANDAMENTO: { label: 'Em Andamento', cor: 'text-blue-700',    bg: 'bg-blue-500/10 border-blue-500/25' },
+  CONCLUIDA:    { label: 'Concluida',    cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  CANCELADA:    { label: 'Cancelada',    cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25' },
+  APROVADA:     { label: 'Aprovada',     cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  REJEITADA:    { label: 'Rejeitada',    cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25' },
 }
 
 export function SolicitacoesEquipeView() {
@@ -84,7 +84,7 @@ export function SolicitacoesEquipeView() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Filter className="w-4 h-4 text-gray-500" />
+        <Filter className="w-4 h-4 text-[#A69E8F]" />
         <div className="flex gap-2">
           {['', 'MANUTENCAO', 'MATERIAL'].map(t => (
             <button
@@ -93,8 +93,8 @@ export function SolicitacoesEquipeView() {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 filtroTipo === t
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
               )}
             >
               {t === '' ? 'Todos os tipos' : t === 'MANUTENCAO' ? 'Manutencao' : 'Material'}
@@ -109,8 +109,8 @@ export function SolicitacoesEquipeView() {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 filtroStatus === s
-                  ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                  : 'bg-white/5 text-gray-400 hover:text-white border-transparent'
+                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
+                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
               )}
             >
               {s === 'PENDENTE' ? 'Pendentes' : 'Todas'}
@@ -128,25 +128,25 @@ export function SolicitacoesEquipeView() {
           const cfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
           const Icon = s.tipo === 'MANUTENCAO' ? Wrench : PackagePlus
           return (
-            <div key={`${s.tipo}-${s.id}`} className={cn('bg-[#111827] border rounded-xl p-4', cfg.bg)}>
+            <div key={`${s.tipo}-${s.id}`} className={cn('bg-white border rounded-xl p-4 shadow-sm shadow-black/[0.03]', cfg.bg)}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-300">
+                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-black/[0.02] rounded-full text-[#7A7266]">
                       <Icon className="w-3 h-3" />
                       {s.tipo === 'MANUTENCAO' ? 'Manutencao' : 'Material'}
                     </span>
                     <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', cfg.cor, cfg.bg)}>
                       {cfg.label}
                     </span>
-                    <span className="text-sm text-orange-400 font-medium">{s.equipeNome}</span>
-                    {s.veiculo && <span className="text-xs text-gray-500 font-mono">{s.veiculo}</span>}
+                    <span className="text-sm text-orange-700 font-medium">{s.equipeNome}</span>
+                    {s.veiculo && <span className="text-xs text-[#A69E8F] font-mono">{s.veiculo}</span>}
                   </div>
-                  <p className="text-white font-medium">{s.descricao}</p>
+                  <p className="text-[#201D17] font-medium">{s.descricao}</p>
                   {s.observacao && (
-                    <p className="text-xs text-gray-400 italic mt-1">{s.observacao}</p>
+                    <p className="text-xs text-[#7A7266] italic mt-1">{s.observacao}</p>
                   )}
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-[#A69E8F] mt-2">
                     Solicitado por {s.solicitadoPor} - {formatDateTime(s.createdAt)}
                   </p>
                 </div>
@@ -160,7 +160,7 @@ export function SolicitacoesEquipeView() {
                         status: s.tipo === 'MANUTENCAO' ? 'CANCELADA' : 'REJEITADA',
                       })}
                       disabled={mutation.isPending}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-medium text-red-400 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 rounded-lg text-xs font-medium text-red-700 transition-colors disabled:opacity-50"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       {s.tipo === 'MANUTENCAO' ? 'Cancelar' : 'Rejeitar'}
@@ -172,7 +172,7 @@ export function SolicitacoesEquipeView() {
                         status: s.tipo === 'MANUTENCAO' ? 'EM_ANDAMENTO' : 'APROVADA',
                       })}
                       disabled={mutation.isPending}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-medium text-emerald-400 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg text-xs font-medium text-emerald-700 transition-colors disabled:opacity-50"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
                       {s.tipo === 'MANUTENCAO' ? 'Aceitar' : 'Aprovar'}

@@ -79,10 +79,10 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
       const map = L.map(mapRef.current, { zoomControl: false }).setView([-5.0892, -42.8019], 12)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
-        className: 'gts-tiles-escuro',
+        className: 'gts-tiles-claro',
       } as any).addTo(map)
 
       mapInstance.current = map
@@ -146,7 +146,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
           const clientes = p.clientes || []
           const listaClientes = clientes.length === 0
-            ? '<p style="color:#9ca3af; margin:4px 0;">Sem clientes vinculados</p>'
+            ? '<p style="color:#7A7266; margin:4px 0;">Sem clientes vinculados</p>'
             : '<div style="max-height:160px; overflow-y:auto; margin-top:4px;">' +
               clientes.slice(0, 40).map((cl: any) =>
                 '<div style="display:flex; align-items:center; gap:6px; padding:1px 0;">' +
@@ -154,14 +154,14 @@ export function MapaInmapView({ telaCheia = false }: Props) {
                 '<span style="font-size:12px;">' + cl.nome + '</span>' +
                 '</div>'
               ).join('') +
-              (clientes.length > 40 ? '<p style="font-size:11px; color:#9ca3af; margin:2px 0;">+' + (clientes.length - 40) + ' outros</p>' : '') +
+              (clientes.length > 40 ? '<p style="font-size:11px; color:#7A7266; margin:2px 0;">+' + (clientes.length - 40) + ' outros</p>' : '') +
               '</div>'
 
           marker.bindPopup(
             '<div style="font-family: sans-serif; min-width: 200px;">' +
             (p.emAlerta ? '<b style="color:#ef4444;">⚠ Sem conexao (todos offline)</b><br/>' : '') +
             '<b>' + p.nome + '</b><br/>' +
-            (p.projeto ? '<span style="color:#9ca3af;">Projeto: ' + p.projeto + '</span><br/>' : '') +
+            (p.projeto ? '<span style="color:#7A7266;">Projeto: ' + p.projeto + '</span><br/>' : '') +
             (p.endereco ? p.endereco + '<br/>' : '') +
             'Capacidade: ' + p.capacidade + ' - Portas livres: ' + p.livres + '<br/>' +
             '<b>Clientes (' + p.ativos + ' online / ' + p.inativos + ' offline):</b>' +
@@ -209,7 +209,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
               '<div style="font-family: sans-serif; min-width: 160px;">' +
               '<b>' + (p.nome || 'Cabo') + '</b><br/>' +
               (p.tipo ? p.tipo + '<br/>' : '') +
-              '<span style="color:' + (p.status === 'DOWN' ? '#ef4444' : '#34d399') + '; font-weight:bold;">' +
+              '<span style="color:' + (p.status === 'DOWN' ? '#ef4444' : '#047857') + '; font-weight:bold;">' +
               (p.status === 'DOWN' ? 'Possivel rompimento' : 'Normal') +
               '</span></div>'
             )
@@ -235,7 +235,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
           const icone = L.divIcon({
             className: 'gts-emenda-icon',
-            html: '<span style="display:block; width:11px; height:11px; background:' + cor + '; border:1.5px solid rgba(0,0,0,0.5); transform: rotate(45deg); box-shadow: 0 0 2px rgba(0,0,0,0.6);"></span>',
+            html: '<span style="display:block; width:11px; height:11px; background:' + cor + '; border:1.5px solid rgba(32,29,23,0.4); transform: rotate(45deg); box-shadow: 0 0 2px rgba(32,29,23,0.35);"></span>',
             iconSize: [11, 11],
             iconAnchor: [5, 5],
           })
@@ -244,7 +244,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
             '<div style="font-family: sans-serif; min-width: 160px;">' +
             '<b>' + p.nome + '</b><br/>' +
             (p.tipo ? '<span style="color:' + cor + ';">' + p.tipo + '</span><br/>' : '') +
-            (p.projeto ? '<span style="color:#9ca3af;">Projeto: ' + p.projeto + '</span>' : '') +
+            (p.projeto ? '<span style="color:#7A7266;">Projeto: ' + p.projeto + '</span>' : '') +
             '</div>'
           )
           grupoEmendas.addLayer(marker)
@@ -319,39 +319,39 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   }
 
   const stats = [
-    { label: 'CTOs', valor: totalCaixas, icon: Box, cor: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Em alerta', valor: alertas.length, icon: AlertTriangle, cor: alertas.length > 0 ? 'text-red-400' : 'text-gray-500', bg: alertas.length > 0 ? 'bg-red-500/10' : 'bg-white/5' },
-    { label: 'Cabos', valor: totalCabos, icon: Cable, cor: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Cabos c/ problema', valor: cabosComProblema, icon: Cable, cor: cabosComProblema > 0 ? 'text-red-400' : 'text-gray-500', bg: cabosComProblema > 0 ? 'bg-red-500/10' : 'bg-white/5' },
-    { label: 'Emendas', valor: totalEmendas, icon: Waypoints, cor: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'CTOs', valor: totalCaixas, icon: Box, cor: 'text-blue-700', bg: 'bg-blue-500/10' },
+    { label: 'Em alerta', valor: alertas.length, icon: AlertTriangle, cor: alertas.length > 0 ? 'text-red-700' : 'text-[#A69E8F]', bg: alertas.length > 0 ? 'bg-red-500/10' : 'bg-black/[0.03]' },
+    { label: 'Cabos', valor: totalCabos, icon: Cable, cor: 'text-emerald-700', bg: 'bg-emerald-500/10' },
+    { label: 'Cabos c/ problema', valor: cabosComProblema, icon: Cable, cor: cabosComProblema > 0 ? 'text-red-700' : 'text-[#A69E8F]', bg: cabosComProblema > 0 ? 'bg-red-500/10' : 'bg-black/[0.03]' },
+    { label: 'Emendas', valor: totalEmendas, icon: Waypoints, cor: 'text-purple-700', bg: 'bg-purple-500/10' },
   ]
 
   return (
-    <div className={cn('relative w-full flex bg-[#0B1120]', telaCheia ? 'h-screen' : 'h-[calc(100vh-64px)]')}>
+    <div className={cn('relative w-full flex bg-[#FAF9F6]', telaCheia ? 'h-screen' : 'h-[calc(100vh-64px)]')}>
       {/* Coluna do mapa */}
       <div className="relative flex-1 min-w-0">
         <div ref={mapRef} className="absolute inset-0 z-0" />
 
         {/* Barra superior: busca */}
-        <div className="absolute top-0 left-0 right-0 z-[1000] p-2 sm:p-3 flex flex-wrap items-center gap-2 bg-gradient-to-b from-[#0B1120]/95 to-transparent">
-          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-[#111827]/95 backdrop-blur border border-white/10 rounded-lg px-3 py-3 sm:py-1.5 shadow-lg">
-            <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+        <div className="absolute top-0 left-0 right-0 z-[1000] p-2 sm:p-3 flex flex-wrap items-center gap-2 bg-gradient-to-b from-[#FAF9F6]/95 to-transparent">
+          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-white/95 backdrop-blur border border-[#E6E1D6] rounded-lg px-3 py-3 sm:py-1.5 shadow-lg shadow-black/[0.1]">
+            <Search className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
             <input
               type="text"
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && buscarEndereco()}
               placeholder="Buscar rua, CTO ou endereco..."
-              className="flex-1 min-w-0 bg-transparent text-white text-sm outline-none placeholder:text-gray-500"
+              className="flex-1 min-w-0 bg-transparent text-[#201D17] text-sm outline-none placeholder:text-[#A69E8F]"
             />
-            <button onClick={buscarEndereco} disabled={buscando} className="text-orange-400 hover:text-orange-300 disabled:opacity-50 flex-shrink-0">
+            <button onClick={buscarEndereco} disabled={buscando} className="text-orange-600 hover:text-orange-500 disabled:opacity-50 flex-shrink-0">
               {buscando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
             </button>
           </div>
 
           <button
             onClick={() => setPainelAberto(v => !v)}
-            className="relative flex items-center gap-1.5 px-3 py-3 sm:py-1.5 rounded-lg border border-white/10 bg-[#111827]/95 text-gray-300 hover:text-white transition-colors flex-shrink-0"
+            className="relative flex items-center gap-1.5 px-3 py-3 sm:py-1.5 rounded-lg border border-[#E6E1D6] bg-white/95 text-[#7A7266] hover:text-[#201D17] transition-colors flex-shrink-0"
             title={painelAberto ? 'Ocultar painel de problemas' : 'Mostrar painel de problemas'}
           >
             {painelAberto ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
@@ -364,7 +364,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         </div>
 
         {/* Legenda */}
-        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-[#111827]/95 backdrop-blur border border-white/10 rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-gray-300 space-y-1 sm:space-y-1.5 shadow-lg max-w-[160px] sm:max-w-none">
+        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-white/95 backdrop-blur border border-[#E6E1D6] rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-[#3F3A32] space-y-1 sm:space-y-1.5 shadow-lg shadow-black/[0.1] max-w-[160px] sm:max-w-none">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#00C853] flex-shrink-0" /> CTO normal
           </div>
@@ -387,8 +387,8 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         </div>
 
         {carregando && (
-          <div className="absolute inset-0 z-[999] bg-[#0B1120]/80 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-white">
+          <div className="absolute inset-0 z-[999] bg-white/80 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-[#201D17]">
               <Loader2 className="w-5 h-5 animate-spin" />
               Carregando rede do IXC...
             </div>
@@ -399,53 +399,53 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       {/* Painel lateral: estatisticas + problemas ativos.
           No celular ocupa a tela toda (overlay); no desktop fica ao lado do mapa. */}
       {painelAberto && (
-        <div className="fixed inset-0 z-[1500] md:static md:z-auto md:w-80 flex-shrink-0 border-l border-white/10 bg-[#0B1120] flex flex-col">
-          <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <h2 className="text-sm font-semibold text-white">Monitoramento da Rede</h2>
+        <div className="fixed inset-0 z-[1500] md:static md:z-auto md:w-80 flex-shrink-0 border-l border-[#E6E1D6] bg-white flex flex-col">
+          <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6]">
+            <h2 className="text-sm font-semibold text-[#201D17]">Monitoramento da Rede</h2>
             <button
               onClick={() => setPainelAberto(false)}
-              className="p-3 -m-1.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white"
+              className="p-3 -m-1.5 rounded-lg hover:bg-black/[0.04] text-[#7A7266] hover:text-[#201D17]"
             >
               <PanelRightClose className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-3 border-b border-white/10">
+          <div className="grid grid-cols-2 gap-2 p-3 border-b border-[#E6E1D6]">
             {stats.map((s, i) => {
               const Icon = s.icon
               return (
-                <div key={i} className={cn('flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/10', s.bg)}>
+                <div key={i} className={cn('flex items-center gap-2 px-2.5 py-2 rounded-lg border border-[#E6E1D6]', s.bg)}>
                   <Icon className={cn('w-4 h-4 flex-shrink-0', s.cor)} />
                   <div className="min-w-0">
                     <p className={cn('text-sm font-bold leading-tight', s.cor)}>{s.valor}</p>
-                    <p className="text-[11px] text-gray-400 leading-tight truncate">{s.label}</p>
+                    <p className="text-[11px] text-[#7A7266] leading-tight truncate">{s.label}</p>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
-            <AlertTriangle className={cn('w-4 h-4', alertas.length > 0 ? 'text-red-400' : 'text-gray-500')} />
-            <h3 className="text-sm font-semibold text-white">Problemas Ativos</h3>
+          <div className="px-4 py-3 border-b border-[#E6E1D6] flex items-center gap-2">
+            <AlertTriangle className={cn('w-4 h-4', alertas.length > 0 ? 'text-red-700' : 'text-[#A69E8F]')} />
+            <h3 className="text-sm font-semibold text-[#201D17]">Problemas Ativos</h3>
             <span className={cn(
               'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
-              alertas.length > 0 ? 'bg-red-500/15 text-red-400' : 'bg-white/5 text-gray-500'
+              alertas.length > 0 ? 'bg-red-500/15 text-red-700' : 'bg-black/[0.03] text-[#A69E8F]'
             )}>
               {alertas.length}
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#E6E1D6]">
             {carregando ? (
-              <div className="p-4 flex items-center justify-center text-gray-500 text-sm gap-2">
+              <div className="p-4 flex items-center justify-center text-[#A69E8F] text-sm gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
               </div>
             ) : alertas.length === 0 ? (
               <div className="p-6 flex flex-col items-center gap-2 text-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-500/60" />
-                <p className="text-sm text-gray-400">Nenhum problema ativo</p>
-                <p className="text-xs text-gray-600">Todas as CTOs monitoradas estao normais</p>
+                <CheckCircle2 className="w-8 h-8 text-emerald-600/60" />
+                <p className="text-sm text-[#7A7266]">Nenhum problema ativo</p>
+                <p className="text-xs text-[#A69E8F]">Todas as CTOs monitoradas estao normais</p>
               </div>
             ) : (
               alertas
@@ -455,18 +455,18 @@ export function MapaInmapView({ telaCheia = false }: Props) {
                   <button
                     key={a.id}
                     onClick={() => focarAlerta(a)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-2 group"
+                    className="w-full text-left px-4 py-3 hover:bg-black/[0.03] transition-colors flex items-start gap-2 group"
                   >
                     <span className="relative w-2 h-2 mt-1.5 flex-shrink-0">
                       <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-60" />
                       <span className="absolute inset-0 rounded-full bg-red-500" />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{a.nome}</p>
-                      <p className="text-xs text-red-400 font-semibold">{a.inativos} de {a.totalLogins} clientes offline</p>
-                      {a.endereco && <p className="text-xs text-gray-500 truncate mt-0.5">{a.endereco}</p>}
+                      <p className="text-sm font-medium text-[#201D17] truncate">{a.nome}</p>
+                      <p className="text-xs text-red-700 font-semibold">{a.inativos} de {a.totalLogins} clientes offline</p>
+                      {a.endereco && <p className="text-xs text-[#A69E8F] truncate mt-0.5">{a.endereco}</p>}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400 flex-shrink-0 mt-0.5" />
+                    <ChevronRight className="w-4 h-4 text-[#A69E8F] group-hover:text-[#7A7266] flex-shrink-0 mt-0.5" />
                   </button>
                 ))
             )}
@@ -475,8 +475,8 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       )}
 
       <style>{`
-        .gts-tiles-escuro {
-          filter: brightness(1.5) contrast(0.9) saturate(0.85);
+        .gts-tiles-claro {
+          filter: saturate(0.9);
         }
         .gts-cluster-icon { transition: transform 0.15s ease; }
         .gts-cluster-icon:hover { transform: scale(1.08); }
@@ -503,12 +503,12 @@ export function MapaInmapView({ telaCheia = false }: Props) {
           100% { transform: scale(1.8); opacity: 0; }
         }
         .leaflet-control-zoom a {
-          background-color: #111827 !important;
-          color: #e5e7eb !important;
-          border-color: rgba(255,255,255,0.1) !important;
+          background-color: #FFFFFF !important;
+          color: #201D17 !important;
+          border-color: #E6E1D6 !important;
         }
         .leaflet-control-zoom a:hover {
-          background-color: #1f2937 !important;
+          background-color: #FAF9F6 !important;
         }
       `}</style>
     </div>

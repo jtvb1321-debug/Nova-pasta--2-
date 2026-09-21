@@ -123,15 +123,15 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
   function SeletorLocal({ label, valor, onChange }: { label: string; valor: Local; onChange: (l: Local) => void }) {
     return (
       <div>
-        <label className="block text-xs text-gray-400 mb-1.5">{label}</label>
+        <label className="block text-xs text-[#7A7266] mb-1.5">{label}</label>
         <div className="flex gap-2 mb-2">
           <button
             type="button"
             onClick={() => onChange({ tipo: 'LOCAL', id: '' })}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
               valor.tipo === 'LOCAL'
-                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                : 'bg-white/5 text-gray-400 border-transparent hover:text-white'
+                ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
+                : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -142,8 +142,8 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
             onClick={() => onChange({ tipo: 'TECNICO', id: '' })}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
               valor.tipo === 'TECNICO'
-                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                : 'bg-white/5 text-gray-400 border-transparent hover:text-white'
+                ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
+                : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
@@ -178,25 +178,25 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center">
-              <ArrowRightLeft className="w-4.5 h-4.5 text-purple-400" />
+              <ArrowRightLeft className="w-4.5 h-4.5 text-purple-700" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">Transferencia de Estoque</h3>
-              <p className="text-xs text-gray-500">Entre locais, tecnicos ou defeituosos - o total nao muda</p>
+              <h3 className="text-lg font-semibold text-[#201D17]">Transferencia de Estoque</h3>
+              <p className="text-xs text-[#A69E8F]">Entre locais, tecnicos ou defeituosos - o total nao muda</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-2 -m-2 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Item</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Item</label>
           <input
             type="search"
             value={buscaItem}
@@ -215,8 +215,8 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
             ))}
           </select>
           {itemSelecionado && (
-            <p className="text-xs text-gray-500 mt-1">
-              Total geral: <span className="text-white font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
+            <p className="text-xs text-[#A69E8F] mt-1">
+              Total geral: <span className="text-[#201D17] font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
             </p>
           )}
         </div>
@@ -229,7 +229,7 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
               <button
                 type="button"
                 onClick={() => setCriandoLocal(true)}
-                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-1.5"
+                className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 mt-1.5"
               >
                 <Plus className="w-3 h-3" />
                 Criar novo local
@@ -259,7 +259,7 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
 
         {destinoEhDefeituosos && (
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Descricao do Defeito (obrigatorio)</label>
+            <label className="block text-xs text-[#7A7266] mb-1.5">Descricao do Defeito (obrigatorio)</label>
             <textarea
               value={defeito}
               onChange={e => setDefeito(e.target.value)}
@@ -271,7 +271,7 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
         )}
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Quantidade</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Quantidade</label>
           <input
             type="number"
             value={quantidade}
@@ -283,7 +283,7 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Motivo (opcional)</label>
+          <label className="block text-xs text-[#7A7266] mb-1.5">Motivo (opcional)</label>
           <input
             type="text"
             value={motivo}
@@ -294,9 +294,9 @@ export function TransferenciaLocalModal({ onClose, onSuccess }: Props) {
         </div>
 
         {erro && (
-          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-xs text-red-400">{erro}</p>
+          <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/25 rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+            <p className="text-xs text-red-700">{erro}</p>
           </div>
         )}
 

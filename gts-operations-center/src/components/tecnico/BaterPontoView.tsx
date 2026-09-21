@@ -22,10 +22,10 @@ function horaOuTraco(data: string | null | undefined) {
 }
 
 const STATUS_CFG: Record<string, { label: string; cor: string; bg: string }> = {
-  PENDENTE:  { label: 'Horas extras pendentes', cor: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  APROVADA:  { label: 'Horas extras aprovadas', cor: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  REJEITADA: { label: 'Horas extras rejeitadas', cor: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-  SEM_EXTRA: { label: 'Sem horas extras', cor: 'text-gray-400', bg: 'bg-white/5 border-white/10' },
+  PENDENTE:  { label: 'Horas extras pendentes', cor: 'text-amber-700', bg: 'bg-amber-500/10 border-amber-500/25' },
+  APROVADA:  { label: 'Horas extras aprovadas', cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  REJEITADA: { label: 'Horas extras rejeitadas', cor: 'text-red-700', bg: 'bg-red-500/10 border-red-500/25' },
+  SEM_EXTRA: { label: 'Sem horas extras', cor: 'text-[#7A7266]', bg: 'bg-black/[0.02] border-[#E6E1D6]' },
 }
 
 export function BaterPontoView() {
@@ -62,18 +62,18 @@ export function BaterPontoView() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0B1120] text-white pb-8">
-      <header className="sticky top-0 z-10 bg-[#111827] border-b border-white/5 px-4 py-4">
+    <div className="min-h-screen bg-[#FAF9F6] text-[#201D17] pb-8">
+      <header className="sticky top-0 z-10 bg-white border-b border-[#E6E1D6] shadow-sm shadow-black/[0.03] px-4 py-4">
         <div className="flex items-center gap-3">
-          <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-white/5 rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-black/[0.03] rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-[#7A7266]" />
           </Link>
-          <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-            <Clock className="w-4.5 h-4.5 text-blue-400" />
+          <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+            <Clock className="w-4.5 h-4.5 text-blue-700" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm">Bater Ponto</p>
-            <p className="text-gray-500 text-xs">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
+            <p className="text-[#201D17] font-bold text-sm">Bater Ponto</p>
+            <p className="text-[#A69E8F] text-xs">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
           </div>
         </div>
       </header>
@@ -86,10 +86,10 @@ export function BaterPontoView() {
         ) : (
           <>
             {ehDomingo ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10 rounded-xl border border-white/5 bg-white/[0.02] text-center">
-                <Clock className="w-8 h-8 text-gray-600" />
-                <p className="text-gray-400 font-medium">Domingo nao tem batida de ponto</p>
-                <p className="text-gray-600 text-xs">Volte amanha para registrar sua jornada</p>
+              <div className="flex flex-col items-center justify-center gap-2 py-10 rounded-xl border border-[#E6E1D6] bg-black/[0.02] text-center">
+                <Clock className="w-8 h-8 text-[#D8D2C3]" />
+                <p className="text-[#7A7266] font-medium">Domingo nao tem batida de ponto</p>
+                <p className="text-[#A69E8F] text-xs">Volte amanha para registrar sua jornada</p>
               </div>
             ) : (
             <div className="grid grid-cols-2 gap-3">
@@ -103,10 +103,10 @@ export function BaterPontoView() {
                     className={cn(
                       'flex flex-col items-center justify-center gap-2 py-5 rounded-xl border transition-colors',
                       b.feito
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
                         : b.podeClicar
-                        ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
-                        : 'bg-white/[0.02] border-white/5 text-gray-600 cursor-not-allowed'
+                        ? 'bg-blue-500/10 border-blue-500/30 text-blue-700 hover:bg-blue-500/20'
+                        : 'bg-black/[0.02] border-[#E6E1D6] text-[#A69E8F] cursor-not-allowed'
                     )}
                   >
                     {b.feito ? <CheckCircle className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
@@ -125,31 +125,31 @@ export function BaterPontoView() {
             {hoje?.saida && (
               <div className={cn('rounded-xl p-4 border', STATUS_CFG[hoje.statusHorasExtras]?.bg)}>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm text-white font-medium">Resumo do dia</p>
+                  <p className="text-sm text-[#201D17] font-medium">Resumo do dia</p>
                   <span className={cn('text-xs font-bold', STATUS_CFG[hoje.statusHorasExtras]?.cor)}>
                     {STATUS_CFG[hoje.statusHorasExtras]?.label}
                   </span>
                 </div>
-                <p className="text-2xl font-black text-white">{hoje.horasTrabalhadas}h trabalhadas</p>
+                <p className="text-2xl font-black text-[#201D17]">{hoje.horasTrabalhadas}h trabalhadas</p>
                 {hoje.horasExtras > 0 && (
-                  <p className="text-sm text-yellow-400 mt-1">{hoje.horasExtras}h extras</p>
+                  <p className="text-sm text-amber-700 mt-1">{hoje.horasExtras}h extras</p>
                 )}
               </div>
             )}
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-300">Historico</p>
+              <p className="text-sm font-medium text-[#3F3A32]">Historico</p>
               {historico.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-6">Nenhum registro anterior</p>
+                <p className="text-[#A69E8F] text-sm text-center py-6">Nenhum registro anterior</p>
               ) : historico.map((r: any) => {
                 const cfg = STATUS_CFG[r.statusHorasExtras] || STATUS_CFG.SEM_EXTRA
                 return (
-                  <div key={r.id} className="bg-white/5 rounded-xl p-3">
+                  <div key={r.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-500">{new Date(r.data).toLocaleDateString('pt-BR')}</span>
+                      <span className="text-xs text-[#A69E8F]">{new Date(r.data).toLocaleDateString('pt-BR')}</span>
                       <span className={cn('text-xs font-bold', cfg.cor)}>{cfg.label}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-400 font-mono">
+                    <div className="flex items-center gap-3 text-xs text-[#7A7266] font-mono">
                       <span>{horaOuTraco(r.entrada)}</span>
                       <span>-</span>
                       <span>{horaOuTraco(r.saidaAlmoco)}</span>
@@ -159,7 +159,7 @@ export function BaterPontoView() {
                       <span>{horaOuTraco(r.saida)}</span>
                     </div>
                     {r.horasTrabalhadas != null && (
-                      <p className="text-sm text-white mt-1">{r.horasTrabalhadas}h trabalhadas{r.horasExtras > 0 ? ` (${r.horasExtras}h extras)` : ''}</p>
+                      <p className="text-sm text-[#201D17] mt-1">{r.horasTrabalhadas}h trabalhadas{r.horasExtras > 0 ? ` (${r.horasExtras}h extras)` : ''}</p>
                     )}
                   </div>
                 )
