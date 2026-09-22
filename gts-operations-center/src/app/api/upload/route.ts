@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 const TIPOS_PERMITIDOS: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -15,6 +17,21 @@ const TAMANHO_MAXIMO_BYTES = 15 * 1024 * 1024 // 15MB por foto
 export async function POST(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  // Usado hoje por ModalAtendimento (tecnico) para anexar fotos de evidencia
+  // a um atendimento/chamado - gate por verChamados, nao verEstoque, pra nao
+  // bloquear o TECNICO (que tem verChamados mas nao verEstoque).
+  if (!temPermissao(role, 'verChamados')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Upload',
+      detalhes: `Tentativa sem permissao verChamados em POST /api/upload`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   try {
     const formData = await request.formData()

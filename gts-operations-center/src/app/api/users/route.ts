@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
+import { registrarLog } from '@/lib/auditLog'
 
 const createSchema = z.object({
   nome:  z.string().min(1),
@@ -55,6 +56,15 @@ export async function POST(request: NextRequest) {
   const usuario = await prisma.usuario.create({
     data: { ...data, senha: hash },
     select: { id: true, nome: true, email: true, role: true, ativo: true, createdAt: true },
+  })
+
+  await registrarLog({
+    usuarioId: (session.user as any).id,
+    acao: 'USUARIO_CRIADO',
+    entidade: 'Usuario',
+    entidadeId: usuario.id,
+    detalhes: `${usuario.nome} (${usuario.email}) criado como ${usuario.role}`,
+    request,
   })
 
   return NextResponse.json(usuario, { status: 201 })

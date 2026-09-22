@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function PATCH(
   request: NextRequest,
@@ -30,11 +31,20 @@ export async function PATCH(
     select: { id: true, nome: true, email: true, role: true, ativo: true },
   })
 
+  await registrarLog({
+    usuarioId: (session.user as any).id,
+    acao: 'USUARIO_EDITADO',
+    entidade: 'Usuario',
+    entidadeId: usuario.id,
+    detalhes: `${usuario.nome} (${usuario.email}) editado${senha ? ' - senha alterada' : ''}`,
+    request,
+  })
+
   return NextResponse.json(usuario)
 }
 
 export async function DELETE(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
@@ -49,6 +59,17 @@ export async function DELETE(
     return NextResponse.json({ error: 'Nao pode excluir sua propria conta' }, { status: 400 })
   }
 
+  const usuarioExcluido = await prisma.usuario.findUnique({ where: { id }, select: { nome: true, email: true } })
   await prisma.usuario.delete({ where: { id } })
+
+  await registrarLog({
+    usuarioId: selfId,
+    acao: 'USUARIO_EXCLUIDO',
+    entidade: 'Usuario',
+    entidadeId: id,
+    detalhes: usuarioExcluido ? `${usuarioExcluido.nome} (${usuarioExcluido.email}) excluido` : `Usuario ${id} excluido`,
+    request,
+  })
+
   return NextResponse.json({ ok: true })
 }

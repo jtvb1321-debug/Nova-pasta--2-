@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function PATCH(
   request: NextRequest,
@@ -61,6 +62,16 @@ export async function PATCH(
       }
       return updated
     })
+
+    await registrarLog({
+      usuarioId: (session.user as any).id,
+      acao: statusFinal === 'APROVADO' ? 'VENDA_APROVADA' : 'VENDA_REPROVADA',
+      entidade: 'Venda',
+      entidadeId: id,
+      detalhes: statusFinal === 'REPROVADO' ? `Venda reprovada: ${motivo}` : 'Venda aprovada',
+      request,
+    })
+
     return NextResponse.json(venda)
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

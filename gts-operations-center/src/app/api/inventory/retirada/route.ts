@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 const schema = z.object({
   destino:     z.string().min(1),
@@ -17,6 +19,18 @@ const schema = z.object({
 export async function POST(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verEstoque')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Estoque',
+      detalhes: `Tentativa sem permissao verEstoque em POST /api/inventory/retirada`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const body = await request.json()
   const parsed = schema.safeParse(body)

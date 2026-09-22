@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { limparCache } from '@/lib/inmapCache'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function PATCH(
   request: NextRequest,
@@ -9,6 +11,18 @@ export async function PATCH(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verLinkDedicado')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'LinkDedicado',
+      detalhes: `Tentativa sem permissao verLinkDedicado em PATCH /api/link-dedicado/[codigoIxc]`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { codigoIxc } = await params
   const body = await request.json()

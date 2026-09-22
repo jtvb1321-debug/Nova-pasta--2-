@@ -58,3 +58,7 @@ nfeeee.txt
 # script local de backup (Windows/Task Scheduler) - contem a senha do
 # Postgres em texto puro e so faz sentido nesta maquina, nunca no repositorio
 scripts/backup-diario.ps1
+
+# logs baixados localmente via "discloud app logs" - artefato de depuracao,
+# nao faz parte do codigo-fonte
+/discloud/

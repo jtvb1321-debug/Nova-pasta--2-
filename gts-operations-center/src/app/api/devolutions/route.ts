@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function GET() {
   const session = await auth()
@@ -87,6 +88,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     return updated
+  })
+
+  await registrarLog({
+    usuarioId: (session.user as any).id,
+    acao: aprovado ? 'DEVOLUCAO_APROVADA' : 'DEVOLUCAO_REJEITADA',
+    entidade: 'MaterialDevolvido',
+    entidadeId: id,
+    detalhes: aprovado ? 'Devolucao aprovada, item retornou ao estoque' : 'Devolucao rejeitada',
+    request,
   })
 
   return NextResponse.json(devolucao)

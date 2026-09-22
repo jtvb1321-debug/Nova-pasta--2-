@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 const createSchema = z.object({
   clienteNome: z.string().min(1),
@@ -64,6 +66,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verVendas')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Venda',
+      detalhes: `Tentativa sem permissao verVendas em POST /api/sales`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const body = await request.json()
   const parsed = createSchema.safeParse(body)

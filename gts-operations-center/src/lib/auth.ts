@@ -2,6 +2,9 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { getClientIp } from '@/lib/getClientIp'
+import { excedeuLimite, registrarFalha, limparTentativas } from '@/lib/rateLimiter'
+import { registrarLog } from '@/lib/auditLog'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -10,17 +13,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: 'Email', type: 'email' },
         password: { label: 'Senha', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null
 
+        const email = credentials.email as string
+        const ip = getClientIp(request)
+        const chaveLimite = `${ip}:${email}`
+
+        if (excedeuLimite(chaveLimite)) {
+          await registrarLog({
+            acao: 'LOGIN_BLOQUEADO_RATE_LIMIT',
+            entidade: 'Usuario',
+            detalhes: `Muitas tentativas de login para ${email}`,
+            request,
+          })
+          return null
+        }
+
         const usuario = await prisma.usuario.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         })
 
-        if (!usuario || !usuario.ativo) return null
+        if (!usuario || !usuario.ativo) {
+          registrarFalha(chaveLimite)
+          await registrarLog({
+            acao: 'LOGIN_FALHOU',
+            entidade: 'Usuario',
+            detalhes: `Tentativa de login com e-mail invalido/inativo: ${email}`,
+            request,
+          })
+          return null
+        }
 
         const senhaValida = await bcrypt.compare(credentials.password as string, usuario.senha)
-        if (!senhaValida) return null
+        if (!senhaValida) {
+          registrarFalha(chaveLimite)
+          await registrarLog({
+            usuarioId: usuario.id,
+            acao: 'LOGIN_FALHOU',
+            entidade: 'Usuario',
+            entidadeId: usuario.id,
+            detalhes: `Senha incorreta para ${email}`,
+            request,
+          })
+          return null
+        }
+
+        limparTentativas(chaveLimite)
+        await registrarLog({
+          usuarioId: usuario.id,
+          acao: 'LOGIN_SUCESSO',
+          entidade: 'Usuario',
+          entidadeId: usuario.id,
+          detalhes: `Login de ${usuario.nome}`,
+          request,
+        })
 
         return {
           id: usuario.id,

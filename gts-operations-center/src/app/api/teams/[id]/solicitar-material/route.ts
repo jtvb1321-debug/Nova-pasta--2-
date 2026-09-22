@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function GET(
   request: NextRequest,
@@ -23,6 +25,19 @@ export async function POST(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verEquipes')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Equipe',
+      detalhes: `Tentativa sem permissao verEquipes em ${request.method} /api/teams/[id]/solicitar-material`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
+
   const { id: equipeId } = await params
   const body = await request.json()
   const { itemId, quantidade, observacao } = body

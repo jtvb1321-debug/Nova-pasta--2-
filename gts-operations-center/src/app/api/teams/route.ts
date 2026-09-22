@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 export async function GET() {
   const session = await auth()
@@ -30,6 +32,18 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verEquipes')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Equipe',
+      detalhes: `Tentativa sem permissao verEquipes em ${request.method} /api/teams`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { equipeId, status } = await request.json()
 

@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth'
 import { z } from 'zod'
 import { classificar, type EntradaDiagnostico } from '@/lib/diagnosticoEngine'
 import { buscarOnuParaDiagnostico } from '@/lib/diagnosticoOnu'
+import { temPermissao } from '@/lib/permissions'
+import { registrarLog } from '@/lib/auditLog'
 
 const testeSchema = z.object({
   tipo:      z.string().min(1),
@@ -36,6 +38,18 @@ export async function POST(
 ) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!temPermissao(role, 'verDiagnostico')) {
+    await registrarLog({
+      usuarioId: (session.user as any)?.id,
+      acao: 'ACESSO_NEGADO',
+      entidade: 'Diagnostico',
+      detalhes: `Tentativa sem permissao verDiagnostico em POST /api/diagnostico/[id]/testes`,
+      request,
+    })
+    return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
+  }
 
   const { id } = await params
   const diagnostico = await prisma.diagnostico.findUnique({
