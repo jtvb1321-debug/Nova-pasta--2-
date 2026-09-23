@@ -26,6 +26,7 @@ const ROTAS_TECNICO = [
   '/api/gts',
   '/diagnostico',
   '/api/diagnostico',
+  '/api/mapa/basemap',
 ]
 
 const ROTAS_VENDEDOR = [
@@ -33,6 +34,7 @@ const ROTAS_VENDEDOR = [
   '/sales',
   '/api/sales',
   '/api/dashboard',
+  '/api/mapa/basemap',
 ]
 
 const ROTAS_BLOQUEADAS_OPERADOR = [

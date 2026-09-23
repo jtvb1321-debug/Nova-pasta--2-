@@ -8,6 +8,7 @@ import {
   Waypoints, PanelRightClose, PanelRightOpen, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ATRIBUICAO_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
 
 // Cor real da caixa de emenda, igual o tecnico ve em campo.
 const COR_EMENDA: Record<string, string> = {
@@ -74,13 +75,14 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       const L = await import('leaflet')
       ;(window as any).L = L
       await import('leaflet.markercluster')
+      const chaveCarto = await obterChaveCarto()
 
       if (!mapRef.current || mapInstance.current) return
 
       const map = L.map(mapRef.current, { zoomControl: false }).setView([-5.0892, -42.8019], 12)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      L.tileLayer(urlCarto('light_all', chaveCarto), {
+        attribution: ATRIBUICAO_CARTO,
         maxZoom: 19,
         className: 'gts-tiles-claro',
       } as any).addTo(map)

@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { NOC } from './theme'
+import { ATRIBUICAO_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
 
 // Centro operacional fixo do NOC (sede/area de cobertura principal).
 const CENTRO_PADRAO: [number, number] = [-5.042275450130424, -42.74770897772132]
@@ -89,15 +91,19 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
 
   const cores = modoTv ? TV_CORES : NOC
 
+  // Espera a chave antes de montar o fundo, para nao carregar imagens com a marca.
+  const [chaveCarto, setChaveCarto] = useState<string | null>(null)
+  useEffect(() => { obterChaveCarto().then(setChaveCarto) }, [])
+
   return (
     <MapContainer center={CENTRO_PADRAO} zoom={ZOOM_PADRAO} style={{ height: '100%', width: '100%', background: cores.bg }} zoomControl={!modoTv}>
-      <TileLayer
-        url={modoTv
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'}
-        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-        maxZoom={19}
-      />
+      {chaveCarto !== null && (
+        <TileLayer
+          url={urlCarto(modoTv ? 'dark_all' : 'light_all', chaveCarto)}
+          attribution={ATRIBUICAO_CARTO}
+          maxZoom={19}
+        />
+      )}
 
       {caboFeatures.map(c => {
         const tronco = isCaboTronco(c.properties.tipo)
