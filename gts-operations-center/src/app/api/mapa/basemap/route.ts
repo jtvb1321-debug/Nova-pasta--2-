@@ -8,8 +8,12 @@ export async function GET() {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
 
+  // Colar a chave a partir de uma pagina web pode trazer caracteres invisiveis
+  // (ex.: U+200B no fim); a chave da CARTO so tem letras, numeros, "_" e "-".
+  const key = (process.env.CARTO_BASEMAP_KEY || '').replace(/[^A-Za-z0-9_-]/g, '')
+
   return NextResponse.json(
-    { key: process.env.CARTO_BASEMAP_KEY || '' },
+    { key },
     { headers: { 'Cache-Control': 'private, no-store' } },
   )
 }
