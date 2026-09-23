@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { SENHA_PADRAO } from '@/lib/senha'
+import { TROCA_OBRIGATORIA_DESDE, ACAO_SENHA_ALTERADA } from '@/lib/senha'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -23,12 +23,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const senhaValida = await bcrypt.compare(credentials.password as string, usuario.senha)
         if (!senhaValida) return null
 
+        const trocou = await prisma.log.findFirst({
+          where: {
+            usuarioId: usuario.id,
+            acao: ACAO_SENHA_ALTERADA,
+            createdAt: { gte: TROCA_OBRIGATORIA_DESDE },
+          },
+          select: { id: true },
+        })
+
         return {
           id: usuario.id,
           name: usuario.nome,
           email: usuario.email,
           role: usuario.role,
-          trocarSenha: credentials.password === SENHA_PADRAO,
+          trocarSenha: !trocou,
         }
       },
     }),

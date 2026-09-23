@@ -87,7 +87,7 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Entrou com a senha padrao: so a troca de senha fica liberada
+  // Troca de senha pendente: so a tela e a API de troca ficam liberadas
   const trocarSenha = !!(session.user as any)?.trocarSenha
   if (pathname === '/api/conta/senha') return NextResponse.next()
   if (pathname === '/trocar-senha') {

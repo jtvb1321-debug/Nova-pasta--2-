@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { SENHA_PADRAO, SENHA_MIN } from '@/lib/senha'
+import { SENHA_PADRAO, SENHA_MIN, ACAO_SENHA_ALTERADA } from '@/lib/senha'
 
 const schema = z.object({
   senhaAtual: z.string().min(1, 'Informe a senha atual'),
@@ -27,17 +27,29 @@ export async function POST(req: NextRequest) {
   if (novaSenha === SENHA_PADRAO) {
     return NextResponse.json({ error: 'A nova senha nao pode ser a senha padrao' }, { status: 400 })
   }
-  if (novaSenha === senhaAtual) {
-    return NextResponse.json({ error: 'A nova senha precisa ser diferente da atual' }, { status: 400 })
-  }
-
   const usuario = await prisma.usuario.findUnique({ where: { id }, select: { senha: true, ativo: true } })
   if (!usuario || !usuario.ativo) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
 
   if (!(await bcrypt.compare(senhaAtual, usuario.senha))) {
     return NextResponse.json({ error: 'Senha atual incorreta' }, { status: 400 })
   }
+  // Nao aceita repetir a ultima senha usada (a que esta salva hoje).
+  if (await bcrypt.compare(novaSenha, usuario.senha)) {
+    return NextResponse.json({ error: 'A nova senha precisa ser diferente da ultima senha usada' }, { status: 400 })
+  }
 
-  await prisma.usuario.update({ where: { id }, data: { senha: await bcrypt.hash(novaSenha, 10) } })
+  await prisma.$transaction([
+    prisma.usuario.update({ where: { id }, data: { senha: await bcrypt.hash(novaSenha, 10) } }),
+    prisma.log.create({
+      data: {
+        usuarioId: id,
+        acao: ACAO_SENHA_ALTERADA,
+        entidade: 'Usuario',
+        entidadeId: id,
+        detalhes: 'Senha alterada pelo proprio usuario',
+        ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+      },
+    }),
+  ])
   return NextResponse.json({ ok: true })
 }

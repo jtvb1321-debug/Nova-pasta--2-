@@ -65,7 +65,7 @@ export default function TrocarSenhaPage() {
             <div>
               <h1 className="text-xl font-bold text-[#201D17]">Troque sua senha</h1>
               <p className="text-[#A69E8F] text-xs">
-                Voce entrou com a senha padrao{session?.user?.email ? ` (${session.user.email})` : ''}. Defina uma senha propria para continuar.
+                Por seguranca, todos precisam definir uma nova senha apos a atualizacao do sistema{session?.user?.email ? ` (${session.user.email})` : ''}. Ela precisa ser diferente da ultima senha usada.
               </p>
             </div>
           </div>
