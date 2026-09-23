@@ -87,6 +87,20 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Entrou com a senha padrao: so a troca de senha fica liberada
+  const trocarSenha = !!(session.user as any)?.trocarSenha
+  if (pathname === '/api/conta/senha') return NextResponse.next()
+  if (pathname === '/trocar-senha') {
+    if (!trocarSenha) return NextResponse.redirect(new URL('/', req.url))
+    return NextResponse.next()
+  }
+  if (trocarSenha) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Troca de senha obrigatoria' }, { status: 403 })
+    }
+    return NextResponse.redirect(new URL('/trocar-senha', req.url))
+  }
+
   const role = (session.user as any)?.role || 'OPERADOR'
 
   // TECNICO - acesso restrito

@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { SENHA_PADRAO } from '@/lib/senha'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -27,6 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: usuario.nome,
           email: usuario.email,
           role: usuario.role,
+          trocarSenha: credentials.password === SENHA_PADRAO,
         }
       },
     }),
@@ -36,6 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = (user as any).role
         token.id = user.id
+        token.trocarSenha = (user as any).trocarSenha
       }
       return token
     },
@@ -43,6 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         (session.user as any).role = token.role
         ;(session.user as any).id = token.id
+        ;(session.user as any).trocarSenha = token.trocarSenha
       }
       return session
     },
