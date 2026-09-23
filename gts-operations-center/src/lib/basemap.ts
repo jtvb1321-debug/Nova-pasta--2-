@@ -10,6 +10,12 @@ export type EstiloCarto = 'light_all' | 'dark_all'
 
 export const ATRIBUICAO_CARTO = '&copy; OpenStreetMap contributors &copy; CARTO'
 
+// A chave e travada por dominio (Referer) no painel da CARTO, mas o proxy da
+// Discloud responde com "Referrer-Policy: same-origin", que faz o navegador
+// omitir o Referer nas imagens da CARTO (resposta 403, fundo em branco).
+// Nas imagens do mapa, enviar so a origem do site (sem caminho).
+export const REFERRER_CARTO = 'strict-origin-when-cross-origin'
+
 let chaveCarto: Promise<string> | null = null
 
 // Uma busca por carregamento de pagina; em falha, o mapa segue sem chave.

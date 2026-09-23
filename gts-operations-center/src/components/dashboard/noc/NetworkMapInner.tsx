@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { NOC } from './theme'
-import { ATRIBUICAO_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
+import { ATRIBUICAO_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
 
 // Centro operacional fixo do NOC (sede/area de cobertura principal).
 const CENTRO_PADRAO: [number, number] = [-5.042275450130424, -42.74770897772132]
@@ -101,6 +101,7 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
         <TileLayer
           url={urlCarto(modoTv ? 'dark_all' : 'light_all', chaveCarto)}
           attribution={ATRIBUICAO_CARTO}
+          referrerPolicy={REFERRER_CARTO}
           maxZoom={19}
         />
       )}
