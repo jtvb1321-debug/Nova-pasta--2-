@@ -31,7 +31,8 @@ mkdir -p "$SAIDA"
 cp -r "$APP/src" "$APP/prisma" "$APP/public" "$SAIDA/"
 cp "$APP/postcss.config.js" "$APP/tailwind.config.ts" "$SAIDA/"
 for f in start.js deploy-build.js next.config.js tsconfig.json package.json; do
-  cp "$CONFIG/$f" "$SAIDA/$f"
+  # LF como no repositorio: o checkout no Windows (autocrlf) entrega CRLF.
+  tr -d '\r' < "$CONFIG/$f" > "$SAIDA/$f"
 done
 
 # Garantia extra: nada de artefato local ou dado de runtime no pacote.
