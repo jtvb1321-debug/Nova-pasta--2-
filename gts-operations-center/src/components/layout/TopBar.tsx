@@ -113,13 +113,9 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
           <div className="flex items-center gap-2">
             {kpis.map((kpi, i) => <KPIItem key={i} kpi={kpi} />)}
           </div>
-          <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-600 animate-pulse shadow-[0_0_6px_rgba(14,143,143,0.6)]" />
-            <span className="text-xs text-cyan-700 font-mono font-bold uppercase tracking-wide hidden sm:block">Ao Vivo</span>
-          </div>
           <button
             onClick={() => refetch()}
-            className="text-tema-apagado hover:text-tema-tinta transition-colors flex-shrink-0"
+            className="ml-auto text-tema-apagado hover:text-tema-tinta transition-colors flex-shrink-0"
             title="Atualizar KPIs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
