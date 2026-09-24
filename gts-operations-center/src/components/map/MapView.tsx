@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { VeiculoRastreado } from '@/types'
 import { formatDateTime, formatSpeed, getSpeedColor } from '@/lib/utils'
+import { ATRIBUICAO_OSM, REFERRER_OSM, URL_OSM } from '@/lib/basemap'
 
 const VELOCIDADE_ALERTA = 80
 
@@ -142,10 +143,9 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
           zoom={temPosicao ? 15 : 12}
           style={{ height: '100%', width: '100%', background: '#FAF9F6' }}
           zoomControl={false}
-          attributionControl={false}
           scrollWheelZoom={false}
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer url={URL_OSM} attribution={ATRIBUICAO_OSM} referrerPolicy={REFERRER_OSM} />
           {temPosicao && (
             <Marker position={[veiculo!.latitude, veiculo!.longitude]} icon={icon}>
               <Popup>

@@ -16,6 +16,13 @@ export const ATRIBUICAO_CARTO = '&copy; OpenStreetMap contributors &copy; CARTO'
 // Nas imagens do mapa, enviar so a origem do site (sem caminho).
 export const REFERRER_CARTO = 'strict-origin-when-cross-origin'
 
+// OpenStreetMap (Central de Monitoramento): sem Referer, o servidor de tiles
+// devolve a imagem "Access blocked"; a politica de uso tambem exige a
+// atribuicao visivel no mapa.
+export const URL_OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+export const ATRIBUICAO_OSM = '&copy; OpenStreetMap contributors'
+export const REFERRER_OSM = REFERRER_CARTO
+
 let chaveCarto: Promise<string> | null = null
 
 // Uma busca por carregamento de pagina; em falha, o mapa segue sem chave.
