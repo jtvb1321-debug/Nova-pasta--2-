@@ -19,11 +19,11 @@ const ENTIDADE_CONFIG: Record<string, { icon: React.ElementType; cor: string; la
   estoque:    { icon: Package,       cor: 'text-amber-700 bg-amber-500/10',   label: 'Estoque' },
   venda:      { icon: ShoppingCart,  cor: 'text-emerald-700 bg-emerald-500/10', label: 'Venda' },
   equipe:     { icon: User,          cor: 'text-purple-700 bg-purple-500/10', label: 'Equipe' },
-  usuario:    { icon: User,          cor: 'text-[#7A7266] bg-black/[0.04]',   label: 'Usuario' },
-  config:     { icon: Settings,      cor: 'text-[#7A7266] bg-black/[0.04]',   label: 'Config' },
+  usuario:    { icon: User,          cor: 'text-tema-suave bg-tema-contraste/[0.04]',   label: 'Usuario' },
+  config:     { icon: Settings,      cor: 'text-tema-suave bg-tema-contraste/[0.04]',   label: 'Config' },
   login:      { icon: LogIn,         cor: 'text-emerald-700 bg-emerald-500/10', label: 'Login' },
   devolucao:  { icon: RefreshCw,     cor: 'text-orange-700 bg-orange-500/10', label: 'Devolucao' },
-  default:    { icon: Activity,      cor: 'text-[#7A7266] bg-black/[0.04]',   label: 'Sistema' },
+  default:    { icon: Activity,      cor: 'text-tema-suave bg-tema-contraste/[0.04]',   label: 'Sistema' },
 }
 
 const ACAO_CONFIG: Record<string, { cor: string; icon: React.ElementType }> = {
@@ -31,11 +31,11 @@ const ACAO_CONFIG: Record<string, { cor: string; icon: React.ElementType }> = {
   UPDATE:   { cor: 'text-blue-700',    icon: Edit2 },
   DELETE:   { cor: 'text-red-700',     icon: Trash2 },
   LOGIN:    { cor: 'text-emerald-700', icon: LogIn },
-  LOGOUT:   { cor: 'text-[#7A7266]',   icon: LogOut },
+  LOGOUT:   { cor: 'text-tema-suave',   icon: LogOut },
   APPROVE:  { cor: 'text-emerald-700', icon: CheckCircle },
   REJECT:   { cor: 'text-red-700',     icon: AlertTriangle },
   DISPATCH: { cor: 'text-amber-700',   icon: ClipboardList },
-  default:  { cor: 'text-[#7A7266]',   icon: Activity },
+  default:  { cor: 'text-tema-suave',   icon: Activity },
 }
 
 async function fetchLogs(params: any) {
@@ -105,7 +105,7 @@ export function AuditView() {
         <Shield className="w-5 h-5 text-blue-700 flex-shrink-0" />
         <div>
           <p className="text-blue-700 font-medium text-sm">Registro Imutavel de Auditoria</p>
-          <p className="text-[#A69E8F] text-xs mt-0.5">
+          <p className="text-tema-apagado text-xs mt-0.5">
             Todas as acoes realizadas no sistema sao registradas automaticamente com usuario, data, hora e IP. Nenhum registro pode ser excluido.
           </p>
         </div>
@@ -114,7 +114,7 @@ export function AuditView() {
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
           <input
             type="search"
             value={busca}
@@ -133,7 +133,7 @@ export function AuditView() {
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 entidade === e.value
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                  : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                  : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
               )}
             >
               {e.label}
@@ -179,8 +179,8 @@ export function AuditView() {
                 : logsFiltrados.length === 0
                 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-16 text-[#7A7266]">
-                      <Shield className="w-8 h-8 mx-auto mb-2 text-[#A69E8F]" />
+                    <td colSpan={7} className="text-center py-16 text-tema-suave">
+                      <Shield className="w-8 h-8 mx-auto mb-2 text-tema-apagado" />
                       Nenhum registro encontrado
                     </td>
                   </tr>
@@ -206,21 +206,21 @@ export function AuditView() {
                           </span>
                         </td>
                         <td className="px-4">
-                          <p className="text-sm text-[#201D17] font-medium">{log.usuario?.nome || 'Sistema'}</p>
-                          <p className="text-xs text-[#A69E8F]">{log.usuario?.email || ''}</p>
+                          <p className="text-sm text-tema-tinta font-medium">{log.usuario?.nome || 'Sistema'}</p>
+                          <p className="text-xs text-tema-apagado">{log.usuario?.email || ''}</p>
                         </td>
                         <td className="px-4">
-                          <span className="text-xs text-[#7A7266] bg-black/[0.03] px-2 py-0.5 rounded-full">
+                          <span className="text-xs text-tema-suave bg-tema-contraste/[0.03] px-2 py-0.5 rounded-full">
                             {log.usuario?.role || '—'}
                           </span>
                         </td>
-                        <td className="px-4 text-xs text-[#A69E8F] max-w-48 truncate">
+                        <td className="px-4 text-xs text-tema-apagado max-w-48 truncate">
                           {log.detalhes || '—'}
                         </td>
                         <td className="px-4">
-                          <span className="text-xs font-mono text-[#A69E8F]">{log.ip || '—'}</span>
+                          <span className="text-xs font-mono text-tema-apagado">{log.ip || '—'}</span>
                         </td>
-                        <td className="px-4 text-xs text-[#A69E8F] whitespace-nowrap">
+                        <td className="px-4 text-xs text-tema-apagado whitespace-nowrap">
                           {formatDateTime(log.createdAt)}
                         </td>
                       </tr>
@@ -232,8 +232,8 @@ export function AuditView() {
 
         {/* Paginacao */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#E6E1D6]">
-            <p className="text-xs text-[#A69E8F]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
+            <p className="text-xs text-tema-apagado">
               Pagina {page} de {totalPages} — {total} registros
             </p>
             <div className="flex gap-2">

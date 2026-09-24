@@ -32,7 +32,7 @@ const CLASSIFICACAO_CFG: Record<string, { label: string; cor: string; icone: Rea
   ATENCAO:            { label: 'Atencao',               cor: 'text-amber-700 bg-amber-500/10 border-amber-500/30',   icone: AlertTriangle },
   POSSIVEL_PROBLEMA:  { label: 'Possivel Problema',     cor: 'text-orange-700 bg-orange-500/10 border-orange-500/30',  icone: AlertTriangle },
   PROBLEMA:           { label: 'Problema Identificado', cor: 'text-red-700 bg-red-500/10 border-red-500/30',           icone: XCircle },
-  INDETERMINADO:      { label: 'Nao foi possivel determinar', cor: 'text-[#7A7266] bg-black/[0.03] border-[#D8D2C3]',  icone: AlertTriangle },
+  INDETERMINADO:      { label: 'Nao foi possivel determinar', cor: 'text-tema-suave bg-tema-contraste/[0.03] border-tema-linha-forte',  icone: AlertTriangle },
 }
 
 const ORIGEM_LABEL: Record<string, string> = {
@@ -42,12 +42,12 @@ const ORIGEM_LABEL: Record<string, string> = {
 }
 
 const STATUS_COR: Record<StatusEtapa, string> = {
-  pendente:     'text-[#D8D2C3]',
+  pendente:     'text-tema-linha-forte',
   rodando:      'text-blue-700',
   ok:           'text-emerald-700',
   atencao:      'text-amber-700',
   problema:     'text-red-700',
-  indisponivel: 'text-[#A69E8F]',
+  indisponivel: 'text-tema-apagado',
   erro:         'text-red-700',
 }
 
@@ -311,14 +311,14 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
   return (
     <div className="fixed inset-0 bg-black/40 z-[60] flex items-end sm:items-center justify-center">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[92vh] flex flex-col overflow-hidden">
 
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6] bg-white flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-tema-linha bg-tema-superficie flex-shrink-0">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-700" />
-            <h2 className="text-[#201D17] font-bold">Diagnostico Tecnico</h2>
+            <h2 className="text-tema-tinta font-bold">Diagnostico Tecnico</h2>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2.5 -m-1 rounded-lg hover:bg-black/[0.03] transition-colors">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2.5 -m-1 rounded-lg hover:bg-tema-contraste/[0.03] transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -327,24 +327,24 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
           {fase === 'inicio' && (
             <>
-              <div className="bg-white border border-[#E6E1D6] rounded-xl p-4 space-y-1.5">
-                <p className="text-[#201D17] font-semibold">{chamado.cliente}</p>
-                <p className="text-sm text-[#7A7266] flex items-start gap-2">
+              <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-1.5">
+                <p className="text-tema-tinta font-semibold">{chamado.cliente}</p>
+                <p className="text-sm text-tema-suave flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                   {formatarEnderecoCompleto(chamado)}
                 </p>
-                <p className="text-xs text-[#A69E8F]">Tecnico: {session?.user?.name || '-'}</p>
-                <p className="text-xs text-[#A69E8F]">OS: {chamado.id.slice(0, 8)}</p>
+                <p className="text-xs text-tema-apagado">Tecnico: {session?.user?.name || '-'}</p>
+                <p className="text-xs text-tema-apagado">OS: {chamado.id.slice(0, 8)}</p>
               </div>
 
               {diagnosticoRemoto && (
                 <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-1">
                   <p className="text-xs text-cyan-700 font-bold">Diagnostico do NOC (antes do despacho)</p>
-                  <p className="text-sm text-[#3F3A32]">
+                  <p className="text-sm text-tema-texto">
                     {CLASSIFICACAO_CFG[diagnosticoRemoto.classificacao]?.label ?? diagnosticoRemoto.classificacao}
                     {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
                   </p>
-                  {diagnosticoRemoto.hipotese && <p className="text-xs text-[#7A7266]">{diagnosticoRemoto.hipotese}</p>}
+                  {diagnosticoRemoto.hipotese && <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>}
                 </div>
               )}
 
@@ -369,24 +369,24 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
           {fase === 'rodando' && (
             <div className="space-y-2">
-              <p className="text-sm text-[#7A7266] mb-2">Analisando conexao...</p>
+              <p className="text-sm text-tema-suave mb-2">Analisando conexao...</p>
               {etapas.map(etapa => {
                 const Icon = etapa.icone
                 return (
-                  <div key={etapa.id} className="flex items-center gap-3 p-3 bg-white border border-[#E6E1D6] rounded-xl">
+                  <div key={etapa.id} className="flex items-center gap-3 p-3 bg-tema-superficie border border-tema-linha rounded-xl">
                     {etapa.status === 'rodando'
                       ? <Loader2 className="w-4 h-4 text-blue-700 animate-spin flex-shrink-0" />
                       : etapa.status === 'pendente'
-                      ? <Icon className="w-4 h-4 text-[#D8D2C3] flex-shrink-0" />
+                      ? <Icon className="w-4 h-4 text-tema-linha-forte flex-shrink-0" />
                       : etapa.status === 'ok'
                       ? <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0" />
                       : etapa.status === 'indisponivel'
-                      ? <AlertTriangle className="w-4 h-4 text-[#A69E8F] flex-shrink-0" />
+                      ? <AlertTriangle className="w-4 h-4 text-tema-apagado flex-shrink-0" />
                       : <AlertTriangle className={cn('w-4 h-4 flex-shrink-0', STATUS_COR[etapa.status])} />
                     }
                     <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm', etapa.status === 'pendente' ? 'text-[#A69E8F]' : 'text-[#201D17]')}>{etapa.label}</p>
-                      {etapa.resumo && <p className="text-xs text-[#A69E8F] truncate">{etapa.resumo}</p>}
+                      <p className={cn('text-sm', etapa.status === 'pendente' ? 'text-tema-apagado' : 'text-tema-tinta')}>{etapa.label}</p>
+                      {etapa.resumo && <p className="text-xs text-tema-apagado truncate">{etapa.resumo}</p>}
                     </div>
                   </div>
                 )
@@ -407,21 +407,21 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               {resultado.resumo && (
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {resultado.resumo.downloadMbps != null && (
-                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
-                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.downloadMbps.toFixed(0)}</p>
-                      <p className="text-[10px] text-[#A69E8F]">Mbps Download</p>
+                    <div className="bg-tema-superficie border border-tema-linha rounded-lg p-2">
+                      <p className="text-lg font-bold text-tema-tinta">{resultado.resumo.downloadMbps.toFixed(0)}</p>
+                      <p className="text-[10px] text-tema-apagado">Mbps Download</p>
                     </div>
                   )}
                   {resultado.resumo.latenciaGtsnetMs != null && (
-                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
-                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.latenciaGtsnetMs.toFixed(0)}</p>
-                      <p className="text-[10px] text-[#A69E8F]">ms Latencia</p>
+                    <div className="bg-tema-superficie border border-tema-linha rounded-lg p-2">
+                      <p className="text-lg font-bold text-tema-tinta">{resultado.resumo.latenciaGtsnetMs.toFixed(0)}</p>
+                      <p className="text-[10px] text-tema-apagado">ms Latencia</p>
                     </div>
                   )}
                   {resultado.resumo.perdaPct != null && (
-                    <div className="bg-white border border-[#E6E1D6] rounded-lg p-2">
-                      <p className="text-lg font-bold text-[#201D17]">{resultado.resumo.perdaPct.toFixed(1)}%</p>
-                      <p className="text-[10px] text-[#A69E8F]">Perda</p>
+                    <div className="bg-tema-superficie border border-tema-linha rounded-lg p-2">
+                      <p className="text-lg font-bold text-tema-tinta">{resultado.resumo.perdaPct.toFixed(1)}%</p>
+                      <p className="text-[10px] text-tema-apagado">Perda</p>
                     </div>
                   )}
                 </div>
@@ -429,21 +429,21 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
               {resultado.recomendacoes?.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-[#3F3A32] mb-2">Recomendacoes</p>
+                  <p className="text-sm font-medium text-tema-texto mb-2">Recomendacoes</p>
                   <div className="space-y-1.5">
                     {resultado.recomendacoes.map((rec: string, i: number) => (
                       <button
                         key={i}
                         onClick={() => setAcoesMarcadas(prev => ({ ...prev, [i]: !prev[i] }))}
-                        className="w-full flex items-start gap-2 p-2.5 bg-white border border-[#E6E1D6] rounded-lg text-left"
+                        className="w-full flex items-start gap-2 p-2.5 bg-tema-superficie border border-tema-linha rounded-lg text-left"
                       >
                         <div className={cn(
                           'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5',
-                          acoesMarcadas[i] ? 'bg-cyan-600 border-cyan-600' : 'border-[#D8D2C3]'
+                          acoesMarcadas[i] ? 'bg-cyan-600 border-cyan-600' : 'border-tema-linha-forte'
                         )}>
                           {acoesMarcadas[i] && <CheckCircle className="w-3 h-3 text-white" />}
                         </div>
-                        <span className={cn('text-xs', acoesMarcadas[i] ? 'text-[#A69E8F] line-through' : 'text-[#3F3A32]')}>{rec}</span>
+                        <span className={cn('text-xs', acoesMarcadas[i] ? 'text-tema-apagado line-through' : 'text-tema-texto')}>{rec}</span>
                       </button>
                     ))}
                   </div>
@@ -452,17 +452,17 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
 
               {anterior && (
                 <div>
-                  <p className="text-sm font-medium text-[#3F3A32] mb-2">Antes x Depois</p>
+                  <p className="text-sm font-medium text-tema-texto mb-2">Antes x Depois</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-[#A69E8F]">
+                        <tr className="text-tema-apagado">
                           <th className="text-left pb-1">Metrica</th>
                           <th className="text-right pb-1">Antes</th>
                           <th className="text-right pb-1">Depois</th>
                         </tr>
                       </thead>
-                      <tbody className="text-[#201D17]">
+                      <tbody className="text-tema-tinta">
                         {[
                           { label: 'Download', campo: 'downloadMbps', unidade: ' Mbps', maior: true },
                           { label: 'Latencia GTSNET', campo: 'latenciaGtsnetMs', unidade: ' ms', maior: false },
@@ -475,7 +475,7 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                             ? (m.maior ? depoisV >= antesV : depoisV <= antesV)
                             : null
                           return (
-                            <tr key={m.campo} className="border-t border-[#E6E1D6]">
+                            <tr key={m.campo} className="border-t border-tema-linha">
                               <td className="py-1.5">{m.label}</td>
                               <td className="text-right py-1.5">{antesV != null ? `${antesV.toFixed(1)}${m.unidade}` : '-'}</td>
                               <td className="text-right py-1.5 flex items-center justify-end gap-1">
@@ -496,7 +496,7 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                 {faseAtual === 'ANTES' && (
                   <button
                     onClick={executarNovamente}
-                    className="flex items-center justify-center gap-2 py-3 bg-black/[0.02] hover:bg-black/[0.05] border border-[#E6E1D6] rounded-xl text-sm text-[#201D17] transition-colors"
+                    className="flex items-center justify-center gap-2 py-3 bg-tema-contraste/[0.02] hover:bg-tema-contraste/[0.05] border border-tema-linha rounded-xl text-sm text-tema-tinta transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Executar Depois
@@ -533,7 +533,7 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                           'py-2 rounded-lg text-xs font-medium border transition-colors',
                           validacaoTecnico === op.valor
                             ? 'bg-cyan-600 border-cyan-600 text-white'
-                            : 'bg-white border-[#D8D2C3] text-[#3F3A32]'
+                            : 'bg-tema-superficie border-tema-linha-forte text-tema-texto'
                         )}
                       >
                         {op.label}
@@ -541,11 +541,11 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                     ))}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Causa real</label>
+                    <label className="block text-xs font-medium text-tema-suave mb-1.5">Causa real</label>
                     <select
                       value={causaReal}
                       onChange={e => setCausaReal(e.target.value)}
-                      className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-sm text-[#201D17]"
+                      className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-sm text-tema-tinta"
                     >
                       <option value="">Selecione...</option>
                       <option value="WIFI">Wi-Fi</option>
@@ -562,11 +562,11 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               )}
 
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Problema encontrado *</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Problema encontrado *</label>
                 <select
                   value={problemaEncontrado}
                   onChange={e => setProblemaEncontrado(e.target.value)}
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17]"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2.5 text-sm text-tema-tinta"
                 >
                   <option value="">Selecione...</option>
                   <option value="WIFI">Wi-Fi</option>
@@ -581,18 +581,18 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Acao realizada *</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Acao realizada *</label>
                 <textarea
                   value={acaoRealizada}
                   onChange={e => setAcaoRealizada(e.target.value)}
                   rows={3}
                   placeholder="Descreva o que foi feito..."
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17] placeholder:text-[#A69E8F] resize-none"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2.5 text-sm text-tema-tinta placeholder:text-tema-apagado resize-none"
                 />
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm text-[#3F3A32] mb-2">
+                <label className="flex items-center gap-2 text-sm text-tema-texto mb-2">
                   <input
                     type="checkbox"
                     checked={equipamentoSubstituido}
@@ -607,24 +607,24 @@ export function DiagnosticoRunner({ chamado, onClose, diagnosticoRemoto }: Props
                       value={equipamentoAntigoDesc}
                       onChange={e => setEquipamentoAntigoDesc(e.target.value)}
                       placeholder="Equipamento antigo"
-                      className="bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-xs text-[#201D17] placeholder:text-[#A69E8F]"
+                      className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-xs text-tema-tinta placeholder:text-tema-apagado"
                     />
                     <input
                       value={equipamentoNovoDesc}
                       onChange={e => setEquipamentoNovoDesc(e.target.value)}
                       placeholder="Equipamento novo"
-                      className="bg-white border border-[#D8D2C3] rounded-lg px-3 py-2 text-xs text-[#201D17] placeholder:text-[#A69E8F]"
+                      className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-xs text-tema-tinta placeholder:text-tema-apagado"
                     />
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Resultado *</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Resultado *</label>
                 <select
                   value={resultadoFinal}
                   onChange={e => setResultadoFinal(e.target.value)}
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17]"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2.5 text-sm text-tema-tinta"
                 >
                   <option value="">Selecione...</option>
                   <option value="RESOLVIDO">Resolvido</option>

@@ -16,14 +16,14 @@ function FieldWrapper({ label, hint, error, required, children }: FieldWrapperPr
   return (
     <div>
       {label && (
-        <label className="block text-xs font-medium text-[#7A7266] mb-1.5">
+        <label className="block text-xs font-medium text-tema-suave mb-1.5">
           {label}{required && <span className="text-red-600"> *</span>}
         </label>
       )}
       {children}
       {error
         ? <p className="text-xs text-red-600 mt-1">{error}</p>
-        : hint ? <p className="text-xs text-[#A69E8F] mt-1">{hint}</p> : null}
+        : hint ? <p className="text-xs text-tema-apagado mt-1">{hint}</p> : null}
     </div>
   )
 }

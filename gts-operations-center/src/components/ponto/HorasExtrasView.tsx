@@ -59,7 +59,7 @@ const STATUS_CFG: Record<string, { label: string; cor: string; bg: string }> = {
   PENDENTE:  { label: 'Pendente',  cor: 'text-amber-700',  bg: 'bg-amber-500/10 border-amber-500/25' },
   APROVADA:  { label: 'Aprovada',  cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
   REJEITADA: { label: 'Rejeitada', cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25' },
-  SEM_EXTRA: { label: 'Sem extra', cor: 'text-[#7A7266]',    bg: 'bg-black/[0.03] border-[#E6E1D6]' },
+  SEM_EXTRA: { label: 'Sem extra', cor: 'text-tema-suave',    bg: 'bg-tema-contraste/[0.03] border-tema-linha' },
 }
 
 const SITUACAO_CFG: Record<string, { cor: string; bg: string }> = {
@@ -69,7 +69,7 @@ const SITUACAO_CFG: Record<string, { cor: string; bg: string }> = {
   FERIADO:                  { cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25' },
   AUSENCIA_JUSTIFICADA:     { cor: 'text-teal-700',    bg: 'bg-teal-500/10 border-teal-500/25' },
   AUSENCIA_NAO_JUSTIFICADA: { cor: 'text-orange-700',  bg: 'bg-orange-500/10 border-orange-500/25' },
-  PONTO_INCOMPLETO:         { cor: 'text-[#7A7266]',    bg: 'bg-black/[0.03] border-[#E6E1D6]' },
+  PONTO_INCOMPLETO:         { cor: 'text-tema-suave',    bg: 'bg-tema-contraste/[0.03] border-tema-linha' },
 }
 
 const SITUACAO_OPTIONS = [
@@ -224,8 +224,8 @@ export function HorasExtrasView({ session }: Props) {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Horas Extras</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">Ponto e horas excedentes por equipe</p>
+          <h1 className="text-2xl font-bold text-tema-tinta">Horas Extras</h1>
+          <p className="text-tema-apagado text-sm mt-1">Ponto e horas excedentes por equipe</p>
         </div>
         {aba === 'registros' && (
           <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export function HorasExtrasView({ session }: Props) {
       </div>
 
       {/* Abas - Relatorio Geral e exclusivo do admin, Registros e Calendario ficam disponiveis pra quem acessa a tela */}
-      <div className="flex items-center gap-1 border-b border-[#E6E1D6]">
+      <div className="flex items-center gap-1 border-b border-tema-linha">
         {[
           { id: 'registros' as Aba, label: 'Registros', icon: ClipboardList },
           { id: 'calendario' as Aba, label: 'Calendario', icon: Calendar },
@@ -258,7 +258,7 @@ export function HorasExtrasView({ session }: Props) {
               onClick={() => setAba(a.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-[#7A7266] hover:text-[#201D17]'
+                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -275,20 +275,20 @@ export function HorasExtrasView({ session }: Props) {
           {porTecnico.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F] flex items-center gap-1"><Users className="w-3 h-3" /> Tecnicos</p>
-                <p className="text-xl font-black text-[#201D17]">{totais.tecnicos}</p>
+                <p className="text-xs text-tema-apagado flex items-center gap-1"><Users className="w-3 h-3" /> Tecnicos</p>
+                <p className="text-xl font-black text-tema-tinta">{totais.tecnicos}</p>
               </div>
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F]">Horas Trabalhadas</p>
-                <p className="text-xl font-black text-[#201D17]">{formatarHorasHM(totais.horasTrabalhadas)}</p>
+                <p className="text-xs text-tema-apagado">Horas Trabalhadas</p>
+                <p className="text-xl font-black text-tema-tinta">{formatarHorasHM(totais.horasTrabalhadas)}</p>
               </div>
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F]">Horas Extras</p>
-                <p className="text-xl font-black text-[#201D17]">{formatarHorasHM(totais.horasExtras)}</p>
+                <p className="text-xs text-tema-apagado">Horas Extras</p>
+                <p className="text-xl font-black text-tema-tinta">{formatarHorasHM(totais.horasExtras)}</p>
               </div>
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F]">Aprovadas / Rejeitadas / Pendentes</p>
-                <p className="text-sm font-black text-[#201D17]">
+                <p className="text-xs text-tema-apagado">Aprovadas / Rejeitadas / Pendentes</p>
+                <p className="text-sm font-black text-tema-tinta">
                   <span className="text-emerald-700">{formatarHorasHM(totais.aprovadas)}</span>
                   {' / '}
                   <span className="text-red-700">{formatarHorasHM(totais.rejeitadas)}</span>
@@ -297,8 +297,8 @@ export function HorasExtrasView({ session }: Props) {
                 </p>
               </div>
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F]">Faltas / Atestados / Folgas</p>
-                <p className="text-sm font-black text-[#201D17]">
+                <p className="text-xs text-tema-apagado">Faltas / Atestados / Folgas</p>
+                <p className="text-sm font-black text-tema-tinta">
                   <span className="text-red-700">{totais.faltas}</span>
                   {' / '}
                   <span className="text-purple-700">{totais.atestados}</span>
@@ -307,8 +307,8 @@ export function HorasExtrasView({ session }: Props) {
                 </p>
               </div>
               <div className="gts-card">
-                <p className="text-xs text-[#A69E8F]">Sabados Trabalhados</p>
-                <p className="text-xl font-black text-[#201D17]">{totais.sabadosTrabalhados}</p>
+                <p className="text-xs text-tema-apagado">Sabados Trabalhados</p>
+                <p className="text-xl font-black text-tema-tinta">{totais.sabadosTrabalhados}</p>
               </div>
             </div>
           )}
@@ -317,27 +317,27 @@ export function HorasExtrasView({ session }: Props) {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {porTecnico.map((t: any) => (
                 <div key={t.funcionarioId} className="gts-card">
-                  <p className="text-sm font-bold text-[#201D17] truncate">{t.nome}</p>
+                  <p className="text-sm font-bold text-tema-tinta truncate">{t.nome}</p>
                   <p className="text-xs text-orange-700 truncate">
                     {t.equipeNome} - {t.dias} dia(s)
                   </p>
                   <div className="flex items-center gap-3 mt-2">
                     <div>
-                      <p className="text-base font-black text-[#201D17]">{formatarHorasHM(t.horasTrabalhadas)}</p>
-                      <p className="text-xs text-[#A69E8F]">Trabalhadas</p>
+                      <p className="text-base font-black text-tema-tinta">{formatarHorasHM(t.horasTrabalhadas)}</p>
+                      <p className="text-xs text-tema-apagado">Trabalhadas</p>
                     </div>
                     <div>
                       <p className="text-base font-black text-amber-700">{formatarHorasHM(t.horasExtras)}</p>
-                      <p className="text-xs text-[#A69E8F]">Extras</p>
+                      <p className="text-xs text-tema-apagado">Extras</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-[#7A7266]">
+                  <div className="flex items-center gap-3 mt-2 text-xs text-tema-suave">
                     <span>Apr <span className="text-emerald-700 font-bold">{formatarHorasHM(t.totalAprovado)}</span></span>
                     <span>Rej <span className="text-red-700 font-bold">{formatarHorasHM(t.totalRejeitado)}</span></span>
                     <span>Pen <span className="text-amber-700 font-bold">{formatarHorasHM(t.totalPendente)}</span></span>
                   </div>
                   {(t.faltas > 0 || t.atestados > 0 || t.folgas > 0) && (
-                    <p className="text-xs text-[#A69E8F] mt-1">
+                    <p className="text-xs text-tema-apagado mt-1">
                       {t.faltas > 0 && <span className="text-red-700">{t.faltas} falta(s) </span>}
                       {t.atestados > 0 && <span className="text-purple-700">{t.atestados} atestado(s) </span>}
                       {t.folgas > 0 && <span className="text-sky-700">{t.folgas} folga(s)</span>}
@@ -349,7 +349,7 @@ export function HorasExtrasView({ session }: Props) {
           )}
 
           <div className="flex flex-wrap items-center gap-3">
-            <Filter className="w-4 h-4 text-[#A69E8F]" />
+            <Filter className="w-4 h-4 text-tema-apagado" />
             <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input py-1.5 text-sm w-auto">
               <option value="">Todas as equipes</option>
               {equipes.map((eq: any) => (
@@ -381,7 +381,7 @@ export function HorasExtrasView({ session }: Props) {
                     'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
                     status === s.valor
                       ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                      : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
                   )}
                 >
                   {s.label}
@@ -392,7 +392,7 @@ export function HorasExtrasView({ session }: Props) {
             {/* Busca por periodo livre (data inicial/final) - exclusiva do admin */}
             {isAdmin && (
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#A69E8F]" />
+                <Calendar className="w-3.5 h-3.5 text-tema-apagado" />
                 <input
                   type="date"
                   value={dataInicioFiltro}
@@ -400,7 +400,7 @@ export function HorasExtrasView({ session }: Props) {
                   className="gts-input py-1.5 text-sm w-auto"
                   title="Data inicial (somente admin)"
                 />
-                <span className="text-xs text-[#A69E8F]">ate</span>
+                <span className="text-xs text-tema-apagado">ate</span>
                 <input
                   type="date"
                   value={dataFimFiltro}
@@ -409,7 +409,7 @@ export function HorasExtrasView({ session }: Props) {
                   title="Data final (somente admin)"
                 />
                 {(dataInicioFiltro || dataFimFiltro) && (
-                  <button onClick={() => { setDataInicioFiltro(''); setDataFimFiltro('') }} className="text-xs text-[#7A7266] hover:text-[#201D17]">
+                  <button onClick={() => { setDataInicioFiltro(''); setDataFimFiltro('') }} className="text-xs text-tema-suave hover:text-tema-tinta">
                     Limpar periodo
                   </button>
                 )}
@@ -422,8 +422,8 @@ export function HorasExtrasView({ session }: Props) {
               Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
             ) : registros.length === 0 ? (
               <div className="gts-card text-center py-16">
-                <Clock className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-                <p className="text-[#7A7266] font-medium">Nenhum registro encontrado</p>
+                <Clock className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+                <p className="text-tema-suave font-medium">Nenhum registro encontrado</p>
               </div>
             ) : registros.map((r: any) => {
               const cfg = STATUS_CFG[r.statusHorasExtras] || STATUS_CFG.SEM_EXTRA
@@ -431,11 +431,11 @@ export function HorasExtrasView({ session }: Props) {
               const situacaoCfg = SITUACAO_CFG[r.tipoRegistro] || (situacaoTxt === 'Ponto Incompleto' ? SITUACAO_CFG.PONTO_INCOMPLETO : null)
               const semJornada = r.tipoRegistro !== 'TRABALHADO'
               return (
-                <div key={r.id} className={cn('bg-white border rounded-xl p-4 shadow-sm shadow-black/[0.03]', cfg.bg)}>
+                <div key={r.id} className={cn('bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]', cfg.bg)}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="text-[#201D17] font-semibold">{r.funcionario?.nome}</p>
+                        <p className="text-tema-tinta font-semibold">{r.funcionario?.nome}</p>
                         <span className="text-xs text-orange-700">{r.funcionario?.equipe?.nome}</span>
                         <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', cfg.cor, cfg.bg)}>
                           {cfg.label}
@@ -446,8 +446,8 @@ export function HorasExtrasView({ session }: Props) {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#A69E8F]">{diaSemanaAbrev(new Date(r.data))}, {new Date(r.data).toLocaleDateString('pt-BR')}</p>
-                      <p className="text-sm text-[#3F3A32] mt-1">
+                      <p className="text-xs text-tema-apagado">{diaSemanaAbrev(new Date(r.data))}, {new Date(r.data).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-sm text-tema-texto mt-1">
                         {semJornada
                           ? (r.observacao || `${situacaoTxt} - sem jornada`)
                           : r.horasTrabalhadas != null ? `${formatarHorasHM(r.horasTrabalhadas)} trabalhadas` : 'Jornada em andamento'}
@@ -493,18 +493,18 @@ export function HorasExtrasView({ session }: Props) {
       {aba === 'relatorio-geral' && isAdmin && (
         <div className="gts-card space-y-5 max-w-2xl">
           <div>
-            <h2 className="text-sm font-semibold text-[#201D17] flex items-center gap-2 mb-1">
+            <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2 mb-1">
               <FileText className="w-4 h-4 text-orange-600" />
               Relatorio Geral de Horas Extras
             </h2>
-            <p className="text-xs text-[#A69E8F]">
+            <p className="text-xs text-tema-apagado">
               Escolha os filtros e quais relatorios incluir - tudo sai em um unico arquivo PDF.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Equipe</label>
+              <label className="block text-xs font-medium text-tema-suave mb-1.5">Equipe</label>
               <select value={equipeRelatorio} onChange={e => setEquipeRelatorio(e.target.value)} className="w-full gts-input">
                 <option value="">Todas as equipes</option>
                 {equipes.map((eq: any) => (
@@ -513,7 +513,7 @@ export function HorasExtrasView({ session }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Tecnico</label>
+              <label className="block text-xs font-medium text-tema-suave mb-1.5">Tecnico</label>
               <select value={funcionarioRelatorio} onChange={e => setFuncionarioRelatorio(e.target.value)} className="w-full gts-input">
                 <option value="">Todos os tecnicos</option>
                 {funcionarios.map((f: any) => (
@@ -522,7 +522,7 @@ export function HorasExtrasView({ session }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Situacao</label>
+              <label className="block text-xs font-medium text-tema-suave mb-1.5">Situacao</label>
               <select value={situacaoRelatorio} onChange={e => setSituacaoRelatorio(e.target.value)} className="w-full gts-input">
                 {SITUACAO_OPTIONS.map(s => (
                   <option key={s.valor} value={s.valor}>{s.label}</option>
@@ -531,20 +531,20 @@ export function HorasExtrasView({ session }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Data inicial</label>
+                <label className="block text-xs font-medium text-tema-suave mb-1.5">Data inicial</label>
                 <input type="date" value={dataInicioRelatorio} onChange={e => setDataInicioRelatorio(e.target.value)} className="w-full gts-input" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#7A7266] mb-1.5">Data final</label>
+                <label className="block text-xs font-medium text-tema-suave mb-1.5">Data final</label>
                 <input type="date" value={dataFimRelatorio} onChange={e => setDataFimRelatorio(e.target.value)} className="w-full gts-input" />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#7A7266] mb-2">Relatorios a incluir</label>
+            <label className="block text-xs font-medium text-tema-suave mb-2">Relatorios a incluir</label>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 p-3 bg-black/[0.02] border border-[#E6E1D6] rounded-lg cursor-pointer">
+              <label className="flex items-center gap-2 p-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
                   checked={incluirResumo}
@@ -552,11 +552,11 @@ export function HorasExtrasView({ session }: Props) {
                   className="rounded w-4 h-4"
                 />
                 <div>
-                  <p className="text-sm text-[#201D17]">Resumo de Horas Extras por Tecnico</p>
-                  <p className="text-xs text-[#A69E8F]">Horas trabalhadas/extras, aprovadas/rejeitadas/pendentes e faltas/atestados/folgas, por tecnico</p>
+                  <p className="text-sm text-tema-tinta">Resumo de Horas Extras por Tecnico</p>
+                  <p className="text-xs text-tema-apagado">Horas trabalhadas/extras, aprovadas/rejeitadas/pendentes e faltas/atestados/folgas, por tecnico</p>
                 </div>
               </label>
-              <label className="flex items-center gap-2 p-3 bg-black/[0.02] border border-[#E6E1D6] rounded-lg cursor-pointer">
+              <label className="flex items-center gap-2 p-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
                   checked={incluirDetalhado}
@@ -564,8 +564,8 @@ export function HorasExtrasView({ session }: Props) {
                   className="rounded w-4 h-4"
                 />
                 <div>
-                  <p className="text-sm text-[#201D17]">Espelho de Ponto Detalhado</p>
-                  <p className="text-xs text-[#A69E8F]">Registro dia a dia de entrada, saida e horas de cada funcionario</p>
+                  <p className="text-sm text-tema-tinta">Espelho de Ponto Detalhado</p>
+                  <p className="text-xs text-tema-apagado">Registro dia a dia de entrada, saida e horas de cada funcionario</p>
                 </div>
               </label>
             </div>

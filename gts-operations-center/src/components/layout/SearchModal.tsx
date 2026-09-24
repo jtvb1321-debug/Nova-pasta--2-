@@ -77,11 +77,11 @@ export function SearchModal({ onClose }: Props) {
     ABERTO: 'text-blue-700',
     EM_ANDAMENTO: 'text-amber-700',
     FINALIZADO: 'text-emerald-700',
-    CANCELADO: 'text-[#A69E8F]',
+    CANCELADO: 'text-tema-apagado',
     CRITICO: 'text-red-700',
     OK: 'text-emerald-700',
     ATIVO: 'text-emerald-700',
-    INATIVO: 'text-[#A69E8F]',
+    INATIVO: 'text-tema-apagado',
     PENDENTE: 'text-amber-700',
     APROVADO: 'text-emerald-700',
     REPROVADO: 'text-red-700',
@@ -91,12 +91,12 @@ export function SearchModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center z-50 pt-20 px-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-[#E6E1D6]">
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-tema-linha">
           {loading
-            ? <Loader2 className="w-5 h-5 text-[#A69E8F] animate-spin flex-shrink-0" />
-            : <Search className="w-5 h-5 text-[#A69E8F] flex-shrink-0" />
+            ? <Loader2 className="w-5 h-5 text-tema-apagado animate-spin flex-shrink-0" />
+            : <Search className="w-5 h-5 text-tema-apagado flex-shrink-0" />
           }
           <input
             ref={inputRef}
@@ -105,16 +105,16 @@ export function SearchModal({ onClose }: Props) {
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Pesquisar cliente, OS, equipe, placa, material..."
-            className="flex-1 bg-transparent text-[#201D17] placeholder:text-[#A69E8F] focus:outline-none text-base"
+            className="flex-1 bg-transparent text-tema-tinta placeholder:text-tema-apagado focus:outline-none text-base"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-[#A69E8F] hover:text-[#201D17] transition-colors">
+            <button onClick={() => setQuery('')} className="text-tema-apagado hover:text-tema-tinta transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-xs text-[#A69E8F] hover:text-[#201D17] border border-[#E6E1D6] px-2 py-0.5 rounded transition-colors"
+            className="text-xs text-tema-apagado hover:text-tema-tinta border border-tema-linha px-2 py-0.5 rounded transition-colors"
           >
             ESC
           </button>
@@ -124,14 +124,14 @@ export function SearchModal({ onClose }: Props) {
         <div className="max-h-96 overflow-y-auto">
           {query.length < 2 ? (
             <div className="p-6 text-center">
-              <Search className="w-8 h-8 text-[#A69E8F] mx-auto mb-2" />
-              <p className="text-[#A69E8F] text-sm">Digite pelo menos 2 caracteres para pesquisar</p>
+              <Search className="w-8 h-8 text-tema-apagado mx-auto mb-2" />
+              <p className="text-tema-apagado text-sm">Digite pelo menos 2 caracteres para pesquisar</p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
                 {['Alex', 'Estoque', 'HNP9017', 'Instalacao', 'Fibra'].map(s => (
                   <button
                     key={s}
                     onClick={() => setQuery(s)}
-                    className="px-3 py-1 bg-black/[0.02] border border-[#E6E1D6] rounded-full text-xs text-[#7A7266] hover:text-[#201D17] transition-colors"
+                    className="px-3 py-1 bg-tema-contraste/[0.02] border border-tema-linha rounded-full text-xs text-tema-suave hover:text-tema-tinta transition-colors"
                   >
                     {s}
                   </button>
@@ -140,8 +140,8 @@ export function SearchModal({ onClose }: Props) {
             </div>
           ) : resultados.length === 0 && !loading ? (
             <div className="p-6 text-center">
-              <AlertTriangle className="w-8 h-8 text-[#A69E8F] mx-auto mb-2" />
-              <p className="text-[#A69E8F] text-sm">Nenhum resultado para "{query}"</p>
+              <AlertTriangle className="w-8 h-8 text-tema-apagado mx-auto mb-2" />
+              <p className="text-tema-apagado text-sm">Nenhum resultado para "{query}"</p>
             </div>
           ) : (
             <div className="py-2">
@@ -157,7 +157,7 @@ export function SearchModal({ onClose }: Props) {
                     onMouseEnter={() => setSelecionado(i)}
                     className={cn(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors text-left',
-                      isSelected ? 'bg-orange-500/10' : 'hover:bg-black/[0.02]'
+                      isSelected ? 'bg-orange-500/10' : 'hover:bg-tema-contraste/[0.02]'
                     )}
                   >
                     <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', cfg.cor.split(' ')[1])}>
@@ -166,13 +166,13 @@ export function SearchModal({ onClose }: Props) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-[#201D17] truncate">{r.titulo}</p>
-                        <span className={cn('text-xs flex-shrink-0', STATUS_COR[r.status] || 'text-[#7A7266]')}>
+                        <p className="text-sm font-medium text-tema-tinta truncate">{r.titulo}</p>
+                        <span className={cn('text-xs flex-shrink-0', STATUS_COR[r.status] || 'text-tema-suave')}>
                           {r.status}
                         </span>
                       </div>
-                      <p className="text-xs text-[#7A7266] truncate">{r.subtitulo}</p>
-                      <p className="text-xs text-[#A69E8F] truncate">{r.detalhe}</p>
+                      <p className="text-xs text-tema-suave truncate">{r.subtitulo}</p>
+                      <p className="text-xs text-tema-apagado truncate">{r.detalhe}</p>
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -189,7 +189,7 @@ export function SearchModal({ onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-[#E6E1D6] flex items-center gap-4 text-xs text-[#A69E8F]">
+        <div className="px-4 py-2.5 border-t border-tema-linha flex items-center gap-4 text-xs text-tema-apagado">
           <span>↑↓ Navegar</span>
           <span>Enter Abrir</span>
           <span>ESC Fechar</span>

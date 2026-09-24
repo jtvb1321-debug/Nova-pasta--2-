@@ -1,6 +1,6 @@
 'use client'
 
-import { NOC } from './theme'
+import { NOC, CARD_TRANSLUCIDO } from './theme'
 import { DashboardToolbar } from './DashboardToolbar'
 import { KpiRow } from './KpiRow'
 import { NetworkMapCard } from './NetworkMapCard'
@@ -48,7 +48,7 @@ export function DashboardNOC() {
           <UnifiedTimelineCard />
         </div>
 
-        <div className="rounded-xl border" style={{ backgroundColor: `${NOC.card}CC`, borderColor: '#E6E1D6' }}>
+        <div className="rounded-xl border" style={{ backgroundColor: CARD_TRANSLUCIDO, borderColor: NOC.cinzaEscuro }}>
           <DashboardFooterBar />
         </div>
       </div>

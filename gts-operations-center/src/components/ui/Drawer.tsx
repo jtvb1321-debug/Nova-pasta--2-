@@ -36,17 +36,17 @@ export function Drawer({ open, onClose, title, subtitle, children, widthClassNam
         onClick={onClose}
       />
       <div className={cn(
-        'relative w-full bg-white border-l border-[#E6E1D6] h-full flex flex-col shadow-2xl animate-drawer-in',
+        'relative w-full bg-tema-superficie border-l border-tema-linha h-full flex flex-col shadow-2xl animate-drawer-in',
         widthClassName
       )}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E1D6] flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-tema-linha flex-shrink-0">
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-[#201D17] truncate">{title}</h2>
-            {subtitle && <p className="text-xs text-[#A69E8F] truncate mt-0.5">{subtitle}</p>}
+            <h2 className="text-base font-bold text-tema-tinta truncate">{title}</h2>
+            {subtitle && <p className="text-xs text-tema-apagado truncate mt-0.5">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 -m-1 text-[#A69E8F] hover:text-[#201D17] hover:bg-black/[0.04] rounded-lg transition-colors flex-shrink-0"
+            className="p-2 -m-1 text-tema-apagado hover:text-tema-tinta hover:bg-tema-contraste/[0.04] rounded-lg transition-colors flex-shrink-0"
           >
             <X className="w-4 h-4" />
           </button>

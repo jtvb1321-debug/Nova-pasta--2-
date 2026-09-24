@@ -91,8 +91,8 @@ export function RelatorioVendasView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Relatorio de Vendas por Vendedor</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">Periodo: {periodoLabel}</p>
+          <h1 className="text-2xl font-bold text-tema-tinta">Relatorio de Vendas por Vendedor</h1>
+          <p className="text-tema-apagado text-sm mt-1">Periodo: {periodoLabel}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => refetch()} className="gts-btn-secondary">
@@ -127,7 +127,7 @@ export function RelatorioVendasView() {
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 periodoRapido === p.value
                   ? 'bg-orange-500/10 text-orange-700 border-orange-500/30'
-                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                  : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
               )}
             >
               {p.label}
@@ -137,8 +137,8 @@ export function RelatorioVendasView() {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#A69E8F]" />
-            <label className="text-xs text-[#7A7266]">De:</label>
+            <Calendar className="w-4 h-4 text-tema-apagado" />
+            <label className="text-xs text-tema-suave">De:</label>
             <input
               type="date"
               value={dataInicio}
@@ -147,7 +147,7 @@ export function RelatorioVendasView() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-[#7A7266]">Ate:</label>
+            <label className="text-xs text-tema-suave">Ate:</label>
             <input
               type="date"
               value={dataFim}
@@ -172,7 +172,7 @@ export function RelatorioVendasView() {
 
       {/* Lista por vendedor */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-[#201D17] flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
           <Trophy className="w-4 h-4 text-orange-600" />
           Desempenho por Vendedor
         </h2>
@@ -182,15 +182,15 @@ export function RelatorioVendasView() {
           : porVendedor.length === 0
           ? (
             <div className="gts-card text-center py-16">
-              <FileText className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhuma venda no periodo selecionado</p>
+              <FileText className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhuma venda no periodo selecionado</p>
             </div>
           )
           : porVendedor.map((v: any, i: number) => (
-            <div key={v.vendedorId} className="bg-white border border-[#E6E1D6] rounded-xl overflow-hidden shadow-sm shadow-black/[0.03]">
+            <div key={v.vendedorId} className="bg-tema-superficie border border-tema-linha rounded-xl overflow-hidden shadow-sm shadow-tema-contraste/[0.03]">
               {/* Header clicavel */}
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/[0.02]"
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-tema-contraste/[0.02]"
                 onClick={() => setExpandido(expandido === v.vendedorId ? null : v.vendedorId)}
               >
                 <div className="flex items-center gap-3">
@@ -198,52 +198,52 @@ export function RelatorioVendasView() {
                     {i === 0 ? <Trophy className="w-4 h-4" /> : v.vendedorNome[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[#201D17] font-bold">{v.vendedorNome}</p>
-                    <p className="text-xs text-[#A69E8F]">{v.totalVendas} venda(s) no periodo</p>
+                    <p className="text-tema-tinta font-bold">{v.vendedorNome}</p>
+                    <p className="text-xs text-tema-apagado">{v.totalVendas} venda(s) no periodo</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <p className="text-xs text-[#A69E8F]">Aprovadas</p>
+                    <p className="text-xs text-tema-apagado">Aprovadas</p>
                     <p className="text-sm font-bold text-emerald-700">{v.totalAprovadas}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-[#A69E8F]">Pendentes</p>
+                    <p className="text-xs text-tema-apagado">Pendentes</p>
                     <p className="text-sm font-bold text-amber-700">{v.totalPendentes}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-[#A69E8F]">Valor Total</p>
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(v.valorTotal)}</p>
+                    <p className="text-xs text-tema-apagado">Valor Total</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(v.valorTotal)}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-[#A69E8F]">Comissao</p>
+                    <p className="text-xs text-tema-apagado">Comissao</p>
                     <p className="text-sm font-bold text-amber-700">{formatCurrency(v.comissaoTotal)}</p>
                   </div>
                   {expandido === v.vendedorId
-                    ? <ChevronUp className="w-4 h-4 text-[#A69E8F]" />
-                    : <ChevronDown className="w-4 h-4 text-[#A69E8F]" />
+                    ? <ChevronUp className="w-4 h-4 text-tema-apagado" />
+                    : <ChevronDown className="w-4 h-4 text-tema-apagado" />
                   }
                 </div>
               </div>
 
               {/* Detalhes das vendas */}
               {expandido === v.vendedorId && (
-                <div className="border-t border-[#E6E1D6] p-4 space-y-2">
+                <div className="border-t border-tema-linha p-4 space-y-2">
                   {v.vendas.map((venda: any) => {
                     const cfg = STATUS_CFG[venda.status] || STATUS_CFG.PENDENTE
                     return (
-                      <div key={venda.id} className="flex items-center justify-between p-2.5 bg-black/[0.02] rounded-lg">
+                      <div key={venda.id} className="flex items-center justify-between p-2.5 bg-tema-contraste/[0.02] rounded-lg">
                         <div>
-                          <p className="text-sm text-[#201D17]">{venda.clienteNome}</p>
-                          <p className="text-xs text-[#A69E8F]">{venda.planoVendido} — {venda.cidade}</p>
+                          <p className="text-sm text-tema-tinta">{venda.clienteNome}</p>
+                          <p className="text-xs text-tema-apagado">{venda.planoVendido} — {venda.cidade}</p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', cfg.cor)}>
                             {cfg.label}
                           </span>
                           <span className="text-sm font-medium text-emerald-700">{formatCurrency(venda.valor)}</span>
-                          <span className="text-xs text-[#A69E8F]">{formatDateTime(venda.data)}</span>
+                          <span className="text-xs text-tema-apagado">{formatDateTime(venda.data)}</span>
                         </div>
                       </div>
                     )

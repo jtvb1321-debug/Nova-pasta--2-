@@ -70,14 +70,14 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
   if (!mounted || !leafletLib || !mapComponents) {
     return (
       <div className="flex flex-col h-full">
-        <div className="px-2 py-1.5 flex items-center gap-2 border-b border-[#E6E1D6] flex-shrink-0"
+        <div className="px-2 py-1.5 flex items-center gap-2 border-b border-tema-linha flex-shrink-0"
           style={{ backgroundColor: equipe.cor + '20' }}>
           <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: equipe.cor }} />
-          <span className="text-xs font-bold text-[#201D17]">{equipe.nome}</span>
-          <span className="text-xs text-[#7A7266]">- {equipe.subNome}</span>
+          <span className="text-xs font-bold text-tema-tinta">{equipe.nome}</span>
+          <span className="text-xs text-tema-suave">- {equipe.subNome}</span>
         </div>
-        <div className="flex-1 bg-[#FAF9F6] flex items-center justify-center">
-          <p className="text-[#A69E8F] text-xs">Carregando mapa...</p>
+        <div className="flex-1 bg-tema-fundo flex items-center justify-center">
+          <p className="text-tema-apagado text-xs">Carregando mapa...</p>
         </div>
       </div>
     )
@@ -110,13 +110,13 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div
-        className="px-2 py-1.5 flex items-center justify-between border-b border-[#E6E1D6] flex-shrink-0"
+        className="px-2 py-1.5 flex items-center justify-between border-b border-tema-linha flex-shrink-0"
         style={{ backgroundColor: equipe.cor + '20' }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: equipe.cor }} />
-          <span className="text-xs font-bold text-[#201D17]">{equipe.nome}</span>
-          <span className="text-xs text-[#7A7266] truncate">- {equipe.subNome}</span>
+          <span className="text-xs font-bold text-tema-tinta">{equipe.nome}</span>
+          <span className="text-xs text-tema-suave truncate">- {equipe.subNome}</span>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {veiculo ? (
@@ -124,13 +124,13 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
               <span className="text-xs font-mono font-bold" style={{ color: cor }}>
                 {Math.round(veiculo.velocidade)} km/h
               </span>
-              <span className={`text-xs px-1 py-0.5 rounded-full ${veiculo.online ? 'bg-emerald-500/15 text-emerald-700' : 'bg-black/[0.05] text-[#7A7266]'}`}>
+              <span className={`text-xs px-1 py-0.5 rounded-full ${veiculo.online ? 'bg-emerald-500/15 text-emerald-700' : 'bg-tema-contraste/[0.05] text-tema-suave'}`}>
                 {veiculo.online ? 'Online' : 'Offline'}
               </span>
               {alerta && <span className="text-xs text-red-700 animate-pulse font-bold">ALERTA</span>}
             </>
           ) : (
-            <span className="text-xs text-[#A69E8F]">Sem sinal GPS</span>
+            <span className="text-xs text-tema-apagado">Sem sinal GPS</span>
           )}
         </div>
       </div>
@@ -141,11 +141,11 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
           key={`minimap-${index}`}
           center={centro}
           zoom={temPosicao ? 15 : 12}
-          style={{ height: '100%', width: '100%', background: '#FAF9F6' }}
+          style={{ height: '100%', width: '100%', background: 'rgb(var(--c-fundo))' }}
           zoomControl={false}
           scrollWheelZoom={false}
         >
-          <TileLayer url={URL_OSM} attribution={ATRIBUICAO_OSM} referrerPolicy={REFERRER_OSM} />
+          <TileLayer url={URL_OSM} attribution={ATRIBUICAO_OSM} referrerPolicy={REFERRER_OSM} className="gts-tiles-osm" />
           {temPosicao && (
             <Marker position={[veiculo!.latitude, veiculo!.longitude]} icon={icon}>
               <Popup>
@@ -163,13 +163,13 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
                   </p>
                   <p>Lat: {veiculo!.latitude.toFixed(5)}</p>
                   <p>Lng: {veiculo!.longitude.toFixed(5)}</p>
-                  <p style={{ color: '#A69E8F' }}>
+                  <p style={{ color: 'rgb(var(--c-apagado))' }}>
                     Atualizado: {formatDateTime(veiculo!.ultimaAtualizacao)}
                   </p>
                   <p>
                     Status: {veiculo!.online
                       ? <span style={{ color: '#059669' }}>Online</span>
-                      : <span style={{ color: '#7A7266' }}>Offline</span>
+                      : <span style={{ color: 'rgb(var(--c-suave))' }}>Offline</span>
                     }
                   </p>
                 </div>
@@ -180,9 +180,9 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
       </div>
 
       {/* Footer */}
-      <div className="px-2 py-1 border-t border-[#E6E1D6] bg-black/[0.02] flex-shrink-0">
-        <p className="text-xs text-[#A69E8F] truncate">
-          <span className="font-mono text-[#7A7266] font-bold">{equipe.placa}</span>
+      <div className="px-2 py-1 border-t border-tema-linha bg-tema-contraste/[0.02] flex-shrink-0">
+        <p className="text-xs text-tema-apagado truncate">
+          <span className="font-mono text-tema-suave font-bold">{equipe.placa}</span>
           {' - '}{equipe.modelo}
           {veiculo?.endereco && ` - ${veiculo.endereco}`}
         </p>
@@ -220,7 +220,7 @@ export default function MapView({ height = '100vh', dashboard = false }: MapView
   return (
     <div style={{ height, width: '100%' }} className={`grid ${gridClass}`}>
       {equipesMostradas.map((equipe, i) => (
-        <div key={i} className="border border-[#E6E1D6] overflow-hidden">
+        <div key={i} className="border border-tema-linha overflow-hidden">
           <MiniMapa
             veiculo={getVeiculoByPlaca(equipe.placa)}
             equipe={equipe}

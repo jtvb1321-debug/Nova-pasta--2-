@@ -12,7 +12,7 @@ const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab']
 
 const TIPO_CFG: Record<string, { label: string; cor: string; bg: string }> = {
   TRABALHO:        { label: 'Trabalho',        cor: 'text-blue-700',   bg: 'bg-blue-500/20 border-blue-500/40' },
-  FOLGA:           { label: 'Folga',           cor: 'text-[#7A7266]',   bg: 'bg-black/[0.04] border-[#D8D2C3]' },
+  FOLGA:           { label: 'Folga',           cor: 'text-tema-suave',   bg: 'bg-tema-contraste/[0.04] border-tema-linha-forte' },
   PLANTAO_SABADO:  { label: 'Plantao Sabado',  cor: 'text-orange-700', bg: 'bg-orange-500/20 border-orange-500/40' },
 }
 
@@ -125,7 +125,7 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
           <button onClick={() => trocarMes(-1)} className="gts-btn-secondary py-1.5 px-2">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <p className="text-lg font-bold text-[#201D17] w-40 text-center">{MESES[mes - 1]} {ano}</p>
+          <p className="text-lg font-bold text-tema-tinta w-40 text-center">{MESES[mes - 1]} {ano}</p>
           <button onClick={() => trocarMes(1)} className="gts-btn-secondary py-1.5 px-2">
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -140,7 +140,7 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
           </select>
         )}
 
-        <div className="flex items-center gap-3 text-xs text-[#7A7266]">
+        <div className="flex items-center gap-3 text-xs text-tema-suave">
           {Object.entries(TIPO_CFG).map(([k, v]) => (
             <span key={k} className="flex items-center gap-1.5">
               <span className={cn('w-2.5 h-2.5 rounded-full', v.bg.split(' ')[0])} />
@@ -152,8 +152,8 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
 
       {isAdmin && !equipeIdFixo && !equipeId ? (
         <div className="gts-card text-center py-16">
-          <Calendar className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-          <p className="text-[#7A7266] font-medium">Selecione uma equipe para ver/editar a escala</p>
+          <Calendar className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+          <p className="text-tema-suave font-medium">Selecione uma equipe para ver/editar a escala</p>
         </div>
       ) : isLoading ? (
         <div className="h-96 skeleton rounded-xl" />
@@ -161,7 +161,7 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
         <div className="gts-card p-3">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DIAS_SEMANA.map(d => (
-              <div key={d} className="text-center text-xs font-bold text-[#7A7266] py-1">{d}</div>
+              <div key={d} className="text-center text-xs font-bold text-tema-suave py-1">{d}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
@@ -178,12 +178,12 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
                   disabled={!isAdmin}
                   className={cn(
                     'aspect-square rounded-lg border p-1 flex flex-col items-center justify-center transition-colors',
-                    cfg ? cfg.bg : ehSabado ? 'bg-black/[0.02] border-[#E6E1D6]' : 'bg-transparent border-[#E6E1D6]',
+                    cfg ? cfg.bg : ehSabado ? 'bg-tema-contraste/[0.02] border-tema-linha' : 'bg-transparent border-tema-linha',
                     ehHoje ? 'ring-1 ring-orange-500' : '',
                     isAdmin ? 'cursor-pointer hover:border-orange-500/50' : 'cursor-default'
                   )}
                 >
-                  <span className={cn('text-xs font-bold', cfg ? cfg.cor : ehSabado ? 'text-[#7A7266]' : 'text-[#A69E8F]')}>
+                  <span className={cn('text-xs font-bold', cfg ? cfg.cor : ehSabado ? 'text-tema-suave' : 'text-tema-apagado')}>
                     {dia.getDate()}
                   </span>
                 </button>
@@ -195,12 +195,12 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
 
       {diaSelecionado && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#201D17]">
+              <h3 className="text-lg font-semibold text-tema-tinta">
                 {diaSelecionado.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               </h3>
-              <button onClick={() => setDiaSelecionado(null)} className="text-[#A69E8F] hover:text-[#201D17]">
+              <button onClick={() => setDiaSelecionado(null)} className="text-tema-apagado hover:text-tema-tinta">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -213,7 +213,7 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
                   disabled={mutation.isPending}
                   className={cn(
                     'w-full flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors disabled:opacity-50',
-                    escalaSelecionada?.tipo === tipo ? cfg.bg : 'bg-black/[0.03] border-transparent hover:border-[#E6E1D6]'
+                    escalaSelecionada?.tipo === tipo ? cfg.bg : 'bg-tema-contraste/[0.03] border-transparent hover:border-tema-linha'
                   )}
                 >
                   <span className={cn('w-3 h-3 rounded-full', cfg.bg.split(' ')[0])} />

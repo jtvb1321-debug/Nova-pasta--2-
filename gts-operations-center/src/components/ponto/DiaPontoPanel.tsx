@@ -33,7 +33,7 @@ interface HorariosDia {
 const VAZIO: HorariosDia = { entrada: '', saidaAlmoco: '', retornoAlmoco: '', saida: '', tipoRegistro: 'TRABALHADO', observacao: '' }
 
 const TIPO_CFG: Record<TipoRegistroUI, { label: string; cor: string; bg: string }> = {
-  TRABALHADO:               { label: 'Trabalhado',               cor: 'text-[#A69E8F]',    bg: '' },
+  TRABALHADO:               { label: 'Trabalhado',               cor: 'text-tema-apagado',    bg: '' },
   SAIDA_ANTECIPADA:         { label: 'Saida Antecipada',         cor: 'text-amber-700',   bg: 'bg-amber-500/10 border-amber-500/25' },
   FALTA:                    { label: 'Falta',                    cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25' },
   ATESTADO:                 { label: 'Atestado',                 cor: 'text-purple-700',  bg: 'bg-purple-500/10 border-purple-500/25' },
@@ -186,18 +186,18 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 pb-4 border-b border-[#E6E1D6]">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 pb-4 border-b border-tema-linha">
           <div className="flex items-center gap-2">
             <button onClick={() => trocarDia(-1)} className="gts-btn-secondary py-1.5 px-2">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h3 className="text-lg font-semibold text-[#201D17] capitalize w-64 text-center">{dataLabel}</h3>
+            <h3 className="text-lg font-semibold text-tema-tinta capitalize w-64 text-center">{dataLabel}</h3>
             <button onClick={() => trocarDia(1)} className="gts-btn-secondary py-1.5 px-2">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17]">
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -215,17 +215,17 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-14 skeleton rounded-lg" />)
           ) : funcionarios.length === 0 ? (
-            <p className="text-sm text-[#A69E8F] text-center py-8">Nenhum funcionario encontrado</p>
+            <p className="text-sm text-tema-apagado text-center py-8">Nenhum funcionario encontrado</p>
           ) : (
             funcionarios.map((f: any) => {
               const v = valores[f.id] ?? VAZIO
               const cfgAtual = TIPO_CFG[v.tipoRegistro]
               return (
-                <div key={f.id} className={cn('p-3 border rounded-lg space-y-2', v.tipoRegistro !== 'TRABALHADO' ? cfgAtual.bg : 'bg-black/[0.02] border-[#E6E1D6]')}>
+                <div key={f.id} className={cn('p-3 border rounded-lg space-y-2', v.tipoRegistro !== 'TRABALHADO' ? cfgAtual.bg : 'bg-tema-contraste/[0.02] border-tema-linha')}>
                   <div className="flex items-center gap-3">
                     <div className="w-40 flex-shrink-0">
-                      <p className="text-sm text-[#201D17] font-medium truncate">{f.nome}</p>
-                      <p className="text-xs text-[#A69E8F] truncate">{f.equipeNome}</p>
+                      <p className="text-sm text-tema-tinta font-medium truncate">{f.nome}</p>
+                      <p className="text-xs text-tema-apagado truncate">{f.equipeNome}</p>
                     </div>
 
                     {v.tipoRegistro === 'TRABALHADO' || v.tipoRegistro === 'SAIDA_ANTECIPADA' ? (
@@ -271,7 +271,7 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
           )}
         </div>
 
-        <div className="p-5 pt-3 border-t border-[#E6E1D6] space-y-3">
+        <div className="p-5 pt-3 border-t border-tema-linha space-y-3">
           {erro && (
             <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />

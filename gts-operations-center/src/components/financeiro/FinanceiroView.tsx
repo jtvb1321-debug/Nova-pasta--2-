@@ -24,7 +24,7 @@ const STATUS_CFG: Record<string, { label: string; icon: React.ElementType; cls: 
   APROVADO:  { label: 'Aprovado',  icon: CheckCircle, cls: 'text-blue-700 bg-blue-500/10 border-blue-500/20' },
   PAGO:      { label: 'Pago',      icon: CreditCard,  cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
   REPROVADO: { label: 'Reprovado', icon: XCircle,     cls: 'text-red-700 bg-red-500/10 border-red-500/20' },
-  CANCELADO: { label: 'Cancelado', icon: XCircle,     cls: 'text-[#7A7266] bg-black/[0.03] border-[#E6E1D6]' },
+  CANCELADO: { label: 'Cancelado', icon: XCircle,     cls: 'text-tema-suave bg-tema-contraste/[0.03] border-tema-linha' },
 }
 
 const CENTRO_CFG: Record<string, { label: string; cor: string; icon: React.ElementType }> = {
@@ -142,7 +142,7 @@ export function FinanceiroView({ session }: Props) {
         ))}
       </div>
 
-      <div className="flex items-center gap-1 border-b border-[#E6E1D6] overflow-x-auto -mx-1 px-1">
+      <div className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1">
         {abas.filter(a => !a.adminOnly || isAdmin).map(a => {
           const Icon = a.icon
           return (
@@ -151,7 +151,7 @@ export function FinanceiroView({ session }: Props) {
               onClick={() => setAba(a.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
-                aba === a.id ? 'border-orange-600 text-orange-600' : 'border-transparent text-[#A69E8F] hover:text-[#201D17]'
+                aba === a.id ? 'border-orange-600 text-orange-600' : 'border-transparent text-tema-apagado hover:text-tema-tinta'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -168,7 +168,7 @@ export function FinanceiroView({ session }: Props) {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
           <input
             type="search"
             value={busca}
@@ -204,8 +204,8 @@ export function FinanceiroView({ session }: Props) {
                   <CentroIcon className={cn('w-4 h-4', cfg.cor)} />
                   <h3 className={cn('font-bold', cfg.cor)}>{cfg.label}</h3>
                 </div>
-                <p className="text-2xl font-black text-[#201D17] mb-1">{formatCurrency(total)}</p>
-                <p className="text-xs text-[#A69E8F] mb-4">{itens.length} solicitacao(oes)</p>
+                <p className="text-2xl font-black text-tema-tinta mb-1">{formatCurrency(total)}</p>
+                <p className="text-xs text-tema-apagado mb-4">{itens.length} solicitacao(oes)</p>
                 <div className="space-y-1">
                   {Object.entries(itens.reduce((acc: any, s: any) => { acc[s.status] = (acc[s.status] || 0) + s.valor; return acc }, {})).map(([st, val]: any) => {
                     const scfg = STATUS_CFG[st] || STATUS_CFG.PENDENTE
@@ -215,7 +215,7 @@ export function FinanceiroView({ session }: Props) {
                         <span className={cn('flex items-center gap-1', scfg.cls.split(' ')[0])}>
                           <Icon className="w-3 h-3" />{scfg.label}
                         </span>
-                        <span className="text-[#7A7266]">{formatCurrency(val)}</span>
+                        <span className="text-tema-suave">{formatCurrency(val)}</span>
                       </div>
                     )
                   })}
@@ -231,8 +231,8 @@ export function FinanceiroView({ session }: Props) {
           {isLoading ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />) :
            solicitacoes.length === 0 ? (
             <div className="gts-card text-center py-16">
-              <DollarSign className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhuma solicitacao encontrada</p>
+              <DollarSign className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhuma solicitacao encontrada</p>
               <button onClick={() => setShowModal(true)} className="gts-btn-primary mx-auto mt-4">
                 <Plus className="w-4 h-4" /> Nova Solicitacao
               </button>
@@ -243,27 +243,27 @@ export function FinanceiroView({ session }: Props) {
             const StatusIcon = scfg.icon
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-white border border-[#E6E1D6] hover:border-[#D8D2C3] rounded-xl p-4 shadow-sm shadow-black/[0.03] transition-all">
+              <div key={s.id} className="bg-tema-superficie border border-tema-linha hover:border-tema-linha-forte rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03] transition-all">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="text-[#201D17] font-bold">{s.titulo}</h3>
+                      <h3 className="text-tema-tinta font-bold">{s.titulo}</h3>
                       <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border', scfg.cls)}>
                         <StatusIcon className="w-3 h-3" />{scfg.label}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-3 text-xs text-[#7A7266]">
+                    <div className="flex flex-wrap gap-3 text-xs text-tema-suave">
                       <span className={cn('flex items-center gap-1', ccfg.cor)}><CentroIcon className="w-3 h-3" />{ccfg.label}</span>
                       <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{s.subcategoria}</span>
                       {s.fornecedor && <span className="flex items-center gap-1"><User className="w-3 h-3" />{s.fornecedor}</span>}
                       {s.tecnico && <span className="flex items-center gap-1 text-amber-700"><User className="w-3 h-3" />Tec: {s.tecnico.nome}</span>}
                       <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{timeAgo(s.createdAt)}</span>
-                      <span className="text-[#A69E8F]">por {s.responsavel?.nome}</span>
+                      <span className="text-tema-apagado">por {s.responsavel?.nome}</span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-emerald-700 font-bold text-lg">{formatCurrency(s.valor)}</p>
-                    {s.parcelas > 1 && <p className="text-xs text-[#A69E8F]">{s.parcelas}x de {formatCurrency(s.valor / s.parcelas)}</p>}
+                    {s.parcelas > 1 && <p className="text-xs text-tema-apagado">{s.parcelas}x de {formatCurrency(s.valor / s.parcelas)}</p>}
                     {s.anexos && (
                       <a href={s.anexos} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-700 flex items-center gap-1 mt-1 justify-end">
                         <FileText className="w-3 h-3" />Ver anexo
@@ -276,7 +276,7 @@ export function FinanceiroView({ session }: Props) {
           })}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages}</p>
+              <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages}</p>
               <div className="flex gap-2">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30"><ChevronLeft className="w-3.5 h-3.5" /></button>
                 <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="gts-btn-secondary py-2 px-3 disabled:opacity-30"><ChevronRight className="w-3.5 h-3.5" /></button>
@@ -291,17 +291,17 @@ export function FinanceiroView({ session }: Props) {
           {pendentesAprov.length === 0 ? (
             <div className="gts-card text-center py-16">
               <CheckCircle className="w-10 h-10 text-emerald-600/40 mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhuma solicitacao pendente</p>
+              <p className="text-tema-suave font-medium">Nenhuma solicitacao pendente</p>
             </div>
           ) : pendentesAprov.map((s: any) => {
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-white border border-amber-500/25 rounded-xl p-4 shadow-sm shadow-black/[0.03]">
+              <div key={s.id} className="bg-tema-superficie border border-amber-500/25 rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-[#201D17] font-bold mb-1">{s.titulo}</h3>
-                    <div className="flex flex-wrap gap-3 text-xs text-[#7A7266] mb-2">
+                    <h3 className="text-tema-tinta font-bold mb-1">{s.titulo}</h3>
+                    <div className="flex flex-wrap gap-3 text-xs text-tema-suave mb-2">
                       <span className={cn('flex items-center gap-1', ccfg.cor)}><CentroIcon className="w-3 h-3" />{ccfg.label}</span>
                       <span>{s.subcategoria}</span>
                       {s.fornecedor && <span>Favorecido: {s.fornecedor}</span>}
@@ -309,7 +309,7 @@ export function FinanceiroView({ session }: Props) {
                       <span>por {s.responsavel?.nome}</span>
                       <span>{timeAgo(s.createdAt)}</span>
                     </div>
-                    {s.observacoes && <p className="text-xs text-[#A69E8F] italic">{s.observacoes}</p>}
+                    {s.observacoes && <p className="text-xs text-tema-apagado italic">{s.observacoes}</p>}
                     {s.anexos && (
                       <a href={s.anexos} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-700 flex items-center gap-1 mt-1">
                         <FileText className="w-3 h-3" />Ver anexo
@@ -341,20 +341,20 @@ export function FinanceiroView({ session }: Props) {
         <div className="space-y-3">
           {solicitacoes.length === 0 ? (
             <div className="gts-card text-center py-16">
-              <History className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhum historico disponivel</p>
+              <History className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhum historico disponivel</p>
             </div>
           ) : solicitacoes.map((s: any) => {
             const scfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
             const StatusIcon = scfg.icon
             return (
-              <div key={s.id} className="flex items-center gap-4 p-3 bg-white border border-[#E6E1D6] rounded-xl shadow-sm shadow-black/[0.03]">
+              <div key={s.id} className="flex items-center gap-4 p-3 bg-tema-superficie border border-tema-linha rounded-xl shadow-sm shadow-tema-contraste/[0.03]">
                 <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0', scfg.cls)}>
                   <StatusIcon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#201D17] font-medium truncate">{s.titulo}</p>
-                  <p className="text-xs text-[#A69E8F]">{s.responsavel?.nome} · {timeAgo(s.createdAt)}</p>
+                  <p className="text-sm text-tema-tinta font-medium truncate">{s.titulo}</p>
+                  <p className="text-xs text-tema-apagado">{s.responsavel?.nome} · {timeAgo(s.createdAt)}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-emerald-700 font-bold">{formatCurrency(s.valor)}</p>

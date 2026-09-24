@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ATRIBUICAO_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
+import { temaAtual, useTema } from '@/lib/tema'
 
 // Cor real da caixa de emenda, igual o tecnico ve em campo.
 const COR_EMENDA: Record<string, string> = {
@@ -58,6 +59,8 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const camadasRef = useRef<any>({})
+  const fundoRef = useRef<{ camada: any; chave: string } | null>(null)
+  const tema = useTema()
   const [busca, setBusca] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [carregando, setCarregando] = useState(true)
@@ -81,12 +84,13 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
       const map = L.map(mapRef.current, { zoomControl: false }).setView([-5.0892, -42.8019], 12)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
-      L.tileLayer(urlCarto('light_all', chaveCarto), {
+      const fundo = L.tileLayer(urlCarto(temaAtual() === 'escuro' ? 'dark_all' : 'light_all', chaveCarto), {
         attribution: ATRIBUICAO_CARTO,
         referrerPolicy: REFERRER_CARTO,
         maxZoom: 19,
         className: 'gts-tiles-claro',
       } as any).addTo(map)
+      fundoRef.current = { camada: fundo, chave: chaveCarto }
 
       mapInstance.current = map
 
@@ -265,6 +269,12 @@ export function MapaInmapView({ telaCheia = false }: Props) {
     return () => { ativo = false }
   }, [])
 
+  // Fundo do mapa acompanha o tema claro/escuro.
+  useEffect(() => {
+    const f = fundoRef.current
+    if (f) f.camada.setUrl(urlCarto(tema === 'escuro' ? 'dark_all' : 'light_all', f.chave))
+  }, [tema])
+
   function focarAlerta(alerta: AlertaCaixa) {
     const { grupoCtos, marcadoresPorId } = camadasRef.current
     const marker = marcadoresPorId?.get(alerta.id)
@@ -323,29 +333,29 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
   const stats = [
     { label: 'CTOs', valor: totalCaixas, icon: Box, cor: 'text-blue-700', bg: 'bg-blue-500/10' },
-    { label: 'Em alerta', valor: alertas.length, icon: AlertTriangle, cor: alertas.length > 0 ? 'text-red-700' : 'text-[#A69E8F]', bg: alertas.length > 0 ? 'bg-red-500/10' : 'bg-black/[0.03]' },
+    { label: 'Em alerta', valor: alertas.length, icon: AlertTriangle, cor: alertas.length > 0 ? 'text-red-700' : 'text-tema-apagado', bg: alertas.length > 0 ? 'bg-red-500/10' : 'bg-tema-contraste/[0.03]' },
     { label: 'Cabos', valor: totalCabos, icon: Cable, cor: 'text-emerald-700', bg: 'bg-emerald-500/10' },
-    { label: 'Cabos c/ problema', valor: cabosComProblema, icon: Cable, cor: cabosComProblema > 0 ? 'text-red-700' : 'text-[#A69E8F]', bg: cabosComProblema > 0 ? 'bg-red-500/10' : 'bg-black/[0.03]' },
+    { label: 'Cabos c/ problema', valor: cabosComProblema, icon: Cable, cor: cabosComProblema > 0 ? 'text-red-700' : 'text-tema-apagado', bg: cabosComProblema > 0 ? 'bg-red-500/10' : 'bg-tema-contraste/[0.03]' },
     { label: 'Emendas', valor: totalEmendas, icon: Waypoints, cor: 'text-purple-700', bg: 'bg-purple-500/10' },
   ]
 
   return (
-    <div className={cn('relative w-full flex bg-[#FAF9F6]', telaCheia ? 'h-screen' : 'h-[calc(100vh-64px)]')}>
+    <div className={cn('relative w-full flex bg-tema-fundo', telaCheia ? 'h-screen' : 'h-[calc(100vh-64px)]')}>
       {/* Coluna do mapa */}
       <div className="relative flex-1 min-w-0">
         <div ref={mapRef} className="absolute inset-0 z-0" />
 
         {/* Barra superior: busca */}
-        <div className="absolute top-0 left-0 right-0 z-[1000] p-2 sm:p-3 flex flex-wrap items-center gap-2 bg-gradient-to-b from-[#FAF9F6]/95 to-transparent">
-          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-white/95 backdrop-blur border border-[#E6E1D6] rounded-lg px-3 py-3 sm:py-1.5 shadow-lg shadow-black/[0.1]">
-            <Search className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+        <div className="absolute top-0 left-0 right-0 z-[1000] p-2 sm:p-3 flex flex-wrap items-center gap-2 bg-gradient-to-b from-tema-fundo/95 to-transparent">
+          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-3 py-3 sm:py-1.5 shadow-lg shadow-tema-contraste/[0.1]">
+            <Search className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
             <input
               type="text"
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && buscarEndereco()}
               placeholder="Buscar rua, CTO ou endereco..."
-              className="flex-1 min-w-0 bg-transparent text-[#201D17] text-sm outline-none placeholder:text-[#A69E8F]"
+              className="flex-1 min-w-0 bg-transparent text-tema-tinta text-sm outline-none placeholder:text-tema-apagado"
             />
             <button onClick={buscarEndereco} disabled={buscando} className="text-orange-600 hover:text-orange-500 disabled:opacity-50 flex-shrink-0">
               {buscando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
@@ -354,7 +364,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
           <button
             onClick={() => setPainelAberto(v => !v)}
-            className="relative flex items-center gap-1.5 px-3 py-3 sm:py-1.5 rounded-lg border border-[#E6E1D6] bg-white/95 text-[#7A7266] hover:text-[#201D17] transition-colors flex-shrink-0"
+            className="relative flex items-center gap-1.5 px-3 py-3 sm:py-1.5 rounded-lg border border-tema-linha bg-tema-superficie/95 text-tema-suave hover:text-tema-tinta transition-colors flex-shrink-0"
             title={painelAberto ? 'Ocultar painel de problemas' : 'Mostrar painel de problemas'}
           >
             {painelAberto ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
@@ -367,7 +377,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         </div>
 
         {/* Legenda */}
-        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-white/95 backdrop-blur border border-[#E6E1D6] rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-[#3F3A32] space-y-1 sm:space-y-1.5 shadow-lg shadow-black/[0.1] max-w-[160px] sm:max-w-none">
+        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-tema-texto space-y-1 sm:space-y-1.5 shadow-lg shadow-tema-contraste/[0.1] max-w-[160px] sm:max-w-none">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#00C853] flex-shrink-0" /> CTO normal
           </div>
@@ -390,8 +400,8 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         </div>
 
         {carregando && (
-          <div className="absolute inset-0 z-[999] bg-white/80 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-[#201D17]">
+          <div className="absolute inset-0 z-[999] bg-tema-superficie/80 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-tema-tinta">
               <Loader2 className="w-5 h-5 animate-spin" />
               Carregando rede do IXC...
             </div>
@@ -402,53 +412,53 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       {/* Painel lateral: estatisticas + problemas ativos.
           No celular ocupa a tela toda (overlay); no desktop fica ao lado do mapa. */}
       {painelAberto && (
-        <div className="fixed inset-0 z-[1500] md:static md:z-auto md:w-80 flex-shrink-0 border-l border-[#E6E1D6] bg-white flex flex-col">
-          <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6]">
-            <h2 className="text-sm font-semibold text-[#201D17]">Monitoramento da Rede</h2>
+        <div className="fixed inset-0 z-[1500] md:static md:z-auto md:w-80 flex-shrink-0 border-l border-tema-linha bg-tema-superficie flex flex-col">
+          <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-tema-linha">
+            <h2 className="text-sm font-semibold text-tema-tinta">Monitoramento da Rede</h2>
             <button
               onClick={() => setPainelAberto(false)}
-              className="p-3 -m-1.5 rounded-lg hover:bg-black/[0.04] text-[#7A7266] hover:text-[#201D17]"
+              className="p-3 -m-1.5 rounded-lg hover:bg-tema-contraste/[0.04] text-tema-suave hover:text-tema-tinta"
             >
               <PanelRightClose className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-3 border-b border-[#E6E1D6]">
+          <div className="grid grid-cols-2 gap-2 p-3 border-b border-tema-linha">
             {stats.map((s, i) => {
               const Icon = s.icon
               return (
-                <div key={i} className={cn('flex items-center gap-2 px-2.5 py-2 rounded-lg border border-[#E6E1D6]', s.bg)}>
+                <div key={i} className={cn('flex items-center gap-2 px-2.5 py-2 rounded-lg border border-tema-linha', s.bg)}>
                   <Icon className={cn('w-4 h-4 flex-shrink-0', s.cor)} />
                   <div className="min-w-0">
                     <p className={cn('text-sm font-bold leading-tight', s.cor)}>{s.valor}</p>
-                    <p className="text-[11px] text-[#7A7266] leading-tight truncate">{s.label}</p>
+                    <p className="text-[11px] text-tema-suave leading-tight truncate">{s.label}</p>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="px-4 py-3 border-b border-[#E6E1D6] flex items-center gap-2">
-            <AlertTriangle className={cn('w-4 h-4', alertas.length > 0 ? 'text-red-700' : 'text-[#A69E8F]')} />
-            <h3 className="text-sm font-semibold text-[#201D17]">Problemas Ativos</h3>
+          <div className="px-4 py-3 border-b border-tema-linha flex items-center gap-2">
+            <AlertTriangle className={cn('w-4 h-4', alertas.length > 0 ? 'text-red-700' : 'text-tema-apagado')} />
+            <h3 className="text-sm font-semibold text-tema-tinta">Problemas Ativos</h3>
             <span className={cn(
               'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
-              alertas.length > 0 ? 'bg-red-500/15 text-red-700' : 'bg-black/[0.03] text-[#A69E8F]'
+              alertas.length > 0 ? 'bg-red-500/15 text-red-700' : 'bg-tema-contraste/[0.03] text-tema-apagado'
             )}>
               {alertas.length}
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#E6E1D6]">
+          <div className="flex-1 overflow-y-auto divide-y divide-tema-linha">
             {carregando ? (
-              <div className="p-4 flex items-center justify-center text-[#A69E8F] text-sm gap-2">
+              <div className="p-4 flex items-center justify-center text-tema-apagado text-sm gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
               </div>
             ) : alertas.length === 0 ? (
               <div className="p-6 flex flex-col items-center gap-2 text-center">
                 <CheckCircle2 className="w-8 h-8 text-emerald-600/60" />
-                <p className="text-sm text-[#7A7266]">Nenhum problema ativo</p>
-                <p className="text-xs text-[#A69E8F]">Todas as CTOs monitoradas estao normais</p>
+                <p className="text-sm text-tema-suave">Nenhum problema ativo</p>
+                <p className="text-xs text-tema-apagado">Todas as CTOs monitoradas estao normais</p>
               </div>
             ) : (
               alertas
@@ -458,18 +468,18 @@ export function MapaInmapView({ telaCheia = false }: Props) {
                   <button
                     key={a.id}
                     onClick={() => focarAlerta(a)}
-                    className="w-full text-left px-4 py-3 hover:bg-black/[0.03] transition-colors flex items-start gap-2 group"
+                    className="w-full text-left px-4 py-3 hover:bg-tema-contraste/[0.03] transition-colors flex items-start gap-2 group"
                   >
                     <span className="relative w-2 h-2 mt-1.5 flex-shrink-0">
                       <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-60" />
                       <span className="absolute inset-0 rounded-full bg-red-500" />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#201D17] truncate">{a.nome}</p>
+                      <p className="text-sm font-medium text-tema-tinta truncate">{a.nome}</p>
                       <p className="text-xs text-red-700 font-semibold">{a.inativos} de {a.totalLogins} clientes offline</p>
-                      {a.endereco && <p className="text-xs text-[#A69E8F] truncate mt-0.5">{a.endereco}</p>}
+                      {a.endereco && <p className="text-xs text-tema-apagado truncate mt-0.5">{a.endereco}</p>}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#A69E8F] group-hover:text-[#7A7266] flex-shrink-0 mt-0.5" />
+                    <ChevronRight className="w-4 h-4 text-tema-apagado group-hover:text-tema-suave flex-shrink-0 mt-0.5" />
                   </button>
                 ))
             )}

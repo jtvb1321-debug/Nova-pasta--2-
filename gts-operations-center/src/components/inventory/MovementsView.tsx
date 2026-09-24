@@ -45,8 +45,8 @@ export function MovementsView() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Movimentações</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">{data?.total ?? 0} registros no total</p>
+          <h1 className="text-2xl font-bold text-tema-tinta">Movimentações</h1>
+          <p className="text-tema-apagado text-sm mt-1">{data?.total ?? 0} registros no total</p>
         </div>
         <button onClick={() => refetch()} className="gts-btn-secondary">
           <RefreshCw className="w-4 h-4" />
@@ -59,7 +59,7 @@ export function MovementsView() {
         <button
           onClick={() => { setTipo(''); setPage(1) }}
           className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-            !tipo ? 'bg-orange-500/15 text-orange-700 border-orange-500/25' : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+            !tipo ? 'bg-orange-500/15 text-orange-700 border-orange-500/25' : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
           )}
         >
           Todos
@@ -69,7 +69,7 @@ export function MovementsView() {
             key={k}
             onClick={() => { setTipo(k); setPage(1) }}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-              tipo === k ? 'bg-orange-500/15 text-orange-700 border-orange-500/25' : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+              tipo === k ? 'bg-orange-500/15 text-orange-700 border-orange-500/25' : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
             )}
           >
             {v.label}
@@ -101,8 +101,8 @@ export function MovementsView() {
                 : movimentos.length === 0
                 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-[#A69E8F]">
-                      <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                    <td colSpan={6} className="text-center py-12 text-tema-apagado">
+                      <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                       Nenhuma movimentação encontrada
                     </td>
                   </tr>
@@ -118,15 +118,15 @@ export function MovementsView() {
                             {cfg.label}
                           </span>
                         </td>
-                        <td className="px-4 text-[#201D17] text-sm">{m.item?.descricao}</td>
+                        <td className="px-4 text-tema-tinta text-sm">{m.item?.descricao}</td>
                         <td className="px-4">
-                          <code className="text-xs text-[#7A7266] font-mono">{m.item?.codigo}</code>
+                          <code className="text-xs text-tema-suave font-mono">{m.item?.codigo}</code>
                         </td>
-                        <td className="px-4 text-right font-mono font-semibold text-[#201D17]">
+                        <td className="px-4 text-right font-mono font-semibold text-tema-tinta">
                           {formatNumber(m.quantidade, 0)} {m.item?.unidade}
                         </td>
-                        <td className="px-4 text-[#A69E8F] text-xs">{m.motivo || '—'}</td>
-                        <td className="px-4 text-[#A69E8F] text-xs">{formatDateTime(m.createdAt)}</td>
+                        <td className="px-4 text-tema-apagado text-xs">{m.motivo || '—'}</td>
+                        <td className="px-4 text-tema-apagado text-xs">{formatDateTime(m.createdAt)}</td>
                       </tr>
                     )
                   })}
@@ -135,8 +135,8 @@ export function MovementsView() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#E6E1D6]">
-            <p className="text-xs text-[#A69E8F]">Página {page} de {totalPages}</p>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
+            <p className="text-xs text-tema-apagado">Página {page} de {totalPages}</p>
             <div className="flex gap-2">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-1 px-2 disabled:opacity-30">
                 <ChevronLeft className="w-3.5 h-3.5" />

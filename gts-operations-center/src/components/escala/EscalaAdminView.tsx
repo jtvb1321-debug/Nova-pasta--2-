@@ -91,7 +91,7 @@ export function EscalaAdminView({ equipeIdInicial }: Props) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-[#7A7266]" />
+          <CalendarDays className="w-5 h-5 text-tema-suave" />
           <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input py-1.5 text-sm w-auto">
             <option value="">Todas as equipes</option>
             {equipes.map((eq: any) => (
@@ -100,12 +100,12 @@ export function EscalaAdminView({ equipeIdInicial }: Props) {
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => mudarMes(-1)} className="p-1.5 hover:bg-black/[0.04] rounded-lg">
-            <ChevronLeft className="w-4 h-4 text-[#7A7266]" />
+          <button onClick={() => mudarMes(-1)} className="p-1.5 hover:bg-tema-contraste/[0.04] rounded-lg">
+            <ChevronLeft className="w-4 h-4 text-tema-suave" />
           </button>
-          <span className="text-sm font-medium text-[#201D17] w-36 text-center">{MESES[mes - 1]} {ano}</span>
-          <button onClick={() => mudarMes(1)} className="p-1.5 hover:bg-black/[0.04] rounded-lg">
-            <ChevronRight className="w-4 h-4 text-[#7A7266]" />
+          <span className="text-sm font-medium text-tema-tinta w-36 text-center">{MESES[mes - 1]} {ano}</span>
+          <button onClick={() => mudarMes(1)} className="p-1.5 hover:bg-tema-contraste/[0.04] rounded-lg">
+            <ChevronRight className="w-4 h-4 text-tema-suave" />
           </button>
         </div>
       </div>
@@ -114,7 +114,7 @@ export function EscalaAdminView({ equipeIdInicial }: Props) {
         {Object.entries(TIPO_CFG).map(([tipo, cfg]) => (
           <div key={tipo} className="flex items-center gap-1.5">
             <span className={cn('w-2.5 h-2.5 rounded-full', cfg.dot)} />
-            <span className="text-[#7A7266]">{cfg.label}</span>
+            <span className="text-tema-suave">{cfg.label}</span>
           </div>
         ))}
       </div>
@@ -132,17 +132,17 @@ export function EscalaAdminView({ equipeIdInicial }: Props) {
       )}
 
       {!equipeId && (
-        <p className="text-xs text-[#A69E8F] text-center">Selecione uma equipe especifica para editar a escala</p>
+        <p className="text-xs text-tema-apagado text-center">Selecione uma equipe especifica para editar a escala</p>
       )}
 
       {diaSelecionado && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#201D17]">
+              <h3 className="text-lg font-semibold text-tema-tinta">
                 {diaSelecionado.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               </h3>
-              <button onClick={() => setDiaSelecionado(null)} className="text-[#A69E8F] hover:text-[#201D17]">
+              <button onClick={() => setDiaSelecionado(null)} className="text-tema-apagado hover:text-tema-tinta">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -155,7 +155,7 @@ export function EscalaAdminView({ equipeIdInicial }: Props) {
                   disabled={mutation.isPending}
                   className={cn(
                     'w-full flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors disabled:opacity-50',
-                    cfg.bg, cfg.cor, 'border-[#E6E1D6] hover:border-[#D8D2C3]'
+                    cfg.bg, cfg.cor, 'border-tema-linha hover:border-tema-linha-forte'
                   )}
                 >
                   <span className={cn('w-2.5 h-2.5 rounded-full', cfg.dot)} />

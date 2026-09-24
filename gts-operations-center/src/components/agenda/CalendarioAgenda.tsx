@@ -24,7 +24,7 @@ const STATUS_COR: Record<string, string> = {
   ABERTO:       'bg-blue-500',
   EM_ANDAMENTO: 'bg-amber-500',
   FINALIZADO:   'bg-emerald-500',
-  CANCELADO:    'bg-[#A69E8F]',
+  CANCELADO:    'bg-tema-apagado',
 }
 
 const TIPOS_LISTA: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'ROMPIMENTO_MASSIVO']
@@ -202,11 +202,11 @@ export function CalendarioAgenda({
       {/* Topo */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-[#201D17] flex items-center gap-2">
+          <h2 className="text-lg font-bold text-tema-tinta flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-orange-600" />
             Agenda de Atendimentos
           </h2>
-          <p className="text-sm text-[#7A7266] mt-0.5">
+          <p className="text-sm text-tema-suave mt-0.5">
             {visao === 'dia' && `${String(dataAtual.getDate()).padStart(2, '0')}/${String(dataAtual.getMonth() + 1).padStart(2, '0')}/${dataAtual.getFullYear()} — ${DIAS_SEMANA[dataAtual.getDay()]}`}
             {visao === 'semana' && (() => {
               const inicio = inicioDaSemana(dataAtual)
@@ -229,14 +229,14 @@ export function CalendarioAgenda({
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex items-center gap-1 bg-black/[0.03] rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-tema-contraste/[0.03] rounded-lg p-1">
             {(['dia', 'semana', 'mes'] as Visao[]).map(v => (
               <button
                 key={v}
                 onClick={() => setVisao(v)}
                 className={cn(
                   'px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors',
-                  visao === v ? 'bg-orange-500 text-white' : 'text-[#7A7266] hover:text-[#201D17]'
+                  visao === v ? 'bg-orange-500 text-white' : 'text-tema-suave hover:text-tema-tinta'
                 )}
               >
                 {v}
@@ -247,19 +247,19 @@ export function CalendarioAgenda({
       </div>
 
       {/* Resumo discreto */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#7A7266] bg-black/[0.02] border border-[#E6E1D6] rounded-lg px-3 py-2">
-        <span className="flex items-center gap-1.5 font-medium text-[#201D17]">
-          <ClipboardList className="w-3.5 h-3.5 text-[#A69E8F]" />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-tema-suave bg-tema-contraste/[0.02] border border-tema-linha rounded-lg px-3 py-2">
+        <span className="flex items-center gap-1.5 font-medium text-tema-tinta">
+          <ClipboardList className="w-3.5 h-3.5 text-tema-apagado" />
           {resumo.total} atendimento(s)
         </span>
         {resumo.porTipo.map(([tipo, qtd]) => (
           <span key={tipo} className="flex items-center gap-1.5">
-            <span className={cn('w-2 h-2 rounded-full', (TIPO_COR[tipo as TipoChamado] || 'text-[#7A7266]').replace('text-', 'bg-'))} />
+            <span className={cn('w-2 h-2 rounded-full', (TIPO_COR[tipo as TipoChamado] || 'text-tema-suave').replace('text-', 'bg-'))} />
             {qtd} {TIPO_CHAMADO_LABELS[tipo as TipoChamado] || tipo}
           </span>
         ))}
         <span className="flex items-center gap-1.5">
-          <UsersIcon className="w-3.5 h-3.5 text-[#A69E8F]" />
+          <UsersIcon className="w-3.5 h-3.5 text-tema-apagado" />
           {resumo.equipesEmCampo} equipe(s) com atendimento no periodo
         </span>
       </div>
@@ -309,14 +309,14 @@ export function CalendarioAgenda({
         >
           <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             {carregandoDetalhe || !chamadoDetalhe ? (
-              <div className="bg-white border border-[#E6E1D6] rounded-2xl p-8 flex items-center justify-center shadow-xl">
-                <Loader2 className="w-6 h-6 text-[#A69E8F] animate-spin" />
+              <div className="bg-tema-superficie border border-tema-linha rounded-2xl p-8 flex items-center justify-center shadow-xl">
+                <Loader2 className="w-6 h-6 text-tema-apagado animate-spin" />
               </div>
             ) : (
               <div className="relative">
                 <button
                   onClick={() => setDetalheId(null)}
-                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-white border border-[#E6E1D6] rounded-full flex items-center justify-center text-[#7A7266] hover:text-[#201D17] shadow-sm"
+                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-tema-superficie border border-tema-linha rounded-full flex items-center justify-center text-tema-suave hover:text-tema-tinta shadow-sm"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -371,8 +371,8 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
   if (itensDoDia.length === 0) {
     return (
       <div className="gts-card text-center py-16">
-        <CalendarIcon className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-        <p className="text-[#7A7266] font-medium">Nenhum atendimento neste dia</p>
+        <CalendarIcon className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+        <p className="text-tema-suave font-medium">Nenhum atendimento neste dia</p>
       </div>
     )
   }
@@ -396,22 +396,22 @@ function VisaoDia({ itensDoDia, equipes, onAbrir }: { itensDoDia: AgendaItem[]; 
           className="grid"
           style={{ gridTemplateColumns: `180px repeat(${slots.length}, minmax(150px, 1fr))` }}
         >
-          <div className="p-2 text-xs text-[#A69E8F] font-semibold border-b border-[#E6E1D6] sticky left-0 bg-white z-10">
+          <div className="p-2 text-xs text-tema-apagado font-semibold border-b border-tema-linha sticky left-0 bg-tema-superficie z-10">
             Equipe
           </div>
           {slots.map(slot => (
-            <div key={slot} className="p-2 text-[11px] text-[#A69E8F] font-mono text-center border-b border-l border-[#E6E1D6]">
+            <div key={slot} className="p-2 text-[11px] text-tema-apagado font-mono text-center border-b border-l border-tema-linha">
               {formatarSlot(slot)}
             </div>
           ))}
 
           {equipesFiltradas.map((eq: any) => (
             <Fragment key={eq.id}>
-              <div className="p-2 text-xs text-orange-600 font-semibold border-t border-[#E6E1D6] sticky left-0 bg-white z-10 flex items-center">
+              <div className="p-2 text-xs text-orange-600 font-semibold border-t border-tema-linha sticky left-0 bg-tema-superficie z-10 flex items-center">
                 {eq.nome}
               </div>
               {slots.map(slot => (
-                <div key={slot} className="p-1.5 border-t border-l border-[#E6E1D6] space-y-1.5 min-h-[70px]">
+                <div key={slot} className="p-1.5 border-t border-l border-tema-linha space-y-1.5 min-h-[70px]">
                   {(porEquipeESlot.get(eq.id)?.get(slot) || []).map(item => (
                     <AgendaCard key={item.id} item={item} onClick={() => onAbrir(item.id)} />
                   ))}
@@ -452,12 +452,12 @@ function VisaoSemana({ dataAtual, porDia, onAbrir }: { dataAtual: Date; porDia: 
           <div key={chave} className="space-y-2">
             <div className={cn(
               'text-center text-xs font-semibold rounded-lg py-1.5',
-              hoje ? 'bg-orange-500/10 text-orange-700 border border-orange-500/25' : 'text-[#7A7266] bg-black/[0.02]'
+              hoje ? 'bg-orange-500/10 text-orange-700 border border-orange-500/25' : 'text-tema-suave bg-tema-contraste/[0.02]'
             )}>
               {DIAS_SEMANA_ABREV[dia.getDay()]} {dia.getDate()}
             </div>
             {itens.length === 0 ? (
-              <p className="text-[10px] text-[#A69E8F] text-center py-3">Sem atendimentos</p>
+              <p className="text-[10px] text-tema-apagado text-center py-3">Sem atendimentos</p>
             ) : (
               <div className="space-y-1.5">
                 {itens.map(item => (
@@ -502,7 +502,7 @@ function VisaoMes({
       <div className="gts-card p-4">
         <div className="grid grid-cols-7 gap-2 mb-2">
           {DIAS_SEMANA_ABREV.map(d => (
-            <div key={d} className="text-center text-xs font-medium text-[#A69E8F] py-1">{d}</div>
+            <div key={d} className="text-center text-xs font-medium text-tema-apagado py-1">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-2">
@@ -516,19 +516,19 @@ function VisaoMes({
                 onClick={() => itens.length > 0 && onSelecionarDia(chave)}
                 className={cn(
                   'aspect-square rounded-lg border p-1.5 flex flex-col items-start transition-colors',
-                  ehHoje(dia) ? 'border-orange-500/50 bg-orange-500/5' : 'border-[#E6E1D6]',
-                  itens.length > 0 ? 'hover:border-[#D8D2C3] cursor-pointer' : 'cursor-default'
+                  ehHoje(dia) ? 'border-orange-500/50 bg-orange-500/5' : 'border-tema-linha',
+                  itens.length > 0 ? 'hover:border-tema-linha-forte cursor-pointer' : 'cursor-default'
                 )}
               >
-                <span className={cn('text-xs font-medium', ehHoje(dia) ? 'text-orange-700' : 'text-[#7A7266]')}>
+                <span className={cn('text-xs font-medium', ehHoje(dia) ? 'text-orange-700' : 'text-tema-suave')}>
                   {dia}
                 </span>
                 {itens.length > 0 && (
                   <div className="flex flex-wrap gap-0.5 mt-1">
                     {itens.slice(0, 4).map((it, idx) => (
-                      <span key={idx} className={cn('w-1.5 h-1.5 rounded-full', STATUS_COR[it.status] || 'bg-[#A69E8F]')} />
+                      <span key={idx} className={cn('w-1.5 h-1.5 rounded-full', STATUS_COR[it.status] || 'bg-tema-apagado')} />
                     ))}
-                    {itens.length > 4 && <span className="text-[9px] text-[#A69E8F]">+{itens.length - 4}</span>}
+                    {itens.length > 4 && <span className="text-[9px] text-tema-apagado">+{itens.length - 4}</span>}
                   </div>
                 )}
               </button>
@@ -539,15 +539,15 @@ function VisaoMes({
 
       {diaSelecionado && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => onSelecionarDia(null)}>
-          <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white">
+          <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5 text-orange-600" />
-                <h3 className="text-[#201D17] font-semibold">
+                <h3 className="text-tema-tinta font-semibold">
                   {new Date(diaSelecionado + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </h3>
               </div>
-              <button onClick={() => onSelecionarDia(null)} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+              <button onClick={() => onSelecionarDia(null)} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
                 <X className="w-5 h-5" />
               </button>
             </div>

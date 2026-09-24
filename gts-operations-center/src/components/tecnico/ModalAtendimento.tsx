@@ -229,19 +229,19 @@ async function marcarClienteAusente() {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#E6E1D6] bg-white flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-tema-linha bg-tema-superficie flex-shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-[#201D17] font-bold">{chamado.cliente}</h2>
+            <h2 className="text-tema-tinta font-bold">{chamado.cliente}</h2>
             {prioridade !== 'NORMAL' && (
               <span className={cn('text-xs px-2 py-0.5 rounded-full border font-bold', pCfg.cor)}>
                 {pCfg.label}
               </span>
             )}
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2.5 -m-1 rounded-lg hover:bg-black/[0.03] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2.5 -m-1 rounded-lg hover:bg-tema-contraste/[0.03] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -250,15 +250,15 @@ async function marcarClienteAusente() {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
           {/* Info */}
-          <div className="bg-white border border-[#E6E1D6] rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-[#7A7266] mb-1">
-              <span className="px-2 py-0.5 bg-black/[0.03] rounded-full">
+          <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-tema-suave mb-1">
+              <span className="px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full">
                 {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
               </span>
               <span>{timeAgo(chamado.createdAt)}</span>
             </div>
-            <p className="text-sm text-[#3F3A32] flex items-start gap-2">
-              <MapPin className="w-4 h-4 text-[#A69E8F] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-tema-texto flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-tema-apagado flex-shrink-0 mt-0.5" />
               {formatarEnderecoCompleto(chamado)}
             </p>
             {chamado.telefone && (
@@ -268,7 +268,7 @@ async function marcarClienteAusente() {
               </a>
             )}
             {obs && (
-              <p className="text-xs text-[#A69E8F] italic border-t border-[#E6E1D6] pt-2 mt-2">{obs}</p>
+              <p className="text-xs text-tema-apagado italic border-t border-tema-linha pt-2 mt-2">{obs}</p>
             )}
           </div>
 
@@ -280,8 +280,8 @@ async function marcarClienteAusente() {
               { label: 'Finalizado', ativo: status === 'FINALIZADO' },
             ].map((step, i) => (
               <div key={i} className="flex-1 flex items-center">
-                <div className={cn('flex-1 h-1.5 rounded-full', step.ativo ? 'bg-orange-500' : 'bg-black/[0.06]')} />
-                {i < 2 && <ChevronRight className="w-3 h-3 text-[#A69E8F] flex-shrink-0" />}
+                <div className={cn('flex-1 h-1.5 rounded-full', step.ativo ? 'bg-orange-500' : 'bg-tema-contraste/[0.06]')} />
+                {i < 2 && <ChevronRight className="w-3 h-3 text-tema-apagado flex-shrink-0" />}
               </div>
             ))}
           </div>
@@ -315,7 +315,7 @@ async function marcarClienteAusente() {
               <button
                 onClick={marcarClienteAusente}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-black/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-tema-contraste/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
               >
                 <AlertTriangle className="w-4 h-4" />
                 Cliente Ausente - Devolver a Agenda
@@ -338,13 +338,13 @@ async function marcarClienteAusente() {
                   <p className="text-xs text-cyan-700 font-bold flex items-center gap-1.5">
                     <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
                   </p>
-                  <p className="text-sm text-[#3F3A32]">
+                  <p className="text-sm text-tema-texto">
                     {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
                     {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
                     {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
                   </p>
                   {diagnosticoRemoto.hipotese && (
-                    <p className="text-xs text-[#7A7266]">{diagnosticoRemoto.hipotese}</p>
+                    <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>
                   )}
                   <div className="flex items-center gap-3 pt-1">
                     <button
@@ -367,30 +367,30 @@ async function marcarClienteAusente() {
                     <div className="pt-2 border-t border-cyan-600/15 space-y-2">
                       {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
                         <div>
-                          <p className="text-[11px] text-[#A69E8F] mb-1">Evidencias</p>
+                          <p className="text-[11px] text-tema-apagado mb-1">Evidencias</p>
                           <ul className="space-y-0.5">
                             {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
-                              <li key={i} className="text-xs text-[#3F3A32]">• {ev}</li>
+                              <li key={i} className="text-xs text-tema-texto">• {ev}</li>
                             ))}
                           </ul>
                         </div>
                       )}
                       {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
                         <div>
-                          <p className="text-[11px] text-[#A69E8F] mb-1">Recomendacoes</p>
+                          <p className="text-[11px] text-tema-apagado mb-1">Recomendacoes</p>
                           <ul className="space-y-0.5">
                             {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
-                              <li key={i} className="text-xs text-[#3F3A32]">• {r}</li>
+                              <li key={i} className="text-xs text-tema-texto">• {r}</li>
                             ))}
                           </ul>
                         </div>
                       )}
                       {diagnosticoRemoto.resumo?.downloadMbps != null && (
-                        <p className="text-xs text-[#A69E8F]">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
+                        <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
                       )}
                       {diagnosticoRemoto.resumo?.onuStatus && (
-                        <p className="text-xs text-[#A69E8F]">
-                          ONU: <span className="text-[#3F3A32]">{diagnosticoRemoto.resumo.onuStatus}</span>
+                        <p className="text-xs text-tema-apagado">
+                          ONU: <span className="text-tema-texto">{diagnosticoRemoto.resumo.onuStatus}</span>
                           {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
                         </p>
                       )}
@@ -412,7 +412,7 @@ async function marcarClienteAusente() {
               <button
                 onClick={marcarClienteAusente}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-black/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-tema-contraste/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
               >
                 <AlertTriangle className="w-4 h-4" />
                 Cliente Ausente - Devolver a Agenda
@@ -421,7 +421,7 @@ async function marcarClienteAusente() {
 
               {/* Relato */}
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5 flex items-center gap-1.5">
+                <label className="block text-sm font-medium text-tema-texto mb-1.5 flex items-center gap-1.5">
                   <FileText className="w-4 h-4" />
                   Relato do Atendimento *
                 </label>
@@ -430,14 +430,14 @@ async function marcarClienteAusente() {
                   onChange={e => setRelato(e.target.value)}
                   rows={3}
                   placeholder="Descreva o servico realizado, problema encontrado e solucao aplicada..."
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-3 py-2.5 text-sm text-[#201D17] placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 focus:ring-orange-600 focus:border-orange-600 resize-none"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2.5 text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-1 focus:ring-orange-600 focus:border-orange-600 resize-none"
                 />
               </div>
 
               {/* Fotos OBRIGATORIO */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-[#3F3A32] flex items-center gap-1.5">
+                  <label className="text-sm font-medium text-tema-texto flex items-center gap-1.5">
                     <Camera className="w-4 h-4" />
                     Evidencias Fotograficas *
                   </label>
@@ -465,7 +465,7 @@ async function marcarClienteAusente() {
                 {fotos.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {fotos.map((url, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-black/[0.04] border border-[#E6E1D6]">
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-tema-contraste/[0.04] border border-tema-linha">
                         <img
                           src={url}
                           alt={`Evidencia ${i + 1}`}
@@ -498,7 +498,7 @@ async function marcarClienteAusente() {
                 <button
                   onClick={() => inputFotoRef.current?.click()}
                   disabled={uploadando}
-                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#D8D2C3] hover:border-orange-500/50 rounded-xl text-[#7A7266] hover:text-orange-700 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-tema-linha-forte hover:border-orange-500/50 rounded-xl text-tema-suave hover:text-orange-700 transition-colors disabled:opacity-50"
                 >
                   {uploadando
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando fotos...</>
@@ -510,7 +510,7 @@ async function marcarClienteAusente() {
               {/* Materiais */}
               {materiaisDisponiveis.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-[#3F3A32] mb-2 flex items-center gap-1.5">
+                  <label className="block text-sm font-medium text-tema-texto mb-2 flex items-center gap-1.5">
                     <Package className="w-4 h-4" />
                     Materiais Utilizados
                   </label>
@@ -523,7 +523,7 @@ async function marcarClienteAusente() {
                           key={m.itemId}
                           className={cn(
                             'p-3 rounded-xl border transition-all',
-                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#E6E1D6] bg-black/[0.02]'
+                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha bg-tema-contraste/[0.02]'
                           )}
                         >
                           <button
@@ -533,19 +533,19 @@ async function marcarClienteAusente() {
                             <div className="flex items-center gap-2">
                               <div className={cn(
                                 'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                                selecionado ? 'bg-orange-500 border-orange-500' : 'border-[#D8D2C3]'
+                                selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte'
                               )}>
                                 {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                               </div>
                               <div className="text-left">
-                                <p className="text-sm text-[#201D17] font-medium">{m.item?.descricao}</p>
-                                <p className="text-xs text-[#A69E8F]">Disponivel: {m.quantidade} {m.item?.unidade}</p>
+                                <p className="text-sm text-tema-tinta font-medium">{m.item?.descricao}</p>
+                                <p className="text-xs text-tema-apagado">Disponivel: {m.quantidade} {m.item?.unidade}</p>
                               </div>
                             </div>
                           </button>
                           {selecionado && (
                             <div className="flex items-center gap-2 mt-2 pl-7">
-                              <label className="text-xs text-[#A69E8F]">Qtd usada:</label>
+                              <label className="text-xs text-tema-apagado">Qtd usada:</label>
                               <input
                                 type="number"
                                 value={usado.quantidade}
@@ -553,9 +553,9 @@ async function marcarClienteAusente() {
                                 min={0}
                                 max={m.quantidade}
                                 step={0.01}
-                                className="w-20 bg-white border border-[#D8D2C3] rounded px-2 py-1 text-sm text-[#201D17] text-center"
+                                className="w-20 bg-tema-superficie border border-tema-linha-forte rounded px-2 py-1 text-sm text-tema-tinta text-center"
                               />
-                              <span className="text-xs text-[#A69E8F]">{m.item?.unidade}</span>
+                              <span className="text-xs text-tema-apagado">{m.item?.unidade}</span>
                             </div>
                           )}
                         </div>
@@ -568,7 +568,7 @@ async function marcarClienteAusente() {
               {/* Equipamento com MAC utilizado */}
               {unidadesDisponiveis.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-[#3F3A32] mb-2 flex items-center gap-1.5">
+                  <label className="block text-sm font-medium text-tema-texto mb-2 flex items-center gap-1.5">
                     <ScanLine className="w-4 h-4" />
                     Equipamento Utilizado *
                   </label>
@@ -581,19 +581,19 @@ async function marcarClienteAusente() {
                           onClick={() => toggleEquipamentoUtilizado(u.id)}
                           className={cn(
                             'w-full flex items-center justify-between p-3 rounded-xl border transition-all',
-                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#E6E1D6] bg-black/[0.02]'
+                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha bg-tema-contraste/[0.02]'
                           )}
                         >
                           <div className="flex items-center gap-2">
                             <div className={cn(
                               'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                              selecionado ? 'bg-orange-500 border-orange-500' : 'border-[#D8D2C3]'
+                              selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte'
                             )}>
                               {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                             </div>
                             <div className="text-left">
-                              <p className="text-sm text-[#201D17] font-medium">{u.item?.descricao}</p>
-                              <p className="text-xs text-[#A69E8F] font-mono">{u.macAddress}</p>
+                              <p className="text-sm text-tema-tinta font-medium">{u.item?.descricao}</p>
+                              <p className="text-xs text-tema-apagado font-mono">{u.macAddress}</p>
                             </div>
                           </div>
                         </button>
@@ -603,16 +603,16 @@ async function marcarClienteAusente() {
                       onClick={toggleNenhumEquipamentoUsado}
                       className={cn(
                         'w-full flex items-center gap-2 p-3 rounded-xl border transition-all',
-                        nenhumEquipamentoUsado ? 'border-[#A69E8F]/40 bg-black/[0.03]' : 'border-[#E6E1D6] bg-black/[0.02]'
+                        nenhumEquipamentoUsado ? 'border-tema-apagado/40 bg-tema-contraste/[0.03]' : 'border-tema-linha bg-tema-contraste/[0.02]'
                       )}
                     >
                       <div className={cn(
                         'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                        nenhumEquipamentoUsado ? 'bg-[#A69E8F] border-[#A69E8F]' : 'border-[#D8D2C3]'
+                        nenhumEquipamentoUsado ? 'bg-tema-apagado border-tema-apagado' : 'border-tema-linha-forte'
                       )}>
                         {nenhumEquipamentoUsado && <Ban className="w-3.5 h-3.5 text-white" />}
                       </div>
-                      <p className="text-sm text-[#3F3A32]">Nenhum equipamento foi utilizado</p>
+                      <p className="text-sm text-tema-texto">Nenhum equipamento foi utilizado</p>
                     </button>
                   </div>
                 </div>
@@ -639,7 +639,7 @@ async function marcarClienteAusente() {
                     'w-full flex items-center justify-center gap-2 py-4 font-bold rounded-xl transition-colors',
                     podeFinalizarFotos && relato.trim() && (unidadesDisponiveis.length === 0 || equipamentosUtilizadosIds.length > 0 || nenhumEquipamentoUsado)
                       ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                      : 'bg-black/[0.06] text-[#A69E8F] cursor-not-allowed'
+                      : 'bg-tema-contraste/[0.06] text-tema-apagado cursor-not-allowed'
                   )}
                 >
                   {loading

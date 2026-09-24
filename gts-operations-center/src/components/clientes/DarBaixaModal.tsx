@@ -62,24 +62,24 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
               <DollarSign className="w-4.5 h-4.5 text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[#201D17]">Dar Baixa</h3>
-              <p className="text-xs text-[#A69E8F]">{cliente.nome}</p>
+              <h3 className="text-lg font-semibold text-tema-tinta">Dar Baixa</h3>
+              <p className="text-xs text-tema-apagado">{cliente.nome}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Forma de Pagamento</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Forma de Pagamento</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {FORMAS.map(f => (
               <button
@@ -88,7 +88,7 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
                 className={`py-2.5 rounded-lg text-xs font-medium border transition-colors ${
                   formaPagamento === f.valor
                     ? 'bg-orange-500/20 text-orange-700 border-orange-500/30'
-                    : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                    : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
                 }`}
               >
                 {f.label}
@@ -99,7 +99,7 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
 
         {(formaPagamento === 'PIX' || formaPagamento === 'BOLETO' || formaPagamento === 'CARTAO') && (
           <div>
-            <label className="block text-xs text-[#7A7266] mb-1.5">Banco de Destino</label>
+            <label className="block text-xs text-tema-suave mb-1.5">Banco de Destino</label>
             <input
               type="text"
               value={banco}
@@ -111,7 +111,7 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
         )}
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Valor Recebido</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Valor Recebido</label>
           <input
             type="number"
             value={valorRecebido}
@@ -121,7 +121,7 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
             className="w-full gts-input text-sm"
           />
           {cliente.valorMensalidade && (
-            <p className="text-xs text-[#A69E8F] mt-1">Mensalidade: R$ {cliente.valorMensalidade.toFixed(2)}</p>
+            <p className="text-xs text-tema-apagado mt-1">Mensalidade: R$ {cliente.valorMensalidade.toFixed(2)}</p>
           )}
         </div>
 
@@ -132,7 +132,7 @@ export function DarBaixaModal({ cliente, onClose, onSuccess }: Props) {
         )}
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Observacao (opcional)</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Observacao (opcional)</label>
           <input
             type="text"
             value={observacao}

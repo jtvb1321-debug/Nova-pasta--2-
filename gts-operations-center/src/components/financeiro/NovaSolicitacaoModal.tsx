@@ -136,17 +136,17 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
               <DollarSign className="w-4 h-4 text-emerald-700" />
             </div>
-            <h2 className="text-lg font-semibold text-[#201D17]">Nova Solicitacao de Pagamento</h2>
+            <h2 className="text-lg font-semibold text-tema-tinta">Nova Solicitacao de Pagamento</h2>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -155,7 +155,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Titulo */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Titulo *</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Titulo *</label>
             <input
               value={form.titulo}
               onChange={e => set('titulo', e.target.value)}
@@ -166,7 +166,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Centro de Custo */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-2">Centro de Custo *</label>
+            <label className="block text-sm font-medium text-tema-suave mb-2">Centro de Custo *</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {CENTROS.map(c => (
                 <button
@@ -176,7 +176,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
                     'py-2.5 px-3 rounded-xl border text-sm font-medium transition-all',
                     form.centroCusto === c.value
                       ? 'border-orange-500/40 bg-orange-500/10 text-orange-600'
-                      : 'border-[#E6E1D6] text-[#7A7266] hover:text-[#201D17] hover:border-[#D8D2C3]'
+                      : 'border-tema-linha text-tema-suave hover:text-tema-tinta hover:border-tema-linha-forte'
                   )}
                 >
                   {c.label}
@@ -187,7 +187,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Subcategoria */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Subcategoria *</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Subcategoria *</label>
             <select
               value={form.subcategoria}
               onChange={e => set('subcategoria', e.target.value)}
@@ -217,7 +217,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
                   <option key={t.id} value={t.id}>{t.nome}</option>
                 ))}
               </select>
-              <p className="text-xs text-[#A69E8F]">
+              <p className="text-xs text-tema-apagado">
                 Vincule a despesa ao tecnico para gerar relatorios individuais de custos
               </p>
             </div>
@@ -226,9 +226,9 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
           {/* Valor e Parcelas */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Valor (R$) *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Valor (R$) *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A69E8F] text-sm">R$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-tema-apagado text-sm">R$</span>
                 <input
                   type="number"
                   value={form.valor}
@@ -241,7 +241,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Parcelas</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Parcelas</label>
               <select
                 value={form.parcelas}
                 onChange={e => set('parcelas', e.target.value)}
@@ -257,7 +257,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
           {/* Fornecedor e Vencimento */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Favorecido / Fornecedor</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Favorecido / Fornecedor</label>
               <input
                 value={form.fornecedor}
                 onChange={e => set('fornecedor', e.target.value)}
@@ -266,7 +266,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Data de Vencimento</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Data de Vencimento</label>
               <input
                 type="date"
                 value={form.dataVencimento}
@@ -278,7 +278,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Nota Fiscal */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Numero da Nota Fiscal</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Numero da Nota Fiscal</label>
             <input
               value={form.notaFiscal}
               onChange={e => set('notaFiscal', e.target.value)}
@@ -289,7 +289,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Anexo */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">
               Anexo (NF, comprovante, contrato)
             </label>
             <input
@@ -301,7 +301,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
             />
             <button
               onClick={() => inputAnexoRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#D8D2C3] hover:border-orange-500/40 rounded-xl text-[#7A7266] hover:text-orange-600 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-tema-linha-forte hover:border-orange-500/40 rounded-xl text-tema-suave hover:text-orange-600 transition-colors"
             >
               <Upload className="w-4 h-4" />
               {anexoNome || 'Clique para anexar PDF ou imagem'}
@@ -315,7 +315,7 @@ export function NovaSolicitacaoModal({ onClose, onSuccess }: Props) {
 
           {/* Descricao */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Descricao / Observacoes</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Descricao / Observacoes</label>
             <textarea
               value={form.observacoes}
               onChange={e => set('observacoes', e.target.value)}

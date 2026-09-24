@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-le
 import 'leaflet/dist/leaflet.css'
 import { NOC } from './theme'
 import { ATRIBUICAO_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
+import { useTema } from '@/lib/tema'
 
 // Centro operacional fixo do NOC (sede/area de cobertura principal).
 const CENTRO_PADRAO: [number, number] = [-5.042275450130424, -42.74770897772132]
@@ -93,13 +94,14 @@ export function NetworkMapInner({ modoTv = false }: NetworkMapInnerProps) {
 
   // Espera a chave antes de montar o fundo, para nao carregar imagens com a marca.
   const [chaveCarto, setChaveCarto] = useState<string | null>(null)
+  const tema = useTema()
   useEffect(() => { obterChaveCarto().then(setChaveCarto) }, [])
 
   return (
     <MapContainer center={CENTRO_PADRAO} zoom={ZOOM_PADRAO} style={{ height: '100%', width: '100%', background: cores.bg }} zoomControl={!modoTv}>
       {chaveCarto !== null && (
         <TileLayer
-          url={urlCarto(modoTv ? 'dark_all' : 'light_all', chaveCarto)}
+          url={urlCarto(modoTv || tema === 'escuro' ? 'dark_all' : 'light_all', chaveCarto)}
           attribution={ATRIBUICAO_CARTO}
           referrerPolicy={REFERRER_CARTO}
           maxZoom={19}

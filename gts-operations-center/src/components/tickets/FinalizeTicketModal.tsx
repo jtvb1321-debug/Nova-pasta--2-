@@ -107,20 +107,20 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-lg shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
               <StopCircle className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#201D17]">Finalizar Chamado</h2>
-              <p className="text-xs text-[#A69E8F]">A equipe voltara automaticamente para Disponivel</p>
+              <h2 className="text-lg font-semibold text-tema-tinta">Finalizar Chamado</h2>
+              <p className="text-xs text-tema-apagado">A equipe voltara automaticamente para Disponivel</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -137,7 +137,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
 
           {/* Relato */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5 flex items-center gap-1.5">
+            <label className="block text-sm font-medium text-tema-suave mb-1.5 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" />
               Relato do Atendimento
             </label>
@@ -155,8 +155,8 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Package className="w-4 h-4 text-blue-700" />
-                <h3 className="text-sm font-medium text-[#201D17]">Materiais Utilizados</h3>
-                <span className="text-xs text-[#A69E8F]">(ajuste as quantidades reais)</span>
+                <h3 className="text-sm font-medium text-tema-tinta">Materiais Utilizados</h3>
+                <span className="text-xs text-tema-apagado">(ajuste as quantidades reais)</span>
               </div>
 
               <div className="space-y-2">
@@ -164,22 +164,22 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                   const qtdUtilizada  = utilizados[m.itemId] ?? 0
                   const qtdDevolvida  = m.quantidade - qtdUtilizada
                   return (
-                    <div key={m.itemId} className="p-3 bg-black/[0.02] border border-[#E6E1D6] rounded-xl">
+                    <div key={m.itemId} className="p-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[#201D17] font-medium truncate">{m.item.descricao}</p>
-                          <p className="text-xs text-[#A69E8F] font-mono">{m.item.codigo}</p>
-                          <p className="text-xs text-[#A69E8F] mt-0.5">
+                          <p className="text-sm text-tema-tinta font-medium truncate">{m.item.descricao}</p>
+                          <p className="text-xs text-tema-apagado font-mono">{m.item.codigo}</p>
+                          <p className="text-xs text-tema-apagado mt-0.5">
                             Reservado: {formatNumber(m.quantidade)} {m.item.unidade}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-center">
-                            <p className="text-xs text-[#A69E8F] mb-1">Utilizado</p>
+                            <p className="text-xs text-tema-apagado mb-1">Utilizado</p>
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada - 1)}
-                                className="w-8 h-8 rounded bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] text-sm transition-colors flex-shrink-0"
+                                className="w-8 h-8 rounded bg-tema-contraste/[0.04] hover:bg-tema-contraste/[0.08] text-tema-tinta text-sm transition-colors flex-shrink-0"
                               >
                                 -
                               </button>
@@ -193,7 +193,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                               />
                               <button
                                 onClick={() => setQtdUtilizada(m.itemId, qtdUtilizada + 1)}
-                                className="w-8 h-8 rounded bg-black/[0.04] hover:bg-black/[0.08] text-[#201D17] text-sm transition-colors flex-shrink-0"
+                                className="w-8 h-8 rounded bg-tema-contraste/[0.04] hover:bg-tema-contraste/[0.08] text-tema-tinta text-sm transition-colors flex-shrink-0"
                               >
                                 +
                               </button>
@@ -224,7 +224,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
                   {devolvidos.length} item(ns) sera(o) registrado(s) como devolucao pendente
                 </p>
               </div>
-              <p className="text-xs text-[#A69E8F]">
+              <p className="text-xs text-tema-apagado">
                 Aguardam aprovacao do Administrador para retornar ao estoque
               </p>
             </div>

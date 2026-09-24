@@ -28,7 +28,7 @@ export const STATUS_CONFIG: Record<StatusChamado, { label: string; icon: React.E
   ABERTO:       { label: 'Aguardando', icon: Clock,         cls: 'text-blue-700 bg-blue-500/10' },
   EM_ANDAMENTO: { label: 'Em Andamento', icon: Zap,         cls: 'text-amber-700 bg-amber-500/10' },
   FINALIZADO:   { label: 'Finalizado', icon: CheckCircle,   cls: 'text-emerald-700 bg-emerald-500/10' },
-  CANCELADO:    { label: 'Cancelado', icon: XCircle,        cls: 'text-[#7A7266] bg-black/[0.04]' },
+  CANCELADO:    { label: 'Cancelado', icon: XCircle,        cls: 'text-tema-suave bg-tema-contraste/[0.04]' },
 }
 
 export const TIPO_COR: Record<TipoChamado, string> = {
@@ -144,10 +144,10 @@ export function CardChamado({
 
   return (
     <div className={cn(
-      'bg-white border rounded-xl transition-all shadow-sm shadow-black/[0.03]',
+      'bg-tema-superficie border rounded-xl transition-all shadow-sm shadow-tema-contraste/[0.03]',
       prioridade === 'CRITICO' ? 'border-red-500/30' :
       prioridade === 'URGENTE' ? 'border-amber-500/25' :
-      'border-[#E6E1D6] hover:border-[#D8D2C3]'
+      'border-tema-linha hover:border-tema-linha-forte'
     )}>
       {/* Header clicavel */}
       <div
@@ -163,7 +163,7 @@ export function CardChamado({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-[#201D17] font-bold">{chamado.cliente}</h3>
+              <h3 className="text-tema-tinta font-bold">{chamado.cliente}</h3>
               {chamado.eace && (
                 <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-700 font-bold">
                   <GraduationCap className="w-3 h-3" />
@@ -193,16 +193,16 @@ export function CardChamado({
               </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-xs text-[#A69E8F]">{timeAgo(chamado.createdAt)}</span>
+              <span className="text-xs text-tema-apagado">{timeAgo(chamado.createdAt)}</span>
               {onToggle && (
                 expandido
-                  ? <ChevronUp className="w-4 h-4 text-[#A69E8F]" />
-                  : <ChevronDown className="w-4 h-4 text-[#A69E8F]" />
+                  ? <ChevronUp className="w-4 h-4 text-tema-apagado" />
+                  : <ChevronDown className="w-4 h-4 text-tema-apagado" />
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-[#7A7266]">
+          <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-tema-suave">
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {chamado.cidade}
@@ -226,7 +226,7 @@ export function CardChamado({
                 value={chamado.tipo}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => { e.stopPropagation(); onAlterarTipo(chamado.id, e.target.value) }}
-                className="bg-black/[0.03] border border-orange-500/25 text-orange-700 text-xs rounded px-1.5 py-0.5 focus:outline-none"
+                className="bg-tema-contraste/[0.03] border border-orange-500/25 text-orange-700 text-xs rounded px-1.5 py-0.5 focus:outline-none"
                 title="Alterar tipo do chamado (antes da equipe iniciar)"
               >
                 {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
@@ -267,23 +267,23 @@ export function CardChamado({
 
       {/* Detalhes expandidos */}
       {expandido && (
-        <div className="px-4 pb-4 space-y-3 border-t border-[#E6E1D6] pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-tema-linha pt-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {chamado.eace && chamado.escolaResponsavel && (
               <div>
-                <p className="text-xs text-[#A69E8F] mb-1">Responsavel pela escola</p>
-                <p className="text-sm text-[#201D17]">{chamado.escolaResponsavel}</p>
+                <p className="text-xs text-tema-apagado mb-1">Responsavel pela escola</p>
+                <p className="text-sm text-tema-tinta">{chamado.escolaResponsavel}</p>
               </div>
             )}
             {chamado.eace && chamado.escolaCodigoInep && (
               <div>
-                <p className="text-xs text-[#A69E8F] mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Codigo INEP</p>
-                <p className="text-sm text-[#201D17] font-mono">{chamado.escolaCodigoInep}</p>
+                <p className="text-xs text-tema-apagado mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Codigo INEP</p>
+                <p className="text-sm text-tema-tinta font-mono">{chamado.escolaCodigoInep}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-[#A69E8F] mb-1">{chamado.eace ? 'Localizacao' : 'Endereco completo'}</p>
-              <p className="text-sm text-[#201D17]">{formatarEnderecoCompleto(chamado)}</p>
+              <p className="text-xs text-tema-apagado mb-1">{chamado.eace ? 'Localizacao' : 'Endereco completo'}</p>
+              <p className="text-sm text-tema-tinta">{formatarEnderecoCompleto(chamado)}</p>
               {chamado.eace && chamado.latitude != null && chamado.longitude != null && (
                 <a
                   href={`https://www.google.com/maps?q=${chamado.latitude},${chamado.longitude}`}
@@ -298,23 +298,23 @@ export function CardChamado({
             </div>
             {chamado.telefone && (
               <div>
-                <p className="text-xs text-[#A69E8F] mb-1">Telefone</p>
-                <p className="text-sm text-[#201D17]">{chamado.telefone}</p>
+                <p className="text-xs text-tema-apagado mb-1">Telefone</p>
+                <p className="text-sm text-tema-tinta">{chamado.telefone}</p>
               </div>
             )}
             <div>
-              <p className="text-xs text-[#A69E8F] mb-1">Abertura</p>
-              <p className="text-sm text-[#201D17]">{formatDateTime(chamado.dataAbertura)}</p>
+              <p className="text-xs text-tema-apagado mb-1">Abertura</p>
+              <p className="text-sm text-tema-tinta">{formatDateTime(chamado.dataAbertura)}</p>
             </div>
             {chamado.dataInicio && (
               <div>
-                <p className="text-xs text-[#A69E8F] mb-1">Inicio Atividade</p>
-                <p className="text-sm text-[#201D17]">{formatDateTime(chamado.dataInicio)}</p>
+                <p className="text-xs text-tema-apagado mb-1">Inicio Atividade</p>
+                <p className="text-sm text-tema-tinta">{formatDateTime(chamado.dataInicio)}</p>
               </div>
             )}
             {chamado.dataFim && (
               <div>
-                <p className="text-xs text-[#A69E8F] mb-1">Finalizacao</p>
+                <p className="text-xs text-tema-apagado mb-1">Finalizacao</p>
                 <p className="text-sm text-emerald-700">{formatDateTime(chamado.dataFim)}</p>
               </div>
             )}
@@ -322,21 +322,21 @@ export function CardChamado({
 
           {obs && (
             <div>
-              <p className="text-xs text-[#A69E8F] mb-1">Observacao</p>
-              <p className="text-sm text-[#3F3A32] bg-black/[0.02] rounded-lg px-3 py-2 italic">{obs}</p>
+              <p className="text-xs text-tema-apagado mb-1">Observacao</p>
+              <p className="text-sm text-tema-texto bg-tema-contraste/[0.02] rounded-lg px-3 py-2 italic">{obs}</p>
             </div>
           )}
 
           {/* Materiais reservados */}
           {chamado.materiaisReservados?.length > 0 && (
             <div>
-              <p className="text-xs text-[#A69E8F] mb-2 flex items-center gap-1">
+              <p className="text-xs text-tema-apagado mb-2 flex items-center gap-1">
                 <Package className="w-3 h-3" /> Materiais Reservados
               </p>
               <div className="space-y-1">
                 {chamado.materiaisReservados.map((m: any) => (
-                  <div key={m.id} className="flex items-center justify-between text-xs bg-black/[0.02] rounded px-2 py-1">
-                    <span className="text-[#3F3A32]">{m.item?.descricao}</span>
+                  <div key={m.id} className="flex items-center justify-between text-xs bg-tema-contraste/[0.02] rounded px-2 py-1">
+                    <span className="text-tema-texto">{m.item?.descricao}</span>
                     <span className="text-blue-700 font-mono">{m.quantidade} {m.item?.unidade}</span>
                   </div>
                 ))}
@@ -347,13 +347,13 @@ export function CardChamado({
           {/* Materiais utilizados */}
           {chamado.materiaisUtilizados?.length > 0 && (
             <div>
-              <p className="text-xs text-[#A69E8F] mb-2 flex items-center gap-1">
+              <p className="text-xs text-tema-apagado mb-2 flex items-center gap-1">
                 <Wrench className="w-3 h-3" /> Materiais Utilizados
               </p>
               <div className="space-y-1">
                 {chamado.materiaisUtilizados.map((m: any) => (
                   <div key={m.id} className="flex items-center justify-between text-xs bg-emerald-500/5 rounded px-2 py-1">
-                    <span className="text-[#3F3A32]">{m.item?.descricao}</span>
+                    <span className="text-tema-texto">{m.item?.descricao}</span>
                     <span className="text-emerald-700 font-mono">{m.quantidade} {m.item?.unidade}</span>
                   </div>
                 ))}
@@ -364,16 +364,16 @@ export function CardChamado({
           {/* Diagnostico remoto do NOC - nunca um card separado, so um painel
               dentro do proprio chamado (regra explicita do produto). */}
           {diagnosticoRemoto && (
-            <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3 space-y-2">
+            <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-[#A69E8F] flex items-center gap-1">
+                <p className="text-xs text-tema-apagado flex items-center gap-1">
                   <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
                 </p>
                 {diagnosticoRemoto.confianca != null && (
-                  <span className="text-xs font-mono text-[#7A7266]">{diagnosticoRemoto.confianca}%</span>
+                  <span className="text-xs font-mono text-tema-suave">{diagnosticoRemoto.confianca}%</span>
                 )}
               </div>
-              <p className="text-sm text-[#201D17]">
+              <p className="text-sm text-tema-tinta">
                 {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
                 {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
                 {diagnosticoRemoto.origemProvavel
@@ -381,10 +381,10 @@ export function CardChamado({
                   : ''}
               </p>
               {diagnosticoRemoto.hipotese && (
-                <p className="text-xs text-[#7A7266]">{diagnosticoRemoto.hipotese}</p>
+                <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>
               )}
               {diagnosticoRemoto.resumo?.downloadMbps != null && (
-                <p className="text-xs text-[#A69E8F]">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
+                <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
               )}
               <button
                 type="button"
@@ -395,30 +395,30 @@ export function CardChamado({
               </button>
 
               {mostrarDiagnosticoCompleto && (
-                <div className="pt-2 border-t border-[#E6E1D6] space-y-2">
+                <div className="pt-2 border-t border-tema-linha space-y-2">
                   {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
                     <div>
-                      <p className="text-[11px] text-[#A69E8F] mb-1">Evidencias</p>
+                      <p className="text-[11px] text-tema-apagado mb-1">Evidencias</p>
                       <ul className="space-y-0.5">
                         {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
-                          <li key={i} className="text-xs text-[#3F3A32]">• {ev}</li>
+                          <li key={i} className="text-xs text-tema-texto">• {ev}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
                     <div>
-                      <p className="text-[11px] text-[#A69E8F] mb-1">Recomendacoes</p>
+                      <p className="text-[11px] text-tema-apagado mb-1">Recomendacoes</p>
                       <ul className="space-y-0.5">
                         {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
-                          <li key={i} className="text-xs text-[#3F3A32]">• {r}</li>
+                          <li key={i} className="text-xs text-tema-texto">• {r}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {diagnosticoRemoto.resumo?.onuStatus && (
-                    <p className="text-xs text-[#A69E8F]">
-                      ONU: <span className="text-[#3F3A32]">{diagnosticoRemoto.resumo.onuStatus}</span>
+                    <p className="text-xs text-tema-apagado">
+                      ONU: <span className="text-tema-texto">{diagnosticoRemoto.resumo.onuStatus}</span>
                       {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
                     </p>
                   )}
@@ -445,7 +445,7 @@ export function CardChamado({
                         e.stopPropagation()
                         import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'salvar'))
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/[0.03] hover:bg-black/[0.06] border border-[#E6E1D6] rounded-lg text-xs font-medium text-[#3F3A32] transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-tema-contraste/[0.03] hover:bg-tema-contraste/[0.06] border border-tema-linha rounded-lg text-xs font-medium text-tema-texto transition-colors"
                     >
                       Gerar Relatorio
                     </button>
@@ -455,7 +455,7 @@ export function CardChamado({
                         e.stopPropagation()
                         import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/[0.03] hover:bg-black/[0.06] border border-[#E6E1D6] rounded-lg text-xs font-medium text-[#3F3A32] transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-tema-contraste/[0.03] hover:bg-tema-contraste/[0.06] border border-tema-linha rounded-lg text-xs font-medium text-tema-texto transition-colors"
                     >
                       Imprimir
                     </button>
@@ -507,7 +507,7 @@ export function CardChamado({
               {emDeslocamento && onIniciar && (
                 <button
                   onClick={() => onIniciar(chamado.id)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-400 rounded-lg text-xs font-bold text-[#201D17] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-400 rounded-lg text-xs font-bold text-tema-tinta transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5" />
                   Iniciar Atividade
@@ -539,17 +539,17 @@ export function CardChamado({
           {chamado.status === 'FINALIZADO' && (
             <div className="flex flex-wrap gap-2 pt-1">
               {chamado.feedbackEnviado ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.03] rounded-lg text-xs text-tema-apagado">
                   <CheckCircle className="w-3.5 h-3.5" />
                   Feedback enviado {chamado.feedbackEnviadoEm ? `em ${formatDateTime(chamado.feedbackEnviadoEm)}` : ''}
                 </span>
               ) : !chamado.telefone ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.03] rounded-lg text-xs text-tema-apagado">
                   <MessageCircle className="w-3.5 h-3.5" />
                   Sem telefone cadastrado - feedback nao sera enviado
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] rounded-lg text-xs text-[#A69E8F]">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.03] rounded-lg text-xs text-tema-apagado">
                   <MessageCircle className="w-3.5 h-3.5" />
                   Feedback sera enviado automaticamente 1h apos o encerramento
                 </span>

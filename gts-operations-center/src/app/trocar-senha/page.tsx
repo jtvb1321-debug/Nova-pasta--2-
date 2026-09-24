@@ -16,9 +16,9 @@ const schema = z.object({
 
 type Form = z.infer<typeof schema>
 
-const campo = (erro?: boolean) => `w-full bg-[#FCFBF8] border rounded-lg px-3 py-2.5 pr-10 text-sm text-[#201D17]
-  placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 transition-colors
-  ${erro ? 'border-red-500/50 focus:ring-red-500' : 'border-[#D8D2C3] focus:ring-orange-600 focus:border-orange-600'}`
+const campo = (erro?: boolean) => `w-full bg-tema-fundo-2 border rounded-lg px-3 py-2.5 pr-10 text-sm text-tema-tinta
+  placeholder:text-tema-apagado focus:outline-none focus:ring-1 transition-colors
+  ${erro ? 'border-red-500/50 focus:ring-red-500' : 'border-tema-linha-forte focus:ring-orange-600 focus:border-orange-600'}`
 
 export default function TrocarSenhaPage() {
   const { data: session } = useSession()
@@ -54,17 +54,17 @@ export default function TrocarSenhaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-tema-fundo flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="relative bg-white border border-[#E6E1D6] rounded-xl p-8 shadow-xl shadow-black/[0.04] overflow-hidden">
+        <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 shadow-xl shadow-tema-contraste/[0.04] overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-xl bg-[#FDEDDD] flex items-center justify-center flex-shrink-0 ring-1 ring-orange-500/20">
+            <div className="w-11 h-11 rounded-xl bg-tema-laranja-suave flex items-center justify-center flex-shrink-0 ring-1 ring-orange-500/20">
               <KeyRound className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[#201D17]">Troque sua senha</h1>
-              <p className="text-[#A69E8F] text-xs">
+              <h1 className="text-xl font-bold text-tema-tinta">Troque sua senha</h1>
+              <p className="text-tema-apagado text-xs">
                 Por seguranca, todos precisam definir uma nova senha apos a atualizacao do sistema{session?.user?.email ? ` (${session.user.email})` : ''}. Ela precisa ser diferente da ultima senha usada.
               </p>
             </div>
@@ -78,19 +78,19 @@ export default function TrocarSenhaPage() {
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="senhaAtual" className="block text-sm font-medium text-[#7A7266] mb-1.5">Senha atual</label>
+                <label htmlFor="senhaAtual" className="block text-sm font-medium text-tema-suave mb-1.5">Senha atual</label>
                 <input id="senhaAtual" {...register('senhaAtual')} type={mostrar ? 'text' : 'password'}
                   autoComplete="current-password" className={campo(!!errors.senhaAtual)} />
                 {errors.senhaAtual && <p className="text-xs text-red-600 mt-1">{errors.senhaAtual.message}</p>}
               </div>
 
               <div>
-                <label htmlFor="novaSenha" className="block text-sm font-medium text-[#7A7266] mb-1.5">Nova senha</label>
+                <label htmlFor="novaSenha" className="block text-sm font-medium text-tema-suave mb-1.5">Nova senha</label>
                 <div className="relative">
                   <input id="novaSenha" {...register('novaSenha')} type={mostrar ? 'text' : 'password'}
                     autoComplete="new-password" className={campo(!!errors.novaSenha)} />
                   <button type="button" onClick={() => setMostrar(!mostrar)} aria-label={mostrar ? 'Ocultar senhas' : 'Mostrar senhas'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A69E8F] hover:text-[#201D17] transition-colors">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-tema-apagado hover:text-tema-tinta transition-colors">
                     {mostrar ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -98,7 +98,7 @@ export default function TrocarSenhaPage() {
               </div>
 
               <div>
-                <label htmlFor="confirmar" className="block text-sm font-medium text-[#7A7266] mb-1.5">Confirme a nova senha</label>
+                <label htmlFor="confirmar" className="block text-sm font-medium text-tema-suave mb-1.5">Confirme a nova senha</label>
                 <input id="confirmar" {...register('confirmar')} type={mostrar ? 'text' : 'password'}
                   autoComplete="new-password" className={campo(!!errors.confirmar)} />
                 {errors.confirmar && <p className="text-xs text-red-600 mt-1">{errors.confirmar.message}</p>}
@@ -119,7 +119,7 @@ export default function TrocarSenhaPage() {
               </button>
 
               <button type="button" onClick={() => signOut({ callbackUrl: '/login' })}
-                className="w-full text-sm text-[#7A7266] hover:text-[#201D17] py-1 transition-colors">
+                className="w-full text-sm text-tema-suave hover:text-tema-tinta py-1 transition-colors">
                 Sair
               </button>
             </form>

@@ -181,19 +181,19 @@ export function PainelTecnico({ session }: Props) {
   ]
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] lg:flex lg:items-start">
+    <div className="min-h-screen bg-tema-fundo lg:flex lg:items-start">
 
       {/* Sidebar - desktop/tablet largo */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-[230px] lg:flex-shrink-0 lg:sticky lg:top-0 lg:min-h-screen bg-white border-r border-[#E6E1D6] p-3.5 gap-4">
+      <aside className="hidden lg:flex lg:flex-col lg:w-[230px] lg:flex-shrink-0 lg:sticky lg:top-0 lg:min-h-screen bg-tema-superficie border-r border-tema-linha p-3.5 gap-4">
         <div className="flex items-center gap-2.5 px-1">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0 shadow-md shadow-orange-600/25">
             {getInitials(session.user?.name || 'T')}
           </div>
           <div className="min-w-0">
-            <p className="text-[#201D17] font-extrabold text-sm truncate">
+            <p className="text-tema-tinta font-extrabold text-sm truncate">
               Ola, {session.user?.name?.split(' ')[0]}!
             </p>
-            <p className="text-[#A69E8F] text-[11px] font-mono">{agora}</p>
+            <p className="text-tema-apagado text-[11px] font-mono">{agora}</p>
           </div>
         </div>
 
@@ -211,10 +211,10 @@ export function PainelTecnico({ session }: Props) {
               href={nav.href}
               className={cn(
                 'flex items-center gap-2.5 px-3 py-2.5 rounded-[11px] text-sm font-semibold transition-colors',
-                nav.active ? 'bg-orange-50 text-orange-700' : 'text-[#7A7266] hover:bg-black/[0.03] hover:text-[#201D17]'
+                nav.active ? 'bg-orange-50 text-orange-700' : 'text-tema-suave hover:bg-tema-contraste/[0.03] hover:text-tema-tinta'
               )}
             >
-              <nav.icon className={cn('w-4 h-4 flex-shrink-0', nav.active ? 'text-orange-700' : 'text-[#A69E8F]')} />
+              <nav.icon className={cn('w-4 h-4 flex-shrink-0', nav.active ? 'text-orange-700' : 'text-tema-apagado')} />
               {nav.label}
             </Link>
           ))}
@@ -232,17 +232,17 @@ export function PainelTecnico({ session }: Props) {
       <div className="flex-1 min-w-0 flex flex-col">
 
         {/* Barra superior - celular / tablet estreito */}
-        <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-[#E6E1D6] shadow-sm shadow-black/[0.03]">
+        <header className="lg:hidden sticky top-0 z-20 bg-tema-superficie border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03]">
           <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2.5">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-md shadow-orange-600/20">
                 {getInitials(session.user?.name || 'T')}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[#201D17] font-bold text-base truncate">
+                <p className="text-tema-tinta font-bold text-base truncate">
                   Ola, {session.user?.name?.split(' ')[0]}!
                 </p>
-                <p className="text-[#A69E8F] text-xs font-mono">{agora}</p>
+                <p className="text-tema-apagado text-xs font-mono">{agora}</p>
               </div>
             </div>
             {situacaoHojeCfg && (
@@ -260,7 +260,7 @@ export function PainelTecnico({ session }: Props) {
                 href={nav.href}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 border transition-colors',
-                  nav.active ? 'bg-orange-50 text-orange-700 border-orange-500/30' : 'bg-black/[0.02] text-[#7A7266] border-[#E6E1D6] hover:text-[#201D17]'
+                  nav.active ? 'bg-orange-50 text-orange-700 border-orange-500/30' : 'bg-tema-contraste/[0.02] text-tema-suave border-tema-linha hover:text-tema-tinta'
                 )}
               >
                 <nav.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -269,7 +269,7 @@ export function PainelTecnico({ session }: Props) {
             ))}
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 border border-[#E6E1D6] bg-black/[0.02] text-red-700"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 border border-tema-linha bg-tema-contraste/[0.02] text-red-700"
             >
               <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
               Sair
@@ -299,53 +299,53 @@ export function PainelTecnico({ session }: Props) {
               <button
                 onClick={() => setFiltroStatus(f => f === 'ABERTO' ? '' : 'ABERTO')}
                 className={cn(
-                  'text-left bg-white border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-black/[0.03]',
-                  filtroStatus === 'ABERTO' ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-[#E6E1D6] hover:border-blue-500/30'
+                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-tema-contraste/[0.03]',
+                  filtroStatus === 'ABERTO' ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-tema-linha hover:border-blue-500/30'
                 )}
               >
                 <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center mb-2">
                   <Clock className="w-3.5 h-3.5 text-blue-700" />
                 </div>
                 <p className="text-xl font-bold text-blue-700">{aguardando.length}</p>
-                <span className="text-[11px] text-[#A69E8F]">Aguardando</span>
+                <span className="text-[11px] text-tema-apagado">Aguardando</span>
               </button>
               <button
                 onClick={() => setFiltroStatus(f => f === 'EM_ANDAMENTO' ? '' : 'EM_ANDAMENTO')}
                 className={cn(
-                  'text-left bg-white border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-black/[0.03]',
-                  filtroStatus === 'EM_ANDAMENTO' ? 'border-emerald-500/50 ring-1 ring-emerald-500/30' : 'border-[#E6E1D6] hover:border-emerald-500/30'
+                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-tema-contraste/[0.03]',
+                  filtroStatus === 'EM_ANDAMENTO' ? 'border-emerald-500/50 ring-1 ring-emerald-500/30' : 'border-tema-linha hover:border-emerald-500/30'
                 )}
               >
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-2">
                   <Zap className="w-3.5 h-3.5 text-emerald-700" />
                 </div>
                 <p className="text-xl font-bold text-emerald-700">{emAndamento.length}</p>
-                <span className="text-[11px] text-[#A69E8F]">Em Atendimento</span>
+                <span className="text-[11px] text-tema-apagado">Em Atendimento</span>
               </button>
-              <div className="bg-white border border-[#E6E1D6] rounded-xl p-3 shadow-sm shadow-black/[0.03]">
+              <div className="bg-tema-superficie border border-tema-linha rounded-xl p-3 shadow-sm shadow-tema-contraste/[0.03]">
                 <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center mb-2">
                   <Calendar className="w-3.5 h-3.5 text-purple-700" />
                 </div>
                 <p className="text-xl font-bold text-purple-700">{agendados.length}</p>
-                <span className="text-[11px] text-[#A69E8F]">Agendados</span>
+                <span className="text-[11px] text-tema-apagado">Agendados</span>
               </div>
             </div>
 
             {/* Titulo */}
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-bold text-[#201D17] flex items-center gap-2">
+              <h1 className="text-lg font-bold text-tema-tinta flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-orange-600" />
                 Meus Chamados
                 {filtroStatus && (
                   <button
                     onClick={() => setFiltroStatus('')}
-                    className="text-[11px] font-normal text-[#7A7266] hover:text-[#201D17] bg-black/[0.03] px-2 py-0.5 rounded-full"
+                    className="text-[11px] font-normal text-tema-suave hover:text-tema-tinta bg-tema-contraste/[0.03] px-2 py-0.5 rounded-full"
                   >
                     {STATUS_CFG[filtroStatus].label} · limpar
                   </button>
                 )}
               </h1>
-              <button onClick={() => refetch()} className="text-[#A69E8F] hover:text-[#201D17]">
+              <button onClick={() => refetch()} className="text-tema-apagado hover:text-tema-tinta">
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
@@ -358,10 +358,10 @@ export function PainelTecnico({ session }: Props) {
                   ))
                 : chamadosExibidos.length === 0
                 ? (
-                  <div className="bg-white border border-[#E6E1D6] rounded-xl p-8 text-center shadow-sm shadow-black/[0.03]">
+                  <div className="bg-tema-superficie border border-tema-linha rounded-xl p-8 text-center shadow-sm shadow-tema-contraste/[0.03]">
                     <CheckCircle className="w-12 h-12 text-emerald-600/50 mx-auto mb-3" />
-                    <p className="text-[#201D17] font-medium">{filtroStatus ? 'Nenhum chamado nesse status' : 'Nenhum chamado pendente'}</p>
-                    <p className="text-[#A69E8F] text-sm mt-1">{filtroStatus ? 'Tente limpar o filtro acima.' : 'Voce esta com a agenda livre!'}</p>
+                    <p className="text-tema-tinta font-medium">{filtroStatus ? 'Nenhum chamado nesse status' : 'Nenhum chamado pendente'}</p>
+                    <p className="text-tema-apagado text-sm mt-1">{filtroStatus ? 'Tente limpar o filtro acima.' : 'Voce esta com a agenda livre!'}</p>
                   </div>
                 )
                 : chamadosExibidos.map((chamado: any) => {
@@ -382,10 +382,10 @@ export function PainelTecnico({ session }: Props) {
                         role="button"
                         tabIndex={0}
                         className={cn(
-                          'relative overflow-hidden w-full text-left bg-white border rounded-xl p-4 pl-5 transition-all active:scale-[0.99] hover:border-[#D8D2C3] cursor-pointer shadow-sm shadow-black/[0.03]',
+                          'relative overflow-hidden w-full text-left bg-tema-superficie border rounded-xl p-4 pl-5 transition-all active:scale-[0.99] hover:border-tema-linha-forte cursor-pointer shadow-sm shadow-tema-contraste/[0.03]',
                           prioridade === 'CRITICO' ? 'border-red-500/40' :
                           prioridade === 'URGENTE' ? 'border-amber-500/30' :
-                          'border-[#E6E1D6]'
+                          'border-tema-linha'
                         )}
                       >
                         <span
@@ -398,8 +398,8 @@ export function PainelTecnico({ session }: Props) {
                         />
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-[#201D17] font-bold">{chamado.cliente}</h3>
-                            <span className="text-xs px-2 py-0.5 bg-black/[0.03] rounded-full text-[#7A7266]">
+                            <h3 className="text-tema-tinta font-bold">{chamado.cliente}</h3>
+                            <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
                               {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
                             </span>
                             {prioridade !== 'NORMAL' && (
@@ -408,7 +408,7 @@ export function PainelTecnico({ session }: Props) {
                               </span>
                             )}
                           </div>
-                          <ChevronRight className="w-4 h-4 text-[#A69E8F] flex-shrink-0" />
+                          <ChevronRight className="w-4 h-4 text-tema-apagado flex-shrink-0" />
                         </div>
 
                         <div className="flex items-center gap-1.5 mb-2">
@@ -421,14 +421,14 @@ export function PainelTecnico({ session }: Props) {
 
                         <div className="space-y-1">
                           {enderecoLimpo && (
-                            <p className="text-sm text-[#3F3A32] flex items-center gap-1.5">
-                              <MapPin className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+                            <p className="text-sm text-tema-texto flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
                               {enderecoLimpo}
                             </p>
                           )}
                           {chamado.telefone && (
-                            <p className="text-sm text-[#7A7266] flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+                            <p className="text-sm text-tema-suave flex items-center gap-1.5">
+                              <Phone className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
                               {chamado.telefone}
                             </p>
                           )}
@@ -448,7 +448,7 @@ export function PainelTecnico({ session }: Props) {
                         </div>
 
                         {obs && (
-                          <p className="text-xs text-[#A69E8F] italic mt-2 line-clamp-2">{obs}</p>
+                          <p className="text-xs text-tema-apagado italic mt-2 line-clamp-2">{obs}</p>
                         )}
 
                         {/* Resumo do diagnostico remoto do NOC - so uma tarja
@@ -457,23 +457,23 @@ export function PainelTecnico({ session }: Props) {
                         {chamado.diagnosticos?.[0] && (
                           <div className="flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded-lg text-xs bg-cyan-600/5 border border-cyan-600/15">
                             <Brain className="w-3.5 h-3.5 text-cyan-700 flex-shrink-0" />
-                            <span className="text-[#3F3A32] font-medium">
+                            <span className="text-tema-texto font-medium">
                               Diagnostico NOC: {CLASSIFICACAO_LABEL[chamado.diagnosticos[0].classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? chamado.diagnosticos[0].classificacao}
                             </span>
                             {chamado.diagnosticos[0].confianca != null && (
-                              <span className="text-[#A69E8F]">({chamado.diagnosticos[0].confianca}%)</span>
+                              <span className="text-tema-apagado">({chamado.diagnosticos[0].confianca}%)</span>
                             )}
                           </div>
                         )}
 
                         {/* Acoes rapidas do card - nao abrem o modal (stopPropagation) */}
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E6E1D6]">
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
                           <a
                             href={linkGoogleMaps(chamado)}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-black/[0.02] hover:bg-blue-500/10 border border-[#E6E1D6] hover:border-blue-500/30 rounded-lg text-xs font-medium text-[#7A7266] hover:text-blue-700 transition-colors"
+                            className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-tema-contraste/[0.02] hover:bg-blue-500/10 border border-tema-linha hover:border-blue-500/30 rounded-lg text-xs font-medium text-tema-suave hover:text-blue-700 transition-colors"
                           >
                             <Navigation className="w-3.5 h-3.5" /> Navegar
                           </a>
@@ -483,7 +483,7 @@ export function PainelTecnico({ session }: Props) {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={e => e.stopPropagation()}
-                              className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-black/[0.02] hover:bg-emerald-500/10 border border-[#E6E1D6] hover:border-emerald-500/30 rounded-lg text-xs font-medium text-[#7A7266] hover:text-emerald-700 transition-colors"
+                              className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-tema-contraste/[0.02] hover:bg-emerald-500/10 border border-tema-linha hover:border-emerald-500/30 rounded-lg text-xs font-medium text-tema-suave hover:text-emerald-700 transition-colors"
                             >
                               <MessageCircle className="w-3.5 h-3.5" /> Contatar
                             </a>
@@ -509,23 +509,23 @@ export function PainelTecnico({ session }: Props) {
             {/* Meus Agendamentos - chamados com horario definido, ainda nao liberados para atendimento */}
             {agendados.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-lg font-bold text-[#201D17] flex items-center gap-2">
+                <h2 className="text-lg font-bold text-tema-tinta flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-purple-600" />
                   Meus Agendamentos
                 </h2>
                 <div className="space-y-2">
                   {agendados.map((chamado: any) => (
-                    <div key={chamado.id} className="bg-white border border-purple-500/20 rounded-xl p-4 shadow-sm shadow-black/[0.03]">
+                    <div key={chamado.id} className="bg-tema-superficie border border-purple-500/20 rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-sm font-bold text-purple-700">{formatarDataAgendada(chamado.dataAgendada)}</span>
-                        <span className="text-xs px-2 py-0.5 bg-black/[0.03] rounded-full text-[#7A7266]">
+                        <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
                           {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
                         </span>
                       </div>
-                      <p className="text-[#201D17] font-medium">{chamado.cliente}</p>
+                      <p className="text-tema-tinta font-medium">{chamado.cliente}</p>
                       {formatarEnderecoCompleto(chamado) && (
-                        <p className="text-sm text-[#7A7266] flex items-center gap-1.5 mt-1">
-                          <MapPin className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+                        <p className="text-sm text-tema-suave flex items-center gap-1.5 mt-1">
+                          <MapPin className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
                           {formatarEnderecoCompleto(chamado)}
                         </p>
                       )}
@@ -538,28 +538,28 @@ export function PainelTecnico({ session }: Props) {
 
           {/* Coluna lateral - Painel Operacional */}
           <aside className="space-y-4 lg:sticky lg:top-20">
-            <div className="bg-white border border-[#E6E1D6] rounded-xl p-4 shadow-sm shadow-black/[0.03]">
-              <h2 className="text-xs font-bold text-[#7A7266] uppercase tracking-wide mb-3 flex items-center gap-2">
+            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+              <h2 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-3 flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-orange-600" /> Acoes Rapidas
               </h2>
               <div className="grid grid-cols-2 gap-2.5">
                 <Link
                   href="/ponto"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-black/[0.02] hover:bg-emerald-500/10 border border-[#E6E1D6] hover:border-emerald-500/30 rounded-xl text-[#7A7266] hover:text-emerald-700 transition-colors text-center"
+                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-emerald-500/10 border border-tema-linha hover:border-emerald-500/30 rounded-xl text-tema-suave hover:text-emerald-700 transition-colors text-center"
                 >
                   <Clock className="w-5 h-5" />
                   <span className="text-xs font-medium">Bater Ponto</span>
                 </Link>
                 <Link
                   href="/meu-carro"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-black/[0.02] hover:bg-blue-500/10 border border-[#E6E1D6] hover:border-blue-500/30 rounded-xl text-[#7A7266] hover:text-blue-700 transition-colors text-center"
+                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-blue-500/10 border border-tema-linha hover:border-blue-500/30 rounded-xl text-tema-suave hover:text-blue-700 transition-colors text-center"
                 >
                   <Truck className="w-5 h-5" />
                   <span className="text-xs font-medium">Meu Carro</span>
                 </Link>
                 <Link
                   href="/escala"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-black/[0.02] hover:bg-purple-500/10 border border-[#E6E1D6] hover:border-purple-500/30 rounded-xl text-[#7A7266] hover:text-purple-700 transition-colors text-center"
+                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-purple-500/10 border border-tema-linha hover:border-purple-500/30 rounded-xl text-tema-suave hover:text-purple-700 transition-colors text-center"
                 >
                   <Calendar className="w-5 h-5" />
                   <span className="text-xs font-medium">Escala</span>
@@ -567,8 +567,8 @@ export function PainelTecnico({ session }: Props) {
               </div>
             </div>
 
-            <div className="bg-white border border-[#E6E1D6] rounded-xl p-4 shadow-sm shadow-black/[0.03]">
-              <h3 className="text-xs font-bold text-[#7A7266] uppercase tracking-wide mb-2">Status do Plantao</h3>
+            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+              <h3 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-2">Status do Plantao</h3>
               {avisoPlantao?.mostrar ? (
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
@@ -578,8 +578,8 @@ export function PainelTecnico({ session }: Props) {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#D8D2C3] flex-shrink-0" />
-                  <p className="text-sm text-[#A69E8F]">Sem plantao agendado no momento.</p>
+                  <span className="w-2 h-2 rounded-full bg-tema-linha-forte flex-shrink-0" />
+                  <p className="text-sm text-tema-apagado">Sem plantao agendado no momento.</p>
                 </div>
               )}
             </div>

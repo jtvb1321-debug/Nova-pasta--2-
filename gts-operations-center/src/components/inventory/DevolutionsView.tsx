@@ -66,8 +66,8 @@ export function DevolutionsView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Aprovacao de Devolucoes</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-tema-tinta">Aprovacao de Devolucoes</h1>
+          <p className="text-tema-apagado text-sm mt-1">
             Somente o Administrador pode aprovar ou rejeitar devolucoes de materiais
           </p>
         </div>
@@ -82,7 +82,7 @@ export function DevolutionsView() {
         <ShieldCheck className="w-5 h-5 text-blue-700 flex-shrink-0" />
         <div>
           <p className="text-blue-700 font-medium text-sm">Area Restrita — Administrador</p>
-          <p className="text-[#A69E8F] text-xs mt-0.5">
+          <p className="text-tema-apagado text-xs mt-0.5">
             Materiais devolvidos pelas equipes ficam pendentes ate sua aprovacao. O estoque so e atualizado apos a aprovacao.
           </p>
         </div>
@@ -95,21 +95,21 @@ export function DevolutionsView() {
             <Clock className="w-5 h-5 text-amber-700" />
           </div>
           <p className="text-2xl font-bold text-amber-700">{totalPendentes}</p>
-          <p className="text-xs text-[#A69E8F] mt-1">Aguardando Aprovacao</p>
+          <p className="text-xs text-tema-apagado mt-1">Aguardando Aprovacao</p>
         </div>
         <div className="gts-card text-center">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-2">
             <CheckCircle className="w-5 h-5 text-emerald-700" />
           </div>
           <p className="text-2xl font-bold text-emerald-700">{totalAprovadas}</p>
-          <p className="text-xs text-[#A69E8F] mt-1">Aprovadas</p>
+          <p className="text-xs text-tema-apagado mt-1">Aprovadas</p>
         </div>
         <div className="gts-card text-center">
           <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-2">
             <XCircle className="w-5 h-5 text-red-700" />
           </div>
           <p className="text-2xl font-bold text-red-700">{totalRejeitadas}</p>
-          <p className="text-xs text-[#A69E8F] mt-1">Rejeitadas</p>
+          <p className="text-xs text-tema-apagado mt-1">Rejeitadas</p>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export function DevolutionsView() {
               'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
               filtro === f.value
                 ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
             )}
           >
             {f.label}
@@ -145,9 +145,9 @@ export function DevolutionsView() {
           : filtradas.length === 0
           ? (
             <div className="gts-card text-center py-16">
-              <RotateCcw className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhuma devolucao encontrada</p>
-              <p className="text-[#A69E8F] text-sm mt-1">
+              <RotateCcw className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhuma devolucao encontrada</p>
+              <p className="text-tema-apagado text-sm mt-1">
                 {filtro === 'pendentes' ? 'Nenhuma devolucao aguardando aprovacao' : 'Sem registros nesta categoria'}
               </p>
             </div>
@@ -161,7 +161,7 @@ export function DevolutionsView() {
                 <div
                   key={d.id}
                   className={cn(
-                    'bg-white border rounded-xl p-5 transition-all shadow-sm shadow-black/[0.03]',
+                    'bg-tema-superficie border rounded-xl p-5 transition-all shadow-sm shadow-tema-contraste/[0.03]',
                     isPendente ? 'border-amber-500/30' :
                     isAprovada ? 'border-emerald-500/25' :
                     'border-red-500/25'
@@ -189,20 +189,20 @@ export function DevolutionsView() {
                         <div>
                           {/* Material */}
                           <div className="flex items-center gap-2 mb-1">
-                            <Package className="w-3.5 h-3.5 text-[#A69E8F]" />
-                            <p className="text-[#201D17] font-semibold">{d.item?.descricao}</p>
-                            <span className="text-xs text-[#A69E8F] font-mono">{d.item?.codigo}</span>
+                            <Package className="w-3.5 h-3.5 text-tema-apagado" />
+                            <p className="text-tema-tinta font-semibold">{d.item?.descricao}</p>
+                            <span className="text-xs text-tema-apagado font-mono">{d.item?.codigo}</span>
                           </div>
 
                           {/* Quantidade */}
                           <div className="flex items-center gap-4 mb-2">
-                            <p className="text-sm text-[#7A7266]">
+                            <p className="text-sm text-tema-suave">
                               Quantidade devolvida:
-                              <span className="text-[#201D17] font-bold ml-1">
+                              <span className="text-tema-tinta font-bold ml-1">
                                 {d.quantidade} {d.item?.unidade}
                               </span>
                             </p>
-                            <p className="text-sm text-[#A69E8F]">
+                            <p className="text-sm text-tema-apagado">
                               Valor estimado:
                               <span className="text-emerald-700 font-medium ml-1">
                                 {formatCurrency(d.quantidade * (d.item?.valorUnitario ?? 0))}
@@ -212,7 +212,7 @@ export function DevolutionsView() {
 
                           {/* Chamado */}
                           {d.chamado && (
-                            <div className="flex items-center gap-3 text-xs text-[#A69E8F]">
+                            <div className="flex items-center gap-3 text-xs text-tema-apagado">
                               <span className="flex items-center gap-1">
                                 <ClipboardList className="w-3 h-3" />
                                 {d.chamado.cliente}
@@ -228,7 +228,7 @@ export function DevolutionsView() {
                           )}
 
                           {/* Data */}
-                          <p className="text-xs text-[#A69E8F] mt-1">
+                          <p className="text-xs text-tema-apagado mt-1">
                             Devolvido em: {formatDateTime(d.createdAt)}
                           </p>
 

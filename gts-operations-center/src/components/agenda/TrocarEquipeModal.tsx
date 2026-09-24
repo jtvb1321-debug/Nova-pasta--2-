@@ -54,28 +54,28 @@ export function TrocarEquipeModal({ chamado, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
               <Users className="w-4.5 h-4.5 text-purple-700" />
             </div>
             <div>
-              <h3 className="text-[#201D17] font-semibold">Trocar Equipe</h3>
-              <p className="text-xs text-[#A69E8F]">{chamado.cliente}</p>
+              <h3 className="text-tema-tinta font-semibold">Trocar Equipe</h3>
+              <p className="text-xs text-tema-apagado">{chamado.cliente}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3 text-sm">
-          <p className="text-[#7A7266]">Equipe atual: <span className="text-[#201D17] font-medium">{chamado.equipe?.nome || 'Nao atribuida'}</span></p>
+        <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-3 text-sm">
+          <p className="text-tema-suave">Equipe atual: <span className="text-tema-tinta font-medium">{chamado.equipe?.nome || 'Nao atribuida'}</span></p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Nova equipe</label>
+          <label className="block text-sm font-medium text-tema-texto mb-1.5">Nova equipe</label>
           <select
             value={equipeSelecionada}
             onChange={e => setEquipeSelecionada(e.target.value)}

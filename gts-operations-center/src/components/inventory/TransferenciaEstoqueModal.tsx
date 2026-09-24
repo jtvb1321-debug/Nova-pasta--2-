@@ -102,7 +102,7 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
   function SeletorLocal({ label, valor, onChange }: { label: string; valor: Local; onChange: (l: Local) => void }) {
     return (
       <div>
-        <label className="block text-xs text-[#7A7266] mb-1.5">{label}</label>
+        <label className="block text-xs text-tema-suave mb-1.5">{label}</label>
         <div className="flex gap-2 mb-2">
           <button
             type="button"
@@ -110,7 +110,7 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
               valor.tipo === 'central'
                 ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
               valor.tipo === 'equipe'
                 ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
             }`}
           >
             <Truck className="w-3.5 h-3.5" />
@@ -147,18 +147,18 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center">
               <ArrowLeftRight className="w-4.5 h-4.5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[#201D17]">Transferencia de Estoque</h3>
-              <p className="text-xs text-[#A69E8F]">O total nao muda, so a localizacao do material</p>
+              <h3 className="text-lg font-semibold text-tema-tinta">Transferencia de Estoque</h3>
+              <p className="text-xs text-tema-apagado">O total nao muda, so a localizacao do material</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -169,7 +169,7 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Item</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Item</label>
           <input
             type="search"
             value={buscaItem}
@@ -188,14 +188,14 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
             ))}
           </select>
           {itemSelecionado && (
-            <p className="text-xs text-[#A69E8F] mt-1">
-              Total da empresa: <span className="text-[#201D17] font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
+            <p className="text-xs text-tema-apagado mt-1">
+              Total da empresa: <span className="text-tema-tinta font-mono">{itemSelecionado.quantidadeAtual} {itemSelecionado.unidade}</span>
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Quantidade</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Quantidade</label>
           <input
             type="number"
             value={quantidade}

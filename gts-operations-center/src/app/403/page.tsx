@@ -3,7 +3,7 @@ import { ShieldX, ArrowLeft, Home } from 'lucide-react'
 
 export default function AcessoNegadoPage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-tema-fundo flex items-center justify-center p-4">
       <div className="text-center max-w-md">
         {/* Icone */}
         <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
@@ -14,13 +14,13 @@ export default function AcessoNegadoPage() {
         <p className="text-8xl font-black text-red-500/15 mb-2">403</p>
 
         {/* Titulo */}
-        <h1 className="text-2xl font-bold text-[#201D17] mb-3">Acesso Negado</h1>
+        <h1 className="text-2xl font-bold text-tema-tinta mb-3">Acesso Negado</h1>
 
         {/* Descricao */}
-        <p className="text-[#7A7266] mb-2">
+        <p className="text-tema-suave mb-2">
           Voce nao tem permissao para acessar esta pagina.
         </p>
-        <p className="text-[#A69E8F] text-sm mb-8">
+        <p className="text-tema-apagado text-sm mb-8">
           Se acredita que isso e um erro, entre em contato com o Administrador do sistema.
         </p>
 
@@ -35,7 +35,7 @@ export default function AcessoNegadoPage() {
           </Link>
           <Link
             href="javascript:history.back()"
-            className="flex items-center gap-2 px-4 py-2.5 bg-black/[0.04] hover:bg-black/[0.07] text-[#201D17] rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-tema-contraste/[0.04] hover:bg-tema-contraste/[0.07] text-tema-tinta rounded-lg text-sm font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
@@ -45,7 +45,7 @@ export default function AcessoNegadoPage() {
         {/* Logo */}
         <div className="mt-12 flex items-center justify-center gap-2 opacity-60">
           <img src="/images/icon.png" alt="GTSNet" className="w-6 h-6 object-contain" />
-          <span className="text-[#A69E8F] text-xs">GTSNet Operations Center</span>
+          <span className="text-tema-apagado text-xs">GTSNet Operations Center</span>
         </div>
       </div>
     </div>

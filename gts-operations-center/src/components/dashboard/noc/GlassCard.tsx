@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { NOC } from './theme'
+import { NOC, CARD_TRANSLUCIDO } from './theme'
 
 interface GlassCardProps {
   children: ReactNode
@@ -19,8 +19,8 @@ export function GlassCard({ children, className = '', noPadding = false, delay =
       transition={{ duration: 0.35, delay }}
       className={`rounded-xl border backdrop-blur-md shadow-lg ${noPadding ? '' : 'p-4'} ${className}`}
       style={{
-        backgroundColor: `${NOC.card}CC`,
-        borderColor: 'rgba(32,29,23,0.05)',
+        backgroundColor: CARD_TRANSLUCIDO,
+        borderColor: 'rgb(var(--c-contraste) / 0.05)',
       }}
     >
       {children}

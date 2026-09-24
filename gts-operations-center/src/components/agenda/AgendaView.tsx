@@ -23,7 +23,7 @@ const STATUS_COR: Record<StatusChamado, string> = {
   ABERTO:       'text-blue-700 bg-blue-500/10',
   EM_ANDAMENTO: 'text-amber-700 bg-amber-500/10',
   FINALIZADO:   'text-emerald-700 bg-emerald-500/10',
-  CANCELADO:    'text-[#7A7266] bg-black/[0.04]',
+  CANCELADO:    'text-tema-suave bg-tema-contraste/[0.04]',
 }
 
 const STATUS_LABEL: Record<StatusChamado, string> = {
@@ -114,8 +114,8 @@ export function AgendaView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Agenda NOC</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-tema-tinta">Agenda NOC</h1>
+          <p className="text-tema-apagado text-sm mt-1">
             Despacho de chamados em tempo real para as equipes de campo
           </p>
         </div>
@@ -144,7 +144,7 @@ export function AgendaView() {
 
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
-        <Filter className="w-4 h-4 text-[#A69E8F]" />
+        <Filter className="w-4 h-4 text-tema-apagado" />
         <select
           value={filtroTipo}
           onChange={e => setFiltroTipo(e.target.value)}
@@ -168,12 +168,12 @@ export function AgendaView() {
         {(filtroTipo || filtroEquipe) && (
           <button
             onClick={() => { setFiltroTipo(''); setFiltroEquipe('') }}
-            className="text-xs text-[#7A7266] hover:text-[#201D17] transition-colors"
+            className="text-xs text-tema-suave hover:text-tema-tinta transition-colors"
           >
             Limpar filtros
           </button>
         )}
-        <span className="ml-auto text-xs text-[#A69E8F]">
+        <span className="ml-auto text-xs text-tema-apagado">
           {filtrados.length} chamado(s)
         </span>
       </div>
@@ -187,9 +187,9 @@ export function AgendaView() {
           : filtrados.length === 0
           ? (
             <div className="gts-card text-center py-16">
-              <Calendar className="w-10 h-10 text-[#A69E8F] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhum chamado na agenda</p>
-              <p className="text-[#A69E8F] text-sm mt-1">Crie um novo despacho para comecar</p>
+              <Calendar className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhum chamado na agenda</p>
+              <p className="text-tema-apagado text-sm mt-1">Crie um novo despacho para comecar</p>
               <button
                 onClick={() => setShowModal(true)}
                 className="gts-btn-primary mx-auto mt-4"
@@ -210,11 +210,11 @@ export function AgendaView() {
                 <div
                   key={chamado.id}
                   className={cn(
-                    'bg-white border rounded-xl p-5 transition-all hover:border-[#D8D2C3] shadow-sm shadow-black/[0.03]',
+                    'bg-tema-superficie border rounded-xl p-5 transition-all hover:border-tema-linha-forte shadow-sm shadow-tema-contraste/[0.03]',
                     chamado.clienteAusente ? 'border-orange-500/40' :
                     prioridade === 'CRITICO' ? 'border-red-500/30' :
                     prioridade === 'URGENTE' ? 'border-amber-500/25' :
-                    'border-[#E6E1D6]'
+                    'border-tema-linha'
                   )}
                 >
                   <div className="flex items-start gap-4">
@@ -230,7 +230,7 @@ export function AgendaView() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-[#201D17] font-bold">{chamado.cliente}</h3>
+                          <h3 className="text-tema-tinta font-bold">{chamado.cliente}</h3>
                           {chamado.clienteAusente && (
                             <span className="status-badge text-xs border text-orange-700 bg-orange-500/10 border-orange-500/30 flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" />
@@ -243,22 +243,22 @@ export function AgendaView() {
                           <span className={cn('status-badge text-xs', sCor)}>
                             {STATUS_LABEL[chamado.status as StatusChamado]}
                           </span>
-                          <span className="text-xs text-[#7A7266] px-2 py-0.5 bg-black/[0.03] rounded-full">
+                          <span className="text-xs text-tema-suave px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full">
                             {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
                           </span>
                         </div>
-                        <span className="text-xs text-[#A69E8F] flex-shrink-0">
+                        <span className="text-xs text-tema-apagado flex-shrink-0">
                           {timeAgo(chamado.createdAt)}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 text-xs text-[#7A7266]">
+                        <div className="flex items-center gap-1.5 text-xs text-tema-suave">
                           <MapPin className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{chamado.endereco}, {chamado.cidade}</span>
                         </div>
                         {chamado.telefone && (
-                          <div className="flex items-center gap-1.5 text-xs text-[#7A7266]">
+                          <div className="flex items-center gap-1.5 text-xs text-tema-suave">
                             <Phone className="w-3 h-3" />
                             {chamado.telefone}
                           </div>
@@ -272,12 +272,12 @@ export function AgendaView() {
                       </div>
 
                       {chamado.observacao && (
-                        <p className="text-xs text-[#A69E8F] bg-black/[0.02] rounded-lg px-3 py-2 mb-3 italic">
+                        <p className="text-xs text-tema-apagado bg-tema-contraste/[0.02] rounded-lg px-3 py-2 mb-3 italic">
                           {chamado.observacao.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?/, '')}
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-[#A69E8F] mb-2">
+                      <div className="flex items-center gap-4 text-xs text-tema-apagado mb-2">
                         {materiaisCount > 0 && (
                           <span className="flex items-center gap-1 text-blue-700">
                             <Package className="w-3 h-3" />
@@ -307,7 +307,7 @@ export function AgendaView() {
                               Redisparar para a equipe
                             </button>
                           ) : (
-                            <div className="flex flex-wrap items-center gap-2 p-3 bg-black/[0.02] border border-orange-500/25 rounded-xl">
+                            <div className="flex flex-wrap items-center gap-2 p-3 bg-tema-contraste/[0.02] border border-orange-500/25 rounded-xl">
                               <input
                                 type="date"
                                 value={novaData}
@@ -329,7 +329,7 @@ export function AgendaView() {
                               </button>
                               <button
                                 onClick={() => setRedisparoId(null)}
-                                className="text-xs text-[#7A7266] hover:text-[#201D17] px-2"
+                                className="text-xs text-tema-suave hover:text-tema-tinta px-2"
                               >
                                 Cancelar
                               </button>

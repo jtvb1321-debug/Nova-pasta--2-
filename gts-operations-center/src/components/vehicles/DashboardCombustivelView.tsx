@@ -21,7 +21,7 @@ async function fetchHistoricoVeiculo(veiculoId: string) {
 }
 
 function mediaCor(consumo: number, mediaGeral: number) {
-  if (mediaGeral === 0) return 'text-[#7A7266]'
+  if (mediaGeral === 0) return 'text-tema-suave'
   if (consumo >= mediaGeral) return 'text-emerald-700'
   if (consumo >= mediaGeral * 0.8) return 'text-amber-700'
   return 'text-red-700'
@@ -37,23 +37,23 @@ function LinhaDetalhada({ veiculoId }: { veiculoId: string }) {
 
   return (
     <tr>
-      <td colSpan={7} className="px-4 pb-4 bg-black/[0.02]">
+      <td colSpan={7} className="px-4 pb-4 bg-tema-contraste/[0.02]">
         {isLoading ? (
           <div className="space-y-2 py-2">
             {Array.from({ length: 2 }).map((_, i) => <div key={i} className="h-12 skeleton rounded-lg" />)}
           </div>
         ) : historico.length === 0 ? (
-          <p className="text-xs text-[#A69E8F] py-3 text-center">Nenhum abastecimento detalhado no periodo</p>
+          <p className="text-xs text-tema-apagado py-3 text-center">Nenhum abastecimento detalhado no periodo</p>
         ) : (
           <div className="space-y-2 py-2">
             {historico.map((a: any) => (
-              <div key={a.id} className="flex items-center gap-3 bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5">
+              <div key={a.id} className="flex items-center gap-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-2.5">
                 {a.fotoComprovante && (
                   <img src={a.fotoComprovante} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#201D17] font-medium">{a.litros}L - {formatCurrency(a.valor)}</p>
-                  <p className="text-xs text-[#A69E8F]">{formatDateTime(a.data)}</p>
+                  <p className="text-sm text-tema-tinta font-medium">{a.litros}L - {formatCurrency(a.valor)}</p>
+                  <p className="text-xs text-tema-apagado">{formatDateTime(a.data)}</p>
                 </div>
               </div>
             ))}
@@ -97,8 +97,8 @@ export function DashboardCombustivelView() {
   return (
     <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-[#201D17]">Dashboard de Combustivel</h1>
-        <p className="text-[#A69E8F] text-sm mt-1">
+        <h1 className="text-2xl font-bold text-tema-tinta">Dashboard de Combustivel</h1>
+        <p className="text-tema-apagado text-sm mt-1">
           {filtroEquipe ? `Consumo e gastos - ${filtroEquipe}` : 'Consumo e gastos gerais da frota'}
         </p>
       </div>
@@ -106,9 +106,9 @@ export function DashboardCombustivelView() {
       {/* Filtros */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-[#A69E8F]" />
+          <Calendar className="w-4 h-4 text-tema-apagado" />
           <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="gts-input text-sm" />
-          <span className="text-[#A69E8F] text-sm">ate</span>
+          <span className="text-tema-apagado text-sm">ate</span>
           <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="gts-input text-sm" />
         </div>
         <select
@@ -128,30 +128,30 @@ export function DashboardCombustivelView() {
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <Fuel className="w-4 h-4 text-blue-700" />
-            <p className="text-xs text-[#A69E8F] uppercase">Litros Abastecidos</p>
+            <p className="text-xs text-tema-apagado uppercase">Litros Abastecidos</p>
           </div>
-          <p className="text-2xl font-black text-[#201D17]">{totalFiltrado.totalLitros.toFixed(0)}L</p>
+          <p className="text-2xl font-black text-tema-tinta">{totalFiltrado.totalLitros.toFixed(0)}L</p>
         </div>
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-4 h-4 text-emerald-700" />
-            <p className="text-xs text-[#A69E8F] uppercase">Total Gasto</p>
+            <p className="text-xs text-tema-apagado uppercase">Total Gasto</p>
           </div>
-          <p className="text-2xl font-black text-[#201D17]">{formatCurrency(totalFiltrado.totalValor)}</p>
+          <p className="text-2xl font-black text-tema-tinta">{formatCurrency(totalFiltrado.totalValor)}</p>
         </div>
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <Gauge className="w-4 h-4 text-purple-700" />
-            <p className="text-xs text-[#A69E8F] uppercase">KM Rodados</p>
+            <p className="text-xs text-tema-apagado uppercase">KM Rodados</p>
           </div>
-          <p className="text-2xl font-black text-[#201D17]">{totalFiltrado.totalKm.toFixed(0)}km</p>
+          <p className="text-2xl font-black text-tema-tinta">{totalFiltrado.totalKm.toFixed(0)}km</p>
         </div>
         <div className="gts-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-orange-600" />
-            <p className="text-xs text-[#A69E8F] uppercase">{filtroEquipe ? 'Media da Equipe' : 'Media Geral'}</p>
+            <p className="text-xs text-tema-apagado uppercase">{filtroEquipe ? 'Media da Equipe' : 'Media Geral'}</p>
           </div>
-          <p className="text-2xl font-black text-[#201D17]">{consumoMedioGeral.toFixed(1)} km/L</p>
+          <p className="text-2xl font-black text-tema-tinta">{consumoMedioGeral.toFixed(1)} km/L</p>
         </div>
       </div>
 
@@ -179,8 +179,8 @@ export function DashboardCombustivelView() {
                 ))
               ) : veiculos.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-[#A69E8F]">
-                    <Truck className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                  <td colSpan={7} className="text-center py-16 text-tema-apagado">
+                    <Truck className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                     Nenhum dado de abastecimento no periodo
                   </td>
                 </tr>
@@ -188,26 +188,26 @@ export function DashboardCombustivelView() {
                 <>
                   <tr
                     key={v.veiculoId}
-                    className="cursor-pointer hover:bg-black/[0.02]"
+                    className="cursor-pointer hover:bg-tema-contraste/[0.02]"
                     onClick={() => setVeiculoExpandido(veiculoExpandido === v.veiculoId ? null : v.veiculoId)}
                   >
                     <td className="px-4">
                       <div className="flex items-center gap-2">
                         {veiculoExpandido === v.veiculoId
-                          ? <ChevronUp className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
-                          : <ChevronDown className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+                          ? <ChevronUp className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
+                          : <ChevronDown className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
                         }
                         <div>
-                          <p className="text-[#201D17] font-medium text-sm">{v.modelo}</p>
-                          <p className="text-xs text-[#A69E8F] font-mono">{v.placa}</p>
+                          <p className="text-tema-tinta font-medium text-sm">{v.modelo}</p>
+                          <p className="text-xs text-tema-apagado font-mono">{v.placa}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 text-[#7A7266] text-sm">{v.equipeNome}</td>
-                    <td className="px-4 text-right text-[#7A7266] text-sm">{v.qtdAbastecimentos}</td>
-                    <td className="px-4 text-right text-[#201D17] font-mono">{v.totalLitros.toFixed(1)}L</td>
+                    <td className="px-4 text-tema-suave text-sm">{v.equipeNome}</td>
+                    <td className="px-4 text-right text-tema-suave text-sm">{v.qtdAbastecimentos}</td>
+                    <td className="px-4 text-right text-tema-tinta font-mono">{v.totalLitros.toFixed(1)}L</td>
                     <td className="px-4 text-right text-emerald-700 font-mono">{formatCurrency(v.totalValor)}</td>
-                    <td className="px-4 text-right text-[#201D17] font-mono">{v.totalKm.toFixed(0)}km</td>
+                    <td className="px-4 text-right text-tema-tinta font-mono">{v.totalKm.toFixed(0)}km</td>
                     <td className="px-4 text-right">
                       <span className={cn('font-mono font-bold', mediaCor(v.consumoMedio, consumoMedioGeral))}>
                         {v.consumoMedio > 0 ? `${v.consumoMedio.toFixed(1)} km/L` : '-'}

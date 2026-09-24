@@ -49,10 +49,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#FAF9F6]">
+    <div className="min-h-screen flex bg-tema-fundo">
 
       {/* Lado esquerdo */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#FDEDDD]/60 via-[#FAF9F6] to-[#FFE9D2]/40 border-r border-[#E6E1D6]">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-tema-laranja-suave/60 via-tema-fundo to-[#FFE9D2]/40 border-r border-tema-linha">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-400/8 rounded-full blur-3xl" />
@@ -76,11 +76,11 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-5xl font-black mb-3 tracking-tight">
-            <span className="text-[#201D17]">GTS</span>
+            <span className="text-tema-tinta">GTS</span>
             <span className="bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">net</span>
-            <span className="text-[#201D17]"> Operations Center</span>
+            <span className="text-tema-tinta"> Operations Center</span>
           </h1>
-          <p className="text-[#7A7266] text-lg mb-10">
+          <p className="text-tema-suave text-lg mb-10">
             Centro de Operacoes Inteligente
           </p>
 
@@ -95,17 +95,17 @@ export default function LoginPage() {
               <div
                 key={i}
                 className={cn(
-                  'flex items-center gap-3 p-3 bg-white border rounded-xl shadow-sm shadow-black/[0.03]',
+                  'flex items-center gap-3 p-3 bg-tema-superficie border rounded-xl shadow-sm shadow-tema-contraste/[0.03]',
                   'transition-all duration-200 hover:shadow-md hover:border-orange-500/30 hover:-translate-y-0.5',
                   'animate-fade-in-up',
-                  f.destaque ? 'border-orange-500/30 gts-hud-corner' : 'border-[#E6E1D6]'
+                  f.destaque ? 'border-orange-500/30 gts-hud-corner' : 'border-tema-linha'
                 )}
                 style={{ animationDelay: `${120 + i * 70}ms` }}
               >
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/15 to-orange-500/5 flex items-center justify-center flex-shrink-0">
                   <f.icon className="w-4 h-4 text-orange-600" />
                 </div>
-                <p className="text-sm text-[#3F3A32]">{f.text}</p>
+                <p className="text-sm text-tema-texto">{f.text}</p>
               </div>
             ))}
           </div>
@@ -116,12 +116,12 @@ export default function LoginPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#187A45] animate-pulse" />
             <span className="text-[#187A45] text-xs font-mono tracking-wider">SISTEMA ONLINE</span>
           </div>
-          <p className="text-[#A69E8F] text-xs">GTSNet — Provedor de Internet</p>
+          <p className="text-tema-apagado text-xs">GTSNet — Provedor de Internet</p>
         </div>
       </div>
 
       {/* Lado direito */}
-      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center px-8 relative bg-[#FCFBF8]">
+      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center px-8 relative bg-tema-fundo-2">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-400/5 rounded-full blur-3xl" />
         </div>
@@ -137,17 +137,17 @@ export default function LoginPage() {
               />
             </div>
             <h1 className="text-xl font-bold">
-              <span className="text-[#201D17]">GTS</span>
+              <span className="text-tema-tinta">GTS</span>
               <span className="text-orange-600">net</span>
-              <span className="text-[#201D17]"> Operations</span>
+              <span className="text-tema-tinta"> Operations</span>
             </h1>
           </div>
 
           {/* Card */}
-          <div className="relative bg-white border border-[#E6E1D6] rounded-xl p-8 shadow-xl shadow-black/[0.04] overflow-hidden">
+          <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 shadow-xl shadow-tema-contraste/[0.04] overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#FDEDDD] p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
+              <div className="w-11 h-11 rounded-xl overflow-hidden bg-tema-laranja-suave p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
                 <img
                   src="/images/icon.png"
                   alt="GTSNet"
@@ -155,48 +155,48 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#201D17]">Bem-vindo!</h2>
-                <p className="text-[#A69E8F] text-xs">Entre com suas credenciais</p>
+                <h2 className="text-xl font-bold text-tema-tinta">Bem-vindo!</h2>
+                <p className="text-tema-apagado text-xs">Entre com suas credenciais</p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} method="post" className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">E-mail</label>
+                <label className="block text-sm font-medium text-tema-suave mb-1.5">E-mail</label>
                 <input
                   {...register('email')}
                   type="email"
                   placeholder="seu@email.com"
                   autoComplete="email"
-                  className={`w-full bg-[#FCFBF8] border rounded-lg px-3 py-2.5 text-sm text-[#201D17]
-                    placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 transition-colors
+                  className={`w-full bg-tema-fundo-2 border rounded-lg px-3 py-2.5 text-sm text-tema-tinta
+                    placeholder:text-tema-apagado focus:outline-none focus:ring-1 transition-colors
                     ${errors.email
                       ? 'border-red-500/50 focus:ring-red-500'
-                      : 'border-[#D8D2C3] focus:ring-orange-600 focus:border-orange-600'
+                      : 'border-tema-linha-forte focus:ring-orange-600 focus:border-orange-600'
                     }`}
                 />
                 {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Senha</label>
+                <label className="block text-sm font-medium text-tema-suave mb-1.5">Senha</label>
                 <div className="relative">
                   <input
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className={`w-full bg-[#FCFBF8] border rounded-lg px-3 py-2.5 pr-10 text-sm text-[#201D17]
-                      placeholder:text-[#A69E8F] focus:outline-none focus:ring-1 transition-colors
+                    className={`w-full bg-tema-fundo-2 border rounded-lg px-3 py-2.5 pr-10 text-sm text-tema-tinta
+                      placeholder:text-tema-apagado focus:outline-none focus:ring-1 transition-colors
                       ${errors.password
                         ? 'border-red-500/50 focus:ring-red-500'
-                        : 'border-[#D8D2C3] focus:ring-orange-600 focus:border-orange-600'
+                        : 'border-tema-linha-forte focus:ring-orange-600 focus:border-orange-600'
                       }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A69E8F] hover:text-[#201D17] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-tema-apagado hover:text-tema-tinta transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -230,8 +230,8 @@ export default function LoginPage() {
           <div className="flex items-center justify-center gap-2 mt-6">
             <Wifi className="w-3.5 h-3.5 text-orange-600" />
             <span className="text-xs text-orange-700">Sistema Online</span>
-            <span className="text-[#A69E8F] text-xs mx-2">·</span>
-            <span className="text-[#A69E8F] text-xs">GTSNet © {new Date().getFullYear()}</span>
+            <span className="text-tema-apagado text-xs mx-2">·</span>
+            <span className="text-tema-apagado text-xs">GTSNet © {new Date().getFullYear()}</span>
           </div>
         </div>
       </div>

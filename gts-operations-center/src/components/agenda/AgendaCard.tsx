@@ -43,7 +43,7 @@ function enderecoResumido(item: AgendaItem) {
 export function AgendaCard({ item, onClick }: { item: AgendaItem; onClick: () => void }) {
   const prioridade = detectarPrioridade(item.observacao || '')
   const sCfg = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.ABERTO
-  const tipoCor = TIPO_COR[item.tipo as TipoChamado] || 'text-[#7A7266]'
+  const tipoCor = TIPO_COR[item.tipo as TipoChamado] || 'text-tema-suave'
   const dotStatus = sCfg.cls.split(' ')[0].replace('text-', 'bg-')
   const hora = item.dataReferencia
     ? new Date(item.dataReferencia).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -53,14 +53,14 @@ export function AgendaCard({ item, onClick }: { item: AgendaItem; onClick: () =>
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left rounded-lg border p-2 transition-colors bg-white hover:bg-black/[0.02] shadow-sm shadow-black/[0.03]',
+        'w-full text-left rounded-lg border p-2 transition-colors bg-tema-superficie hover:bg-tema-contraste/[0.02] shadow-sm shadow-tema-contraste/[0.03]',
         prioridade === 'CRITICO' ? 'border-red-500/40' :
         prioridade === 'URGENTE' ? 'border-amber-500/30' :
-        'border-[#E6E1D6]'
+        'border-tema-linha'
       )}
     >
       <div className="flex items-center justify-between gap-1.5 mb-1">
-        <span className="text-[10px] font-mono text-[#A69E8F] flex items-center gap-1 flex-shrink-0">
+        <span className="text-[10px] font-mono text-tema-apagado flex items-center gap-1 flex-shrink-0">
           <Clock className="w-3 h-3" />
           {hora}
         </span>
@@ -72,14 +72,14 @@ export function AgendaCard({ item, onClick }: { item: AgendaItem; onClick: () =>
       <p className={cn('text-[10px] font-bold uppercase tracking-wide mb-0.5', tipoCor)}>
         {TIPO_CHAMADO_LABELS[item.tipo as TipoChamado] || item.tipo}
       </p>
-      <p className="text-xs font-semibold text-[#201D17] truncate mb-0.5">{item.cliente}</p>
+      <p className="text-xs font-semibold text-tema-tinta truncate mb-0.5">{item.cliente}</p>
       {item.equipe && (
         <p className="text-[10px] text-orange-600 truncate flex items-center gap-1 mb-0.5">
           <Users className="w-2.5 h-2.5 flex-shrink-0" />
           {item.equipe}
         </p>
       )}
-      <p className="text-[10px] text-[#A69E8F] truncate flex items-center gap-1">
+      <p className="text-[10px] text-tema-apagado truncate flex items-center gap-1">
         <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
         {enderecoResumido(item)}
       </p>

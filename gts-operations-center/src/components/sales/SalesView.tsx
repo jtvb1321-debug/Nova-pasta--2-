@@ -34,12 +34,12 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
   REPROVADO:  { label: 'Reprovado',  icon: XCircle,       cls: 'text-red-700 bg-red-500/10 border-red-500/20' },
   INSTALANDO: { label: 'Instalando', icon: Wifi,          cls: 'text-blue-700 bg-blue-500/10 border-blue-500/20' },
   INSTALADO:  { label: 'Instalado',  icon: CheckCircle,   cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
-  CANCELADO:  { label: 'Cancelado',  icon: XCircle,       cls: 'text-[#7A7266] bg-black/[0.03] border-[#E6E1D6]' },
+  CANCELADO:  { label: 'Cancelado',  icon: XCircle,       cls: 'text-tema-suave bg-tema-contraste/[0.03] border-tema-linha' },
 }
 
 const MEDALHAS = [
   { icon: Trophy, cor: 'text-amber-700', bg: 'bg-amber-500/10' },
-  { icon: Medal,  cor: 'text-[#7A7266]',   bg: 'bg-black/[0.03]' },
+  { icon: Medal,  cor: 'text-tema-suave',   bg: 'bg-tema-contraste/[0.03]' },
   { icon: Award,  cor: 'text-orange-600', bg: 'bg-orange-500/10' },
 ]
 
@@ -184,8 +184,8 @@ export function SalesView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Comercial</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-tema-tinta">Comercial</h1>
+          <p className="text-tema-apagado text-sm mt-1">
             Gestao de vendas, comissoes e ranking
             {pendentes > 0 && (
               <span className="ml-2 text-amber-700 font-medium animate-pulse">
@@ -213,7 +213,7 @@ export function SalesView() {
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-[#E6E1D6]">
+      <div className="flex items-center gap-1 border-b border-tema-linha">
         {abas.map(a => {
           const Icon = a.icon
           return (
@@ -224,7 +224,7 @@ export function SalesView() {
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 aba === a.id
                   ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-[#A69E8F] hover:text-[#201D17]'
+                  : 'border-transparent text-tema-apagado hover:text-tema-tinta'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -257,7 +257,7 @@ export function SalesView() {
             <div className="gts-card">
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="w-4 h-4 text-orange-600" />
-                <h2 className="text-sm font-semibold text-[#201D17]">Vendas por Mes</h2>
+                <h2 className="text-sm font-semibold text-tema-tinta">Vendas por Mes</h2>
               </div>
               <div className="h-44">
                 <Bar data={chartMensal} options={CHART_OPT as any} />
@@ -266,7 +266,7 @@ export function SalesView() {
             <div className="gts-card">
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-4 h-4 text-emerald-700" />
-                <h2 className="text-sm font-semibold text-[#201D17]">Faturamento Mensal</h2>
+                <h2 className="text-sm font-semibold text-tema-tinta">Faturamento Mensal</h2>
               </div>
               <div className="h-44">
                 <Line data={chartFaturamento} options={CHART_OPT as any} />
@@ -275,7 +275,7 @@ export function SalesView() {
           </div>
 
           <div className="gts-card">
-            <h2 className="text-sm font-semibold text-[#201D17] mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-tema-tinta mb-4 flex items-center gap-2">
               <Filter className="w-4 h-4 text-orange-600" />
               Distribuicao por Status
             </h2>
@@ -301,7 +301,7 @@ export function SalesView() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
               <input
                 type="search"
                 value={busca}
@@ -319,7 +319,7 @@ export function SalesView() {
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     filtroStatus === s
                       ? 'bg-orange-500/10 text-orange-700 border-orange-500/30'
-                      : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                      : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
                   )}
                 >
                   {s || 'Todas'}
@@ -349,20 +349,20 @@ export function SalesView() {
                   const isPendente = venda.status === 'PENDENTE'
                   const podeMarcarInstalado = venda.status === 'APROVADO' && venda.statusInstalacao !== 'INSTALADA'
                   return (
-                    <div key={venda.id} className="bg-white border border-[#E6E1D6] rounded-xl p-4 hover:border-[#D8D2C3] shadow-sm shadow-black/[0.03] transition-all">
+                    <div key={venda.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4 hover:border-tema-linha-forte shadow-sm shadow-tema-contraste/[0.03] transition-all">
                       <div className="flex items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <h3 className="text-[#201D17] font-bold">{venda.clienteNome}</h3>
+                            <h3 className="text-tema-tinta font-bold">{venda.clienteNome}</h3>
                             <span className={cn('flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium', cfg.cls)}>
                               <StatusIcon className="w-3 h-3" />
                               {cfg.label}
                             </span>
-                            <span className="text-xs text-[#7A7266] bg-black/[0.03] px-2 py-0.5 rounded-full">
+                            <span className="text-xs text-tema-suave bg-tema-contraste/[0.03] px-2 py-0.5 rounded-full">
                               {venda.planoVendido}
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-3 text-xs text-[#7A7266] mb-2">
+                          <div className="flex flex-wrap gap-3 text-xs text-tema-suave mb-2">
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               {venda.endereco}, {venda.cidade}
@@ -440,7 +440,7 @@ export function SalesView() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages}</p>
+              <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages}</p>
               <div className="flex gap-2">
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-1 px-2 disabled:opacity-30">
                   <ChevronLeft className="w-3.5 h-3.5" />
@@ -469,9 +469,9 @@ export function SalesView() {
                     <div className={cn('w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2', med.bg)}>
                       <MedIcon className={cn('w-6 h-6', med.cor)} />
                     </div>
-                    <p className="text-[#201D17] font-bold text-sm">{v?.nome || '-'}</p>
+                    <p className="text-tema-tinta font-bold text-sm">{v?.nome || '-'}</p>
                     <p className={cn('text-2xl font-black mt-1', med.cor)}>{v?.totalVendas ?? 0}</p>
-                    <p className="text-xs text-[#A69E8F]">vendas</p>
+                    <p className="text-xs text-tema-apagado">vendas</p>
                     <p className="text-xs text-emerald-700 mt-1">{formatCurrency(v?.totalValor ?? 0)}</p>
                     <p className="text-xs text-amber-700">Comissao: {formatCurrency(v?.totalComissao ?? 0)}</p>
                   </div>
@@ -495,8 +495,8 @@ export function SalesView() {
               <tbody>
                 {ranking.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-[#A69E8F]">
-                      <Trophy className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                    <td colSpan={6} className="text-center py-12 text-tema-apagado">
+                      <Trophy className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                       Nenhum dado de ranking disponivel
                     </td>
                   </tr>
@@ -509,7 +509,7 @@ export function SalesView() {
                         {i < 3 && MedIcon ? (
                           <MedIcon className={cn('w-4 h-4', med.cor)} />
                         ) : (
-                          <span className="text-[#A69E8F] font-mono text-sm">{i + 1}</span>
+                          <span className="text-tema-apagado font-mono text-sm">{i + 1}</span>
                         )}
                       </td>
                       <td className="px-4">
@@ -517,13 +517,13 @@ export function SalesView() {
                           <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-700 text-xs font-bold">
                             {v.nome?.[0] || '?'}
                           </div>
-                          <p className="text-sm text-[#201D17] font-medium">{v.nome}</p>
+                          <p className="text-sm text-tema-tinta font-medium">{v.nome}</p>
                         </div>
                       </td>
-                      <td className="px-4 text-right font-bold text-[#201D17]">{v.totalVendas}</td>
+                      <td className="px-4 text-right font-bold text-tema-tinta">{v.totalVendas}</td>
                       <td className="px-4 text-right text-emerald-700 font-medium">{formatCurrency(v.totalValor ?? 0)}</td>
                       <td className="px-4 text-right text-amber-700 font-medium">{formatCurrency(v.totalComissao ?? 0)}</td>
-                      <td className="px-4 text-right text-[#3F3A32]">{formatCurrency(v.ticketMedio ?? 0)}</td>
+                      <td className="px-4 text-right text-tema-texto">{formatCurrency(v.ticketMedio ?? 0)}</td>
                     </tr>
                   )
                 })}

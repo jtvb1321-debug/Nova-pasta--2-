@@ -14,7 +14,7 @@ const CLASSIFICACAO_CFG: Record<string, { label: string; cor: string; icone: Rea
   ATENCAO:           { label: 'Atencao',           cor: 'text-amber-700 bg-amber-500/10',   icone: AlertTriangle },
   POSSIVEL_PROBLEMA: { label: 'Possivel Problema', cor: 'text-orange-700 bg-orange-500/10',   icone: AlertTriangle },
   PROBLEMA:          { label: 'Problema',          cor: 'text-red-700 bg-red-500/10',         icone: XCircle },
-  INDETERMINADO:     { label: 'Indeterminado',     cor: 'text-[#7A7266] bg-black/[0.03]',       icone: HelpCircle },
+  INDETERMINADO:     { label: 'Indeterminado',     cor: 'text-tema-suave bg-tema-contraste/[0.03]',       icone: HelpCircle },
 }
 
 const ORIGEM_LABEL: Record<string, string> = {
@@ -73,11 +73,11 @@ export function DiagnosticoHistoricoView() {
   return (
     <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-[#201D17] flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-tema-tinta flex items-center gap-2">
           <Activity className="w-6 h-6 text-cyan-700" />
           Diagnostico Tecnico
         </h1>
-        <p className="text-[#A69E8F] text-sm mt-1">Diagnosticos de conexao executados pelas equipes em campo</p>
+        <p className="text-tema-apagado text-sm mt-1">Diagnosticos de conexao executados pelas equipes em campo</p>
       </div>
 
       {/* KPIs do dia */}
@@ -91,7 +91,7 @@ export function DiagnosticoHistoricoView() {
                 <Icon className={cn('w-4 h-4', cfg.cor.split(' ')[0])} />
               </div>
               <p className={cn('text-2xl font-bold', cfg.cor.split(' ')[0])}>{kpi.quantidade}</p>
-              <p className="text-xs text-[#A69E8F] mt-1">{cfg.label} hoje</p>
+              <p className="text-xs text-tema-apagado mt-1">{cfg.label} hoje</p>
             </div>
           )
         })}
@@ -100,11 +100,11 @@ export function DiagnosticoHistoricoView() {
       {/* Problemas mais comuns */}
       {stats?.porOrigemProvavel?.length > 0 && (
         <div className="gts-card">
-          <h2 className="text-sm font-semibold text-[#201D17] mb-3">Origens mais frequentes</h2>
+          <h2 className="text-sm font-semibold text-tema-tinta mb-3">Origens mais frequentes</h2>
           <div className="flex flex-wrap gap-2">
             {stats.porOrigemProvavel.map((o: any) => (
-              <span key={o.origem} className="text-xs px-3 py-1.5 bg-black/[0.03] rounded-full text-[#3F3A32]">
-                {ORIGEM_LABEL[o.origem] || o.origem} <strong className="text-[#201D17]">{o.quantidade}</strong>
+              <span key={o.origem} className="text-xs px-3 py-1.5 bg-tema-contraste/[0.03] rounded-full text-tema-texto">
+                {ORIGEM_LABEL[o.origem] || o.origem} <strong className="text-tema-tinta">{o.quantidade}</strong>
               </span>
             ))}
           </div>
@@ -112,7 +112,7 @@ export function DiagnosticoHistoricoView() {
       )}
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-[#E6E1D6]">
+      <div className="flex items-center gap-1 border-b border-tema-linha">
         {([
           { id: 'historico' as const, label: 'Historico' },
           { id: 'precisao' as const, label: 'Precisao NOC' },
@@ -122,7 +122,7 @@ export function DiagnosticoHistoricoView() {
             onClick={() => setAba(a.id)}
             className={cn(
               'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-              aba === a.id ? 'border-cyan-600 text-cyan-700' : 'border-transparent text-[#7A7266] hover:text-[#201D17]'
+              aba === a.id ? 'border-cyan-600 text-cyan-700' : 'border-transparent text-tema-suave hover:text-tema-tinta'
             )}
           >
             {a.label}
@@ -153,8 +153,8 @@ export function DiagnosticoHistoricoView() {
           : diagnosticos.length === 0
           ? (
             <div className="gts-card text-center py-16">
-              <ClipboardList className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhum diagnostico encontrado</p>
+              <ClipboardList className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhum diagnostico encontrado</p>
             </div>
           )
           : diagnosticos.map((d: any) => {
@@ -165,7 +165,7 @@ export function DiagnosticoHistoricoView() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link href={`/agenda?chamadoId=${d.chamadoId}`} className="text-[#201D17] font-semibold hover:text-cyan-700 hover:underline decoration-dotted">
+                      <Link href={`/agenda?chamadoId=${d.chamadoId}`} className="text-tema-tinta font-semibold hover:text-cyan-700 hover:underline decoration-dotted">
                         {d.chamado?.cliente}
                       </Link>
                       <span className={cn('status-badge text-xs', cfg.cor)}>
@@ -176,7 +176,7 @@ export function DiagnosticoHistoricoView() {
                         <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-600/10 text-cyan-700">Depois</span>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-[#A69E8F]">
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-tema-apagado">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {d.chamado?.cidade}
@@ -189,9 +189,9 @@ export function DiagnosticoHistoricoView() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-xs text-[#A69E8F]">{formatDateTime(d.createdAt)}</p>
+                    <p className="text-xs text-tema-apagado">{formatDateTime(d.createdAt)}</p>
                     {d.resultadoFinal && (
-                      <p className="text-xs text-[#A69E8F] mt-1">{d.resultadoFinal.replace(/_/g, ' ')}</p>
+                      <p className="text-xs text-tema-apagado mt-1">{d.resultadoFinal.replace(/_/g, ' ')}</p>
                     )}
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export function DiagnosticoHistoricoView() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages}</p>
+            <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -233,38 +233,38 @@ export function DiagnosticoHistoricoView() {
             </div>
           ) : !precisao || precisao.totalValidados === 0 ? (
             <div className="gts-card text-center py-16">
-              <Target className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-              <p className="text-[#7A7266] font-medium">Nenhum diagnostico remoto validado por tecnico ainda</p>
-              <p className="text-[#A69E8F] text-sm mt-1">A precisao e calculada a partir dos diagnosticos do NOC confirmados/corrigidos em campo</p>
+              <Target className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+              <p className="text-tema-suave font-medium">Nenhum diagnostico remoto validado por tecnico ainda</p>
+              <p className="text-tema-apagado text-sm mt-1">A precisao e calculada a partir dos diagnosticos do NOC confirmados/corrigidos em campo</p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="gts-card">
                   <p className="text-2xl font-bold text-emerald-700">{precisao.taxaConfirmacaoPct?.toFixed(0) ?? 0}%</p>
-                  <p className="text-xs text-[#A69E8F] mt-1">Taxa de confirmacao</p>
+                  <p className="text-xs text-tema-apagado mt-1">Taxa de confirmacao</p>
                 </div>
                 <div className="gts-card">
                   <p className="text-2xl font-bold text-cyan-700">{precisao.totalValidados}</p>
-                  <p className="text-xs text-[#A69E8F] mt-1">Diagnosticos validados</p>
+                  <p className="text-xs text-tema-apagado mt-1">Diagnosticos validados</p>
                 </div>
                 <div className="gts-card">
                   <p className="text-2xl font-bold text-blue-700">{precisao.taxaResolvidoRemotamentePct?.toFixed(0) ?? 0}%</p>
-                  <p className="text-xs text-[#A69E8F] mt-1">Resolvidos sem visita</p>
+                  <p className="text-xs text-tema-apagado mt-1">Resolvidos sem visita</p>
                 </div>
                 <div className="gts-card">
-                  <p className="text-2xl font-bold text-[#3F3A32]">{precisao.confiancaMediaConfirmado?.toFixed(0) ?? '-'}%</p>
-                  <p className="text-xs text-[#A69E8F] mt-1">Confianca media (confirmados)</p>
+                  <p className="text-2xl font-bold text-tema-texto">{precisao.confiancaMediaConfirmado?.toFixed(0) ?? '-'}%</p>
+                  <p className="text-xs text-tema-apagado mt-1">Confianca media (confirmados)</p>
                 </div>
               </div>
 
               {precisao.porClassificacao?.length > 0 && (
                 <div className="gts-card">
-                  <h2 className="text-sm font-semibold text-[#201D17] mb-3">Por classificacao</h2>
+                  <h2 className="text-sm font-semibold text-tema-tinta mb-3">Por classificacao</h2>
                   <div className="flex flex-wrap gap-2">
                     {precisao.porClassificacao.map((c: any) => (
-                      <span key={c.classificacao} className="text-xs px-3 py-1.5 bg-black/[0.03] rounded-full text-[#3F3A32]">
-                        {CLASSIFICACAO_CFG[c.classificacao]?.label || c.classificacao} <strong className="text-[#201D17]">{c.quantidade}</strong>
+                      <span key={c.classificacao} className="text-xs px-3 py-1.5 bg-tema-contraste/[0.03] rounded-full text-tema-texto">
+                        {CLASSIFICACAO_CFG[c.classificacao]?.label || c.classificacao} <strong className="text-tema-tinta">{c.quantidade}</strong>
                       </span>
                     ))}
                   </div>
@@ -273,11 +273,11 @@ export function DiagnosticoHistoricoView() {
 
               {precisao.porOrigemProvavel?.length > 0 && (
                 <div className="gts-card">
-                  <h2 className="text-sm font-semibold text-[#201D17] mb-3">Por origem provavel</h2>
+                  <h2 className="text-sm font-semibold text-tema-tinta mb-3">Por origem provavel</h2>
                   <div className="flex flex-wrap gap-2">
                     {precisao.porOrigemProvavel.map((o: any) => (
-                      <span key={o.origem} className="text-xs px-3 py-1.5 bg-black/[0.03] rounded-full text-[#3F3A32]">
-                        {ORIGEM_LABEL[o.origem] || o.origem} <strong className="text-[#201D17]">{o.quantidade}</strong>
+                      <span key={o.origem} className="text-xs px-3 py-1.5 bg-tema-contraste/[0.03] rounded-full text-tema-texto">
+                        {ORIGEM_LABEL[o.origem] || o.origem} <strong className="text-tema-tinta">{o.quantidade}</strong>
                       </span>
                     ))}
                   </div>

@@ -42,10 +42,10 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
 
   const conteudo = (
     <div className={cn(
-      'relative rounded-lg border bg-white shadow-sm shadow-black/[0.03] overflow-hidden',
+      'relative rounded-lg border bg-tema-superficie shadow-sm shadow-tema-contraste/[0.03] overflow-hidden',
       compact ? 'p-3' : 'p-4',
-      alert ? 'border-red-500/40 shadow-lg shadow-red-500/5' : 'border-[#E6E1D6]',
-      href && 'transition-all duration-200 hover:-translate-y-0.5 hover:border-[#D8D2C3]',
+      alert ? 'border-red-500/40 shadow-lg shadow-red-500/5' : 'border-tema-linha',
+      href && 'transition-all duration-200 hover:-translate-y-0.5 hover:border-tema-linha-forte',
       className
     )}>
       {!compact && (
@@ -63,7 +63,7 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
         </div>
         {trend != null ? (
           <div className={cn('flex items-center gap-0.5 text-[11px] font-medium font-mono',
-            trend > 0 ? 'text-emerald-700' : trend < 0 ? 'text-red-700' : 'text-[#A69E8F]'
+            trend > 0 ? 'text-emerald-700' : trend < 0 ? 'text-red-700' : 'text-tema-apagado'
           )}>
             {trend > 0 ? <TrendingUp className="w-3 h-3" /> : trend < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
             {Math.abs(trend)}%
@@ -72,9 +72,9 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
         )}
       </div>
-      <p className={cn('text-[#7A7266] leading-tight mb-1', compact ? 'text-xs' : 'text-xs text-[#A69E8F]')}>{label}</p>
-      <p className={cn('font-bold text-[#201D17] font-mono tracking-tight leading-none', compact ? 'text-xl' : 'text-3xl')} style={compact ? { color } : undefined}>{value}</p>
-      {sublabel && <p className="text-xs text-[#A69E8F] mt-1">{sublabel}</p>}
+      <p className={cn('text-tema-suave leading-tight mb-1', compact ? 'text-xs' : 'text-xs text-tema-apagado')}>{label}</p>
+      <p className={cn('font-bold text-tema-tinta font-mono tracking-tight leading-none', compact ? 'text-xl' : 'text-3xl')} style={compact ? { color } : undefined}>{value}</p>
+      {sublabel && <p className="text-xs text-tema-apagado mt-1">{sublabel}</p>}
       {sparkline && <div className="mt-2"><Sparkline data={sparkline} color={color} /></div>}
     </div>
   )

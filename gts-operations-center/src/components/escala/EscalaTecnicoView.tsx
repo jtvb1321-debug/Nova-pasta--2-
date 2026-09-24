@@ -37,30 +37,30 @@ export function EscalaTecnicoView() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#201D17] pb-8">
-      <header className="sticky top-0 z-10 bg-white border-b border-[#E6E1D6] px-4 py-4">
+    <div className="min-h-screen bg-tema-fundo text-tema-tinta pb-8">
+      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha px-4 py-4">
         <div className="flex items-center gap-3">
-          <Link href="/meus-chamados" className="p-2 hover:bg-black/[0.04] rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-[#7A7266]" />
+          <Link href="/meus-chamados" className="p-2 hover:bg-tema-contraste/[0.04] rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-tema-suave" />
           </Link>
           <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
             <CalendarDays className="w-4.5 h-4.5 text-purple-700" />
           </div>
           <div>
-            <p className="text-[#201D17] font-bold text-sm">Minha Escala</p>
-            <p className="text-[#A69E8F] text-xs">{equipeNome || 'Escala e plantoes de sabado'}</p>
+            <p className="text-tema-tinta font-bold text-sm">Minha Escala</p>
+            <p className="text-tema-apagado text-xs">{equipeNome || 'Escala e plantoes de sabado'}</p>
           </div>
         </div>
       </header>
 
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-center gap-3">
-          <button onClick={() => mudarMes(-1)} className="p-2 hover:bg-black/[0.04] rounded-lg">
-            <ChevronLeft className="w-4 h-4 text-[#7A7266]" />
+          <button onClick={() => mudarMes(-1)} className="p-2 hover:bg-tema-contraste/[0.04] rounded-lg">
+            <ChevronLeft className="w-4 h-4 text-tema-suave" />
           </button>
-          <span className="text-sm font-medium text-[#201D17] w-36 text-center">{MESES[mes - 1]} {ano}</span>
-          <button onClick={() => mudarMes(1)} className="p-2 hover:bg-black/[0.04] rounded-lg">
-            <ChevronRight className="w-4 h-4 text-[#7A7266]" />
+          <span className="text-sm font-medium text-tema-tinta w-36 text-center">{MESES[mes - 1]} {ano}</span>
+          <button onClick={() => mudarMes(1)} className="p-2 hover:bg-tema-contraste/[0.04] rounded-lg">
+            <ChevronRight className="w-4 h-4 text-tema-suave" />
           </button>
         </div>
 
@@ -68,7 +68,7 @@ export function EscalaTecnicoView() {
           {Object.entries(TIPO_CFG).map(([tipo, cfg]) => (
             <div key={tipo} className="flex items-center gap-1.5">
               <span className={cn('w-2.5 h-2.5 rounded-full', cfg.dot)} />
-              <span className="text-[#7A7266]">{cfg.label}</span>
+              <span className="text-tema-suave">{cfg.label}</span>
             </div>
           ))}
         </div>

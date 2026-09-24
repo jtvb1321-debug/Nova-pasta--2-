@@ -89,27 +89,27 @@ export function RelatorioCompletoModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#201D17]">Baixar Relatorio Completo</h3>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <h3 className="text-lg font-semibold text-tema-tinta">Baixar Relatorio Completo</h3>
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-xs text-[#A69E8F]">
+        <p className="text-xs text-tema-apagado">
           Consolida saldo central, alocacao por tecnico, itens avariados e historico de movimentacoes.
         </p>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Periodo</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Periodo</label>
           <div className="flex gap-2 mb-2">
             <button
               onClick={() => setPeriodo('dia')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 periodo === 'dia'
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                  : 'bg-black/[0.03] text-[#7A7266] border-transparent'
+                  : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent'
               }`}
             >
               Diario (hoje)
@@ -119,7 +119,7 @@ export function RelatorioCompletoModal({ onClose }: Props) {
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 periodo === 'intervalo'
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                  : 'bg-black/[0.03] text-[#7A7266] border-transparent'
+                  : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent'
               }`}
             >
               Por periodo
@@ -127,9 +127,9 @@ export function RelatorioCompletoModal({ onClose }: Props) {
           </div>
           {periodo === 'intervalo' && (
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#A69E8F] flex-shrink-0" />
+              <Calendar className="w-4 h-4 text-tema-apagado flex-shrink-0" />
               <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="gts-input text-sm flex-1" />
-              <span className="text-[#A69E8F] text-xs">ate</span>
+              <span className="text-tema-apagado text-xs">ate</span>
               <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="gts-input text-sm flex-1" />
             </div>
           )}

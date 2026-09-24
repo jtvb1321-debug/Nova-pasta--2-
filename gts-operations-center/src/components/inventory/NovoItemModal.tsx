@@ -73,17 +73,17 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">
               <Package className="w-4 h-4 text-orange-700" />
             </div>
-            <h2 className="text-lg font-semibold text-[#201D17]">Novo Item / Entrada de Estoque</h2>
+            <h2 className="text-lg font-semibold text-tema-tinta">Novo Item / Entrada de Estoque</h2>
           </div>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -98,7 +98,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
                 'flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-colors',
                 tipo === 'manual'
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                  : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                  : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
               )}
             >
               <Hash className="w-4 h-4" />
@@ -110,7 +110,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
                 'flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-colors',
                 tipo === 'nota'
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                  : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                  : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
               )}
             >
               <FileText className="w-4 h-4" />
@@ -120,7 +120,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
 
           {tipo === 'nota' && (
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">
                 Numero da Nota Fiscal *
               </label>
               <input
@@ -135,17 +135,17 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
           {/* Codigo e Descricao */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Codigo *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Codigo *</label>
               <input
                 value={form.codigo}
                 onChange={e => set('codigo', e.target.value.toUpperCase())}
                 placeholder="Ex: ONT-001"
                 className="w-full gts-input font-mono"
               />
-              <p className="text-xs text-[#A69E8F] mt-1">Se o codigo ja existir, sera somado ao estoque</p>
+              <p className="text-xs text-tema-apagado mt-1">Se o codigo ja existir, sera somado ao estoque</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Categoria *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Categoria *</label>
               <select
                 value={form.categoria}
                 onChange={e => set('categoria', e.target.value)}
@@ -159,7 +159,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Descricao *</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Descricao *</label>
             <input
               value={form.descricao}
               onChange={e => set('descricao', e.target.value)}
@@ -171,7 +171,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
           {/* Quantidade e Unidade */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">
                 {tipo === 'nota' ? 'Qtd. da Nota' : 'Quantidade'} *
               </label>
               <input
@@ -184,7 +184,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Unidade</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Unidade</label>
               <select
                 value={form.unidade}
                 onChange={e => set('unidade', e.target.value)}
@@ -196,7 +196,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Estoque Minimo</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Estoque Minimo</label>
               <input
                 type="number"
                 value={form.quantidadeMinima}
@@ -211,7 +211,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
           {/* Valor e Fornecedor */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Valor Unitario (R$)</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Valor Unitario (R$)</label>
               <input
                 type="number"
                 value={form.valorUnitario}
@@ -222,7 +222,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Fornecedor</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Fornecedor</label>
               <input
                 value={form.fornecedor}
                 onChange={e => set('fornecedor', e.target.value)}
@@ -234,7 +234,7 @@ export function NovoItemModal({ onClose, onSuccess }: Props) {
 
           {/* Observacao */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Observacao</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Observacao</label>
             <textarea
               value={form.observacao}
               onChange={e => set('observacao', e.target.value)}

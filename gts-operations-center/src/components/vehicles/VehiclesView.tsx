@@ -41,31 +41,31 @@ function VehicleCard({ veiculo }: { veiculo: VeiculoRastreado }) {
 
   return (
     <div className={cn(
-      'bg-white border rounded-xl overflow-hidden transition-all duration-300 shadow-sm shadow-black/[0.03]',
+      'bg-tema-superficie border rounded-xl overflow-hidden transition-all duration-300 shadow-sm shadow-tema-contraste/[0.03]',
       alerta
         ? 'border-red-500/60 velocity-alert'
         : veiculo.online
         ? 'border-emerald-500/25 hover:border-emerald-500/40'
-        : 'border-[#E6E1D6] hover:border-[#D8D2C3]'
+        : 'border-tema-linha hover:border-tema-linha-forte'
     )}>
       {/* Header */}
       <div className={cn(
         'px-4 py-3 flex items-center justify-between',
-        alerta ? 'bg-red-500/10' : veiculo.online ? 'bg-emerald-500/5' : 'bg-black/[0.02]'
+        alerta ? 'bg-red-500/10' : veiculo.online ? 'bg-emerald-500/5' : 'bg-tema-contraste/[0.02]'
       )}>
         <div className="flex items-center gap-3">
           <div className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center',
-            alerta ? 'bg-red-500/15' : veiculo.online ? 'bg-emerald-500/10' : 'bg-black/[0.04]'
+            alerta ? 'bg-red-500/15' : veiculo.online ? 'bg-emerald-500/10' : 'bg-tema-contraste/[0.04]'
           )}>
             <Truck className={cn(
               'w-4 h-4',
-              alerta ? 'text-red-700' : veiculo.online ? 'text-emerald-700' : 'text-[#A69E8F]'
+              alerta ? 'text-red-700' : veiculo.online ? 'text-emerald-700' : 'text-tema-apagado'
             )} />
           </div>
           <div>
-            <p className="text-[#201D17] font-semibold text-sm">{veiculo.nome}</p>
-            <p className="text-[#A69E8F] text-xs font-mono">{veiculo.placa}</p>
+            <p className="text-tema-tinta font-semibold text-sm">{veiculo.nome}</p>
+            <p className="text-tema-apagado text-xs font-mono">{veiculo.placa}</p>
           </div>
         </div>
 
@@ -80,7 +80,7 @@ function VehicleCard({ veiculo }: { veiculo: VeiculoRastreado }) {
             'flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium',
             veiculo.online
               ? 'text-emerald-700 bg-emerald-500/10'
-              : 'text-[#A69E8F] bg-black/[0.04]'
+              : 'text-tema-apagado bg-tema-contraste/[0.04]'
           )}>
             {veiculo.online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
             {veiculo.online ? 'Online' : 'Offline'}
@@ -91,12 +91,12 @@ function VehicleCard({ veiculo }: { veiculo: VeiculoRastreado }) {
       {/* Corpo */}
       <div className="p-4 grid grid-cols-2 gap-3">
         {/* Velocidade */}
-        <div className="col-span-2 bg-black/[0.02] rounded-lg p-3 text-center">
-          <p className="text-xs text-[#A69E8F] mb-1">Velocidade Atual</p>
+        <div className="col-span-2 bg-tema-contraste/[0.02] rounded-lg p-3 text-center">
+          <p className="text-xs text-tema-apagado mb-1">Velocidade Atual</p>
           <p className="text-3xl font-bold font-mono" style={{ color: corVelocidade }}>
             {Math.round(veiculo.velocidade)}
           </p>
-          <p className="text-xs text-[#A69E8F]">km/h</p>
+          <p className="text-xs text-tema-apagado">km/h</p>
           {alerta && (
             <p className="text-xs text-red-700 font-medium mt-1">
               ⚠️ Acima de {VELOCIDADE_ALERTA} km/h
@@ -105,34 +105,34 @@ function VehicleCard({ veiculo }: { veiculo: VeiculoRastreado }) {
         </div>
 
         {/* Ignição */}
-        <div className="bg-black/[0.02] rounded-lg p-3">
-          <p className="text-xs text-[#A69E8F] mb-1.5 flex items-center gap-1">
+        <div className="bg-tema-contraste/[0.02] rounded-lg p-3">
+          <p className="text-xs text-tema-apagado mb-1.5 flex items-center gap-1">
             {veiculo.ignicao ? <Zap className="w-3 h-3 text-amber-600" /> : <ZapOff className="w-3 h-3" />}
             Ignição
           </p>
-          <p className={cn('text-sm font-semibold', veiculo.ignicao ? 'text-amber-700' : 'text-[#A69E8F]')}>
+          <p className={cn('text-sm font-semibold', veiculo.ignicao ? 'text-amber-700' : 'text-tema-apagado')}>
             {veiculo.ignicao ? 'Ligada' : 'Desligada'}
           </p>
         </div>
 
         {/* Motorista */}
-        <div className="bg-black/[0.02] rounded-lg p-3">
-          <p className="text-xs text-[#A69E8F] mb-1.5">Motorista</p>
-          <p className="text-sm font-medium text-[#201D17] truncate">
+        <div className="bg-tema-contraste/[0.02] rounded-lg p-3">
+          <p className="text-xs text-tema-apagado mb-1.5">Motorista</p>
+          <p className="text-sm font-medium text-tema-tinta truncate">
             {veiculo.motorista || '—'}
           </p>
         </div>
 
         {/* Localização */}
         {veiculo.endereco && (
-          <div className="col-span-2 bg-black/[0.02] rounded-lg p-3">
-            <p className="text-xs text-[#A69E8F] mb-1">Localização</p>
-            <p className="text-xs text-[#7A7266] leading-relaxed">{veiculo.endereco}</p>
+          <div className="col-span-2 bg-tema-contraste/[0.02] rounded-lg p-3">
+            <p className="text-xs text-tema-apagado mb-1">Localização</p>
+            <p className="text-xs text-tema-suave leading-relaxed">{veiculo.endereco}</p>
           </div>
         )}
 
         {/* Última atualização */}
-        <div className="col-span-2 flex items-center gap-1.5 text-xs text-[#A69E8F]">
+        <div className="col-span-2 flex items-center gap-1.5 text-xs text-tema-apagado">
           <Clock className="w-3 h-3" />
           Atualizado {timeAgo(veiculo.ultimaAtualizacao)}
         </div>
@@ -156,8 +156,8 @@ export function VehiclesView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17]">Monitoramento de Veículos</h1>
-          <p className="text-[#A69E8F] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-tema-tinta">Monitoramento de Veículos</h1>
+          <p className="text-tema-apagado text-sm mt-1">
             {online.length}/{veiculos.length} online
             {emAlerta.length > 0 && (
               <span className="ml-2 text-red-700 font-medium animate-pulse">
@@ -167,7 +167,7 @@ export function VehiclesView() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#A69E8F]">
+          <span className="text-xs text-tema-apagado">
             Atualiza a cada 30s · {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : ''}
           </span>
           <button onClick={() => refetch()} className="gts-btn-secondary">
@@ -185,7 +185,7 @@ export function VehiclesView() {
             <p className="text-red-700 font-medium text-sm">
               {emAlerta.map(v => v.nome).join(', ')} — velocidade acima de {VELOCIDADE_ALERTA} km/h!
             </p>
-            <p className="text-[#A69E8F] text-xs mt-0.5">Verifique com o motorista imediatamente</p>
+            <p className="text-tema-apagado text-xs mt-0.5">Verifique com o motorista imediatamente</p>
           </div>
         </div>
       )}
@@ -193,9 +193,9 @@ export function VehiclesView() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Mapa */}
         <div className="xl:col-span-2 gts-card p-0 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E6E1D6]">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-tema-linha">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            <h2 className="text-sm font-semibold text-[#201D17]">Posição em Tempo Real</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Posição em Tempo Real</h2>
           </div>
           <div className="h-[480px]">
             <MapView height="100%" />

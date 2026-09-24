@@ -27,7 +27,7 @@ async function fetchClientes() {
 }
 
 function CorPotencia({ valor }: { valor: number | null }) {
-  if (valor == null) return <span className="text-[#A69E8F]">-</span>
+  if (valor == null) return <span className="text-tema-apagado">-</span>
   const cor = valor <= -28 ? 'text-red-700' : valor <= -25 ? 'text-amber-700' : 'text-emerald-700'
   return <span className={cn('font-mono font-bold', cor)}>{valor.toFixed(1)} dBm</span>
 }
@@ -48,7 +48,7 @@ function CampoEditavel({
     return (
       <button
         onClick={() => { setRascunho(valor); setEditando(true) }}
-        className="flex items-center gap-1.5 text-xs text-[#7A7266] hover:text-[#201D17] transition-colors"
+        className="flex items-center gap-1.5 text-xs text-tema-suave hover:text-tema-tinta transition-colors"
       >
         <Pencil className="w-3 h-3" />
         {valor ? `${valor}${sufixo || ''}` : `Informar ${placeholder}`}
@@ -69,7 +69,7 @@ function CampoEditavel({
       <button onClick={salvar} disabled={salvando} className="text-emerald-700 hover:text-emerald-600 disabled:opacity-50">
         {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
       </button>
-      <button onClick={() => setEditando(false)} disabled={salvando} className="text-[#A69E8F] hover:text-[#7A7266]">
+      <button onClick={() => setEditando(false)} disabled={salvando} className="text-tema-apagado hover:text-tema-suave">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -116,7 +116,7 @@ export function LinkDedicadoView() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-[#A69E8F]" />
+        <Loader2 className="w-6 h-6 animate-spin text-tema-apagado" />
       </div>
     )
   }
@@ -125,11 +125,11 @@ export function LinkDedicadoView() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#201D17] flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-tema-tinta flex items-center gap-2">
             <Radio className="w-5 h-5 text-purple-600" />
             Clientes de Link Dedicado
           </h1>
-          <p className="text-[#A69E8F] text-sm mt-1">
+          <p className="text-tema-apagado text-sm mt-1">
             {clientes.length} cliente(s) corporativo(s) em planos dedicados/IP fixo
           </p>
         </div>
@@ -143,7 +143,7 @@ export function LinkDedicadoView() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-[#7A7266] border-b border-[#E6E1D6] bg-black/[0.02]">
+              <tr className="text-left text-xs text-tema-suave border-b border-tema-linha bg-tema-contraste/[0.02]">
                 <th className="py-3 px-4 font-medium">Cliente / Razao Social</th>
                 <th className="py-3 px-4 font-medium">Contrato</th>
                 <th className="py-3 px-4 font-medium">Plano</th>
@@ -156,29 +156,29 @@ export function LinkDedicadoView() {
             <tbody>
               {clientes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-[#A69E8F] text-sm">
+                  <td colSpan={7} className="py-10 text-center text-tema-apagado text-sm">
                     Nenhum cliente de link dedicado encontrado
                   </td>
                 </tr>
               ) : clientes.map(c => (
-                <tr key={c.codigoIxc} className="border-b border-[#E6E1D6] hover:bg-black/[0.02]">
-                  <td className="py-3 px-4 text-[#201D17] font-medium">{c.nome}</td>
-                  <td className="py-3 px-4 text-[#7A7266] font-mono text-xs">{c.idContrato || '-'}</td>
-                  <td className="py-3 px-4 text-[#7A7266] text-xs">{c.plano}</td>
+                <tr key={c.codigoIxc} className="border-b border-tema-linha hover:bg-tema-contraste/[0.02]">
+                  <td className="py-3 px-4 text-tema-tinta font-medium">{c.nome}</td>
+                  <td className="py-3 px-4 text-tema-suave font-mono text-xs">{c.idContrato || '-'}</td>
+                  <td className="py-3 px-4 text-tema-suave text-xs">{c.plano}</td>
                   <td className="py-3 px-4">
                     {c.online ? (
                       <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
                         <Wifi className="w-3.5 h-3.5" /> Online
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-xs text-[#A69E8F] font-medium">
+                      <span className="flex items-center gap-1.5 text-xs text-tema-apagado font-medium">
                         <WifiOff className="w-3.5 h-3.5" /> Offline
                       </span>
                     )}
                   </td>
                   <td className="py-3 px-4">
                     {c.fonteIp === 'ixc' ? (
-                      <span className="font-mono text-[#201D17] text-xs">{c.ip}</span>
+                      <span className="font-mono text-tema-tinta text-xs">{c.ip}</span>
                     ) : (
                       <CampoEditavel
                         valor={c.ip || ''}
@@ -218,7 +218,7 @@ export function LinkDedicadoView() {
         </div>
       </div>
 
-      <p className="text-xs text-[#A69E8F]">
+      <p className="text-xs text-tema-apagado">
         IP e potencia optica sao buscados automaticamente do IXC/SmartOLT quando disponiveis.
         Quando nao encontrados, ficam liberados para preenchimento manual (clique no campo) -
         esses dados servem de base para a criacao futura de alertas individuais por cliente.

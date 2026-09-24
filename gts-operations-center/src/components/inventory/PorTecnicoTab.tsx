@@ -128,9 +128,9 @@ export function PorTecnicoTab() {
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
       {/* Lista de tecnicos/equipes */}
       <div className="gts-card p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#E6E1D6] flex items-center gap-2">
-          <Users className="w-4 h-4 text-[#7A7266]" />
-          <h3 className="text-sm font-semibold text-[#201D17]">Tecnicos / Equipes</h3>
+        <div className="px-4 py-3 border-b border-tema-linha flex items-center gap-2">
+          <Users className="w-4 h-4 text-tema-suave" />
+          <h3 className="text-sm font-semibold text-tema-tinta">Tecnicos / Equipes</h3>
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
           {equipes.map((eq: any) => (
@@ -138,15 +138,15 @@ export function PorTecnicoTab() {
               key={eq.id}
               onClick={() => setEquipeId(eq.id)}
               className={cn(
-                'w-full text-left px-4 py-3 border-b border-[#E6E1D6] transition-colors',
-                equipeId === eq.id ? 'bg-orange-500/10' : 'hover:bg-black/[0.02]'
+                'w-full text-left px-4 py-3 border-b border-tema-linha transition-colors',
+                equipeId === eq.id ? 'bg-orange-500/10' : 'hover:bg-tema-contraste/[0.02]'
               )}
             >
-              <p className={cn('text-sm font-medium', equipeId === eq.id ? 'text-orange-700' : 'text-[#201D17]')}>
+              <p className={cn('text-sm font-medium', equipeId === eq.id ? 'text-orange-700' : 'text-tema-tinta')}>
                 {eq.nome}
               </p>
               {eq.veiculo && (
-                <p className="text-xs text-[#A69E8F] flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-tema-apagado flex items-center gap-1 mt-0.5">
                   <Truck className="w-3 h-3" />
                   {eq.veiculo.placa}
                 </p>
@@ -158,14 +158,14 @@ export function PorTecnicoTab() {
 
       {/* Estoque do tecnico selecionado */}
       <div className="lg:col-span-3 gts-card p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#E6E1D6]">
-          <h3 className="text-sm font-semibold text-[#201D17]">
+        <div className="px-4 py-3 border-b border-tema-linha">
+          <h3 className="text-sm font-semibold text-tema-tinta">
             {equipeId ? `Material com: ${equipes.find((e: any) => e.id === equipeId)?.nome || ''}` : 'Selecione um tecnico'}
           </h3>
         </div>
         <div className="p-4 space-y-5">
           {equipeId && (
-            <div className="bg-black/[0.02] rounded-xl p-3 space-y-3">
+            <div className="bg-tema-contraste/[0.02] rounded-xl p-3 space-y-3">
               <h4 className="text-xs font-semibold text-orange-700 flex items-center gap-1.5">
                 <ScanLine className="w-3.5 h-3.5" />
                 Adicionar por MAC
@@ -176,12 +176,12 @@ export function PorTecnicoTab() {
                   value={buscaItemMac}
                   onChange={e => setBuscaItemMac(e.target.value)}
                   placeholder="Buscar item por nome ou codigo..."
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-2 py-1.5 text-sm text-[#201D17] mb-2"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-1.5 text-sm text-tema-tinta mb-2"
                 />
                 <select
                   value={itemMacId}
                   onChange={e => { setItemMacId(e.target.value); setMacsPendentes([]) }}
-                  className="w-full bg-white border border-[#D8D2C3] rounded-lg px-2 py-1.5 text-sm text-[#201D17]"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-1.5 text-sm text-tema-tinta"
                 >
                   <option value="">Selecione o item...</option>
                   {itensCatalogoFiltrados.map((i: any) => (
@@ -200,7 +200,7 @@ export function PorTecnicoTab() {
                       onChange={e => setMacInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarMacPendente() } }}
                       placeholder="Ler ou digitar o MAC e apertar Enter"
-                      className="flex-1 bg-white border border-[#D8D2C3] rounded-lg px-2 py-1.5 text-sm text-[#201D17] font-mono"
+                      className="flex-1 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-1.5 text-sm text-tema-tinta font-mono"
                       autoFocus
                     />
                     <button
@@ -214,11 +214,11 @@ export function PorTecnicoTab() {
                   {macsPendentes.length > 0 && (
                     <div className="space-y-1.5">
                       {macsPendentes.map(mac => (
-                        <div key={mac} className="flex items-center justify-between text-xs bg-white border border-[#E6E1D6] rounded-lg px-2.5 py-1.5">
-                          <span className="font-mono text-[#7A7266]">{mac}</span>
+                        <div key={mac} className="flex items-center justify-between text-xs bg-tema-superficie border border-tema-linha rounded-lg px-2.5 py-1.5">
+                          <span className="font-mono text-tema-suave">{mac}</span>
                           <button
                             onClick={() => setMacsPendentes(lista => lista.filter(m => m !== mac))}
-                            className="text-[#A69E8F] hover:text-red-700"
+                            className="text-tema-apagado hover:text-red-700"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -242,11 +242,11 @@ export function PorTecnicoTab() {
 
           {equipeId && unidades.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-[#7A7266] mb-2">Equipamentos com MAC no estoque</h4>
+              <h4 className="text-xs font-semibold text-tema-suave mb-2">Equipamentos com MAC no estoque</h4>
               <div className="space-y-1.5">
                 {unidades.map((u: any) => (
-                  <div key={u.id} className="flex items-center justify-between text-xs bg-black/[0.02] rounded-lg px-3 py-2">
-                    <span className="text-[#7A7266]">{u.item.descricao}</span>
+                  <div key={u.id} className="flex items-center justify-between text-xs bg-tema-contraste/[0.02] rounded-lg px-3 py-2">
+                    <span className="text-tema-suave">{u.item.descricao}</span>
                     <span className="font-mono text-orange-700">{u.macAddress}</span>
                   </div>
                 ))}
@@ -255,8 +255,8 @@ export function PorTecnicoTab() {
           )}
 
           {!equipeId ? (
-            <div className="text-center py-16 text-[#A69E8F]">
-              <Package className="w-10 h-10 mx-auto mb-3 text-[#D8D2C3]" />
+            <div className="text-center py-16 text-tema-apagado">
+              <Package className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
               Escolha um tecnico ao lado para ver o material alocado
             </div>
           ) : isLoading ? (
@@ -264,8 +264,8 @@ export function PorTecnicoTab() {
               {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-xl" />)}
             </div>
           ) : itens.length === 0 ? (
-            <div className="text-center py-16 text-[#A69E8F]">
-              <Package className="w-10 h-10 mx-auto mb-3 text-[#D8D2C3]" />
+            <div className="text-center py-16 text-tema-apagado">
+              <Package className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
               Nenhum material com este tecnico no momento
             </div>
           ) : (
@@ -273,18 +273,18 @@ export function PorTecnicoTab() {
               {itens.map((registro: any) => {
                 const estaBaixando = baixandoItemId === registro.itemId
                 return (
-                  <div key={registro.id} className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3">
+                  <div key={registro.id} className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[#201D17] text-sm font-medium">{registro.item.descricao}</p>
-                        <p className="text-xs text-[#A69E8F] font-mono">{registro.item.codigo}</p>
+                        <p className="text-tema-tinta text-sm font-medium">{registro.item.descricao}</p>
+                        <p className="text-xs text-tema-apagado font-mono">{registro.item.codigo}</p>
                         <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700">
                           Com Tecnico
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-bold font-mono text-[#201D17]">
-                          {registro.quantidade} <span className="text-xs text-[#A69E8F] font-normal">{registro.item.unidade}</span>
+                        <span className="font-bold font-mono text-tema-tinta">
+                          {registro.quantidade} <span className="text-xs text-tema-apagado font-normal">{registro.item.unidade}</span>
                         </span>
                         {!estaBaixando && (
                           <button
@@ -299,7 +299,7 @@ export function PorTecnicoTab() {
                     </div>
 
                     {estaBaixando && (
-                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#E6E1D6]">
+                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
                         <input
                           type="number"
                           value={qtdBaixa}
@@ -307,14 +307,14 @@ export function PorTecnicoTab() {
                           min={0.01}
                           max={registro.quantidade}
                           step={0.01}
-                          className="w-24 bg-white border border-[#D8D2C3] rounded-lg px-2 py-1.5 text-sm text-[#201D17] text-center"
+                          className="w-24 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-1.5 text-sm text-tema-tinta text-center"
                         />
                         <input
                           type="text"
                           value={motivoBaixa}
                           onChange={e => setMotivoBaixa(e.target.value)}
                           placeholder="Motivo (ex: instalado no cliente X)"
-                          className="flex-1 min-w-[180px] bg-white border border-[#D8D2C3] rounded-lg px-2 py-1.5 text-sm text-[#201D17]"
+                          className="flex-1 min-w-[180px] bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-1.5 text-sm text-tema-tinta"
                         />
                         <button
                           onClick={() => mutation.mutate({ itemId: registro.itemId, quantidade: Number(qtdBaixa), motivo: motivoBaixa })}
@@ -325,7 +325,7 @@ export function PorTecnicoTab() {
                         </button>
                         <button
                           onClick={() => setBaixandoItemId(null)}
-                          className="text-xs text-[#7A7266] hover:text-[#201D17] px-2"
+                          className="text-xs text-tema-suave hover:text-tema-tinta px-2"
                         >
                           Cancelar
                         </button>

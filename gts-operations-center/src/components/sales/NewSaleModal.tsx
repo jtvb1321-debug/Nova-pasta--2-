@@ -53,10 +53,10 @@ export function NewSaleModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold text-[#201D17]">Registrar Nova Venda</h2>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
+          <h2 className="text-lg font-semibold text-tema-tinta">Registrar Nova Venda</h2>
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -64,39 +64,39 @@ export function NewSaleModal({ onClose, onSuccess }: Props) {
         <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Nome do Cliente *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Nome do Cliente *</label>
               <input {...register('clienteNome')} placeholder="Nome completo" className="w-full gts-input" />
               {errors.clienteNome && <p className="text-xs text-red-700 mt-1">{errors.clienteNome.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">CPF / CNPJ</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">CPF / CNPJ</label>
               <input {...register('clienteCpfCnpj')} placeholder="000.000.000-00" className="w-full gts-input" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Telefone</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Telefone</label>
               <input {...register('telefone')} placeholder="(00) 00000-0000" className="w-full gts-input" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Cidade *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Cidade *</label>
               <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
               {errors.cidade && <p className="text-xs text-red-700 mt-1">{errors.cidade.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Bairro</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Bairro</label>
               <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Endereco</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Endereco</label>
               <input {...register('endereco')} placeholder="Rua, numero, complemento" className="w-full gts-input" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Plano Vendido *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Plano Vendido *</label>
               <select {...register('planoVendido')} className="w-full gts-input">
                 <option value="">Selecionar plano...</option>
                 {PLANOS.map(p => <option key={p} value={p}>{p}</option>)}
@@ -105,18 +105,18 @@ export function NewSaleModal({ onClose, onSuccess }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Valor (R$) *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Valor (R$) *</label>
               <input {...register('valor')} type="number" step="0.01" min="0" placeholder="0,00" className="w-full gts-input" />
               {errors.valor && <p className="text-xs text-red-700 mt-1">{errors.valor.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Data Prevista Instalacao</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Data Prevista Instalacao</label>
               <input {...register('dataInstalacao')} type="date" className="w-full gts-input" />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Observacoes</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Observacoes</label>
               <textarea {...register('observacoes')} rows={3} placeholder="Informacoes adicionais..." className="w-full gts-input resize-none" />
             </div>
           </div>

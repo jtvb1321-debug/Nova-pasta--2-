@@ -14,7 +14,7 @@ const TIPO_DESPESA_CFG: Record<string, { label: string; icon: any; cor: string }
   ALIMENTACAO:     { label: 'Alimentacao',       icon: UtensilsCrossed, cor: 'text-orange-700 bg-orange-500/10' },
   HOSPEDAGEM:      { label: 'Hospedagem',        icon: BedDouble,       cor: 'text-blue-700 bg-blue-500/10' },
   ALUGUEL_VEICULO: { label: 'Aluguel de Veiculo',icon: Car,             cor: 'text-purple-700 bg-purple-500/10' },
-  OUTRAS:          { label: 'Outras Despesas',   icon: Receipt,         cor: 'text-[#7A7266] bg-black/[0.03]' },
+  OUTRAS:          { label: 'Outras Despesas',   icon: Receipt,         cor: 'text-tema-suave bg-tema-contraste/[0.03]' },
 }
 
 async function fetchTeams() {
@@ -61,13 +61,13 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden shadow-sm shadow-black/[0.03]">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden shadow-sm shadow-tema-contraste/[0.03]">
 
         {/* Lista de equipes */}
-        <div className="w-64 flex-shrink-0 border-r border-[#E6E1D6] flex flex-col">
-          <div className="px-4 py-4 border-b border-[#E6E1D6]">
-            <h3 className="text-[#201D17] font-bold">Painel Admin</h3>
-            <p className="text-xs text-[#A69E8F]">Custos por equipe/veiculo</p>
+        <div className="w-64 flex-shrink-0 border-r border-tema-linha flex flex-col">
+          <div className="px-4 py-4 border-b border-tema-linha">
+            <h3 className="text-tema-tinta font-bold">Painel Admin</h3>
+            <p className="text-xs text-tema-apagado">Custos por equipe/veiculo</p>
           </div>
           <div className="flex-1 overflow-y-auto">
             {equipes.map((eq: any) => (
@@ -75,19 +75,19 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
                 key={eq.id}
                 onClick={() => setEquipeId(eq.id)}
                 className={cn(
-                  'w-full text-left px-4 py-3 border-b border-[#E6E1D6] transition-colors flex items-center justify-between gap-2',
-                  equipeId === eq.id ? 'bg-orange-500/10' : 'hover:bg-black/[0.02]'
+                  'w-full text-left px-4 py-3 border-b border-tema-linha transition-colors flex items-center justify-between gap-2',
+                  equipeId === eq.id ? 'bg-orange-500/10' : 'hover:bg-tema-contraste/[0.02]'
                 )}
               >
                 <div className="min-w-0">
-                  <p className={cn('text-sm font-medium truncate', equipeId === eq.id ? 'text-orange-700' : 'text-[#201D17]')}>
+                  <p className={cn('text-sm font-medium truncate', equipeId === eq.id ? 'text-orange-700' : 'text-tema-tinta')}>
                     {eq.nome}
                   </p>
                   {eq.veiculo && (
-                    <p className="text-xs text-[#A69E8F] font-mono truncate">{eq.veiculo.placa}</p>
+                    <p className="text-xs text-tema-apagado font-mono truncate">{eq.veiculo.placa}</p>
                   )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#A69E8F] flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-tema-apagado flex-shrink-0" />
               </button>
             ))}
           </div>
@@ -95,35 +95,35 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
 
         {/* Conteudo */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha flex-shrink-0">
             <div>
               {relatorio ? (
                 <>
-                  <h3 className="text-lg font-semibold text-[#201D17]">{relatorio.equipe.nome}</h3>
+                  <h3 className="text-lg font-semibold text-tema-tinta">{relatorio.equipe.nome}</h3>
                   {relatorio.veiculo && (
-                    <p className="text-xs text-[#A69E8F] flex items-center gap-1.5">
+                    <p className="text-xs text-tema-apagado flex items-center gap-1.5">
                       <Truck className="w-3.5 h-3.5" />
                       {relatorio.veiculo.modelo} - {relatorio.veiculo.placa}
                     </p>
                   )}
                 </>
               ) : (
-                <p className="text-[#A69E8F] text-sm">Selecione uma equipe ao lado</p>
+                <p className="text-tema-apagado text-sm">Selecione uma equipe ao lado</p>
               )}
             </div>
-            <Link href="/escala" className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.02] hover:bg-purple-500/10 rounded-lg text-xs text-[#7A7266] hover:text-purple-700 transition-colors">
+            <Link href="/escala" className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.02] hover:bg-purple-500/10 rounded-lg text-xs text-tema-suave hover:text-purple-700 transition-colors">
               <CalendarDays className="w-3.5 h-3.5" />
               Escala de Trabalho
             </Link>
-            <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17]">
+            <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {!equipeId ? (
-              <div className="text-center py-20 text-[#A69E8F]">
-                <Truck className="w-10 h-10 mx-auto mb-3 text-[#D8D2C3]" />
+              <div className="text-center py-20 text-tema-apagado">
+                <Truck className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
                 Escolha uma equipe para ver o relatorio completo
               </div>
             ) : isLoading ? (
@@ -134,52 +134,52 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
               <>
                 {/* Totais */}
                 <div className="grid grid-cols-6 gap-3">
-                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 text-center">
+                  <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 text-center">
                     <Fuel className="w-4 h-4 text-blue-700 mx-auto mb-1" />
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(relatorio.totais.abastecimento)}</p>
-                    <p className="text-xs text-[#A69E8F]">Combustivel</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(relatorio.totais.abastecimento)}</p>
+                    <p className="text-xs text-tema-apagado">Combustivel</p>
                   </div>
-                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 text-center">
+                  <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 text-center">
                     <UtensilsCrossed className="w-4 h-4 text-orange-600 mx-auto mb-1" />
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(relatorio.totais.alimentacao)}</p>
-                    <p className="text-xs text-[#A69E8F]">Alimentacao</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(relatorio.totais.alimentacao)}</p>
+                    <p className="text-xs text-tema-apagado">Alimentacao</p>
                   </div>
-                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 text-center">
+                  <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 text-center">
                     <BedDouble className="w-4 h-4 text-blue-700 mx-auto mb-1" />
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(relatorio.totais.hospedagem)}</p>
-                    <p className="text-xs text-[#A69E8F]">Hospedagem</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(relatorio.totais.hospedagem)}</p>
+                    <p className="text-xs text-tema-apagado">Hospedagem</p>
                   </div>
-                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 text-center">
+                  <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 text-center">
                     <Car className="w-4 h-4 text-purple-700 mx-auto mb-1" />
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(relatorio.totais.aluguel)}</p>
-                    <p className="text-xs text-[#A69E8F]">Aluguel</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(relatorio.totais.aluguel)}</p>
+                    <p className="text-xs text-tema-apagado">Aluguel</p>
                   </div>
-                  <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 text-center">
-                    <Receipt className="w-4 h-4 text-[#7A7266] mx-auto mb-1" />
-                    <p className="text-sm font-bold text-[#201D17]">{formatCurrency(relatorio.totais.outras)}</p>
-                    <p className="text-xs text-[#A69E8F]">Outras</p>
+                  <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 text-center">
+                    <Receipt className="w-4 h-4 text-tema-suave mx-auto mb-1" />
+                    <p className="text-sm font-bold text-tema-tinta">{formatCurrency(relatorio.totais.outras)}</p>
+                    <p className="text-xs text-tema-apagado">Outras</p>
                   </div>
                   <div className="bg-emerald-500/10 rounded-xl p-3 text-center border border-emerald-500/25">
                     <DollarSign className="w-4 h-4 text-emerald-700 mx-auto mb-1" />
                     <p className="text-sm font-bold text-emerald-700">{formatCurrency(relatorio.totais.geral)}</p>
-                    <p className="text-xs text-[#A69E8F]">Total Geral</p>
+                    <p className="text-xs text-tema-apagado">Total Geral</p>
                   </div>
                 </div>
 
                 {/* Estoque do veiculo */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[#201D17] mb-2 flex items-center gap-1.5">
-                    <Package className="w-4 h-4 text-[#7A7266]" />
+                  <h4 className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5">
+                    <Package className="w-4 h-4 text-tema-suave" />
                     Estoque do Veiculo ({relatorio.estoque.length})
                   </h4>
                   {relatorio.estoque.length === 0 ? (
-                    <p className="text-xs text-[#A69E8F]">Nenhum item no carro</p>
+                    <p className="text-xs text-tema-apagado">Nenhum item no carro</p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       {relatorio.estoque.map((e: any) => (
-                        <div key={e.id} className="flex items-center justify-between bg-black/[0.02] border border-[#E6E1D6] rounded-lg px-3 py-2 text-sm">
-                          <span className="text-[#7A7266] truncate">{e.item.descricao}</span>
-                          <span className="text-[#201D17] font-mono font-bold ml-2 flex-shrink-0">{e.quantidade} {e.item.unidade}</span>
+                        <div key={e.id} className="flex items-center justify-between bg-tema-contraste/[0.02] border border-tema-linha rounded-lg px-3 py-2 text-sm">
+                          <span className="text-tema-suave truncate">{e.item.descricao}</span>
+                          <span className="text-tema-tinta font-mono font-bold ml-2 flex-shrink-0">{e.quantidade} {e.item.unidade}</span>
                         </div>
                       ))}
                     </div>
@@ -188,24 +188,24 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
 
                 {/* Abastecimentos */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[#201D17] mb-2 flex items-center gap-1.5">
-                    <Fuel className="w-4 h-4 text-[#7A7266]" />
+                  <h4 className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5">
+                    <Fuel className="w-4 h-4 text-tema-suave" />
                     Historico de Abastecimento ({relatorio.abastecimentos.length})
                   </h4>
                   {relatorio.abastecimentos.length === 0 ? (
-                    <p className="text-xs text-[#A69E8F]">Nenhum abastecimento registrado</p>
+                    <p className="text-xs text-tema-apagado">Nenhum abastecimento registrado</p>
                   ) : (
                     <div className="space-y-2">
                       {relatorio.abastecimentos.slice(0, 10).map((a: any) => (
-                        <div key={a.id} className="flex items-center gap-3 bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-2.5">
+                        <div key={a.id} className="flex items-center gap-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-2.5">
                           <img src={a.fotoComprovante} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-[#201D17]">{a.litros}L - {formatCurrency(a.valor)}</p>
-                            <p className="text-xs text-[#A69E8F]">{formatDateTime(a.data)}</p>
+                            <p className="text-sm text-tema-tinta">{a.litros}L - {formatCurrency(a.valor)}</p>
+                            <p className="text-xs text-tema-apagado">{formatDateTime(a.data)}</p>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            <a href={a.fotoComprovante} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[#7A7266] hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors" title="Ver evidencia"><Eye className="w-4 h-4" /></a>
-                            <a href={a.fotoComprovante} download className="p-1.5 text-[#7A7266] hover:text-emerald-700 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Baixar evidencia"><Download className="w-4 h-4" /></a>
+                            <a href={a.fotoComprovante} target="_blank" rel="noopener noreferrer" className="p-1.5 text-tema-suave hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors" title="Ver evidencia"><Eye className="w-4 h-4" /></a>
+                            <a href={a.fotoComprovante} download className="p-1.5 text-tema-suave hover:text-emerald-700 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Baixar evidencia"><Download className="w-4 h-4" /></a>
                           </div>
                         </div>
                       ))}
@@ -215,19 +215,19 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
 
                 {/* Despesas com aprovacao */}
                 <div>
-                  <h4 className="text-sm font-semibold text-[#201D17] mb-2 flex items-center gap-1.5">
-                    <DollarSign className="w-4 h-4 text-[#7A7266]" />
+                  <h4 className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5">
+                    <DollarSign className="w-4 h-4 text-tema-suave" />
                     Despesas (Alimentacao / Hospedagem / Aluguel) ({relatorio.despesas.length})
                   </h4>
                   {relatorio.despesas.length === 0 ? (
-                    <p className="text-xs text-[#A69E8F]">Nenhuma despesa registrada</p>
+                    <p className="text-xs text-tema-apagado">Nenhuma despesa registrada</p>
                   ) : (
                     <div className="space-y-2">
                       {relatorio.despesas.map((d: any) => {
                         const cfg = TIPO_DESPESA_CFG[d.tipo]
                         const Icon = cfg?.icon
                         return (
-                          <div key={d.id} className="flex items-center gap-3 bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3">
+                          <div key={d.id} className="flex items-center gap-3 bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-3">
                             <img src={d.fotoComprovante} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-0.5">
@@ -251,12 +251,12 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-[#201D17]">{d.valor ? formatCurrency(d.valor) : 'Sem valor informado'}</p>
-                              <p className="text-xs text-[#A69E8F]">{formatDateTime(d.data)} - {d.registradoPor}</p>
+                              <p className="text-sm text-tema-tinta">{d.valor ? formatCurrency(d.valor) : 'Sem valor informado'}</p>
+                              <p className="text-xs text-tema-apagado">{formatDateTime(d.data)} - {d.registradoPor}</p>
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <a href={d.fotoComprovante} target="_blank" rel="noopener noreferrer" className="p-2 text-[#7A7266] hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors" title="Ver evidencia"><Eye className="w-4 h-4" /></a>
-                              <a href={d.fotoComprovante} download className="p-2 text-[#7A7266] hover:text-emerald-700 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Baixar evidencia"><Download className="w-4 h-4" /></a>
+                              <a href={d.fotoComprovante} target="_blank" rel="noopener noreferrer" className="p-2 text-tema-suave hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors" title="Ver evidencia"><Eye className="w-4 h-4" /></a>
+                              <a href={d.fotoComprovante} download className="p-2 text-tema-suave hover:text-emerald-700 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Baixar evidencia"><Download className="w-4 h-4" /></a>
                               {d.status === "PENDENTE" && (
                                 <>
                                   <button

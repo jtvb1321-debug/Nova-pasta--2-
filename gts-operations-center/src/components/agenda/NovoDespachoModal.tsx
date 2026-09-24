@@ -187,10 +187,10 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">
               {eace
@@ -199,13 +199,13 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               }
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#201D17]">{eace ? 'Novo Despacho EACE' : 'Novo Despacho NOC'}</h2>
-              <p className="text-xs text-[#A69E8F]">
+              <h2 className="text-lg font-semibold text-tema-tinta">{eace ? 'Novo Despacho EACE' : 'Novo Despacho NOC'}</h2>
+              <p className="text-xs text-tema-apagado">
                 {eace ? 'Chamado de escola - sera enviado diretamente para a equipe' : 'O chamado sera enviado diretamente para a equipe'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] transition-colors p-2 -m-2 rounded-lg hover:bg-black/[0.04] flex-shrink-0">
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta transition-colors p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -215,19 +215,19 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Toggle EACE */}
           <label className={cn(
             'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-            eace ? 'border-orange-500/40 bg-orange-500/10' : 'border-[#D8D2C3] bg-black/[0.02] hover:border-orange-500/30'
+            eace ? 'border-orange-500/40 bg-orange-500/10' : 'border-tema-linha-forte bg-tema-contraste/[0.02] hover:border-orange-500/30'
           )}>
             <input {...register('eace')} type="checkbox" className="w-4 h-4 accent-orange-500" />
-            <GraduationCap className={cn('w-4 h-4 flex-shrink-0', eace ? 'text-orange-600' : 'text-[#A69E8F]')} />
+            <GraduationCap className={cn('w-4 h-4 flex-shrink-0', eace ? 'text-orange-600' : 'text-tema-apagado')} />
             <div>
-              <p className="text-sm font-medium text-[#3F3A32]">Chamado EACE (escola)</p>
-              <p className="text-xs text-[#A69E8F]">Marque se este chamado e de uma escola do contrato EACE</p>
+              <p className="text-sm font-medium text-tema-texto">Chamado EACE (escola)</p>
+              <p className="text-xs text-tema-apagado">Marque se este chamado e de uma escola do contrato EACE</p>
             </div>
           </label>
 
           {/* Prioridade */}
           <div>
-            <label className="block text-sm font-medium text-[#3F3A32] mb-2">Prioridade</label>
+            <label className="block text-sm font-medium text-tema-texto mb-2">Prioridade</label>
             <div className="grid grid-cols-3 gap-2">
               {(['NORMAL', 'URGENTE', 'CRITICO'] as const).map(p => (
                 <label key={p} className="cursor-pointer">
@@ -247,14 +247,14 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-[#3F3A32] mb-2">Tipo de Atividade *</label>
+            <label className="block text-sm font-medium text-tema-texto mb-2">Tipo de Atividade *</label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(tipo => (
                 <label key={tipo} className="cursor-pointer">
                   <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
-                  <div className="px-3 py-2 text-xs text-center font-medium border border-[#D8D2C3] rounded-lg
+                  <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha-forte rounded-lg
                                   peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                  text-[#7A7266] hover:border-[#A69E8F] transition-colors">
+                                  text-tema-suave hover:border-tema-apagado transition-colors">
                     {TIPO_CHAMADO_LABELS[tipo]}
                   </div>
                 </label>
@@ -263,7 +263,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           </div>
           {(watch('tipo') === 'MANUTENCAO' || watch('tipo') === 'SUPORTE') && (
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-2">Detalhe da Solicitacao</label>
+              <label className="block text-sm font-medium text-tema-texto mb-2">Detalhe da Solicitacao</label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {(watch('tipo') === 'MANUTENCAO'
                   ? ['Lentidao', 'Oscilacao', 'Problemas de conexao']
@@ -271,9 +271,9 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 ).map((opcao) => (
                   <label key={opcao} className="cursor-pointer">
                     <input {...register('subCategoria')} type="radio" value={opcao} className="sr-only peer" />
-                    <div className="px-3 py-2 text-xs text-center font-medium border border-[#D8D2C3] rounded-lg
+                    <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha-forte rounded-lg
                                     peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                    text-[#7A7266] hover:border-[#A69E8F] transition-colors">
+                                    text-tema-suave hover:border-tema-apagado transition-colors">
                       {opcao}
                     </div>
                   </label>
@@ -285,7 +285,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Cliente */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">
                 {eace
                   ? <GraduationCap className="w-3.5 h-3.5 inline mr-1" />
                   : <Phone className="w-3.5 h-3.5 inline mr-1" />
@@ -311,7 +311,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                   className="w-full gts-input pr-8"
                 />
                 {!eace && buscandoClientes && (
-                  <Loader2 className="w-3.5 h-3.5 text-[#A69E8F] animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                  <Loader2 className="w-3.5 h-3.5 text-tema-apagado animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
                 )}
                 {!eace && !buscandoClientes && clienteVinculado && (
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-1/2 -translate-y-1/2" />
@@ -333,19 +333,19 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               {!eace && mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
                 <div
                   onMouseDown={(e) => e.preventDefault()}
-                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-[#E6E1D6] rounded-lg shadow-xl"
+                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-tema-superficie border border-tema-linha rounded-lg shadow-xl"
                 >
                   {sugestoesClientes.slice(0, 8).map((c: any) => (
                     <button
                       type="button"
                       key={c.id}
                       onClick={() => selecionarClienteIxc(c)}
-                      className="w-full text-left px-3 py-2 hover:bg-black/[0.03] transition-colors border-b border-[#E6E1D6] last:border-b-0 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 hover:bg-tema-contraste/[0.03] transition-colors border-b border-tema-linha last:border-b-0 flex items-center gap-2"
                     >
-                      <Search className="w-3.5 h-3.5 text-[#A69E8F] flex-shrink-0" />
+                      <Search className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm text-[#201D17] truncate">{c.nome}</p>
-                        <p className="text-xs text-[#A69E8F] truncate">
+                        <p className="text-sm text-tema-tinta truncate">{c.nome}</p>
+                        <p className="text-xs text-tema-apagado truncate">
                           {[c.cpfCnpj, c.telefone, c.cidade].filter(Boolean).join(' - ') || 'Sem dados adicionais'}
                         </p>
                       </div>
@@ -355,7 +355,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Telefone</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Telefone</label>
               <input {...register('telefone')} placeholder="(00) 00000-0000" className="w-full gts-input" />
             </div>
           </div>
@@ -364,15 +364,15 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {!eace && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Condominio</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Condominio</label>
                 <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Bloco</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Bloco</label>
                 <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Apartamento</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Apartamento</label>
                 <input {...register('apartamento')} placeholder="Apartamento" className="w-full gts-input" />
               </div>
             </div>
@@ -382,11 +382,11 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {eace && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Responsavel pela Escola</label>
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">Responsavel pela Escola</label>
                 <input {...register('escolaResponsavel')} placeholder="Nome do responsavel/diretor(a)" className="w-full gts-input" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+                <label className="block text-sm font-medium text-tema-texto mb-1.5">
                   <Hash className="w-3.5 h-3.5 inline mr-1" />
                   Codigo INEP
                 </label>
@@ -398,12 +398,12 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* CEP / Endereco / Numero */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">CEP *</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">CEP *</label>
               <input {...register('cep')} placeholder="00000-000" className="w-full gts-input" />
               {errors.cep && <p className="text-xs text-red-700 mt-1">{errors.cep.message}</p>}
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">
                 <MapPin className="w-3.5 h-3.5 inline mr-1" />
                 Endereco *
               </label>
@@ -411,7 +411,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               {errors.endereco && <p className="text-xs text-red-700 mt-1">{errors.endereco.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Numero *</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Numero *</label>
               <input {...register('numero')} placeholder="Numero" className="w-full gts-input" />
               {errors.numero && <p className="text-xs text-red-700 mt-1">{errors.numero.message}</p>}
             </div>
@@ -420,11 +420,11 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Complemento / Bairro */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Complemento</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Complemento</label>
               <input {...register('complemento')} placeholder="Complemento" className="w-full gts-input" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Bairro *</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Bairro *</label>
               <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
               {errors.bairro && <p className="text-xs text-red-700 mt-1">{errors.bairro.message}</p>}
             </div>
@@ -433,12 +433,12 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Cidade / UF */}
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Cidade *</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Cidade *</label>
               <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
               {errors.cidade && <p className="text-xs text-red-700 mt-1">{errors.cidade.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">UF</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">UF</label>
               <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
             </div>
           </div>
@@ -446,25 +446,25 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Localizacao (apenas EACE) */}
           {eace && (
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">
                 <Link2 className="w-3.5 h-3.5 inline mr-1" />
                 Link do Google Maps
               </label>
               <input {...register('localizacaoLink')} placeholder="Cole aqui o link compartilhado do Google Maps" className="w-full gts-input" />
-              <p className="text-xs text-[#A69E8F] mt-1">As coordenadas sao extraidas automaticamente do link, quando possivel.</p>
+              <p className="text-xs text-tema-apagado mt-1">As coordenadas sao extraidas automaticamente do link, quando possivel.</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">
                 <Clock className="w-3.5 h-3.5 inline mr-1" />
                 Data Agendada
               </label>
               <input {...register('dataAgendada')} type="date" className="w-full gts-input" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">Hora</label>
+              <label className="block text-sm font-medium text-tema-texto mb-1.5">Hora</label>
               <input {...register('horaAgendada')} type="time" className="w-full gts-input" />
             </div>
           </div>
@@ -489,7 +489,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Equipe */}
           <div>
-            <label className="block text-sm font-medium text-[#3F3A32] mb-2">
+            <label className="block text-sm font-medium text-tema-texto mb-2">
               <Users className="w-3.5 h-3.5 inline mr-1" />
               Equipe Responsavel *
             </label>
@@ -530,7 +530,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Observacao / Solicitacao */}
           <div>
-            <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+            <label className="block text-sm font-medium text-tema-texto mb-1.5">
               {eace ? 'Informacoes passadas pelo cliente' : 'Solicitacao / Observacoes *'}
             </label>
             <textarea
@@ -546,7 +546,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Upload O.S PDF */}
           <div>
-            <label className="block text-sm font-medium text-[#3F3A32] mb-1.5">
+            <label className="block text-sm font-medium text-tema-texto mb-1.5">
               <FileText className="w-3.5 h-3.5 inline mr-1" />
               Ordem de Servico (PDF)
             </label>
@@ -563,7 +563,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 'w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg cursor-pointer transition-all',
                 arquivoPDF
                   ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-[#D8D2C3] bg-black/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
+                  : 'border-tema-linha-forte bg-tema-contraste/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
               )}
             >
               <div className={cn(
@@ -579,12 +579,12 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 {arquivoPDF ? (
                   <>
                     <p className="text-sm text-emerald-700 font-medium">{arquivoPDF.name}</p>
-                    <p className="text-xs text-[#A69E8F]">{(arquivoPDF.size / 1024).toFixed(0)} KB</p>
+                    <p className="text-xs text-tema-apagado">{(arquivoPDF.size / 1024).toFixed(0)} KB</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-[#3F3A32]">Clique para anexar a O.S</p>
-                    <p className="text-xs text-[#A69E8F]">O PDF sera enviado junto com o chamado para a equipe</p>
+                    <p className="text-sm text-tema-texto">Clique para anexar a O.S</p>
+                    <p className="text-xs text-tema-apagado">O PDF sera enviado junto com o chamado para a equipe</p>
                   </>
                 )}
               </div>
@@ -592,7 +592,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 <button
                   type="button"
                   onClick={e => { e.preventDefault(); setArquivoPDF(null) }}
-                  className="text-[#A69E8F] hover:text-red-700 transition-colors"
+                  className="text-tema-apagado hover:text-red-700 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -603,7 +603,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           {/* Materiais */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-[#3F3A32] flex items-center gap-1.5">
+              <label className="text-sm font-medium text-tema-texto flex items-center gap-1.5">
                 <Package className="w-4 h-4" />
                 Materiais a Enviar com a Equipe
               </label>
@@ -624,18 +624,18 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
             {materiais.length > 0 ? (
               <div className="space-y-2">
                 {materiais.map(m => (
-                  <div key={m.itemId} className="flex items-center gap-3 p-2.5 bg-black/[0.02] rounded-lg border border-[#E6E1D6]">
-                    <span className="flex-1 text-sm text-[#3F3A32] truncate">{m.descricao}</span>
+                  <div key={m.itemId} className="flex items-center gap-3 p-2.5 bg-tema-contraste/[0.02] rounded-lg border border-tema-linha">
+                    <span className="flex-1 text-sm text-tema-texto truncate">{m.descricao}</span>
                     <input
                       type="number" min={0.01} step={0.01} value={m.quantidade}
                       onChange={e => atualizarQtd(m.itemId, Number(e.target.value))}
                       className="w-20 gts-input py-1 text-center text-sm"
                     />
-                    <span className="text-xs text-[#A69E8F] w-8">{m.unidade}</span>
+                    <span className="text-xs text-tema-apagado w-8">{m.unidade}</span>
                     <button
                       type="button"
                       onClick={() => removerMaterial(m.itemId)}
-                      className="text-[#A69E8F] hover:text-red-700 transition-colors"
+                      className="text-tema-apagado hover:text-red-700 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -643,7 +643,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-[#A69E8F] text-center py-3 border border-dashed border-[#D8D2C3] rounded-lg">
+              <p className="text-xs text-tema-apagado text-center py-3 border border-dashed border-tema-linha-forte rounded-lg">
                 Nenhum material selecionado
               </p>
             )}
@@ -666,7 +666,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                prioridade === 'URGENTE' ? 'Despacho Urgente' :
                'Despacho Normal'}
             </p>
-            <p className="text-xs text-[#7A7266]">
+            <p className="text-xs text-tema-suave">
               Ao confirmar, o chamado sera criado e a equipe selecionada mudara automaticamente para status
               <span className="text-amber-700 font-medium"> Em Deslocamento</span>.
               {arquivoPDF && <span className="text-emerald-700"> A O.S em PDF sera anexada.</span>}

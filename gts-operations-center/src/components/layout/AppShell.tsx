@@ -27,7 +27,7 @@ export function AppShell({ children, title }: AppShellProps) {
   })
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
+    <div className="flex h-screen overflow-hidden bg-tema-fundo">
       <Sidebar />
       <div className="relative flex-1 flex flex-col overflow-hidden min-w-0">
         <div className="relative z-10">

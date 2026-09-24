@@ -9,7 +9,7 @@ const MESES = [
 ]
 
 const TIPO_CFG: Record<string, { label: string; cor: string; bg: string; dot: string }> = {
-  TRABALHO:       { label: 'Trabalho',       cor: 'text-[#3F3A32]',   bg: 'bg-black/[0.03]',            dot: 'bg-[#A69E8F]' },
+  TRABALHO:       { label: 'Trabalho',       cor: 'text-tema-texto',   bg: 'bg-tema-contraste/[0.03]',            dot: 'bg-tema-apagado' },
   FOLGA:          { label: 'Folga',          cor: 'text-blue-700',   bg: 'bg-blue-500/10',         dot: 'bg-blue-500' },
   PLANTAO_SABADO: { label: 'Plantao Sabado', cor: 'text-orange-700', bg: 'bg-orange-500/10',       dot: 'bg-orange-500' },
 }
@@ -46,7 +46,7 @@ export function EscalaCalendarGrid({ mes, ano, escalas, modoTodasEquipes, onDiaC
     <div>
       <div className="grid grid-cols-7 gap-1 mb-1">
         {DIAS_SEMANA.map(d => (
-          <div key={d} className="text-center text-xs font-medium text-[#7A7266] py-1">{d}</div>
+          <div key={d} className="text-center text-xs font-medium text-tema-suave py-1">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -63,10 +63,10 @@ export function EscalaCalendarGrid({ mes, ano, escalas, modoTodasEquipes, onDiaC
                 key={chave}
                 className={cn(
                   'min-h-[70px] rounded-lg p-1.5 border',
-                  ehHoje ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#E6E1D6] bg-black/[0.02]'
+                  ehHoje ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha bg-tema-contraste/[0.02]'
                 )}
               >
-                <p className={cn('text-xs font-medium mb-1', ehSabado ? 'text-orange-700' : 'text-[#7A7266]')}>{data.getDate()}</p>
+                <p className={cn('text-xs font-medium mb-1', ehSabado ? 'text-orange-700' : 'text-tema-suave')}>{data.getDate()}</p>
                 <div className="space-y-0.5">
                   {eventosDoDia.slice(0, 3).map((e: any) => {
                     const cfg = TIPO_CFG[e.tipo] || TIPO_CFG.TRABALHO
@@ -77,7 +77,7 @@ export function EscalaCalendarGrid({ mes, ano, escalas, modoTodasEquipes, onDiaC
                     )
                   })}
                   {eventosDoDia.length > 3 && (
-                    <p className="text-[10px] text-[#A69E8F]">+{eventosDoDia.length - 3}</p>
+                    <p className="text-[10px] text-tema-apagado">+{eventosDoDia.length - 3}</p>
                   )}
                 </div>
               </div>
@@ -94,12 +94,12 @@ export function EscalaCalendarGrid({ mes, ano, escalas, modoTodasEquipes, onDiaC
               disabled={!onDiaClick}
               className={cn(
                 'min-h-[64px] rounded-lg p-1.5 border flex flex-col items-center justify-center gap-1 transition-colors',
-                cfg ? cfg.bg : 'bg-black/[0.02]',
-                ehHoje ? 'border-orange-500/40' : 'border-[#E6E1D6]',
+                cfg ? cfg.bg : 'bg-tema-contraste/[0.02]',
+                ehHoje ? 'border-orange-500/40' : 'border-tema-linha',
                 onDiaClick && 'hover:border-orange-500/30 cursor-pointer'
               )}
             >
-              <p className={cn('text-xs font-medium', ehSabado ? 'text-orange-700' : 'text-[#7A7266]')}>{data.getDate()}</p>
+              <p className={cn('text-xs font-medium', ehSabado ? 'text-orange-700' : 'text-tema-suave')}>{data.getDate()}</p>
               {cfg && <span className={cn('text-[10px] font-medium', cfg.cor)}>{cfg.label}</span>}
             </button>
           )

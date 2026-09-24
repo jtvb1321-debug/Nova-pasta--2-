@@ -90,7 +90,7 @@ export function PontoCalendarView() {
           <button onClick={() => trocarMes(-1)} className="gts-btn-secondary py-1.5 px-2">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <p className="text-lg font-bold text-[#201D17] w-40 text-center">{MESES[mes - 1]} {ano}</p>
+          <p className="text-lg font-bold text-tema-tinta w-40 text-center">{MESES[mes - 1]} {ano}</p>
           <button onClick={() => trocarMes(1)} className="gts-btn-secondary py-1.5 px-2">
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -103,7 +103,7 @@ export function PontoCalendarView() {
           ))}
         </select>
 
-        <div className="flex items-center gap-3 text-xs text-[#7A7266] flex-wrap">
+        <div className="flex items-center gap-3 text-xs text-tema-suave flex-wrap">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             Completo
@@ -113,13 +113,13 @@ export function PontoCalendarView() {
             Parcial
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full border border-dashed border-[#A69E8F]" />
+            <span className="w-2.5 h-2.5 rounded-full border border-dashed border-tema-apagado" />
             Sem registro
           </span>
         </div>
       </div>
 
-      <p className="text-xs text-[#A69E8F]">Clique num dia para lançar ou corrigir o ponto de todas as equipes/tecnicos daquele dia de uma vez.</p>
+      <p className="text-xs text-tema-apagado">Clique num dia para lançar ou corrigir o ponto de todas as equipes/tecnicos daquele dia de uma vez.</p>
 
       {isLoading ? (
         <div className="h-96 skeleton rounded-xl" />
@@ -127,7 +127,7 @@ export function PontoCalendarView() {
         <div className="gts-card p-3">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DIAS_SEMANA.map(d => (
-              <div key={d} className="text-center text-xs font-bold text-[#7A7266] py-1">{d}</div>
+              <div key={d} className="text-center text-xs font-bold text-tema-suave py-1">{d}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
@@ -143,8 +143,8 @@ export function PontoCalendarView() {
 
               // Domingo nao conta como dia de trabalho esperado - fica sempre neutro,
               // nao entra na contagem de completo/parcial.
-              let corBg = ehDomingo ? 'bg-black/[0.015] border-[#E6E1D6]' : ehSabado ? 'bg-black/[0.02] border-dashed border-[#E6E1D6]' : 'bg-transparent border-dashed border-[#E6E1D6]'
-              let corTexto = ehDomingo ? 'text-[#A69E8F]' : ehSabado ? 'text-[#7A7266]' : 'text-[#A69E8F]'
+              let corBg = ehDomingo ? 'bg-tema-contraste/[0.015] border-tema-linha' : ehSabado ? 'bg-tema-contraste/[0.02] border-dashed border-tema-linha' : 'bg-transparent border-dashed border-tema-linha'
+              let corTexto = ehDomingo ? 'text-tema-apagado' : ehSabado ? 'text-tema-suave' : 'text-tema-apagado'
               if (!ehDomingo && tudoCompleto) { corBg = 'bg-emerald-500/15 border-emerald-500/30'; corTexto = 'text-emerald-700' }
               else if (!ehDomingo && temAlgum) { corBg = 'bg-amber-500/15 border-amber-500/30'; corTexto = 'text-amber-700' }
 
@@ -159,7 +159,7 @@ export function PontoCalendarView() {
                   )}
                 >
                   <span className={cn('text-xs font-bold', corTexto)}>{dia.getDate()}</span>
-                  {!ehDomingo && temAlgum && <span className="text-[10px] text-[#A69E8F]">{completos}/{totalFuncionarios || registrosDia.length}</span>}
+                  {!ehDomingo && temAlgum && <span className="text-[10px] text-tema-apagado">{completos}/{totalFuncionarios || registrosDia.length}</span>}
                 </button>
               )
             })}
@@ -170,18 +170,18 @@ export function PontoCalendarView() {
       <div className="gts-card">
         <div className="flex items-center gap-2 mb-3">
           <Clock className="w-4 h-4 text-orange-600" />
-          <h3 className="text-sm font-semibold text-[#201D17]">Horas do mes por tecnico</h3>
-          <span className="text-xs text-[#A69E8F]">{MESES[mes - 1]} {ano}{equipeId ? ` - ${equipes.find((eq: any) => eq.id === equipeId)?.nome ?? ''}` : ''}</span>
+          <h3 className="text-sm font-semibold text-tema-tinta">Horas do mes por tecnico</h3>
+          <span className="text-xs text-tema-apagado">{MESES[mes - 1]} {ano}{equipeId ? ` - ${equipes.find((eq: any) => eq.id === equipeId)?.nome ?? ''}` : ''}</span>
         </div>
         {resumoMes.length === 0 ? (
-          <p className="text-sm text-[#A69E8F] py-4 text-center">Nenhum registro de ponto neste mes</p>
+          <p className="text-sm text-tema-apagado py-4 text-center">Nenhum registro de ponto neste mes</p>
         ) : (
           <div className="space-y-1.5">
             {resumoMes.map((r: any) => (
-              <div key={r.funcionarioId} className="flex items-center justify-between gap-3 py-2 px-3 bg-black/[0.02] rounded-lg">
+              <div key={r.funcionarioId} className="flex items-center justify-between gap-3 py-2 px-3 bg-tema-contraste/[0.02] rounded-lg">
                 <div className="min-w-0">
-                  <p className="text-sm text-[#201D17] font-medium truncate">{r.nome}</p>
-                  <p className="text-xs text-[#A69E8F]">
+                  <p className="text-sm text-tema-tinta font-medium truncate">{r.nome}</p>
+                  <p className="text-xs text-tema-apagado">
                     {r.equipeNome} - {r.dias} dia(s) registrado(s)
                     {r.sabadosTrabalhados > 0 && <span className="text-blue-700"> - {r.sabadosTrabalhados} sabado(s)</span>}
                     {r.faltas > 0 && <span className="text-red-700"> - {r.faltas} falta(s)</span>}
@@ -192,12 +192,12 @@ export function PontoCalendarView() {
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0 text-right">
                   <div>
-                    <p className="text-sm font-bold text-[#201D17]">{formatarHorasHM(r.horasTrabalhadas)}</p>
-                    <p className="text-xs text-[#A69E8F]">trabalhadas</p>
+                    <p className="text-sm font-bold text-tema-tinta">{formatarHorasHM(r.horasTrabalhadas)}</p>
+                    <p className="text-xs text-tema-apagado">trabalhadas</p>
                   </div>
                   <div>
-                    <p className={cn('text-sm font-bold', r.horasExtras > 0 ? 'text-amber-700' : 'text-[#A69E8F]')}>{formatarHorasHM(r.horasExtras)}</p>
-                    <p className="text-xs text-[#A69E8F]">extras</p>
+                    <p className={cn('text-sm font-bold', r.horasExtras > 0 ? 'text-amber-700' : 'text-tema-apagado')}>{formatarHorasHM(r.horasExtras)}</p>
+                    <p className="text-xs text-tema-apagado">extras</p>
                   </div>
                 </div>
               </div>

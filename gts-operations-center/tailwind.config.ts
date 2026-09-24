@@ -61,6 +61,22 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Cores neutras do sistema com versao clara e escura (tema claro/escuro).
+        // Os valores do tema claro sao os mesmos hex usados antes em todo o
+        // sistema; os do escuro ficam em globals.css (html.dark).
+        tema: {
+          tinta: 'rgb(var(--c-tinta) / <alpha-value>)', // #201D17 - titulos, texto forte
+          texto: 'rgb(var(--c-texto) / <alpha-value>)', // #3F3A32 - texto corrido
+          suave: 'rgb(var(--c-suave) / <alpha-value>)', // #7A7266 - texto secundario
+          apagado: 'rgb(var(--c-apagado) / <alpha-value>)', // #A69E8F - texto terciario, datas
+          linha: 'rgb(var(--c-linha) / <alpha-value>)', // #E6E1D6 - bordas
+          'linha-forte': 'rgb(var(--c-linha-forte) / <alpha-value>)', // #D8D2C3 - bordas de campos
+          fundo: 'rgb(var(--c-fundo) / <alpha-value>)', // #FAF9F6 - fundo das paginas
+          'fundo-2': 'rgb(var(--c-fundo-2) / <alpha-value>)', // #FCFBF8 - fundo de campos
+          superficie: 'rgb(var(--c-superficie) / <alpha-value>)', // branco - cartoes, menus, modais
+          contraste: 'rgb(var(--c-contraste) / <alpha-value>)', // preto - sombras e realces leves
+          'laranja-suave': 'rgb(var(--c-laranja-suave) / <alpha-value>)', // #FDEDDD
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

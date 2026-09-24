@@ -54,7 +54,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-[#A69E8F]" />
+        <Loader2 className="w-6 h-6 animate-spin text-tema-apagado" />
       </div>
     )
   }
@@ -94,29 +94,29 @@ export function SmartOLTView({ podeAprovar }: Props) {
         <div className="gts-card">
           <div className="flex items-center gap-2 mb-4">
             <Radio className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-semibold text-[#201D17]">Network At-a-Glance</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Network At-a-Glance</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-              <p className="text-xs text-[#7A7266]">Online</p>
-              <p className="text-xl font-bold text-emerald-700">{status.online} <span className="text-xs text-[#A69E8F]">/ {totalClientes}</span></p>
+              <p className="text-xs text-tema-suave">Online</p>
+              <p className="text-xl font-bold text-emerald-700">{status.online} <span className="text-xs text-tema-apagado">/ {totalClientes}</span></p>
               <p className="text-xs text-emerald-700">{percOnline}% online</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-xs text-[#7A7266]">Offline</p>
+              <p className="text-xs text-tema-suave">Offline</p>
               <p className="text-xl font-bold text-red-700">{status.offline}</p>
               <p className="text-xs text-red-700">{percOffline}%</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-xs text-[#7A7266]">LOS Alarms</p>
+              <p className="text-xs text-tema-suave">LOS Alarms</p>
               <p className="text-xl font-bold text-red-700">{status.los}</p>
             </div>
             <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-              <p className="text-xs text-[#7A7266]">Dying Gasp</p>
+              <p className="text-xs text-tema-suave">Dying Gasp</p>
               <p className="text-xl font-bold text-orange-700">{status.quedaEnergia}</p>
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#A69E8F] flex items-center justify-between">
+          <div className="mt-3 text-xs text-tema-apagado flex items-center justify-between">
             <span>{totalOlts} OLTs monitoradas</span>
           </div>
         </div>
@@ -125,7 +125,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
         <div className="gts-card">
           <div className="flex items-center gap-2 mb-4">
             <Signal className="w-4 h-4 text-purple-600" />
-            <h2 className="text-sm font-semibold text-[#201D17]">Optical Signal Distribution</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Optical Signal Distribution</h2>
           </div>
           <div className="h-32 mb-3">
             <Doughnut
@@ -140,11 +140,11 @@ export function SmartOLTView({ podeAprovar }: Props) {
               }}
             />
           </div>
-          <div className="border-t border-[#E6E1D6] pt-3 space-y-1.5">
-            <p className="text-xs text-[#A69E8F] mb-1">Top 5 Sinais Mais Fracos</p>
+          <div className="border-t border-tema-linha pt-3 space-y-1.5">
+            <p className="text-xs text-tema-apagado mb-1">Top 5 Sinais Mais Fracos</p>
             {top5PioresSinais.map((s: any, i: number) => (
               <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-[#7A7266] truncate">{s.nome || s.sn}</span>
+                <span className="text-tema-suave truncate">{s.nome || s.sn}</span>
                 <span className={cn(
                   'font-bold flex-shrink-0 ml-2',
                   s.nivel === 'CRITICO' ? 'text-red-700' : s.nivel === 'ATENCAO' ? 'text-amber-700' : 'text-emerald-700'
@@ -154,9 +154,9 @@ export function SmartOLTView({ podeAprovar }: Props) {
               </div>
             ))}
             {typeof mediaRxSignal === 'number' && (
-              <div className="flex items-center justify-between text-xs pt-2 mt-2 border-t border-[#E6E1D6]">
-                <span className="text-[#A69E8F]">Media Geral</span>
-                <span className="text-[#201D17] font-bold">{mediaRxSignal.toFixed(1)} dBm</span>
+              <div className="flex items-center justify-between text-xs pt-2 mt-2 border-t border-tema-linha">
+                <span className="text-tema-apagado">Media Geral</span>
+                <span className="text-tema-tinta font-bold">{mediaRxSignal.toFixed(1)} dBm</span>
               </div>
             )}
           </div>
@@ -166,13 +166,13 @@ export function SmartOLTView({ podeAprovar }: Props) {
         <div className="gts-card flex flex-col">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-red-600" />
-            <h2 className="text-sm font-semibold text-[#201D17]">Critical Alarms & Events</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Critical Alarms & Events</h2>
           </div>
           <div className="space-y-2 overflow-y-auto max-h-64">
             {alarmesFeed.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 gap-2">
                 <CheckCircle className="w-8 h-8 text-emerald-500/50" />
-                <p className="text-[#A69E8F] text-xs">Rede estavel, sem alertas</p>
+                <p className="text-tema-apagado text-xs">Rede estavel, sem alertas</p>
               </div>
             ) : alarmesFeed.map((a: any, i: number) => (
               <div key={i} className={cn(
@@ -180,7 +180,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
                 a.nivel === 'CRITICO' ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'
               )}>
                 <p className={cn('font-bold', a.nivel === 'CRITICO' ? 'text-red-700' : 'text-amber-700')}>{a.titulo}</p>
-                <p className="text-[#7A7266] mt-0.5">{a.descricao}</p>
+                <p className="text-tema-suave mt-0.5">{a.descricao}</p>
               </div>
             ))}
           </div>
@@ -192,13 +192,13 @@ export function SmartOLTView({ podeAprovar }: Props) {
         <div className="gts-card">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <h2 className="text-sm font-semibold text-[#201D17]">Clientes com Alerta de Sinal</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Clientes com Alerta de Sinal</h2>
           </div>
           {/* Tabela - desktop/tablet */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-[#A69E8F] border-b border-[#E6E1D6]">
+                <tr className="text-left text-xs text-tema-apagado border-b border-tema-linha">
                   <th className="pb-2 font-medium">Cliente</th>
                   <th className="pb-2 font-medium">OLT / Porta</th>
                   <th className="pb-2 font-medium">Sinal</th>
@@ -208,9 +208,9 @@ export function SmartOLTView({ podeAprovar }: Props) {
               </thead>
               <tbody>
                 {(data?.alertasSinal ?? []).map((a: any, i: number) => (
-                  <tr key={i} className="border-b border-[#E6E1D6]">
-                    <td className="py-2 text-[#201D17]">{a.nome || a.sn}</td>
-                    <td className="py-2 text-[#7A7266]">{a.olt} - {a.board}/{a.port}</td>
+                  <tr key={i} className="border-b border-tema-linha">
+                    <td className="py-2 text-tema-tinta">{a.nome || a.sn}</td>
+                    <td className="py-2 text-tema-suave">{a.olt} - {a.board}/{a.port}</td>
                     <td className={cn('py-2 font-bold', a.nivel === 'CRITICO' ? 'text-red-700' : 'text-amber-700')}>
                       {typeof a.dbm === 'number' ? a.dbm.toFixed(1) : '-'} dBm
                     </td>
@@ -239,9 +239,9 @@ export function SmartOLTView({ podeAprovar }: Props) {
           {/* Cards - mobile */}
           <div className="sm:hidden space-y-2">
             {(data?.alertasSinal ?? []).map((a: any, i: number) => (
-              <div key={i} className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-3 space-y-2">
+              <div key={i} className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[#201D17] font-medium truncate">{a.nome || a.sn}</p>
+                  <p className="text-tema-tinta font-medium truncate">{a.nome || a.sn}</p>
                   <span className={cn(
                     'text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0',
                     a.nivel === 'CRITICO' ? 'text-red-700 bg-red-500/10 border-red-500/20' : 'text-amber-700 bg-amber-500/10 border-amber-500/20'
@@ -249,7 +249,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
                     {a.nivel === 'CRITICO' ? 'Critico' : 'Atencao'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-[#7A7266]">
+                <div className="flex items-center justify-between text-xs text-tema-suave">
                   <span>{a.olt} - {a.board}/{a.port}</span>
                   <span className={cn('font-bold', a.nivel === 'CRITICO' ? 'text-red-700' : 'text-amber-700')}>
                     {typeof a.dbm === 'number' ? a.dbm.toFixed(1) : '-'} dBm
@@ -273,29 +273,29 @@ export function SmartOLTView({ podeAprovar }: Props) {
           <div className="gts-card border-red-500/30 bg-red-500/5">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="w-4 h-4 text-red-600" />
-              <h2 className="text-sm font-semibold text-[#201D17]">Rompimento Massivo</h2>
+              <h2 className="text-sm font-semibold text-tema-tinta">Rompimento Massivo</h2>
             </div>
-            <p className="text-[#201D17] font-semibold">{r.cliente}</p>
-            <p className="text-xs text-[#A69E8F] mt-1">{r.endereco}</p>
+            <p className="text-tema-tinta font-semibold">{r.cliente}</p>
+            <p className="text-xs text-tema-apagado mt-1">{r.endereco}</p>
             <div className="mt-3 space-y-1 text-sm">
-              <p className="text-[#7A7266]">Clientes Afetados: <span className="text-[#201D17] font-bold">{r.clientesAfetados}</span></p>
+              <p className="text-tema-suave">Clientes Afetados: <span className="text-tema-tinta font-bold">{r.clientesAfetados}</span></p>
             </div>
-            <p className="text-sm text-[#7A7266] mt-3">{r.observacao}</p>
+            <p className="text-sm text-tema-suave mt-3">{r.observacao}</p>
           </div>
 
           <div className="gts-card">
             <div className="flex items-center gap-2 mb-3">
               <Activity className="w-4 h-4 text-blue-600" />
-              <h2 className="text-sm font-semibold text-[#201D17]">Chamado Automatico - Aprovacao do ADM</h2>
+              <h2 className="text-sm font-semibold text-tema-tinta">Chamado Automatico - Aprovacao do ADM</h2>
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#A69E8F]">Status</span>
+              <span className="text-xs text-tema-apagado">Status</span>
               <span className="text-xs px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-medium">
                 Aguardando Aprovacao
               </span>
             </div>
-            <p className="text-[#201D17] font-bold">{r.cliente}</p>
-            <p className="text-sm text-[#7A7266] mt-2">{r.observacao}</p>
+            <p className="text-tema-tinta font-bold">{r.cliente}</p>
+            <p className="text-sm text-tema-suave mt-2">{r.observacao}</p>
 
             {podeAprovar ? (
               <div className="flex gap-3 mt-4">
@@ -317,7 +317,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
                 </button>
               </div>
             ) : (
-              <p className="text-xs text-[#A69E8F] mt-4 text-center">Aguardando aprovacao do Admin/Operador</p>
+              <p className="text-xs text-tema-apagado mt-4 text-center">Aguardando aprovacao do Admin/Operador</p>
             )}
           </div>
         </div>

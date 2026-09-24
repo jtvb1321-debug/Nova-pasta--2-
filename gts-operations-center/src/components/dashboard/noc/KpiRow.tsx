@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Wifi, WifiOff, Server, Radio, ClipboardList, Users, ShieldCheck, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { NOC } from './theme'
+import { NOC, CARD_TRANSLUCIDO } from './theme'
 import { Sparkline } from './Sparkline'
 
 async function fetchKpis() {
@@ -51,10 +51,10 @@ export function KpiRow() {
             <Link
               href={kpi.href}
               className={cn(
-                'relative block rounded-xl border p-4 backdrop-blur-md overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-[#D8D2C3]',
+                'relative block rounded-xl border p-4 backdrop-blur-md overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-tema-linha-forte',
                 kpi.key === 'clientesOffline' && 'gts-hud-corner'
               )}
-              style={{ backgroundColor: `${NOC.card}CC`, borderColor: 'rgba(32,29,23,0.05)' }}
+              style={{ backgroundColor: CARD_TRANSLUCIDO, borderColor: 'rgb(var(--c-contraste) / 0.05)' }}
             >
               <span className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: kpi.cor }} />
               <div className="flex items-center justify-between mb-2">

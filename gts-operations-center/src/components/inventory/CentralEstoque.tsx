@@ -83,13 +83,13 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
   })
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-[#201D17]">{item.descricao}</h3>
-            <p className="text-xs text-[#A69E8F] font-mono">{item.codigo}</p>
+            <h3 className="text-lg font-semibold text-tema-tinta">{item.descricao}</h3>
+            <p className="text-xs text-tema-apagado font-mono">{item.codigo}</p>
           </div>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -100,24 +100,24 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-[#201D17]">{data?.total ?? 0}</p>
-                <p className="text-xs text-[#A69E8F] mt-1">Total (empresa)</p>
+              <div className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-tema-tinta">{data?.total ?? 0}</p>
+                <p className="text-xs text-tema-apagado mt-1">Total (empresa)</p>
               </div>
               <div className="bg-blue-500/10 rounded-xl p-4 text-center">
                 <p className="text-2xl font-black text-blue-700">{data?.naoAlocado ?? 0}</p>
-                <p className="text-xs text-[#A69E8F] mt-1">Nao alocado</p>
+                <p className="text-xs text-tema-apagado mt-1">Nao alocado</p>
               </div>
             </div>
             <div>
-              <p className="text-xs text-[#A69E8F] mb-2">Por local (categoria/sub-estoque)</p>
+              <p className="text-xs text-tema-apagado mb-2">Por local (categoria/sub-estoque)</p>
               {(!data?.porLocal || data.porLocal.length === 0) ? (
-                <p className="text-sm text-[#A69E8F] text-center py-4">Nenhum saldo em local especifico</p>
+                <p className="text-sm text-tema-apagado text-center py-4">Nenhum saldo em local especifico</p>
               ) : (
                 <div className="space-y-2">
                   {data.porLocal.map((l: any) => (
-                    <div key={l.localId} className="flex items-center justify-between bg-black/[0.02] border border-[#E6E1D6] rounded-lg px-3 py-2">
-                      <span className="text-sm text-[#201D17]">{l.localNome}</span>
+                    <div key={l.localId} className="flex items-center justify-between bg-tema-contraste/[0.02] border border-tema-linha rounded-lg px-3 py-2">
+                      <span className="text-sm text-tema-tinta">{l.localNome}</span>
                       <span className="text-sm font-mono font-bold text-purple-700">{l.quantidade}</span>
                     </div>
                   ))}
@@ -125,14 +125,14 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
               )}
             </div>
             <div>
-              <p className="text-xs text-[#A69E8F] mb-2">Com as equipes / tecnicos</p>
+              <p className="text-xs text-tema-apagado mb-2">Com as equipes / tecnicos</p>
               {(!data?.porTecnico || data.porTecnico.length === 0) ? (
-                <p className="text-sm text-[#A69E8F] text-center py-4">Nenhuma equipe com este item no momento</p>
+                <p className="text-sm text-tema-apagado text-center py-4">Nenhuma equipe com este item no momento</p>
               ) : (
                 <div className="space-y-2">
                   {data.porTecnico.map((e: any) => (
-                    <div key={e.equipeId} className="flex items-center justify-between bg-black/[0.02] border border-[#E6E1D6] rounded-lg px-3 py-2">
-                      <span className="text-sm text-[#201D17]">{e.equipeNome}</span>
+                    <div key={e.equipeId} className="flex items-center justify-between bg-tema-contraste/[0.02] border border-tema-linha rounded-lg px-3 py-2">
+                      <span className="text-sm text-tema-tinta">{e.equipeNome}</span>
                       <span className="text-sm font-mono font-bold text-orange-700">{e.quantidade}</span>
                     </div>
                   ))}
@@ -376,7 +376,7 @@ export function CentralEstoque({ session }: Props) {
       />
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-[#E6E1D6] overflow-x-auto -mx-1 px-1">
+      <div className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1">
         {abas.map(a => {
           const Icon = a.icon
           return (
@@ -387,7 +387,7 @@ export function CentralEstoque({ session }: Props) {
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
                 aba === a.id
                   ? 'border-orange-600 text-orange-700'
-                  : 'border-transparent text-[#7A7266] hover:text-[#201D17]'
+                  : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -407,7 +407,7 @@ export function CentralEstoque({ session }: Props) {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A69E8F]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
               <input
                 type="search"
                 value={search}
@@ -425,7 +425,7 @@ export function CentralEstoque({ session }: Props) {
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     categoria === cat
                       ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
                   )}
                 >
                   {cat || 'Todos'}
@@ -438,10 +438,10 @@ export function CentralEstoque({ session }: Props) {
           </div>
 
           {/* Relatorio PDF - Estoque */}
-          <div className="flex flex-wrap items-center gap-2 bg-black/[0.02] border border-[#E6E1D6] rounded-xl px-4 py-3">
-            <FileText className="w-4 h-4 text-[#7A7266] flex-shrink-0" />
-            <span className="text-sm text-[#7A7266]">
-              Relatorio de estoque: <strong className="text-[#201D17]">{categoria ? CATEGORIA_LABELS[categoria as CategoriaEstoque] : 'Todos (geral)'}</strong>
+          <div className="flex flex-wrap items-center gap-2 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl px-4 py-3">
+            <FileText className="w-4 h-4 text-tema-suave flex-shrink-0" />
+            <span className="text-sm text-tema-suave">
+              Relatorio de estoque: <strong className="text-tema-tinta">{categoria ? CATEGORIA_LABELS[categoria as CategoriaEstoque] : 'Todos (geral)'}</strong>
             </span>
             <button
               onClick={handleGerarRelatorioEstoque}
@@ -478,8 +478,8 @@ export function CentralEstoque({ session }: Props) {
                     : itens.length === 0
                     ? (
                       <tr>
-                        <td colSpan={7} className="text-center py-16 text-[#A69E8F]">
-                          <Package className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                        <td colSpan={7} className="text-center py-16 text-tema-apagado">
+                          <Package className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                           Nenhum item cadastrado
                         </td>
                       </tr>
@@ -489,21 +489,21 @@ export function CentralEstoque({ session }: Props) {
                         return (
                           <tr key={item.id} className={baixo ? 'bg-red-500/5' : ''}>
                             <td className="px-4">
-                              <code className="text-xs text-[#7A7266] font-mono">{item.codigo}</code>
+                              <code className="text-xs text-tema-suave font-mono">{item.codigo}</code>
                             </td>
-                            <td className="px-4 text-[#201D17] font-medium text-sm">{item.descricao}</td>
+                            <td className="px-4 text-tema-tinta font-medium text-sm">{item.descricao}</td>
                             <td className="px-4">
                               <span className={cn('status-badge text-xs', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
                                 {CATEGORIA_LABELS[item.categoria as CategoriaEstoque]}
                               </span>
                             </td>
                             <td className="px-4 text-right">
-                              <span className={cn('font-mono font-bold', baixo ? 'text-red-700' : 'text-[#201D17]')}>
+                              <span className={cn('font-mono font-bold', baixo ? 'text-red-700' : 'text-tema-tinta')}>
                                 {formatNumber(item.quantidadeAtual)}
                               </span>
-                              <span className="text-[#A69E8F] text-xs ml-1">{item.unidade}</span>
+                              <span className="text-tema-apagado text-xs ml-1">{item.unidade}</span>
                             </td>
-                            <td className="px-4 text-right text-[#7A7266] font-mono text-sm">
+                            <td className="px-4 text-right text-tema-suave font-mono text-sm">
                               {formatNumber(item.quantidadeMinima)}
                             </td>
                             <td className="px-4">
@@ -520,14 +520,14 @@ export function CentralEstoque({ session }: Props) {
                               <div className="flex items-center justify-center gap-1">
                                 <button
                                   onClick={() => setItemDistribuicao(item)}
-                                  className="p-1.5 text-[#A69E8F] hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                  className="p-1.5 text-tema-apagado hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors"
                                   title="Ver distribuicao por equipe"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => setItemAjuste(item)}
-                                  className="p-1.5 text-[#A69E8F] hover:text-orange-700 hover:bg-orange-500/10 rounded-lg transition-colors"
+                                  className="p-1.5 text-tema-apagado hover:text-orange-700 hover:bg-orange-500/10 rounded-lg transition-colors"
                                   title="Ajustar quantidade"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -535,7 +535,7 @@ export function CentralEstoque({ session }: Props) {
                                 {isAdmin && (
                                   <button
                                     onClick={() => setItemExcluir(item)}
-                                    className="p-1.5 text-[#A69E8F] hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors"
+                                    className="p-1.5 text-tema-apagado hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors"
                                     title="Excluir item (somente admin)"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -551,13 +551,13 @@ export function CentralEstoque({ session }: Props) {
             </div>
 
             {/* Cards - mobile */}
-            <div className="sm:hidden divide-y divide-[#E6E1D6]">
+            <div className="sm:hidden divide-y divide-tema-linha">
               {loadingEstoque
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="p-4"><div className="h-16 skeleton rounded-lg" /></div>)
                 : itens.length === 0
                 ? (
-                  <div className="text-center py-16 text-[#A69E8F]">
-                    <Package className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                  <div className="text-center py-16 text-tema-apagado">
+                    <Package className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                     Nenhum item cadastrado
                   </div>
                 )
@@ -567,8 +567,8 @@ export function CentralEstoque({ session }: Props) {
                       <div key={item.id} className={cn('p-4', baixo && 'bg-red-500/5')}>
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="min-w-0">
-                            <p className="text-[#201D17] font-medium text-sm truncate">{item.descricao}</p>
-                            <code className="text-xs text-[#A69E8F] font-mono">{item.codigo}</code>
+                            <p className="text-tema-tinta font-medium text-sm truncate">{item.descricao}</p>
+                            <code className="text-xs text-tema-apagado font-mono">{item.codigo}</code>
                           </div>
                           <span className={cn('status-badge text-xs flex-shrink-0', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
                             {CATEGORIA_LABELS[item.categoria as CategoriaEstoque]}
@@ -583,8 +583,8 @@ export function CentralEstoque({ session }: Props) {
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />OK
                               </span>
                           }
-                          <span className={cn('font-mono font-bold text-sm', baixo ? 'text-red-700' : 'text-[#201D17]')}>
-                            {formatNumber(item.quantidadeAtual)} <span className="text-[#A69E8F] text-xs font-normal">{item.unidade}</span>
+                          <span className={cn('font-mono font-bold text-sm', baixo ? 'text-red-700' : 'text-tema-tinta')}>
+                            {formatNumber(item.quantidadeAtual)} <span className="text-tema-apagado text-xs font-normal">{item.unidade}</span>
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -614,8 +614,8 @@ export function CentralEstoque({ session }: Props) {
                   })}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-[#E6E1D6]">
-                <p className="text-xs text-[#A69E8F]">Pagina {page} de {totalPages} - {estoqueData?.total} itens</p>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
+                <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages} - {estoqueData?.total} itens</p>
                 <div className="flex gap-2">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -643,7 +643,7 @@ export function CentralEstoque({ session }: Props) {
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     tipoMov === tipo
                       ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
                   )}
                 >
                   {tipo ? TIPO_MOV[tipo].label : 'Todos'}
@@ -664,7 +664,7 @@ export function CentralEstoque({ session }: Props) {
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                     periodoMov === p.valor
                       ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-black/[0.03] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
                   )}
                 >
                   {p.label}
@@ -674,10 +674,10 @@ export function CentralEstoque({ session }: Props) {
           </div>
 
           {/* Relatorio PDF - Movimentacoes */}
-          <div className="flex flex-wrap items-center gap-2 bg-black/[0.02] border border-[#E6E1D6] rounded-xl px-4 py-3">
-            <FileText className="w-4 h-4 text-[#7A7266] flex-shrink-0" />
-            <span className="text-sm text-[#7A7266]">
-              Relatorio de movimentacoes: <strong className="text-[#201D17]">
+          <div className="flex flex-wrap items-center gap-2 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl px-4 py-3">
+            <FileText className="w-4 h-4 text-tema-suave flex-shrink-0" />
+            <span className="text-sm text-tema-suave">
+              Relatorio de movimentacoes: <strong className="text-tema-tinta">
                 {tipoMov ? TIPO_MOV[tipoMov].label : 'Todos os tipos'} - {periodoMov === 'dia' ? 'Hoje' : periodoMov === 'mes' ? 'Este mes' : 'Todo periodo'}
               </strong>
             </span>
@@ -715,8 +715,8 @@ export function CentralEstoque({ session }: Props) {
                     : movimentos.length === 0
                     ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-12 text-[#A69E8F]">
-                          <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                        <td colSpan={6} className="text-center py-12 text-tema-apagado">
+                          <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                           Nenhuma movimentacao encontrada
                         </td>
                       </tr>
@@ -732,13 +732,13 @@ export function CentralEstoque({ session }: Props) {
                                 {cfg.label}
                               </span>
                             </td>
-                            <td className="px-4 text-[#201D17] text-sm">{m.item?.descricao}</td>
-                            <td className="px-4"><code className="text-xs text-[#7A7266] font-mono">{m.item?.codigo}</code></td>
-                            <td className="px-4 text-right font-mono font-semibold text-[#201D17]">
+                            <td className="px-4 text-tema-tinta text-sm">{m.item?.descricao}</td>
+                            <td className="px-4"><code className="text-xs text-tema-suave font-mono">{m.item?.codigo}</code></td>
+                            <td className="px-4 text-right font-mono font-semibold text-tema-tinta">
                               {formatNumber(m.quantidade)} {m.item?.unidade}
                             </td>
-                            <td className="px-4 text-[#A69E8F] text-xs max-w-xs truncate">{m.motivo || '-'}</td>
-                            <td className="px-4 text-[#A69E8F] text-xs">{formatDateTime(m.createdAt)}</td>
+                            <td className="px-4 text-tema-apagado text-xs max-w-xs truncate">{m.motivo || '-'}</td>
+                            <td className="px-4 text-tema-apagado text-xs">{formatDateTime(m.createdAt)}</td>
                           </tr>
                         )
                       })}
@@ -747,13 +747,13 @@ export function CentralEstoque({ session }: Props) {
             </div>
 
             {/* Cards - mobile */}
-            <div className="sm:hidden divide-y divide-[#E6E1D6]">
+            <div className="sm:hidden divide-y divide-tema-linha">
               {loadingMov
                 ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="p-4"><div className="h-14 skeleton rounded-lg" /></div>)
                 : movimentos.length === 0
                 ? (
-                  <div className="text-center py-12 text-[#A69E8F]">
-                    <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-[#D8D2C3]" />
+                  <div className="text-center py-12 text-tema-apagado">
+                    <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
                     Nenhuma movimentacao encontrada
                   </div>
                 )
@@ -767,21 +767,21 @@ export function CentralEstoque({ session }: Props) {
                             <Icon className="w-3 h-3" />
                             {cfg.label}
                           </span>
-                          <span className="font-mono font-semibold text-[#201D17] text-sm">
+                          <span className="font-mono font-semibold text-tema-tinta text-sm">
                             {formatNumber(m.quantidade)} {m.item?.unidade}
                           </span>
                         </div>
-                        <p className="text-[#201D17] text-sm truncate">{m.item?.descricao}</p>
-                        <p className="text-xs text-[#A69E8F] font-mono">{m.item?.codigo}</p>
-                        {m.motivo && <p className="text-xs text-[#A69E8F] mt-1 truncate">{m.motivo}</p>}
-                        <p className="text-xs text-[#A69E8F] mt-1">{formatDateTime(m.createdAt)}</p>
+                        <p className="text-tema-tinta text-sm truncate">{m.item?.descricao}</p>
+                        <p className="text-xs text-tema-apagado font-mono">{m.item?.codigo}</p>
+                        {m.motivo && <p className="text-xs text-tema-apagado mt-1 truncate">{m.motivo}</p>}
+                        <p className="text-xs text-tema-apagado mt-1">{formatDateTime(m.createdAt)}</p>
                       </div>
                     )
                   })}
             </div>
             {movTotalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-[#E6E1D6]">
-                <p className="text-xs text-[#A69E8F]">Pagina {page} de {movTotalPages}</p>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
+                <p className="text-xs text-tema-apagado">Pagina {page} de {movTotalPages}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -814,8 +814,8 @@ export function CentralEstoque({ session }: Props) {
               : devolucoes.length === 0
               ? (
                 <div className="gts-card text-center py-16">
-                  <RotateCcw className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-                  <p className="text-[#7A7266] font-medium">Nenhuma devolucao registrada</p>
+                  <RotateCcw className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+                  <p className="text-tema-suave font-medium">Nenhuma devolucao registrada</p>
                 </div>
               )
               : devolucoes.map((d: any) => {
@@ -823,32 +823,32 @@ export function CentralEstoque({ session }: Props) {
                   const isAprovada = d.aprovado
                   return (
                     <div key={d.id} className={cn(
-                      'bg-white border rounded-xl p-4 shadow-sm shadow-black/[0.03]',
+                      'bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]',
                       isPendente ? 'border-amber-500/30' :
                       isAprovada ? 'border-emerald-500/25' : 'border-red-500/25'
                     )}>
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <Package className="w-3.5 h-3.5 text-[#A69E8F]" />
-                            <p className="text-[#201D17] font-semibold">{d.item?.descricao}</p>
-                            <code className="text-xs text-[#A69E8F] font-mono">{d.item?.codigo}</code>
+                            <Package className="w-3.5 h-3.5 text-tema-apagado" />
+                            <p className="text-tema-tinta font-semibold">{d.item?.descricao}</p>
+                            <code className="text-xs text-tema-apagado font-mono">{d.item?.codigo}</code>
                           </div>
                           <div className="flex items-center gap-4 text-sm mb-1">
-                            <span className="text-[#3F3A32]">
-                              Qtd: <span className="text-[#201D17] font-bold">{d.quantidade} {d.item?.unidade}</span>
+                            <span className="text-tema-texto">
+                              Qtd: <span className="text-tema-tinta font-bold">{d.quantidade} {d.item?.unidade}</span>
                             </span>
                             <span className="text-emerald-700">
                               {formatCurrency(d.quantidade * (d.item?.valorUnitario ?? 0))}
                             </span>
                           </div>
-                          {d.observacao && <p className="text-xs text-[#A69E8F] italic">{d.observacao}</p>}
+                          {d.observacao && <p className="text-xs text-tema-apagado italic">{d.observacao}</p>}
                           {d.chamado && (
-                            <p className="text-xs text-[#A69E8F]">
+                            <p className="text-xs text-tema-apagado">
                               Chamado: {d.chamado.cliente} - {d.chamado.equipe?.nome}
                             </p>
                           )}
-                          <p className="text-xs text-[#A69E8F] mt-1">{formatDateTime(d.createdAt)}</p>
+                          <p className="text-xs text-tema-apagado mt-1">{formatDateTime(d.createdAt)}</p>
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -899,7 +899,7 @@ export function CentralEstoque({ session }: Props) {
       {aba === 'reversa' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-[#7A7266]">Materiais enviados para troca junto ao ManINFO</p>
+            <p className="text-sm text-tema-suave">Materiais enviados para troca junto ao ManINFO</p>
             <button onClick={() => setShowNovaReversa(true)} className="gts-btn-primary flex-shrink-0">
               <Repeat className="w-4 h-4" />
               Nova Reversa
@@ -910,24 +910,24 @@ export function CentralEstoque({ session }: Props) {
               Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />)
             ) : (reversasData?.data ?? []).length === 0 ? (
               <div className="gts-card text-center py-16">
-                <Repeat className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-                <p className="text-[#7A7266] font-medium">Nenhuma reversa registrada</p>
+                <Repeat className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+                <p className="text-tema-suave font-medium">Nenhuma reversa registrada</p>
               </div>
             ) : (reversasData?.data ?? []).map((r: any) => (
-              <div key={r.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4">
+              <div key={r.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-3.5 h-3.5 text-[#A69E8F]" />
-                    <p className="text-[#201D17] font-semibold">{r.item?.descricao}</p>
-                    <code className="text-xs text-[#A69E8F] font-mono">{r.item?.codigo}</code>
+                    <Package className="w-3.5 h-3.5 text-tema-apagado" />
+                    <p className="text-tema-tinta font-semibold">{r.item?.descricao}</p>
+                    <code className="text-xs text-tema-apagado font-mono">{r.item?.codigo}</code>
                   </div>
-                  <p className="text-sm text-[#3F3A32] mb-1">
-                    Qtd: <span className="text-[#201D17] font-bold">{r.quantidade} {r.item?.unidade}</span>
+                  <p className="text-sm text-tema-texto mb-1">
+                    Qtd: <span className="text-tema-tinta font-bold">{r.quantidade} {r.item?.unidade}</span>
                   </p>
                   {r.observacao && (
-                    <p className="text-xs text-[#7A7266] italic bg-black/[0.02] rounded-lg px-3 py-2 mt-1">{r.observacao}</p>
+                    <p className="text-xs text-tema-suave italic bg-tema-contraste/[0.02] rounded-lg px-3 py-2 mt-1">{r.observacao}</p>
                   )}
-                  <p className="text-xs text-[#A69E8F] mt-2">{formatDateTime(r.data)} - {r.registradoPor}</p>
+                  <p className="text-xs text-tema-apagado mt-2">{formatDateTime(r.data)} - {r.registradoPor}</p>
                 </div>
               </div>
             ))}
@@ -947,7 +947,7 @@ export function CentralEstoque({ session }: Props) {
       {aba === 'defeituosos' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-[#7A7266]">Itens avariados/queimados recebidos ou recolhidos em campo</p>
+            <p className="text-sm text-tema-suave">Itens avariados/queimados recebidos ou recolhidos em campo</p>
             <button onClick={() => setShowEntradaDefeito(true)} className="gts-btn-primary flex-shrink-0">
               <PackageX className="w-4 h-4" />
               Registrar Entrada Defeituosa
@@ -958,26 +958,26 @@ export function CentralEstoque({ session }: Props) {
               Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
             ) : (defeitosData?.data ?? []).length === 0 ? (
               <div className="gts-card text-center py-16">
-                <PackageX className="w-10 h-10 text-[#D8D2C3] mx-auto mb-3" />
-                <p className="text-[#7A7266] font-medium">Nenhuma entrada defeituosa registrada</p>
+                <PackageX className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
+                <p className="text-tema-suave font-medium">Nenhuma entrada defeituosa registrada</p>
               </div>
             ) : (defeitosData?.data ?? []).map((d: any) => (
-              <div key={d.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4">
+              <div key={d.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-[#201D17] font-semibold">{d.item?.descricao}</p>
-                      <code className="text-xs text-[#A69E8F] font-mono">{d.item?.codigo}</code>
+                      <p className="text-tema-tinta font-semibold">{d.item?.descricao}</p>
+                      <code className="text-xs text-tema-apagado font-mono">{d.item?.codigo}</code>
                       {d.status === 'PENDENTE_ACEITE' ? (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700">Pendente Aceite</span>
                       ) : (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700">Aceito</span>
                       )}
                     </div>
-                    <p className="text-sm text-[#3F3A32]">Qtd: <span className="text-[#201D17] font-bold">{d.quantidade} {d.item?.unidade}</span></p>
-                    {d.numeroSerie && <p className="text-xs text-[#A69E8F]">Serie/Patrimonio: {d.numeroSerie}</p>}
-                    <p className="text-xs text-[#7A7266] italic bg-black/[0.02] rounded-lg px-3 py-2 mt-1">{d.defeito}</p>
-                    <p className="text-xs text-[#A69E8F] mt-2">
+                    <p className="text-sm text-tema-texto">Qtd: <span className="text-tema-tinta font-bold">{d.quantidade} {d.item?.unidade}</span></p>
+                    {d.numeroSerie && <p className="text-xs text-tema-apagado">Serie/Patrimonio: {d.numeroSerie}</p>}
+                    <p className="text-xs text-tema-suave italic bg-tema-contraste/[0.02] rounded-lg px-3 py-2 mt-1">{d.defeito}</p>
+                    <p className="text-xs text-tema-apagado mt-2">
                       Origem: {d.origem === 'TECNICO' ? 'Tecnico' : d.origem === 'CLIENTE' ? 'Cliente' : 'Entrada Direta'}
                       {d.tecnicoNome ? ` (${d.tecnicoNome})` : ''} - {formatDateTime(d.createdAt)}
                     </p>
@@ -1122,9 +1122,9 @@ export function CentralEstoque({ session }: Props) {
           titulo="Excluir item do estoque"
           mensagem={
             <>
-              <span className="block bg-black/[0.02] border border-[#E6E1D6] rounded-lg p-3 mb-3">
-                <span className="block text-[#201D17] font-medium">{itemExcluir.descricao}</span>
-                <span className="block text-xs text-[#A69E8F] font-mono">{itemExcluir.codigo}</span>
+              <span className="block bg-tema-contraste/[0.02] border border-tema-linha rounded-lg p-3 mb-3">
+                <span className="block text-tema-tinta font-medium">{itemExcluir.descricao}</span>
+                <span className="block text-xs text-tema-apagado font-mono">{itemExcluir.codigo}</span>
               </span>
               Tem certeza que deseja excluir permanentemente este item? Esta acao nao pode ser desfeita.
             </>

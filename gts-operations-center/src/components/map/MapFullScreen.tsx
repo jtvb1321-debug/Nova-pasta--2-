@@ -39,20 +39,20 @@ export function MapFullScreen() {
   })
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#FAF9F6]">
+    <div className="h-screen flex flex-col overflow-hidden bg-tema-fundo">
       {/* Topbar flutuante */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] flex items-center gap-3 px-4 py-3 bg-white/90 backdrop-blur-md border-b border-[#E6E1D6] shadow-sm shadow-black/[0.03]">
-        <Link href="/dashboard" className="text-[#7A7266] hover:text-[#201D17] transition-colors">
+      <div className="absolute top-0 left-0 right-0 z-[1000] flex items-center gap-3 px-4 py-3 bg-tema-superficie/90 backdrop-blur-md border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03]">
+        <Link href="/dashboard" className="text-tema-suave hover:text-tema-tinta transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#187A45] animate-pulse" />
-          <h1 className="text-sm font-semibold text-[#201D17]">Mapa em Tempo Real</h1>
+          <h1 className="text-sm font-semibold text-tema-tinta">Mapa em Tempo Real</h1>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
           {/* Filtro */}
-          <div className="flex items-center bg-black/[0.02] border border-[#E6E1D6] rounded-lg overflow-hidden">
+          <div className="flex items-center bg-tema-contraste/[0.02] border border-tema-linha rounded-lg overflow-hidden">
             {(['all', 'online', 'offline'] as const).map(f => (
               <button
                 key={f}
@@ -61,7 +61,7 @@ export function MapFullScreen() {
                   'px-3 py-1.5 text-xs font-medium transition-colors',
                   filtroOnline === f
                     ? 'bg-orange-600 text-white'
-                    : 'text-[#7A7266] hover:text-[#201D17]'
+                    : 'text-tema-suave hover:text-tema-tinta'
                 )}
               >
                 {f === 'all' ? 'Todos' : f === 'online' ? 'Online' : 'Offline'}
@@ -89,9 +89,9 @@ export function MapFullScreen() {
 
         {/* Sidebar de veículos */}
         {sidebarOpen && (
-          <div className="w-72 bg-white/95 backdrop-blur-md border-l border-[#E6E1D6] shadow-lg shadow-black/[0.1] overflow-y-auto z-[999]">
+          <div className="w-72 bg-tema-superficie/95 backdrop-blur-md border-l border-tema-linha shadow-lg shadow-tema-contraste/[0.1] overflow-y-auto z-[999]">
             <div className="p-4">
-              <p className="text-xs text-[#A69E8F] font-medium uppercase tracking-wider mb-3">
+              <p className="text-xs text-tema-apagado font-medium uppercase tracking-wider mb-3">
                 Veículos ({filtered.length})
               </p>
               <div className="space-y-2">
@@ -106,22 +106,22 @@ export function MapFullScreen() {
                           ? 'bg-red-500/10 border-red-500/30'
                           : v.online
                           ? 'bg-emerald-500/5 border-emerald-500/20'
-                          : 'bg-black/[0.02] border-[#E6E1D6]'
+                          : 'bg-tema-contraste/[0.02] border-tema-linha'
                       )}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <Truck className={cn('w-3.5 h-3.5', alerta ? 'text-red-700' : v.online ? 'text-emerald-700' : 'text-[#A69E8F]')} />
-                          <span className="text-[#201D17] text-sm font-medium">{v.nome}</span>
+                          <Truck className={cn('w-3.5 h-3.5', alerta ? 'text-red-700' : v.online ? 'text-emerald-700' : 'text-tema-apagado')} />
+                          <span className="text-tema-tinta text-sm font-medium">{v.nome}</span>
                         </div>
                         {alerta && <AlertTriangle className="w-3.5 h-3.5 text-red-700 animate-pulse" />}
                         {!alerta && (v.online
                           ? <Wifi className="w-3.5 h-3.5 text-emerald-700" />
-                          : <WifiOff className="w-3.5 h-3.5 text-[#A69E8F]" />
+                          : <WifiOff className="w-3.5 h-3.5 text-tema-apagado" />
                         )}
                       </div>
                       {v.motorista && (
-                        <p className="text-xs text-[#A69E8F] mb-1">👤 {v.motorista}</p>
+                        <p className="text-xs text-tema-apagado mb-1">👤 {v.motorista}</p>
                       )}
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-mono font-bold" style={{
@@ -129,7 +129,7 @@ export function MapFullScreen() {
                         }}>
                           {formatSpeed(v.velocidade)}
                         </span>
-                        <span className="text-xs text-[#A69E8F]">{timeAgo(v.ultimaAtualizacao)}</span>
+                        <span className="text-xs text-tema-apagado">{timeAgo(v.ultimaAtualizacao)}</span>
                       </div>
                     </div>
                   )

@@ -84,7 +84,7 @@ export function SolicitacoesEquipeView() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Filter className="w-4 h-4 text-[#A69E8F]" />
+        <Filter className="w-4 h-4 text-tema-apagado" />
         <div className="flex gap-2">
           {['', 'MANUTENCAO', 'MATERIAL'].map(t => (
             <button
@@ -94,7 +94,7 @@ export function SolicitacoesEquipeView() {
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 filtroTipo === t
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                  : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
               )}
             >
               {t === '' ? 'Todos os tipos' : t === 'MANUTENCAO' ? 'Manutencao' : 'Material'}
@@ -110,7 +110,7 @@ export function SolicitacoesEquipeView() {
                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
                 filtroStatus === s
                   ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                  : 'bg-black/[0.02] text-[#7A7266] hover:text-[#201D17] border-transparent'
+                  : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
               )}
             >
               {s === 'PENDENTE' ? 'Pendentes' : 'Todas'}
@@ -128,11 +128,11 @@ export function SolicitacoesEquipeView() {
           const cfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
           const Icon = s.tipo === 'MANUTENCAO' ? Wrench : PackagePlus
           return (
-            <div key={`${s.tipo}-${s.id}`} className={cn('bg-white border rounded-xl p-4 shadow-sm shadow-black/[0.03]', cfg.bg)}>
+            <div key={`${s.tipo}-${s.id}`} className={cn('bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]', cfg.bg)}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-black/[0.02] rounded-full text-[#7A7266]">
+                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-tema-contraste/[0.02] rounded-full text-tema-suave">
                       <Icon className="w-3 h-3" />
                       {s.tipo === 'MANUTENCAO' ? 'Manutencao' : 'Material'}
                     </span>
@@ -140,13 +140,13 @@ export function SolicitacoesEquipeView() {
                       {cfg.label}
                     </span>
                     <span className="text-sm text-orange-700 font-medium">{s.equipeNome}</span>
-                    {s.veiculo && <span className="text-xs text-[#A69E8F] font-mono">{s.veiculo}</span>}
+                    {s.veiculo && <span className="text-xs text-tema-apagado font-mono">{s.veiculo}</span>}
                   </div>
-                  <p className="text-[#201D17] font-medium">{s.descricao}</p>
+                  <p className="text-tema-tinta font-medium">{s.descricao}</p>
                   {s.observacao && (
-                    <p className="text-xs text-[#7A7266] italic mt-1">{s.observacao}</p>
+                    <p className="text-xs text-tema-suave italic mt-1">{s.observacao}</p>
                   )}
-                  <p className="text-xs text-[#A69E8F] mt-2">
+                  <p className="text-xs text-tema-apagado mt-2">
                     Solicitado por {s.solicitadoPor} - {formatDateTime(s.createdAt)}
                   </p>
                 </div>

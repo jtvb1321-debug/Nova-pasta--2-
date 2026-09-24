@@ -119,17 +119,17 @@ export function HistoricoRetiradasModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center">
               <History className="w-4 h-4 text-purple-700" />
             </div>
-            <h2 className="text-lg font-semibold text-[#201D17]">Historico de Retiradas</h2>
+            <h2 className="text-lg font-semibold text-tema-tinta">Historico de Retiradas</h2>
           </div>
-          <button onClick={onClose} className="text-[#A69E8F] hover:text-[#201D17] p-2 -m-2 rounded-lg hover:bg-black/[0.04] transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] transition-colors flex-shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -138,26 +138,26 @@ export function HistoricoRetiradasModal({ onClose }: Props) {
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
           ) : lotes.length === 0 ? (
-            <div className="text-center py-16 text-[#A69E8F]">
-              <PackageMinus className="w-10 h-10 mx-auto mb-3 text-[#D8D2C3]" />
+            <div className="text-center py-16 text-tema-apagado">
+              <PackageMinus className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
               Nenhuma retirada registrada ainda
             </div>
           ) : (
             lotes.map((lote: any) => (
-              <div key={lote.loteId} className="bg-black/[0.02] border border-[#E6E1D6] rounded-xl p-4">
+              <div key={lote.loteId} className="bg-tema-contraste/[0.02] border border-tema-linha rounded-xl p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap mb-1">
-                      <span className="text-[#201D17] font-semibold">{lote.retiradoPor}</span>
-                      <span className="text-xs text-[#A69E8F]">{formatDateTime(lote.data)}</span>
+                      <span className="text-tema-tinta font-semibold">{lote.retiradoPor}</span>
+                      <span className="text-xs text-tema-apagado">{formatDateTime(lote.data)}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-[#7A7266] mb-2">
-                      <span>Destino: <span className="text-[#7A7266]">{lote.destino}</span></span>
-                      <span>Finalidade: <span className="text-[#7A7266]">{lote.finalidade}</span></span>
+                    <div className="flex items-center gap-4 text-sm text-tema-suave mb-2">
+                      <span>Destino: <span className="text-tema-suave">{lote.destino}</span></span>
+                      <span>Finalidade: <span className="text-tema-suave">{lote.finalidade}</span></span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {lote.itens.map((item: any, i: number) => (
-                        <span key={i} className="text-xs px-2 py-1 bg-black/[0.03] rounded-full text-[#7A7266]">
+                        <span key={i} className="text-xs px-2 py-1 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
                           {item.descricao} — {item.quantidade} {item.unidade}
                         </span>
                       ))}
@@ -165,7 +165,7 @@ export function HistoricoRetiradasModal({ onClose }: Props) {
                   </div>
                   <button
                     onClick={() => reimprimir(lote)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-black/[0.03] hover:bg-black/[0.06] border border-[#E6E1D6] rounded-lg text-xs text-[#7A7266] flex-shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.03] hover:bg-tema-contraste/[0.06] border border-tema-linha rounded-lg text-xs text-tema-suave flex-shrink-0"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     Reimprimir

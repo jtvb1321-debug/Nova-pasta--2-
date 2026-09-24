@@ -9,7 +9,7 @@ interface SparklineProps {
 
 export function Sparkline({ data, color }: SparklineProps) {
   if (!data || data.length < 2) {
-    return <div className="h-10 flex items-center text-[10px] text-[#A69E8F]">Sem historico ainda</div>
+    return <div className="h-10 flex items-center text-[10px] text-tema-apagado">Sem historico ainda</div>
   }
 
   const pontos = data.map((v, i) => ({ i, v }))

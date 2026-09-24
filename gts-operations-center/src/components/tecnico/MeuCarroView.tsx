@@ -100,7 +100,7 @@ export function MeuCarroView({ session }: Props) {
 
   if (loadingVeiculo) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+      <div className="min-h-screen bg-tema-fundo flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
       </div>
     )
@@ -108,10 +108,10 @@ export function MeuCarroView({ session }: Props) {
 
   if (erroVeiculo || !veiculo) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="min-h-screen bg-tema-fundo flex flex-col items-center justify-center gap-4 p-6 text-center">
         <AlertTriangle className="w-10 h-10 text-amber-600" />
-        <p className="text-[#201D17] font-medium">Nenhum veiculo vinculado a sua equipe ainda</p>
-        <p className="text-[#A69E8F] text-sm">Fale com o administrador para vincular um veiculo.</p>
+        <p className="text-tema-tinta font-medium">Nenhum veiculo vinculado a sua equipe ainda</p>
+        <p className="text-tema-apagado text-sm">Fale com o administrador para vincular um veiculo.</p>
         <Link href="/meus-chamados" className="text-blue-700 text-sm mt-2">Voltar</Link>
       </div>
     )
@@ -127,25 +127,25 @@ export function MeuCarroView({ session }: Props) {
   ]
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#201D17] pb-8">
+    <div className="min-h-screen bg-tema-fundo text-tema-tinta pb-8">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-[#E6E1D6] shadow-sm shadow-black/[0.03] px-4 py-4">
+      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03] px-4 py-4">
         <div className="flex items-center gap-3">
-          <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-black/[0.03] rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-[#7A7266]" />
+          <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-tema-contraste/[0.03] rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-tema-suave" />
           </Link>
           <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
             <Truck className="w-4.5 h-4.5 text-orange-600" />
           </div>
           <div>
-            <p className="text-[#201D17] font-bold text-sm">{veiculo.modelo} - {veiculo.placa}</p>
-            <p className="text-[#A69E8F] text-xs">{veiculoData.equipeNome}</p>
+            <p className="text-tema-tinta font-bold text-sm">{veiculo.modelo} - {veiculo.placa}</p>
+            <p className="text-tema-apagado text-xs">{veiculoData.equipeNome}</p>
           </div>
         </div>
       </header>
 
       {/* Abas */}
-      <div className="flex overflow-x-auto border-b border-[#E6E1D6] bg-white px-2">
+      <div className="flex overflow-x-auto border-b border-tema-linha bg-tema-superficie px-2">
         {abas.map(a => {
           const Icon = a.icon
           return (
@@ -154,7 +154,7 @@ export function MeuCarroView({ session }: Props) {
               onClick={() => setAba(a.id)}
               className={cn(
                 'flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors',
-                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-[#7A7266]'
+                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-tema-suave'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -235,8 +235,8 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
 
   if (itens.length === 0) {
     return (
-      <div className="text-center py-16 text-[#A69E8F]">
-        <Package className="w-10 h-10 mx-auto mb-3 text-[#D8D2C3]" />
+      <div className="text-center py-16 text-tema-apagado">
+        <Package className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
         Nenhum material carregado no veiculo ainda
       </div>
     )
@@ -255,11 +255,11 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
 
       {unidades.length > 0 && (
         <div>
-          <p className="text-sm font-medium text-[#3F3A32] mb-2">Equipamentos com MAC</p>
+          <p className="text-sm font-medium text-tema-texto mb-2">Equipamentos com MAC</p>
           <div className="space-y-1.5">
             {unidades.map((u: any) => (
-              <div key={u.id} className="flex items-center justify-between text-xs bg-black/[0.02] rounded-lg px-3 py-2">
-                <span className="text-[#3F3A32]">{u.item.descricao}</span>
+              <div key={u.id} className="flex items-center justify-between text-xs bg-tema-contraste/[0.02] rounded-lg px-3 py-2">
+                <span className="text-tema-texto">{u.item.descricao}</span>
                 <span className="font-mono text-blue-700">{u.macAddress}</span>
               </div>
             ))}
@@ -277,20 +277,20 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
               key={registro.id}
               className={cn(
                 'rounded-xl p-3',
-                baixo ? 'bg-red-500/5 border border-red-500/25' : 'bg-black/[0.02]'
+                baixo ? 'bg-red-500/5 border border-red-500/25' : 'bg-tema-contraste/[0.02]'
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#201D17] text-sm font-medium">{registro.item.descricao}</p>
-                  <p className="text-xs text-[#A69E8F] font-mono">{registro.item.codigo}</p>
+                  <p className="text-tema-tinta text-sm font-medium">{registro.item.descricao}</p>
+                  <p className="text-xs text-tema-apagado font-mono">{registro.item.codigo}</p>
                   {baixo && (
                     <p className="text-xs text-red-700 mt-0.5">Minimo: {registro.quantidadeMinima} {registro.item.unidade}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={cn('font-bold font-mono', baixo ? 'text-red-700' : 'text-[#201D17]')}>
-                    {registro.quantidade} <span className="text-xs text-[#A69E8F] font-normal">{registro.item.unidade}</span>
+                  <span className={cn('font-bold font-mono', baixo ? 'text-red-700' : 'text-tema-tinta')}>
+                    {registro.quantidade} <span className="text-xs text-tema-apagado font-normal">{registro.item.unidade}</span>
                   </span>
                   {!estaDevolvendo && (
                     <>
@@ -316,7 +316,7 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
               </div>
 
               {estaDevolvendo && (
-                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#E6E1D6]">
+                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
                   <input
                     type="number"
                     value={qtdDevolucao}
@@ -324,9 +324,9 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
                     min={0.01}
                     max={registro.quantidade}
                     step={0.01}
-                    className="w-24 bg-white border border-[#D8D2C3] rounded-lg px-2 py-2.5 text-sm text-[#201D17] text-center"
+                    className="w-24 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-2.5 text-sm text-tema-tinta text-center"
                   />
-                  <span className="text-xs text-[#A69E8F]">{registro.item.unidade}</span>
+                  <span className="text-xs text-tema-apagado">{registro.item.unidade}</span>
                   <button
                     onClick={() => confirmarDevolucao(registro.itemId)}
                     disabled={enviando}
@@ -336,7 +336,7 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
                   </button>
                   <button
                     onClick={() => setDevolvendoId(null)}
-                    className="text-xs text-[#7A7266] hover:text-[#201D17] px-2 py-2.5"
+                    className="text-xs text-tema-suave hover:text-tema-tinta px-2 py-2.5"
                   >
                     Cancelar
                   </button>
@@ -403,26 +403,26 @@ function AbaAbastecimento({ veiculoId, queryClient }: { veiculoId: string; query
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-[#3F3A32]">Registrar abastecimento</p>
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-tema-texto">Registrar abastecimento</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-[#7A7266] mb-1">Litros</label>
+            <label className="block text-xs text-tema-suave mb-1">Litros</label>
             <input type="number" value={litros} onChange={e => setLitros(e.target.value)} step="0.01" className="w-full gts-input" />
           </div>
           <div>
-            <label className="block text-xs text-[#7A7266] mb-1">Valor (R$)</label>
+            <label className="block text-xs text-tema-suave mb-1">Valor (R$)</label>
             <input type="number" value={valor} onChange={e => setValor(e.target.value)} step="0.01" className="w-full gts-input" />
           </div>
         </div>
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Foto do comprovante</label>
+          <label className="block text-xs text-tema-suave mb-1">Foto do comprovante</label>
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             onChange={e => setFoto(e.target.files?.[0] || null)}
-            className="w-full text-sm text-[#7A7266]"
+            className="w-full text-sm text-tema-suave"
           />
         </div>
         {erro && (
@@ -437,15 +437,15 @@ function AbaAbastecimento({ veiculoId, queryClient }: { veiculoId: string; query
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-[#3F3A32]">Historico</p>
+        <p className="text-sm font-medium text-tema-texto">Historico</p>
         {historico.length === 0 ? (
-          <p className="text-[#A69E8F] text-sm text-center py-6">Nenhum abastecimento registrado</p>
+          <p className="text-tema-apagado text-sm text-center py-6">Nenhum abastecimento registrado</p>
         ) : historico.map((a: any) => (
-          <div key={a.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-3 flex items-center gap-3">
+          <div key={a.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center gap-3">
             <img src={a.fotoComprovante} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[#201D17] text-sm font-medium">{a.litros}L - R$ {a.valor.toFixed(2)}</p>
-              <p className="text-xs text-[#A69E8F]">{formatDateTime(a.data)}</p>
+              <p className="text-tema-tinta text-sm font-medium">{a.litros}L - R$ {a.valor.toFixed(2)}</p>
+              <p className="text-xs text-tema-apagado">{formatDateTime(a.data)}</p>
             </div>
           </div>
         ))}
@@ -497,11 +497,11 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-[#3F3A32]">Registrar despesa</p>
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-tema-texto">Registrar despesa</p>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1.5">Tipo</label>
+          <label className="block text-xs text-tema-suave mb-1.5">Tipo</label>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(TIPO_DESPESA_LABELS).map(([valor_tipo, label]) => (
               <button
@@ -511,7 +511,7 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
                   'py-2 rounded-lg text-xs font-medium border transition-colors',
                   tipo === valor_tipo
                     ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                    : 'bg-black/[0.03] text-[#7A7266] border-transparent hover:text-[#201D17]'
+                    : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
                 )}
               >
                 {label}
@@ -521,18 +521,18 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Valor (R$) - opcional</label>
+          <label className="block text-xs text-tema-suave mb-1">Valor (R$) - opcional</label>
           <input type="number" value={valor} onChange={e => setValor(e.target.value)} step="0.01" className="w-full gts-input" />
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Foto do recibo</label>
+          <label className="block text-xs text-tema-suave mb-1">Foto do recibo</label>
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             onChange={e => setFoto(e.target.files?.[0] || null)}
-            className="w-full text-sm text-[#7A7266]"
+            className="w-full text-sm text-tema-suave"
           />
         </div>
 
@@ -548,18 +548,18 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-[#3F3A32]">Historico</p>
+        <p className="text-sm font-medium text-tema-texto">Historico</p>
         {historico.length === 0 ? (
-          <p className="text-[#A69E8F] text-sm text-center py-6">Nenhuma despesa registrada</p>
+          <p className="text-tema-apagado text-sm text-center py-6">Nenhuma despesa registrada</p>
         ) : historico.map((d: any) => (
-          <div key={d.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-3 flex items-center gap-3">
+          <div key={d.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center gap-3">
             <img src={d.fotoComprovante} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[#201D17] text-sm font-medium">
+              <p className="text-tema-tinta text-sm font-medium">
                 {TIPO_DESPESA_LABELS[d.tipo] || d.tipo}
                 {d.valor ? ` - R$ ${d.valor.toFixed(2)}` : ''}
               </p>
-              <p className="text-xs text-[#A69E8F]">{formatDateTime(d.data)}</p>
+              <p className="text-xs text-tema-apagado">{formatDateTime(d.data)}</p>
             </div>
           </div>
         ))}
@@ -692,11 +692,11 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-[#3F3A32]">Solicitar material para o carro</p>
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-tema-texto">Solicitar material para o carro</p>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Buscar item</label>
+          <label className="block text-xs text-tema-suave mb-1">Buscar item</label>
           <input
             type="search"
             value={busca}
@@ -717,7 +717,7 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Quantidade</label>
+          <label className="block text-xs text-tema-suave mb-1">Quantidade</label>
           <input
             type="number"
             value={quantidade}
@@ -729,7 +729,7 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
         </div>
 
         <div>
-          <label className="block text-xs text-[#7A7266] mb-1">Observacao (opcional)</label>
+          <label className="block text-xs text-tema-suave mb-1">Observacao (opcional)</label>
           <textarea
             value={observacao}
             onChange={e => setObservacao(e.target.value)}
@@ -746,9 +746,9 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-[#3F3A32]">Minhas solicitacoes</p>
+        <p className="text-sm font-medium text-tema-texto">Minhas solicitacoes</p>
         {solicitacoes.length === 0 ? (
-          <p className="text-[#A69E8F] text-sm text-center py-6">Nenhuma solicitacao ainda</p>
+          <p className="text-tema-apagado text-sm text-center py-6">Nenhuma solicitacao ainda</p>
         ) : solicitacoes.map((s: any) => {
           const cfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
           return (
@@ -759,10 +759,10 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
                 <span className={cn(
 'text-xs font-bold'
 , cfg.cor)}>{cfg.label}</span>
-                <span className="text-xs text-[#A69E8F]">{formatDateTime(s.createdAt)}</span>
+                <span className="text-xs text-tema-apagado">{formatDateTime(s.createdAt)}</span>
               </div>
-              <p className="text-sm text-[#201D17]">{s.quantidade} {s.item?.unidade} - {s.item?.descricao}</p>
-              {s.observacao && <p className="text-xs text-[#7A7266] mt-1 italic">{s.observacao}</p>}
+              <p className="text-sm text-tema-tinta">{s.quantidade} {s.item?.unidade} - {s.item?.descricao}</p>
+              {s.observacao && <p className="text-xs text-tema-suave mt-1 italic">{s.observacao}</p>}
             </div>
           )
         })}
@@ -812,9 +812,9 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-[#3F3A32]">{ehHoje ? 'Registro de hoje' : 'Registro retroativo'}</p>
+          <p className="text-sm font-medium text-tema-texto">{ehHoje ? 'Registro de hoje' : 'Registro retroativo'}</p>
           <input
             type="date"
             value={dataSelecionada}
@@ -826,12 +826,12 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
         {registroDoDia?.kmInicial != null && registroDoDia?.kmFinal != null ? (
           <div className="text-center py-2">
             <p className="text-3xl font-black text-emerald-700">{(registroDoDia.kmFinal - registroDoDia.kmInicial).toFixed(1)} km</p>
-            <p className="text-xs text-[#A69E8F] mt-1">Rodados no dia ({registroDoDia.kmInicial} para {registroDoDia.kmFinal})</p>
+            <p className="text-xs text-tema-apagado mt-1">Rodados no dia ({registroDoDia.kmInicial} para {registroDoDia.kmFinal})</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-[#7A7266] mb-1">KM Inicial</label>
+              <label className="block text-xs text-tema-suave mb-1">KM Inicial</label>
               <input
                 type="number"
                 value={registroDoDia?.kmInicial ?? kmInicial}
@@ -841,7 +841,7 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
               />
             </div>
             <div>
-              <label className="block text-xs text-[#7A7266] mb-1">KM Final</label>
+              <label className="block text-xs text-tema-suave mb-1">KM Final</label>
               <input
                 type="number"
                 value={kmFinal}
@@ -874,13 +874,13 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-[#3F3A32]">Historico</p>
+        <p className="text-sm font-medium text-tema-texto">Historico</p>
         {registros.length === 0 ? (
-          <p className="text-[#A69E8F] text-sm text-center py-6">Nenhum registro ainda</p>
+          <p className="text-tema-apagado text-sm text-center py-6">Nenhum registro ainda</p>
         ) : registros.map((r: any) => (
-          <div key={r.id} className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-3 flex items-center justify-between">
-            <p className="text-xs text-[#A69E8F]">{formatDateTime(r.data)}</p>
-            <p className="text-sm text-[#201D17]">
+          <div key={r.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center justify-between">
+            <p className="text-xs text-tema-apagado">{formatDateTime(r.data)}</p>
+            <p className="text-sm text-tema-tinta">
               {r.kmInicial ?? '-'} para {r.kmFinal ?? '-'}
               {r.kmInicial != null && r.kmFinal != null && (
                 <span className="text-emerald-700 font-bold ml-2">({(r.kmFinal - r.kmInicial).toFixed(1)} km)</span>
@@ -925,8 +925,8 @@ function AbaManutencao({ veiculoId, queryClient }: { veiculoId: string; queryCli
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-[#E6E1D6] shadow-sm shadow-black/[0.03] rounded-xl p-4 space-y-3">
-        <p className="text-sm font-medium text-[#3F3A32]">Solicitar manutencao</p>
+      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+        <p className="text-sm font-medium text-tema-texto">Solicitar manutencao</p>
         <textarea
           value={descricao}
           onChange={e => setDescricao(e.target.value)}
@@ -945,19 +945,19 @@ function AbaManutencao({ veiculoId, queryClient }: { veiculoId: string; queryCli
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-[#3F3A32]">Solicitacoes</p>
+        <p className="text-sm font-medium text-tema-texto">Solicitacoes</p>
         {solicitacoes.length === 0 ? (
-          <p className="text-[#A69E8F] text-sm text-center py-6">Nenhuma solicitacao ainda</p>
+          <p className="text-tema-apagado text-sm text-center py-6">Nenhuma solicitacao ainda</p>
         ) : solicitacoes.map((s: any) => {
           const cfg = STATUS_MANUTENCAO[s.status] || STATUS_MANUTENCAO.PENDENTE
           return (
             <div key={s.id} className={cn('rounded-xl p-3 border', cfg.bg)}>
               <div className="flex items-center justify-between mb-1">
                 <span className={cn('text-xs font-bold', cfg.cor)}>{cfg.label}</span>
-                <span className="text-xs text-[#A69E8F]">{formatDateTime(s.createdAt)}</span>
+                <span className="text-xs text-tema-apagado">{formatDateTime(s.createdAt)}</span>
               </div>
-              <p className="text-sm text-[#201D17]">{s.descricao}</p>
-              {s.observacao && <p className="text-xs text-[#7A7266] mt-1 italic">{s.observacao}</p>}
+              <p className="text-sm text-tema-tinta">{s.descricao}</p>
+              {s.observacao && <p className="text-xs text-tema-suave mt-1 italic">{s.observacao}</p>}
             </div>
           )
         })}

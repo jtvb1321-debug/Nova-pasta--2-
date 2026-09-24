@@ -18,10 +18,10 @@ export function Toaster() {
           className={cn(
             'flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300 animate-slide-in',
             toast.variant === 'destructive'
-              ? 'bg-white border-red-500/30 text-red-800'
+              ? 'bg-tema-superficie border-red-500/30 text-red-800'
               : toast.variant === 'success'
-              ? 'bg-white border-emerald-500/30 text-emerald-800'
-              : 'bg-white border-[#E6E1D6] text-[#201D17]'
+              ? 'bg-tema-superficie border-emerald-500/30 text-emerald-800'
+              : 'bg-tema-superficie border-tema-linha text-tema-tinta'
           )}
         >
           {toast.variant === 'destructive' ? (
@@ -41,7 +41,7 @@ export function Toaster() {
           </div>
           <button
             onClick={() => dismiss(toast.id)}
-            className="text-black/30 hover:text-[#201D17] transition-colors"
+            className="text-black/30 hover:text-tema-tinta transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>

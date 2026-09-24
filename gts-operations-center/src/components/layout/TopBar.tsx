@@ -8,6 +8,7 @@ import {
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn, formatCurrency } from '@/lib/utils'
+import { ThemeToggle } from './ThemeToggle'
 
 interface KPI {
   label: string
@@ -30,11 +31,11 @@ function KPIItem({ kpi }: { kpi: KPI }) {
       'flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all flex-shrink-0',
       kpi.alerta
         ? 'bg-red-500/10 border-red-500/25'
-        : 'bg-black/[0.02] border-[#E6E1D6]'
+        : 'bg-tema-contraste/[0.02] border-tema-linha'
     )}>
       <Icon className={cn('w-3 h-3 flex-shrink-0', kpi.cor)} />
       <span className={cn('text-xs font-bold font-mono', kpi.cor)}>{kpi.value}</span>
-      <span className="text-xs text-[#A69E8F] hidden xl:block">{kpi.label}</span>
+      <span className="text-xs text-tema-apagado hidden xl:block">{kpi.label}</span>
     </div>
   )
 }
@@ -86,7 +87,7 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
       label: 'Estoque Critico',
       value: stats?.estoqueBaixo ?? 0,
       icon: Package,
-      cor: (stats?.estoqueBaixo ?? 0) > 0 ? 'text-red-700' : 'text-[#A69E8F]',
+      cor: (stats?.estoqueBaixo ?? 0) > 0 ? 'text-red-700' : 'text-tema-apagado',
       alerta: (stats?.estoqueBaixo ?? 0) > 0,
     },
     {
@@ -104,11 +105,11 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
   ]
 
   return (
-      <header className="flex-shrink-0 border-b border-[#E6E1D6] bg-white/90 backdrop-blur-sm">
+      <header className="flex-shrink-0 border-b border-tema-linha bg-tema-superficie/90 backdrop-blur-sm">
         {/* Barra KPIs */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E6E1D6] overflow-x-auto scrollbar-hide">
-          <span className="text-xs text-[#A69E8F] flex-shrink-0 font-medium uppercase tracking-wider">Operacional</span>
-          <div className="w-px h-4 bg-[#E6E1D6] flex-shrink-0" />
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-tema-linha overflow-x-auto scrollbar-hide">
+          <span className="text-xs text-tema-apagado flex-shrink-0 font-medium uppercase tracking-wider">Operacional</span>
+          <div className="w-px h-4 bg-tema-linha flex-shrink-0" />
           <div className="flex items-center gap-2">
             {kpis.map((kpi, i) => <KPIItem key={i} kpi={kpi} />)}
           </div>
@@ -118,7 +119,7 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
           </div>
           <button
             onClick={() => refetch()}
-            className="text-[#A69E8F] hover:text-[#201D17] transition-colors flex-shrink-0"
+            className="text-tema-apagado hover:text-tema-tinta transition-colors flex-shrink-0"
             title="Atualizar KPIs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -128,13 +129,13 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
         {/* Barra principal */}
         <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5">
           {title && (
-            <h1 className="text-base font-bold tracking-tight text-[#201D17] flex-shrink-0 truncate">{title}</h1>
+            <h1 className="text-base font-bold tracking-tight text-tema-tinta flex-shrink-0 truncate">{title}</h1>
           )}
 
           <div className="flex items-center gap-2 sm:gap-3 ml-auto flex-shrink-0">
             {/* Hora — so renderiza no cliente apos hydration */}
             {horaStr && (
-              <span className="text-xs text-[#A69E8F] font-mono hidden lg:block">
+              <span className="text-xs text-tema-apagado font-mono hidden lg:block">
                 {horaStr}
               </span>
             )}
@@ -144,9 +145,11 @@ export function TopBar({ title, onAlertasClick, totalAlertas = 0 }: TopBarProps)
               <span className="text-xs text-emerald-700 hidden sm:block">Online</span>
             </div>
 
+            <ThemeToggle />
+
             <button
               onClick={onAlertasClick}
-              className="relative text-[#7A7266] hover:text-[#201D17] hover:bg-black/[0.04] rounded-lg p-1.5 transition-colors"
+              className="relative text-tema-suave hover:text-tema-tinta hover:bg-tema-contraste/[0.04] rounded-lg p-1.5 transition-colors"
             >
               <Bell className="w-4 h-4" />
               {totalAlertas > 0 && (

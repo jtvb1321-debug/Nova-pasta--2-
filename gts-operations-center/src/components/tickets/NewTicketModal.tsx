@@ -113,11 +113,11 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-[#E6E1D6] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E1D6] sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold text-[#201D17]">Novo Chamado</h2>
-          <button onClick={onClose} className="text-[#7A7266] hover:text-[#201D17] transition-colors">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
+          <h2 className="text-lg font-semibold text-tema-tinta">Novo Chamado</h2>
+          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -125,14 +125,14 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
         <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="p-6 space-y-5">
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-2">Tipo de Chamado</label>
+            <label className="block text-sm font-medium text-tema-suave mb-2">Tipo de Chamado</label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(tipo => (
                 <label key={tipo} className="cursor-pointer">
                   <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
-                  <div className="px-3 py-2 text-xs text-center font-medium border border-[#E6E1D6] rounded-lg
+                  <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha rounded-lg
                                   peer-checked:border-orange-600 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                  text-[#7A7266] hover:border-[#D8D2C3] transition-colors">
+                                  text-tema-suave hover:border-tema-linha-forte transition-colors">
                     {TIPO_CHAMADO_LABELS[tipo]}
                   </div>
                 </label>
@@ -141,7 +141,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
           </div>
           {(watch('tipo') === 'MANUTENCAO' || watch('tipo') === 'SUPORTE') && (
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-2">Detalhe da Solicitacao</label>
+              <label className="block text-sm font-medium text-tema-suave mb-2">Detalhe da Solicitacao</label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {(watch('tipo') === 'MANUTENCAO'
                   ? ['Lentidao', 'Oscilacao', 'Problemas de conexao']
@@ -149,9 +149,9 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
                 ).map((opcao) => (
                   <label key={opcao} className="cursor-pointer">
                     <input {...register('subCategoria')} type="radio" value={opcao} className="sr-only peer" />
-                    <div className="px-3 py-2 text-xs text-center font-medium border border-[#E6E1D6] rounded-lg
+                    <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha rounded-lg
                                     peer-checked:border-orange-600 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                    text-[#7A7266] hover:border-[#D8D2C3] transition-colors">
+                                    text-tema-suave hover:border-tema-linha-forte transition-colors">
                       {opcao}
                     </div>
                   </label>
@@ -163,12 +163,12 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
           {/* Cliente + Telefone */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Cliente *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Cliente *</label>
               <input {...register('cliente')} placeholder="Nome do cliente" className="w-full gts-input" />
               {errors.cliente && <p className="text-xs text-red-700 mt-1">{errors.cliente.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Telefone</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Telefone</label>
               <input {...register('telefone')} placeholder="(00) 00000-0000" className="w-full gts-input" />
             </div>
           </div>
@@ -176,12 +176,12 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
           {/* Endereco + Cidade */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Endereco *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Endereco *</label>
               <input {...register('endereco')} placeholder="Rua, numero, bairro" className="w-full gts-input" />
               {errors.endereco && <p className="text-xs text-red-700 mt-1">{errors.endereco.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Cidade *</label>
+              <label className="block text-sm font-medium text-tema-suave mb-1.5">Cidade *</label>
               <input {...register('cidade')} placeholder="Cidade ou Estado" className="w-full gts-input" />
               {errors.cidade && <p className="text-xs text-red-700 mt-1">{errors.cidade.message}</p>}
             </div>
@@ -189,7 +189,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Equipe */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Equipe Responsavel</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Equipe Responsavel</label>
             <select {...register('equipeId')} className="w-full gts-input">
               <option value="">Selecionar equipe...</option>
               {equipes.map((e: any) => (
@@ -200,7 +200,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Observacoes */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">Observacoes</label>
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">Observacoes</label>
             <textarea
               {...register('observacao')}
               rows={3}
@@ -211,7 +211,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
 
           {/* Upload O.S PDF */}
           <div>
-            <label className="block text-sm font-medium text-[#7A7266] mb-1.5">
+            <label className="block text-sm font-medium text-tema-suave mb-1.5">
               Ordem de Servico (PDF)
             </label>
             <div className="relative">
@@ -227,7 +227,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
                 className={`w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg cursor-pointer transition-all ${
                   arquivoPDF
                     ? 'border-emerald-500/50 bg-emerald-500/5'
-                    : 'border-[#D8D2C3] bg-black/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
+                    : 'border-tema-linha-forte bg-tema-contraste/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -242,14 +242,14 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
                   {arquivoPDF ? (
                     <>
                       <p className="text-sm text-emerald-700 font-medium truncate">{arquivoPDF.name}</p>
-                      <p className="text-xs text-[#A69E8F]">
+                      <p className="text-xs text-tema-apagado">
                         {(arquivoPDF.size / 1024).toFixed(0)} KB - Clique para trocar
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm text-[#7A7266]">Clique para anexar a O.S</p>
-                      <p className="text-xs text-[#A69E8F]">Somente arquivos PDF</p>
+                      <p className="text-sm text-tema-suave">Clique para anexar a O.S</p>
+                      <p className="text-xs text-tema-apagado">Somente arquivos PDF</p>
                     </>
                   )}
                 </div>
@@ -257,7 +257,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); setArquivoPDF(null) }}
-                    className="text-[#A69E8F] hover:text-red-700 transition-colors"
+                    className="text-tema-apagado hover:text-red-700 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -269,7 +269,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
           {/* Materiais */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-[#7A7266] flex items-center gap-1.5">
+              <label className="text-sm font-medium text-tema-suave flex items-center gap-1.5">
                 <Package className="w-4 h-4" />
                 Materiais a Carregar
               </label>
@@ -290,8 +290,8 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
             {materiais.length > 0 && (
               <div className="space-y-2 mt-3">
                 {materiais.map(m => (
-                  <div key={m.itemId} className="flex items-center gap-3 p-2.5 bg-black/[0.02] rounded-lg border border-[#E6E1D6]">
-                    <span className="flex-1 text-sm text-[#7A7266] truncate">{m.descricao}</span>
+                  <div key={m.itemId} className="flex items-center gap-3 p-2.5 bg-tema-contraste/[0.02] rounded-lg border border-tema-linha">
+                    <span className="flex-1 text-sm text-tema-suave truncate">{m.descricao}</span>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
@@ -300,11 +300,11 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
                         onChange={e => atualizarQuantidade(m.itemId, Number(e.target.value))}
                         className="w-16 gts-input py-1 text-center text-sm"
                       />
-                      <span className="text-xs text-[#A69E8F] w-8">{m.unidade}</span>
+                      <span className="text-xs text-tema-apagado w-8">{m.unidade}</span>
                       <button
                         type="button"
                         onClick={() => removerMaterial(m.itemId)}
-                        className="text-[#A69E8F] hover:text-red-700 transition-colors"
+                        className="text-tema-apagado hover:text-red-700 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
