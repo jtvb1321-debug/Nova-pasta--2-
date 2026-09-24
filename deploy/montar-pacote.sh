@@ -34,6 +34,11 @@ for f in start.js deploy-build.js next.config.js tsconfig.json package.json; do
   # LF como no repositorio: o checkout no Windows (autocrlf) entrega CRLF.
   tr -d '\r' < "$CONFIG/$f" > "$SAIDA/$f"
 done
+# Lockfile da versao (a partir da 1.0.10): fixa as dependencias instaladas
+# pelo "npm install" do builder e substitui o lock antigo do servidor.
+if [ -f "$CONFIG/package-lock.json" ]; then
+  tr -d '\r' < "$CONFIG/package-lock.json" > "$SAIDA/package-lock.json"
+fi
 
 # Garantia extra: nada de artefato local ou dado de runtime no pacote.
 rm -rf "$SAIDA/public/uploads" "$SAIDA/node_modules" "$SAIDA/dist" "$SAIDA/.next"
