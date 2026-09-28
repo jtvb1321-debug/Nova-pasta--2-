@@ -93,9 +93,31 @@ export async function GET() {
       })
     }
 
+    // O SmartOLT pode responder normalmente mas sem dados das ONUs (status
+    // "Unknown", sem sinal) quando perde a comunicacao com as OLTs.
+    const STATUS_CONHECIDOS = new Set(['Online', 'Offline', 'Power failure', 'LOS'])
+    const porOlt = new Map<string, { nome: string; totalOnus: number; semStatus: number }>()
+    let semStatus = 0
+    for (const s of statuses) {
+      const nome = mapaOlts.get(s.olt_id) || s.olt_id
+      const item = porOlt.get(nome) || { nome, totalOnus: 0, semStatus: 0 }
+      item.totalOnus++
+      if (!STATUS_CONHECIDOS.has(s.status)) { item.semStatus++; semStatus++ }
+      porOlt.set(nome, item)
+    }
+    const comunicacao = {
+      totalOnus: statuses.length,
+      semStatus,
+      semComunicacao: statuses.length > 0 && semStatus === statuses.length,
+      olts: [...porOlt.values()],
+    }
+
     return NextResponse.json({
       totalOlts: olts.length,
       status: { online, offline, quedaEnergia, los, total: statuses.length },
+      comunicacao,
+      alarmesFeed,
+      mediaRxSignal,
       alertasSinal,
       totalAlertasSinal: alertasSinal.length,
       distribuicaoSinal,

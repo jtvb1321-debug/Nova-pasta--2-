@@ -29,6 +29,7 @@ async function fetchStatus() {
 export function SmartOLTView({ podeAprovar }: Props) {
   const queryClient = useQueryClient()
   const [aprovandoId, setAprovandoId] = useState<string | null>(null)
+  const [rejeitandoId, setRejeitandoId] = useState<string | null>(null)
   const [alertaParaChamado, setAlertaParaChamado] = useState<any>(null)
 
   const { data, isLoading, error } = useQuery({
@@ -50,6 +51,35 @@ export function SmartOLTView({ podeAprovar }: Props) {
     },
     onError: (err: any) => toast({ title: 'Erro ao aprovar', description: err.message, variant: 'destructive' }),
   })
+
+  const rejeitarMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) {
+        const res = await fetch(`/api/tickets/${id}/rejeitar-rompimento`, { method: 'POST' })
+        const resData = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(resData.error || 'Erro ao rejeitar')
+      }
+      return ids.length
+    },
+    onSuccess: (qtd) => {
+      toast({ title: qtd > 1 ? `${qtd} alertas fechados.` : 'Alerta fechado.', variant: 'success' })
+      queryClient.invalidateQueries({ queryKey: ['smartolt-status'] })
+    },
+    onError: (err: any) => {
+      toast({ title: 'Erro ao fechar alerta', description: err.message, variant: 'destructive' })
+      queryClient.invalidateQueries({ queryKey: ['smartolt-status'] })
+    },
+    onSettled: () => setRejeitandoId(null),
+  })
+
+  function rejeitar(ids: string[]) {
+    const texto = ids.length > 1
+      ? `Fechar os ${ids.length} alertas de rompimento? Os chamados serao cancelados.`
+      : 'Fechar este alerta de rompimento? O chamado sera cancelado.'
+    if (!window.confirm(texto)) return
+    setRejeitandoId(ids.length > 1 ? 'todos' : ids[0])
+    rejeitarMutation.mutate(ids)
+  }
 
   if (isLoading) {
     return (
@@ -74,6 +104,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
   const alarmesFeed = data.alarmesFeed ?? []
   const rompimentosPendentes = data.rompimentosPendentes ?? []
   const totalOlts = data.totalOlts ?? 0
+  const comunicacao = data.comunicacao ?? { totalOnus: 0, semStatus: 0, semComunicacao: false, olts: [] }
   const totalClientes = status.online + status.offline + status.quedaEnergia + status.los
   const percOnline = totalClientes > 0 ? ((status.online / totalClientes) * 100).toFixed(1) : '0'
   const percOffline = totalClientes > 0 ? ((status.offline / totalClientes) * 100).toFixed(1) : '0'
@@ -89,6 +120,20 @@ export function SmartOLTView({ podeAprovar }: Props) {
 
   return (
     <div className="space-y-5 animate-fade-in">
+      {comunicacao.semComunicacao && (
+        <div className="gts-card border-amber-500/40 bg-amber-500/10 flex items-start gap-3">
+          <WifiOff className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-semibold text-tema-tinta">SmartOLT sem comunicacao com as OLTs</p>
+            <p className="text-tema-suave mt-1">
+              O SmartOLT esta respondendo, mas nao tem informacao de nenhuma das {comunicacao.totalOnus} ONUs
+              (status desconhecido e sem sinal){comunicacao.olts.length > 0 && ` em ${comunicacao.olts.map((o: any) => `${o.nome} (${o.totalOnus})`).join(', ')}`}.
+              Por isso os numeros abaixo aparecem zerados. Verifique no painel do SmartOLT se as OLTs estao acessiveis e se a assinatura esta ativa.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Network At-a-Glance */}
         <div className="gts-card">
@@ -268,6 +313,23 @@ export function SmartOLTView({ podeAprovar }: Props) {
       )}
 
       {/* Rompimentos pendentes de aprovacao */}
+      {podeAprovar && rompimentosPendentes.length > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-tema-suave">
+            {rompimentosPendentes.length} alertas de rompimento aguardando decisao
+          </p>
+          <button
+            onClick={() => rejeitar(rompimentosPendentes.map((r: any) => r.id))}
+            disabled={rejeitarMutation.isPending}
+            className="gts-btn-secondary disabled:opacity-50"
+          >
+            {rejeitarMutation.isPending && rejeitandoId === 'todos'
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <XCircle className="w-4 h-4" />}
+            Rejeitar todos
+          </button>
+        </div>
+      )}
       {rompimentosPendentes.map((r: any) => (
         <div key={r.id} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="gts-card border-red-500/30 bg-red-500/5">
@@ -299,8 +361,14 @@ export function SmartOLTView({ podeAprovar }: Props) {
 
             {podeAprovar ? (
               <div className="flex gap-3 mt-4">
-                <button className="gts-btn-secondary flex-1 justify-center">
-                  <XCircle className="w-4 h-4" />
+                <button
+                  onClick={() => rejeitar([r.id])}
+                  disabled={rejeitarMutation.isPending}
+                  className="gts-btn-secondary flex-1 justify-center disabled:opacity-50"
+                >
+                  {rejeitarMutation.isPending && rejeitandoId === r.id
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <XCircle className="w-4 h-4" />}
                   Rejeitar
                 </button>
                 <button
