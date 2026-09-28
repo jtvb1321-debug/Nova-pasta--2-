@@ -33,7 +33,8 @@ export async function POST(
       where: { id },
       data: {
         aguardandoAprovacao: false,
-        status: 'CANCELADO',
+        // Chamado ja finalizado continua finalizado; so sai da fila de alertas.
+        status: chamado.status === 'FINALIZADO' ? 'FINALIZADO' : 'CANCELADO',
         observacao: `${chamado.observacao ?? ''}\n\nAlerta rejeitado por ${rejeitadoPor} em ${quando}.`.trim(),
       },
     }),

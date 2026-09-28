@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import {
   Search, Loader2, AlertTriangle, CheckCircle2, Box, Cable,
-  Waypoints, PanelRightClose, PanelRightOpen, ChevronRight,
+  Waypoints, PanelRightClose, PanelRightOpen, ChevronRight, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ATRIBUICAO_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
@@ -48,6 +48,91 @@ function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+// Consulta de viabilidade (prospeccao): CTO com porta livre perto do endereco.
+// Distancias em linha reta; o cabo real segue as ruas e costuma ser maior.
+const RAIO_VIAVEL = 200
+const RAIO_CONFIRMAR = 400
+
+interface OpcaoCto {
+  nome: string
+  distancia: number
+  livres: number
+  ativa: boolean // tem cliente ligado (caixa comprovadamente instalada)
+}
+
+type Precisao = 'exata' | 'rua' | 'bairro'
+
+interface Consulta {
+  rotulo: string
+  precisao: Precisao
+  nivel: 'viavel' | 'confirmar' | 'sem' | 'nao_encontrado'
+  opcoes: OpcaoCto[]
+  distanciaMaisProxima: number | null
+}
+
+const CONSULTA_NIVEL: Record<Consulta['nivel'], { rotulo: string; classe: string }> = {
+  viavel: { rotulo: 'Tem viabilidade', classe: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25' },
+  confirmar: { rotulo: 'Viabilidade a confirmar', classe: 'bg-amber-500/10 text-amber-700 border-amber-500/25' },
+  sem: { rotulo: 'Sem viabilidade', classe: 'bg-red-500/10 text-red-700 border-red-500/25' },
+  nao_encontrado: { rotulo: 'Endereco nao encontrado', classe: 'bg-tema-contraste/[0.04] text-tema-suave border-tema-linha' },
+}
+
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br'
+
+async function buscarNominatim(parametros: string): Promise<{ lat: number; lng: number; precisao: Precisao } | null> {
+  const res = await fetch(`${NOMINATIM}&${parametros}`, { referrerPolicy: 'strict-origin-when-cross-origin' })
+  const lista = await res.json()
+  const r = Array.isArray(lista) ? lista[0] : null
+  if (!r) return null
+  // Sem numero da casa o Nominatim devolve o meio da rua (ou o centro do bairro).
+  const precisao: Precisao =
+    r.addresstype === 'house' || r.type === 'house' || r.class === 'building' ? 'exata'
+      : r.class === 'highway' || r.addresstype === 'road' ? 'rua'
+        : 'bairro'
+  return { lat: parseFloat(r.lat), lng: parseFloat(r.lon), precisao }
+}
+
+// Coordenadas coladas ("-5.04, -42.74") ou link completo do Google Maps.
+function extrairCoordenadas(texto: string): { lat: number; lng: number } | null {
+  const padroes = [
+    /^\s*(-?\d{1,2}\.\d+)\s*[,; ]\s*(-?\d{1,3}\.\d+)\s*$/,
+    /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/, // posicao do marcador em links de lugar
+    /@(-?\d+\.\d+),(-?\d+\.\d+)/, // centro da tela do Maps
+    /[?&](?:q|ll|query)=(-?\d+\.\d+)(?:,|%2C)(-?\d+\.\d+)/,
+  ]
+  for (const re of padroes) {
+    const m = texto.match(re)
+    if (m) {
+      const lat = parseFloat(m[1]), lng = parseFloat(m[2])
+      if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng }
+    }
+  }
+  return null
+}
+
+// Coordenada/link do Maps (exato), CEP -> rua/bairro (ViaCEP) -> Nominatim,
+// ou endereco livre.
+async function localizarEndereco(texto: string): Promise<{ lat: number; lng: number; precisao: Precisao; rotulo: string } | null> {
+  const coord = extrairCoordenadas(texto)
+  if (coord) return { ...coord, precisao: 'exata', rotulo: `Ponto ${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}` }
+
+  const cep = texto.replace(/\D/g, '')
+  if (/^\d{5}-?\d{3}$/.test(texto.trim())) {
+    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    const v = await res.json().catch(() => null)
+    if (!v || v.erro) return null
+    const rotulo = [v.logradouro, v.bairro, v.localidade].filter(Boolean).join(', ') || `CEP ${texto}`
+    const enc = encodeURIComponent
+    const ponto =
+      (v.logradouro && await buscarNominatim(`street=${enc(v.logradouro)}&city=${enc(v.localidade)}&state=${enc(v.uf)}`)) ||
+      (v.logradouro && await buscarNominatim(`q=${enc(`${v.logradouro}, ${v.bairro}, ${v.localidade}`)}`)) ||
+      (v.bairro && await buscarNominatim(`q=${enc(`${v.bairro}, ${v.localidade}, ${v.uf}`)}`).then(p => p && { ...p, precisao: 'bairro' as Precisao }))
+    return ponto ? { ...ponto, rotulo: `CEP ${texto.trim()} - ${rotulo}` } : null
+  }
+  const ponto = await buscarNominatim(`q=${encodeURIComponent(texto + ', Teresina, PI')}`)
+  return ponto ? { ...ponto, rotulo: texto } : null
+}
+
 interface Props {
   // Tela do tecnico: sem AppShell, entao o mapa deve ocupar 100% da altura
   // da tela (nao h-[calc(100vh-64px)], que reserva espaco de um cabecalho
@@ -61,6 +146,9 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   const camadasRef = useRef<any>({})
   const fundoRef = useRef<{ camada: any; chave: string } | null>(null)
   const tema = useTema()
+  const [consulta, setConsulta] = useState<Consulta | null>(null)
+  const consultaAtivaRef = useRef(false)
+  const consultaCamadaRef = useRef<any>(null)
   const [busca, setBusca] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [carregando, setCarregando] = useState(true)
@@ -93,6 +181,15 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       fundoRef.current = { camada: fundo, chave: chaveCarto }
 
       mapInstance.current = map
+
+      // Com uma consulta de viabilidade aberta, clicar no mapa consulta o ponto
+      // exato (cliques em caixas/cabos continuam abrindo o popup deles).
+      map.on('click', (e: any) => {
+        if (!consultaAtivaRef.current) return
+        const alvo = e.originalEvent?.target as HTMLElement | undefined
+        if (alvo?.classList?.contains('leaflet-interactive')) return
+        avaliarPonto(e.latlng.lat, e.latlng.lng, 'Ponto escolhido no mapa', 'exata')
+      })
 
       const grupoCtos = (L as any).markerClusterGroup({
         maxClusterRadius: 50,
@@ -282,15 +379,71 @@ export function MapaInmapView({ telaCheia = false }: Props) {
     grupoCtos.zoomToShowLayer(marker, () => marker.openPopup())
   }
 
+  function limparMarcaConsulta() {
+    const { map } = camadasRef.current
+    if (map && consultaCamadaRef.current) map.removeLayer(consultaCamadaRef.current)
+    consultaCamadaRef.current = null
+  }
+
+  function fecharConsulta() {
+    limparMarcaConsulta()
+    consultaAtivaRef.current = false
+    setConsulta(null)
+  }
+
+  // Caixas com porta livre perto do ponto: ate 200 m com cliente ligado = viavel;
+  // ate 400 m (ou so caixas ainda sem clientes) = a confirmar; alem disso = sem.
+  function avaliarPonto(lat: number, lng: number, rotulo: string, precisao: Precisao) {
+    const { L, map, marcadoresCtos } = camadasRef.current
+    if (!L || !map) return
+
+    const candidatas: OpcaoCto[] = (marcadoresCtos || [])
+      .map((m: any) => {
+        const p = m.feature?.properties || {}
+        return {
+          nome: p.nome || 'CTO',
+          distancia: distanciaMetros(lat, lng, m._lat, m._lng),
+          livres: Number(p.livres ?? 0),
+          capacidade: Number(p.capacidade ?? 0),
+          ativa: Number(p.totalLogins ?? 0) > 0,
+        }
+      })
+      .filter((c: any) => c.capacidade > 0 && c.livres > 0)
+      .sort((a: OpcaoCto, b: OpcaoCto) => a.distancia - b.distancia)
+
+    const nivel: Consulta['nivel'] =
+      candidatas.some(c => c.ativa && c.distancia <= RAIO_VIAVEL) ? 'viavel'
+        : candidatas.some(c => c.distancia <= RAIO_CONFIRMAR) ? 'confirmar'
+          : 'sem'
+
+    limparMarcaConsulta()
+    consultaCamadaRef.current = L.layerGroup([
+      L.circle([lat, lng], { radius: RAIO_VIAVEL, color: '#EA580C', weight: 1.5, dashArray: '6 6', fillColor: '#EA580C', fillOpacity: 0.06, interactive: false }),
+      L.circleMarker([lat, lng], { radius: 7, color: '#FFFFFF', weight: 2, fillColor: '#EA580C', fillOpacity: 1, interactive: false }),
+    ]).addTo(map)
+    map.setView([lat, lng], Math.max(map.getZoom(), 17))
+
+    consultaAtivaRef.current = true
+    setConsulta({
+      rotulo,
+      precisao,
+      nivel,
+      opcoes: candidatas.filter(c => c.distancia <= RAIO_CONFIRMAR).slice(0, 3).map(({ nome, distancia, livres, ativa }) => ({ nome, distancia, livres, ativa })),
+      distanciaMaisProxima: candidatas[0]?.distancia ?? null,
+    })
+  }
+
   async function buscarEndereco() {
     if (!busca.trim()) return
     setBuscando(true)
     try {
-      const { map, grupoCtos, marcadoresCtos } = camadasRef.current
+      const { grupoCtos, marcadoresCtos } = camadasRef.current
       const buscaLower = busca.toLowerCase()
+      const ehConsultaDireta = /^\s*\d{5}-?\d{3}\s*$/.test(busca) || extrairCoordenadas(busca) !== null
 
-      // 1. Busca interna: nome/endereco da propria caixa
-      const encontrada = marcadoresCtos.find((m: any) => {
+      // 1. Busca interna: nome/endereco da propria caixa (CEP, coordenada e
+      // link do Maps vao direto para a consulta de viabilidade)
+      const encontrada = !ehConsultaDireta && marcadoresCtos.find((m: any) => {
         const p = m.feature?.properties
         const texto = ((p?.nome || '') + ' ' + (p?.endereco || '')).toLowerCase()
         return texto.includes(buscaLower)
@@ -302,27 +455,14 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         return
       }
 
-      // 2. Geocoding externo (rua/endereco) + acha a caixa mais proxima
-      const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(busca + ', Teresina, PI'))
-      const resultados = await res.json()
-
-      if (resultados && resultados.length > 0) {
-        const { lat, lon } = resultados[0]
-        const latN = parseFloat(lat)
-        const lngN = parseFloat(lon)
-
-        let maisProxima: any = null
-        let menorDistancia = Infinity
-        for (const m of marcadoresCtos) {
-          const d = distanciaMetros(latN, lngN, m._lat, m._lng)
-          if (d < menorDistancia) { menorDistancia = d; maisProxima = m }
-        }
-
-        if (maisProxima && menorDistancia < 2000) {
-          setTimeout(() => grupoCtos.zoomToShowLayer(maisProxima, () => maisProxima.openPopup()), 300)
-        } else {
-          map.setView([latN, lngN], 17)
-        }
+      // 2. CEP, coordenada, link do Maps ou endereco: localiza e consulta a viabilidade
+      const local = await localizarEndereco(busca)
+      if (local) {
+        avaliarPonto(local.lat, local.lng, local.rotulo, local.precisao)
+      } else {
+        limparMarcaConsulta()
+        consultaAtivaRef.current = true
+        setConsulta({ rotulo: busca, precisao: 'exata', nivel: 'nao_encontrado', opcoes: [], distanciaMaisProxima: null })
       }
     } catch (err) {
       console.error('Erro na busca:', err)
@@ -354,7 +494,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && buscarEndereco()}
-              placeholder="Buscar rua, CTO ou endereco..."
+              placeholder="Buscar CEP, rua, CTO, coordenada ou link do Google Maps..."
               className="flex-1 min-w-0 bg-transparent text-tema-tinta text-sm outline-none placeholder:text-tema-apagado"
             />
             <button onClick={buscarEndereco} disabled={buscando} className="text-orange-600 hover:text-orange-500 disabled:opacity-50 flex-shrink-0">
@@ -375,6 +515,59 @@ export function MapaInmapView({ telaCheia = false }: Props) {
             )}
           </button>
         </div>
+
+        {/* Consulta de viabilidade (prospeccao) */}
+        {consulta && (
+          <div className="absolute top-16 sm:top-14 left-2 sm:left-3 z-[1000] w-[calc(100%-1rem)] sm:w-80 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg shadow-lg shadow-tema-contraste/[0.1] p-3 text-sm">
+            <div className="flex items-start justify-between gap-2">
+              <span className={cn('text-xs font-bold px-2 py-0.5 rounded-md border', CONSULTA_NIVEL[consulta.nivel].classe)}>
+                {CONSULTA_NIVEL[consulta.nivel].rotulo}
+              </span>
+              <button onClick={fecharConsulta} className="text-tema-apagado hover:text-tema-tinta" aria-label="Fechar consulta" title="Fechar consulta">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-tema-tinta font-medium mt-2 leading-snug">{consulta.rotulo}</p>
+
+            {consulta.nivel === 'nao_encontrado' ? (
+              <p className="text-xs text-tema-suave mt-1.5">
+                Tente rua e bairro (ex.: Rua Tal, Bairro Tal) ou clique no mapa no local desejado.
+              </p>
+            ) : (
+              <>
+                {consulta.precisao !== 'exata' && (
+                  <p className="text-xs text-amber-700 mt-1.5">
+                    {consulta.precisao === 'rua' ? 'Local aproximado: meio da rua (sem o numero exato).' : 'Local aproximado: centro do bairro (a rua nao foi encontrada no mapa).'} Clique no mapa no ponto certo ou cole o link do Google Maps da casa.
+                  </p>
+                )}
+                {consulta.opcoes.length > 0 ? (
+                  <ul className="mt-2 space-y-1.5">
+                    {consulta.opcoes.map((o, i) => (
+                      <li key={i} className="flex items-start justify-between gap-2 text-xs">
+                        <span className="min-w-0">
+                          <span className="text-tema-tinta font-medium truncate block">{o.nome}</span>
+                          {!o.ativa && <span className="text-tema-apagado">sem clientes - confirmar se esta instalada</span>}
+                        </span>
+                        <span className="text-right flex-shrink-0 font-mono">
+                          <span className="text-tema-tinta block">{Math.round(o.distancia)} m</span>
+                          <span className="text-emerald-700">{o.livres} {o.livres === 1 ? 'porta livre' : 'portas livres'}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-tema-suave mt-2">
+                    Nenhuma caixa com porta livre ate {RAIO_CONFIRMAR} m.
+                    {consulta.distanciaMaisProxima !== null && ` A mais proxima fica a ${(consulta.distanciaMaisProxima / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km.`}
+                  </p>
+                )}
+              </>
+            )}
+            <p className="text-[11px] text-tema-apagado mt-2.5 pt-2 border-t border-tema-linha">
+              Distancia em linha reta (o cabo segue as ruas). Clique em outro ponto do mapa para consultar.
+            </p>
+          </div>
+        )}
 
         {/* Legenda */}
         <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-tema-texto space-y-1 sm:space-y-1.5 shadow-lg shadow-tema-contraste/[0.1] max-w-[160px] sm:max-w-none">

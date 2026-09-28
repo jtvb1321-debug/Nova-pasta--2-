@@ -65,7 +65,8 @@ export async function GET() {
       .slice(0, 50)
 
     const rompimentosPendentes = await prisma.chamado.findMany({
-      where: { aguardandoAprovacao: true, tipo: 'ROMPIMENTO_MASSIVO' },
+      // Chamados ja finalizados/cancelados em Chamados nao sao mais alerta.
+      where: { aguardandoAprovacao: true, tipo: 'ROMPIMENTO_MASSIVO', status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
       orderBy: { dataAbertura: 'desc' },
     })
 
