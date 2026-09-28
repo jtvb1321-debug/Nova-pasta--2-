@@ -23,10 +23,12 @@ import { NovaReversaModal } from './NovaReversaModal'
 import { EntradaDefeitoModal } from './EntradaDefeitoModal'
 import { RelatorioCompletoModal } from './RelatorioCompletoModal'
 import { PorTecnicoTab } from './PorTecnicoTab'
+import { EstoqueIUTab } from './EstoqueIUTab'
+import { podeUsarEstoqueIU } from '@/lib/estoqueIU'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico'
+type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico' | 'estoque-iu'
 const CATEGORIA_CORES: Record<CategoriaEstoque, string> = {
   GTSNET:      'text-blue-700 bg-blue-500/10',
   EACE:        'text-emerald-700 bg-emerald-500/10',
@@ -323,6 +325,10 @@ export function CentralEstoque({ session }: Props) {
     { id: 'reversa'       as Aba, label: 'Reversa ManINFO', icon: Repeat,       badge: 0,            badgeCor: '' },
     { id: 'defeituosos'  as Aba, label: 'Defeituosos ManINFO', icon: PackageX, badge: (defeitosData?.data ?? []).filter((d: any) => d.status === 'PENDENTE_ACEITE').length, badgeCor: 'bg-amber-500' },
     { id: 'por-tecnico'  as Aba, label: 'Por Tecnico',    icon: UserCog,      badge: 0,            badgeCor: '' },
+    // Estoque IU: separado dos demais, so para ADMIN/GESTOR
+    ...(podeUsarEstoqueIU(role)
+      ? [{ id: 'estoque-iu' as Aba, label: 'Estoque IU', icon: ShieldCheck, badge: 0, badgeCor: '' }]
+      : []),
   ]
 
   return (
@@ -337,7 +343,7 @@ export function CentralEstoque({ session }: Props) {
             {devPendentes > 0 && <span className="ml-2 text-amber-700 font-medium">- {devPendentes} devolucao(oes) pendente(s)</span>}
           </>
         }
-        actions={
+        actions={aba === 'estoque-iu' ? undefined : (
           <>
             <button onClick={handleExport} className="gts-btn-secondary">
               <Download className="w-4 h-4" />
@@ -372,7 +378,7 @@ export function CentralEstoque({ session }: Props) {
               Novo Item
             </button>
           </>
-        }
+        )}
       />
 
       {/* Abas */}
@@ -1018,6 +1024,8 @@ export function CentralEstoque({ session }: Props) {
 
       {/* ABA POR TECNICO */}
       {aba === 'por-tecnico' && <PorTecnicoTab />}
+
+      {aba === 'estoque-iu' && podeUsarEstoqueIU(role) && <EstoqueIUTab />}
 
       {/* Modal entrada defeituosa */}
       {showEntradaDefeito && (

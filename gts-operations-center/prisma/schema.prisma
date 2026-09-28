@@ -1021,3 +1021,83 @@ model EscalaTrabalho {
   @@unique([equipeId, data])
   @@map("escalas_trabalho")
 }
+// ---------------------------------------------------------------------------
+// Estoque IU - separado dos demais estoques: tabelas proprias e nenhuma
+// transferencia com GTSNET/EACE/etc. So equipamentos com serial ou MAC; toda
+// entrada e saida e bipada e cada movimento registra destino, responsavel e
+// data. Equipe/chamado ficam como texto (id + nome) para nao depender das
+// tabelas dos outros modulos.
+// ---------------------------------------------------------------------------
+
+enum StatusUnidadeIU {
+  EM_ESTOQUE
+  COM_TECNICO
+  INSTALADO
+  DEVOLVIDO_FORNECEDOR
+  DEFEITO
+}
+
+enum TipoMovimentoIU {
+  ENTRADA
+  SAIDA_TECNICO
+  SAIDA_CLIENTE
+  INSTALACAO
+  RETORNO_ESTOQUE
+  DEVOLUCAO_FORNECEDOR
+  DEFEITO
+}
+
+model ProdutoIU {
+  id         String   @id @default(cuid())
+  codigo     String   @unique
+  descricao  String
+  fabricante String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  unidades UnidadeIU[]
+
+  @@map("iu_produtos")
+}
+
+model UnidadeIU {
+  id           String          @id @default(cuid())
+  produtoId    String
+  serial       String          @unique // serial ou MAC, normalizado
+  status       StatusUnidadeIU @default(EM_ESTOQUE)
+  equipeId     String?         // com qual tecnico/equipe esta (COM_TECNICO)
+  equipeNome   String?
+  cliente      String?         // onde foi instalada / para quem saiu
+  chamado      String?         // numero ou protocolo do chamado
+  notaFiscal   String?
+  entradaEm    DateTime        @default(now())
+  atualizadoEm DateTime        @updatedAt
+
+  produto    ProdutoIU     @relation(fields: [produtoId], references: [id])
+  movimentos MovimentoIU[]
+
+  @@index([status])
+  @@index([produtoId])
+  @@map("iu_unidades")
+}
+
+model MovimentoIU {
+  id          String          @id @default(cuid())
+  unidadeId   String
+  tipo        TipoMovimentoIU
+  equipeId    String?
+  equipeNome  String?
+  cliente     String?
+  chamado     String?
+  motivo      String?
+  notaFiscal  String?
+  usuarioId   String?
+  usuarioNome String
+  createdAt   DateTime        @default(now())
+
+  unidade UnidadeIU @relation(fields: [unidadeId], references: [id])
+
+  @@index([unidadeId])
+  @@index([createdAt])
+  @@map("iu_movimentos")
+}
