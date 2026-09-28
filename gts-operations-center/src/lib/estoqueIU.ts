@@ -11,7 +11,7 @@ export function podeUsarEstoqueIU(role: string | undefined | null) {
 export type StatusIU = 'EM_ESTOQUE' | 'COM_TECNICO' | 'INSTALADO' | 'DEVOLVIDO_FORNECEDOR' | 'DEFEITO'
 export type TipoMovIU =
   | 'ENTRADA' | 'SAIDA_TECNICO' | 'SAIDA_CLIENTE' | 'INSTALACAO'
-  | 'RETORNO_ESTOQUE' | 'DEVOLUCAO_FORNECEDOR' | 'DEFEITO'
+  | 'RETORNO_ESTOQUE' | 'REVERSA' | 'DEVOLUCAO_FORNECEDOR' | 'DEFEITO'
 
 export const STATUS_IU: Record<StatusIU, { rotulo: string; classe: string }> = {
   EM_ESTOQUE: { rotulo: 'Em estoque', classe: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25' },
@@ -32,7 +32,8 @@ export const MOVIMENTOS_IU: Record<Exclude<TipoMovIU, 'ENTRADA'>, {
   SAIDA_TECNICO: { rotulo: 'Saida para tecnico', de: ['EM_ESTOQUE'], para: 'COM_TECNICO', exige: ['equipe'] },
   SAIDA_CLIENTE: { rotulo: 'Saida direta para cliente/chamado', de: ['EM_ESTOQUE'], para: 'INSTALADO', exige: ['cliente'] },
   INSTALACAO: { rotulo: 'Instalacao pelo tecnico (uso)', de: ['COM_TECNICO'], para: 'INSTALADO', exige: ['cliente'] },
-  RETORNO_ESTOQUE: { rotulo: 'Retorno ao Estoque IU', de: ['COM_TECNICO', 'INSTALADO'], para: 'EM_ESTOQUE', exige: ['motivo'] },
+  RETORNO_ESTOQUE: { rotulo: 'Devolucao do tecnico ao Estoque IU', de: ['COM_TECNICO'], para: 'EM_ESTOQUE', exige: ['motivo'] },
+  REVERSA: { rotulo: 'Reversa (recolhido do cliente)', de: ['INSTALADO'], para: 'EM_ESTOQUE', exige: ['motivo'] },
   DEVOLUCAO_FORNECEDOR: { rotulo: 'Devolucao ao fornecedor', de: ['EM_ESTOQUE', 'DEFEITO'], para: 'DEVOLVIDO_FORNECEDOR', exige: ['motivo'] },
   DEFEITO: { rotulo: 'Defeito / descarte', de: ['EM_ESTOQUE', 'COM_TECNICO', 'INSTALADO'], para: 'DEFEITO', exige: ['motivo'] },
 }
@@ -41,6 +42,15 @@ export const ROTULO_MOV_IU: Record<TipoMovIU, string> = {
   ENTRADA: 'Entrada',
   ...Object.fromEntries(Object.entries(MOVIMENTOS_IU).map(([k, v]) => [k, v.rotulo])),
 } as Record<TipoMovIU, string>
+
+// Grupos do relatorio do Estoque IU.
+export const GRUPOS_RELATORIO_IU: { id: string; rotulo: string; tipos: TipoMovIU[]; classe: string }[] = [
+  { id: 'entradas', rotulo: 'Entradas', tipos: ['ENTRADA'], classe: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/25' },
+  { id: 'saidas', rotulo: 'Saidas', tipos: ['SAIDA_TECNICO', 'SAIDA_CLIENTE', 'INSTALACAO'], classe: 'text-blue-700 bg-blue-500/10 border-blue-500/25' },
+  { id: 'devolucoes', rotulo: 'Devolucoes', tipos: ['RETORNO_ESTOQUE', 'DEVOLUCAO_FORNECEDOR'], classe: 'text-amber-700 bg-amber-500/10 border-amber-500/25' },
+  { id: 'reversas', rotulo: 'Reversas', tipos: ['REVERSA'], classe: 'text-purple-700 bg-purple-500/10 border-purple-500/25' },
+  { id: 'defeitos', rotulo: 'Defeito / descarte', tipos: ['DEFEITO'], classe: 'text-red-700 bg-red-500/10 border-red-500/25' },
+]
 
 // Serial/MAC bipado -> forma unica: sem espacos, maiusculo; MAC (12 hex, com
 // ou sem separador) vira AA:BB:CC:DD:EE:FF, para o mesmo equipamento lido de

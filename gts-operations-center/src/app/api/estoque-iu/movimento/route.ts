@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
           tipo === 'SAIDA_TECNICO' ? { equipeId: equipe!.id, equipeNome: equipe!.nome, cliente: null, chamado: null }
             : tipo === 'SAIDA_CLIENTE' ? { equipeId: null, equipeNome: null, cliente, chamado }
               : tipo === 'INSTALACAO' ? { cliente, chamado } // mantem a equipe que instalou
-                : tipo === 'RETORNO_ESTOQUE' || tipo === 'DEVOLUCAO_FORNECEDOR' ? { equipeId: null, equipeNome: null, cliente: null, chamado: null }
+                : tipo === 'RETORNO_ESTOQUE' || tipo === 'REVERSA' || tipo === 'DEVOLUCAO_FORNECEDOR' ? { equipeId: null, equipeNome: null, cliente: null, chamado: null }
                   : {} // DEFEITO: mantem onde estava, o motivo fica no movimento
 
         // Revalida o status dentro da transacao (evita duas saidas ao mesmo tempo).
@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
             tipo,
             equipeId: equipe?.id ?? u.equipeId,
             equipeNome: equipe?.nome ?? u.equipeNome,
-            cliente: cliente ?? (tipo === 'RETORNO_ESTOQUE' || tipo === 'DEFEITO' ? u.cliente : null),
-            chamado: chamado ?? (tipo === 'RETORNO_ESTOQUE' || tipo === 'DEFEITO' ? u.chamado : null),
+            cliente: cliente ?? (tipo === 'RETORNO_ESTOQUE' || tipo === 'REVERSA' || tipo === 'DEFEITO' ? u.cliente : null),
+            chamado: chamado ?? (tipo === 'RETORNO_ESTOQUE' || tipo === 'REVERSA' || tipo === 'DEFEITO' ? u.chamado : null),
             motivo,
             usuarioId: acesso.usuarioId,
             usuarioNome: acesso.usuarioNome,

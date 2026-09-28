@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, PackagePlus, ArrowRightLeft, Search, ChevronLeft, ChevronRight, Boxes, History, ScanBarcode } from 'lucide-react'
+import { Loader2, PackagePlus, ArrowRightLeft, Search, ChevronLeft, ChevronRight, Boxes, History, ScanBarcode, BarChart3 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { ROTULO_MOV_IU, STATUS_IU, normalizarSerial, type StatusIU, type TipoMovIU } from '@/lib/estoqueIU'
 import { EntradaIUModal, MovimentoIUModal, FichaUnidadeIUModal } from './EstoqueIUModais'
+import { EstoqueIURelatorio } from './EstoqueIURelatorio'
 
 // Estoque IU: separado dos demais estoques (sem transferencias), so
 // equipamentos com serial/MAC, entrada e saida bipadas e rastreio de destino.
 export function EstoqueIUTab() {
   const queryClient = useQueryClient()
-  const [visao, setVisao] = useState<'unidades' | 'historico'>('unidades')
+  const [visao, setVisao] = useState<'unidades' | 'historico' | 'relatorio'>('unidades')
   const [status, setStatus] = useState<StatusIU | ''>('')
   const [produtoId, setProdutoId] = useState('')
   const [busca, setBusca] = useState('')
@@ -49,6 +50,7 @@ export function EstoqueIUTab() {
     setModal(null)
     queryClient.invalidateQueries({ queryKey: ['estoque-iu'] })
     queryClient.invalidateQueries({ queryKey: ['estoque-iu-movimentos'] })
+    queryClient.invalidateQueries({ queryKey: ['estoque-iu-relatorio'] })
   }
 
   // Bipar um serial na busca abre direto a ficha do equipamento.
@@ -137,7 +139,7 @@ export function EstoqueIUTab() {
           <button onClick={aplicarBusca} className="text-orange-600 hover:text-orange-500" aria-label="Buscar"><Search className="w-4 h-4" /></button>
         </div>
         <div className="flex rounded-lg border border-tema-linha overflow-hidden text-sm">
-          {([['unidades', 'Unidades', Boxes], ['historico', 'Historico', History]] as const).map(([v, rotulo, Icone]) => (
+          {([['unidades', 'Unidades', Boxes], ['historico', 'Historico', History], ['relatorio', 'Relatorio', BarChart3]] as const).map(([v, rotulo, Icone]) => (
             <button key={v} onClick={() => setVisao(v)}
               className={cn('flex items-center gap-1.5 px-3 py-2', visao === v ? 'bg-orange-600 text-white' : 'bg-tema-superficie text-tema-suave hover:text-tema-tinta')}>
               <Icone className="w-4 h-4" /> {rotulo}
@@ -151,7 +153,9 @@ export function EstoqueIUTab() {
         )}
       </div>
 
-      {visao === 'unidades' ? (
+      {visao === 'relatorio' ? (
+        <EstoqueIURelatorio onAbrirFicha={setFicha} />
+      ) : visao === 'unidades' ? (
         <div className="gts-card overflow-x-auto">
           {unidades.length === 0 ? (
             <p className="text-sm text-tema-apagado text-center py-8">
