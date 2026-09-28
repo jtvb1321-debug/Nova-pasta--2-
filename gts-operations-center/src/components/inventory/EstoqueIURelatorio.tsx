@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2, FileSpreadsheet } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { GRUPOS_RELATORIO_IU, ROTULO_MOV_IU, type TipoMovIU } from '@/lib/estoqueIU'
+import { GRUPOS_RELATORIO_IU, ROTULO_MOV_IU, numeroTermo, retiradaVencida, type TipoMovIU } from '@/lib/estoqueIU'
 
 type Preset = 'hoje' | '7dias' | 'mes' | 'mes-passado' | 'personalizado'
 
@@ -82,6 +82,17 @@ export function EstoqueIURelatorio({ onAbrirFicha }: { onAbrirFicha: (serial: st
         'Codigo': p.codigo, 'Produto': p.descricao,
         ...Object.fromEntries(GRUPOS_RELATORIO_IU.map(g => [g.rotulo, p[g.id] ?? 0])),
       }))), 'Por produto')
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((data.termos?.lista ?? []).length ? data.termos.lista.map((t: any) => ({
+        'Termo': numeroTermo(t.numero),
+        'Tecnico / equipe': t.equipeNome,
+        'Retirado em': formatDateTime(t.createdAt),
+        'Entregue por': t.usuarioNome,
+        'Unidades': t.totalUnidades,
+        'Pendentes': t.pendentes,
+        'Situacao': t.status === 'CONFERIDA' ? 'Conferido' : retiradaVencida(t) ? 'Vencido' : 'Aguardando conferencia',
+        'Conferido em': t.conferidaEm ? formatDateTime(t.conferidaEm) : '',
+        'Conferido por': t.conferidaPor || '',
+      })) : [{ 'Sem termos no periodo': '' }]), 'Termos de retirada')
       for (const g of GRUPOS_RELATORIO_IU) {
         const linhas = movimentos.filter(m => g.tipos.includes(m.tipo)).map(linha)
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ 'Sem movimentos': '' }]), g.rotulo.slice(0, 31))
@@ -142,6 +153,13 @@ export function EstoqueIURelatorio({ onAbrirFicha }: { onAbrirFicha: (serial: st
                 </button>
               )
             })}
+          </div>
+
+          {/* Termos de retirada no periodo */}
+          <div className="gts-card flex flex-wrap gap-6 text-sm">
+            <div><p className="text-xs text-tema-apagado">Termos de retirada gerados</p><p className="text-2xl font-bold font-mono text-tema-tinta">{data.termos?.criados ?? 0}</p></div>
+            <div><p className="text-xs text-tema-apagado">Termos conferidos</p><p className="text-2xl font-bold font-mono text-tema-tinta">{data.termos?.conferidos ?? 0}</p></div>
+            <div><p className="text-xs text-tema-apagado">Ainda em aberto (destes)</p><p className="text-2xl font-bold font-mono text-amber-700">{(data.termos?.lista ?? []).filter((t: any) => t.status === 'ABERTA').length}</p></div>
           </div>
 
           {/* Por produto */}

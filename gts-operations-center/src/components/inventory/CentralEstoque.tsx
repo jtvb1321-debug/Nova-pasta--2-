@@ -318,6 +318,14 @@ export function CentralEstoque({ session }: Props) {
   const criticos = itens.filter((i: any) => isEstoqueBaixo(i.quantidadeAtual, i.quantidadeMinima)).length
   const devPendentes = devolucoes.filter((d: any) => !d.aprovado && !d.aprovadoEm).length
 
+  // Termos de retirada do Estoque IU vencidos (sem conferencia no prazo).
+  const { data: resumoTermosIU } = useQuery({
+    queryKey: ['estoque-iu-resumo-termos'],
+    queryFn: async () => { const r = await fetch('/api/estoque-iu/retiradas?status=ABERTA'); return r.ok ? r.json() : null },
+    enabled: podeUsarEstoqueIU(role),
+    refetchInterval: 5 * 60 * 1000,
+  })
+
   const abas = [
     { id: 'estoque'       as Aba, label: 'Estoque',       icon: Package,       badge: criticos,     badgeCor: 'bg-red-500' },
     { id: 'movimentacoes' as Aba, label: 'Movimentacoes', icon: ArrowLeftRight, badge: 0,            badgeCor: '' },
@@ -327,7 +335,7 @@ export function CentralEstoque({ session }: Props) {
     { id: 'por-tecnico'  as Aba, label: 'Por Tecnico',    icon: UserCog,      badge: 0,            badgeCor: '' },
     // Estoque IU: separado dos demais, so para ADMIN/GESTOR
     ...(podeUsarEstoqueIU(role)
-      ? [{ id: 'estoque-iu' as Aba, label: 'Estoque IU', icon: ShieldCheck, badge: 0, badgeCor: '' }]
+      ? [{ id: 'estoque-iu' as Aba, label: 'Estoque IU', icon: ShieldCheck, badge: resumoTermosIU?.vencidas ?? 0, badgeCor: 'bg-red-500' }]
       : []),
   ]
 

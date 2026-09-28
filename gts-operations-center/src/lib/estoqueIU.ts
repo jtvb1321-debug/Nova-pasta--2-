@@ -15,7 +15,7 @@ export type TipoMovIU =
 
 export const STATUS_IU: Record<StatusIU, { rotulo: string; classe: string }> = {
   EM_ESTOQUE: { rotulo: 'Em estoque', classe: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25' },
-  COM_TECNICO: { rotulo: 'Com tecnico', classe: 'bg-blue-500/10 text-blue-700 border-blue-500/25' },
+  COM_TECNICO: { rotulo: 'Com tecnico (aguardando conferencia)', classe: 'bg-blue-500/10 text-blue-700 border-blue-500/25' },
   INSTALADO: { rotulo: 'Instalado', classe: 'bg-purple-500/10 text-purple-700 border-purple-500/25' },
   DEVOLVIDO_FORNECEDOR: { rotulo: 'Devolvido ao fornecedor', classe: 'bg-tema-contraste/[0.04] text-tema-suave border-tema-linha' },
   DEFEITO: { rotulo: 'Defeito / descarte', classe: 'bg-red-500/10 text-red-700 border-red-500/25' },
@@ -29,10 +29,10 @@ export const MOVIMENTOS_IU: Record<Exclude<TipoMovIU, 'ENTRADA'>, {
   para: StatusIU
   exige: ('equipe' | 'cliente' | 'motivo')[]
 }> = {
-  SAIDA_TECNICO: { rotulo: 'Saida para tecnico', de: ['EM_ESTOQUE'], para: 'COM_TECNICO', exige: ['equipe'] },
+  SAIDA_TECNICO: { rotulo: 'Retirada pelo tecnico', de: ['EM_ESTOQUE'], para: 'COM_TECNICO', exige: ['equipe'] },
   SAIDA_CLIENTE: { rotulo: 'Saida direta para cliente/chamado', de: ['EM_ESTOQUE'], para: 'INSTALADO', exige: ['cliente'] },
-  INSTALACAO: { rotulo: 'Instalacao pelo tecnico (uso)', de: ['COM_TECNICO'], para: 'INSTALADO', exige: ['cliente'] },
-  RETORNO_ESTOQUE: { rotulo: 'Devolucao do tecnico ao Estoque IU', de: ['COM_TECNICO'], para: 'EM_ESTOQUE', exige: ['motivo'] },
+  INSTALACAO: { rotulo: 'Conferencia: instalado no cliente', de: ['COM_TECNICO'], para: 'INSTALADO', exige: ['cliente'] },
+  RETORNO_ESTOQUE: { rotulo: 'Conferencia: devolvido ao estoque', de: ['COM_TECNICO'], para: 'EM_ESTOQUE', exige: [] },
   REVERSA: { rotulo: 'Reversa (recolhido do cliente)', de: ['INSTALADO'], para: 'EM_ESTOQUE', exige: ['motivo'] },
   DEVOLUCAO_FORNECEDOR: { rotulo: 'Devolucao ao fornecedor', de: ['EM_ESTOQUE', 'DEFEITO'], para: 'DEVOLVIDO_FORNECEDOR', exige: ['motivo'] },
   DEFEITO: { rotulo: 'Defeito / descarte', de: ['EM_ESTOQUE', 'COM_TECNICO', 'INSTALADO'], para: 'DEFEITO', exige: ['motivo'] },
@@ -42,6 +42,29 @@ export const ROTULO_MOV_IU: Record<TipoMovIU, string> = {
   ENTRADA: 'Entrada',
   ...Object.fromEntries(Object.entries(MOVIMENTOS_IU).map(([k, v]) => [k, v.rotulo])),
 } as Record<TipoMovIU, string>
+
+// Fluxo: entrada -> estoque -> retirada (termo numerado) -> conferencia ->
+// controle. Tudo que envolve unidade com tecnico passa pelo termo:
+// retirada = SAIDA_TECNICO; conferencia = INSTALACAO, RETORNO_ESTOQUE ou DEFEITO.
+export const PRAZO_CONFERENCIA_HORAS = 24
+
+export const DESTINOS_CONFERENCIA = ['INSTALACAO', 'RETORNO_ESTOQUE', 'DEFEITO'] as const
+export type DestinoConferencia = typeof DESTINOS_CONFERENCIA[number]
+export const ROTULO_DESTINO: Record<DestinoConferencia, string> = {
+  INSTALACAO: 'Instalado no cliente',
+  RETORNO_ESTOQUE: 'Devolvido ao estoque',
+  DEFEITO: 'Defeito',
+}
+
+// Movimentos avulsos (fora do termo): nao valem para unidade com tecnico.
+export const TIPOS_AVULSOS = ['SAIDA_CLIENTE', 'REVERSA', 'DEVOLUCAO_FORNECEDOR', 'DEFEITO'] as const
+export type TipoAvulso = typeof TIPOS_AVULSOS[number]
+
+export function retiradaVencida(r: { status: string; createdAt: string | Date }) {
+  return r.status === 'ABERTA' && Date.now() - new Date(r.createdAt).getTime() > PRAZO_CONFERENCIA_HORAS * 3600 * 1000
+}
+
+export const numeroTermo = (n: number) => String(n).padStart(4, '0')
 
 // Grupos do relatorio do Estoque IU.
 export const GRUPOS_RELATORIO_IU: { id: string; rotulo: string; tipos: TipoMovIU[]; classe: string }[] = [

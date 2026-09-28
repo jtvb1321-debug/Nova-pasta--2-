@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   }
 
   const where = { createdAt: { gte: inicio, lte: fim } }
-  const [total, porTipo, movimentos] = await Promise.all([
+  const [total, porTipo, movimentos, termos] = await Promise.all([
     prisma.movimentoIU.count({ where }),
     prisma.movimentoIU.groupBy({ by: ['tipo'], where, _count: { _all: true } }),
     prisma.movimentoIU.findMany({
@@ -36,6 +36,12 @@ export async function GET(req: NextRequest) {
       include: { unidade: { select: { serial: true, produto: { select: { codigo: true, descricao: true } } } } },
       orderBy: { createdAt: 'asc' },
       take: LIMITE,
+    }),
+    // Termos de retirada criados ou conferidos no periodo.
+    prisma.retiradaIU.findMany({
+      where: { OR: [{ createdAt: { gte: inicio, lte: fim } }, { conferidaEm: { gte: inicio, lte: fim } }] },
+      include: { _count: { select: { unidades: true } }, movimentos: { where: { tipo: 'SAIDA_TECNICO' }, select: { id: true } } },
+      orderBy: { numero: 'asc' },
     }),
   ])
 
@@ -57,8 +63,16 @@ export async function GET(req: NextRequest) {
     porProdutoMapa.set(p.codigo, linha)
   }
 
+  const dentro = (x: Date | null) => !!x && x >= inicio && x <= fim
+  const termosLista = termos.map(({ _count, movimentos: saidas, ...t }) => ({ ...t, totalUnidades: saidas.length, pendentes: _count.unidades }))
+
   return NextResponse.json({
     periodo: { de, ate },
+    termos: {
+      criados: termosLista.filter(t => dentro(t.createdAt)).length,
+      conferidos: termosLista.filter(t => dentro(t.conferidaEm)).length,
+      lista: termosLista,
+    },
     total,
     truncado: total > LIMITE,
     grupos,

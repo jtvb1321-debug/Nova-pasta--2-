@@ -2,10 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, ScanBarcode, X, CheckCircle, AlertCircle, Trash2, History, PackagePlus, ArrowRightLeft } from 'lucide-react'
+import { Loader2, ScanBarcode, X, CheckCircle, AlertCircle, Trash2, History, PackagePlus, ArrowRightLeft, PackageMinus, ClipboardCheck, Clock } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { MOVIMENTOS_IU, ROTULO_MOV_IU, STATUS_IU, normalizarSerial, type StatusIU, type TipoMovIU } from '@/lib/estoqueIU'
+import {
+  DESTINOS_CONFERENCIA, MOVIMENTOS_IU, PRAZO_CONFERENCIA_HORAS, ROTULO_DESTINO, ROTULO_MOV_IU, STATUS_IU, TIPOS_AVULSOS,
+  normalizarSerial, numeroTermo, retiradaVencida,
+  type DestinoConferencia, type StatusIU, type TipoAvulso, type TipoMovIU,
+} from '@/lib/estoqueIU'
 
 // Bipe curto de confirmacao/erro para quem esta lendo com o leitor sem olhar a tela.
 function bipe(ok: boolean) {
@@ -208,31 +212,251 @@ export function EntradaIUModal({ produtos, onClose, onSuccess }: { produtos: any
   )
 }
 
-// ---------------------------------------------------------------- Movimento
-type TipoSaida = Exclude<TipoMovIU, 'ENTRADA'>
+// ---------------------------------------------------------------- Retirada
+function useEquipes(ativo = true) {
+  return useQuery({
+    queryKey: ['iu-equipes'],
+    queryFn: async () => { const r = await fetch('/api/teams'); return r.ok ? r.json() : [] },
+    enabled: ativo,
+  })
+}
 
-export function MovimentoIUModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [tipo, setTipo] = useState<TipoSaida>('SAIDA_TECNICO')
+// Retirada pelo tecnico: gera o termo numerado; as unidades ficam com o
+// tecnico ate a conferencia do destino de cada uma.
+export function RetiradaIUModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [equipeId, setEquipeId] = useState('')
+  const [observacao, setObservacao] = useState('')
+  const [lidos, setLidos] = useState<Lido[]>([])
+  const [salvando, setSalvando] = useState(false)
+  const { data: equipes = [] } = useEquipes()
+
+  async function ler(serial: string) {
+    if (lidos.some(l => l.serial === serial)) { bipe(false); toast({ title: `${serial} ja esta na lista`, variant: 'destructive' }); return }
+    try {
+      const u = await consultarUnidade(serial)
+      const item: Lido = !u ? { serial, erro: 'Nao cadastrado no Estoque IU' }
+        : u.status !== 'EM_ESTOQUE'
+          ? { serial, produto: u.produto?.descricao, status: u.status, erro: `Nao esta em estoque (${STATUS_IU[u.status as StatusIU].rotulo}${u.retirada ? ` - termo ${numeroTermo(u.retirada.numero)}` : ''})` }
+          : { serial, produto: u.produto?.descricao, status: u.status }
+      setLidos(l => [item, ...l])
+      bipe(!item.erro)
+    } catch (e: any) {
+      bipe(false); toast({ title: e.message, variant: 'destructive' })
+    }
+  }
+
+  const validos = lidos.filter(l => !l.erro)
+
+  async function salvar() {
+    setSalvando(true)
+    try {
+      const r = await fetch('/api/estoque-iu/retirada', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ equipeId, observacao: observacao || null, seriais: validos.map(l => l.serial) }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error([d.error, d.seriais?.join(', ')].filter(Boolean).join(': ') || 'Erro na retirada')
+      toast({ title: `Termo ${numeroTermo(d.numero)} gerado: ${d.quantidade} unidade(s) com ${d.equipe}`, variant: 'success' })
+      onSuccess()
+    } catch (e: any) {
+      toast({ title: 'Retirada nao registrada', description: e.message, variant: 'destructive' })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <ModalIU titulo="Retirada pelo tecnico" subtitulo="Gera um termo numerado; cada unidade tera o destino conferido depois" icone={PackageMinus} onClose={onClose}>
+      <div>
+        <label htmlFor="iu-ret-equipe" className="block text-sm font-medium text-tema-suave mb-1.5">Tecnico / equipe que esta retirando *</label>
+        <select id="iu-ret-equipe" value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input w-full">
+          <option value="">Selecione...</option>
+          {(equipes as any[]).map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="iu-ret-obs" className="block text-sm font-medium text-tema-suave mb-1.5">Observacao</label>
+        <input id="iu-ret-obs" value={observacao} onChange={e => setObservacao(e.target.value)} placeholder="Opcional (ex.: servicos do dia)" className="gts-input w-full" />
+      </div>
+
+      <CampoBipagem onLer={ler} desabilitado={salvando} />
+      <ListaLidos lidos={lidos} onRemover={s => setLidos(l => l.filter(x => x.serial !== s))} />
+
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <p className="text-xs text-tema-apagado">
+          {validos.length} para retirar{lidos.length !== validos.length && ` - ${lidos.length - validos.length} com erro (remova da lista)`}
+        </p>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="gts-btn-secondary">Cancelar</button>
+          <button onClick={salvar} disabled={salvando || !equipeId || validos.length === 0 || validos.length !== lidos.length} className="gts-btn-primary">
+            {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+            Gerar termo de retirada
+          </button>
+        </div>
+      </div>
+    </ModalIU>
+  )
+}
+
+// ---------------------------------------------------------------- Termo + conferencia
+export function TermoIUModal({ retiradaId, onClose, onAlterado }: { retiradaId: string; onClose: () => void; onAlterado: () => void }) {
+  const [destino, setDestino] = useState<DestinoConferencia>('INSTALACAO')
+  const [cliente, setCliente] = useState('')
+  const [chamado, setChamado] = useState('')
+  const [motivo, setMotivo] = useState('')
+  const [lidos, setLidos] = useState<Lido[]>([])
+  const [salvando, setSalvando] = useState(false)
+
+  const { data: t, isLoading, error, refetch } = useQuery({
+    queryKey: ['iu-termo', retiradaId],
+    queryFn: async () => {
+      const r = await fetch(`/api/estoque-iu/retiradas/${retiradaId}`)
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'Termo nao encontrado')
+      return d
+    },
+  })
+
+  const itens: any[] = t?.itens ?? []
+  const pendentes = itens.filter(i => i.pendente)
+  const aberto = t?.status === 'ABERTA'
+  const vencido = t && retiradaVencida(t)
+
+  function ler(serial: string) {
+    if (lidos.some(l => l.serial === serial)) { bipe(false); toast({ title: `${serial} ja esta na lista`, variant: 'destructive' }); return }
+    const item = itens.find(i => i.serial === serial)
+    const lido: Lido = !item ? { serial, erro: 'Nao faz parte deste termo' }
+      : !item.pendente ? { serial, produto: item.produto, erro: 'Ja conferido neste termo' }
+        : { serial, produto: item.produto }
+    setLidos(l => [lido, ...l])
+    bipe(!lido.erro)
+  }
+
+  const validos = lidos.filter(l => !l.erro)
+  const camposOk = (destino !== 'INSTALACAO' || !!cliente.trim()) && (destino !== 'DEFEITO' || !!motivo.trim())
+
+  async function conferir() {
+    setSalvando(true)
+    try {
+      const r = await fetch(`/api/estoque-iu/retiradas/${retiradaId}/conferencia`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destino, seriais: validos.map(l => l.serial), cliente: cliente || null, chamado: chamado || null, motivo: motivo || null }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error([d.error, d.seriais?.join(', ')].filter(Boolean).join(': ') || 'Erro na conferencia')
+      toast({
+        title: d.termoConferido ? `Termo ${numeroTermo(t.numero)} conferido por completo` : `${d.quantidade} unidade(s) conferida(s): ${ROTULO_DESTINO[destino].toLowerCase()}`,
+        variant: 'success',
+      })
+      setLidos([]); setCliente(''); setChamado(''); setMotivo('')
+      await refetch()
+      onAlterado()
+    } catch (e: any) {
+      toast({ title: 'Conferencia nao registrada', description: e.message, variant: 'destructive' })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  const textoConferencia = (c: any) => c && [
+    ROTULO_DESTINO[c.tipo as DestinoConferencia] || c.tipo,
+    c.cliente && `cliente ${c.cliente}`, c.chamado && `chamado ${c.chamado}`, c.motivo,
+  ].filter(Boolean).join(' - ')
+
+  return (
+    <ModalIU
+      titulo={t ? `Termo de retirada ${numeroTermo(t.numero)}` : 'Termo de retirada'}
+      subtitulo={t ? `${t.equipeNome} - retirado em ${formatDateTime(t.createdAt)} por ${t.usuarioNome}` : undefined}
+      icone={ClipboardCheck}
+      onClose={onClose}
+    >
+      {isLoading && <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-tema-apagado" /></div>}
+      {error && <p className="text-sm text-red-700">{(error as Error).message}</p>}
+      {t && (
+        <>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-md border',
+              !aberto ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25' : vencido ? 'bg-red-500/10 text-red-700 border-red-500/25' : 'bg-amber-500/10 text-amber-700 border-amber-500/25')}>
+              {!aberto ? 'Conferido' : vencido ? `Vencido (mais de ${PRAZO_CONFERENCIA_HORAS}h)` : 'Aguardando conferencia'}
+            </span>
+            <span className="text-tema-suave">{itens.length - pendentes.length} de {itens.length} conferida(s)</span>
+            {!aberto && t.conferidaEm && <span className="text-xs text-tema-apagado">em {formatDateTime(t.conferidaEm)} por {t.conferidaPor}</span>}
+            {t.observacao && <span className="text-xs text-tema-apagado">- {t.observacao}</span>}
+          </div>
+
+          <ul className="border border-tema-linha rounded-lg divide-y divide-tema-linha max-h-56 overflow-y-auto">
+            {itens.map(i => (
+              <li key={i.serial} className="flex items-center gap-3 px-3 py-2 text-sm">
+                {i.pendente ? <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" /> : <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-tema-tinta truncate">{i.serial} <span className="font-sans text-xs text-tema-apagado">{i.produto}</span></p>
+                  <p className="text-xs text-tema-suave truncate">{i.pendente ? 'Pendente de conferencia' : textoConferencia(i.conferencia)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {aberto && (
+            <div className="border-t border-tema-linha pt-4 space-y-3">
+              <p className="text-sm font-semibold text-tema-tinta">Conferir destino</p>
+              <div className="grid grid-cols-3 gap-2">
+                {DESTINOS_CONFERENCIA.map(d => (
+                  <button key={d} onClick={() => setDestino(d)}
+                    className={cn('text-xs font-medium py-2.5 rounded-lg border-2 transition-colors',
+                      destino === d ? 'border-orange-600 bg-orange-500/10 text-orange-700' : 'border-tema-linha text-tema-suave hover:text-tema-tinta')}>
+                    {ROTULO_DESTINO[d]}
+                  </button>
+                ))}
+              </div>
+              {destino === 'INSTALACAO' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input id="iu-conf-cliente" value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Cliente onde foi instalado *" className="gts-input sm:col-span-2" />
+                  <input id="iu-conf-chamado" value={chamado} onChange={e => setChamado(e.target.value)} placeholder="Chamado / protocolo" className="gts-input" />
+                </div>
+              )}
+              {destino === 'DEFEITO' && (
+                <input id="iu-conf-motivo" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Motivo do defeito *" className="gts-input w-full" />
+              )}
+              {destino === 'RETORNO_ESTOQUE' && (
+                <input id="iu-conf-obs" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Observacao (opcional)" className="gts-input w-full" />
+              )}
+
+              <CampoBipagem onLer={ler} desabilitado={salvando} />
+              <ListaLidos lidos={lidos} onRemover={s => setLidos(l => l.filter(x => x.serial !== s))} />
+
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-tema-apagado">{pendentes.length} pendente(s) no termo</p>
+                <button onClick={conferir} disabled={salvando || !camposOk || validos.length === 0 || validos.length !== lidos.length} className="gts-btn-primary">
+                  {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Confirmar conferencia
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </ModalIU>
+  )
+}
+
+// ---------------------------------------------------------------- Outros movimentos
+export function MovimentoIUModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [tipo, setTipo] = useState<TipoAvulso>('SAIDA_CLIENTE')
   const [cliente, setCliente] = useState('')
   const [chamado, setChamado] = useState('')
   const [motivo, setMotivo] = useState('')
   const [lidos, setLidos] = useState<Lido[]>([])
   const [salvando, setSalvando] = useState(false)
   const regra = MOVIMENTOS_IU[tipo]
+  const origens = regra.de.filter(s => s !== 'COM_TECNICO')
 
-  const { data: equipes = [] } = useQuery({
-    queryKey: ['iu-equipes'],
-    queryFn: async () => { const r = await fetch('/api/teams'); return r.ok ? r.json() : [] },
-    enabled: regra.exige.includes('equipe'),
-  })
-
-  const erroStatus = (status?: StatusIU) =>
-    status && !regra.de.includes(status) ? `Esta ${STATUS_IU[status].rotulo.toLowerCase()} - nao pode ter "${regra.rotulo.toLowerCase()}"` : undefined
+  const erroStatus = (status?: StatusIU, termo?: number) =>
+    status === 'COM_TECNICO' ? `Com tecnico${termo ? ` (termo ${numeroTermo(termo)})` : ''}: registre pela conferencia do termo`
+      : status && !origens.includes(status) ? `Esta ${STATUS_IU[status].rotulo.toLowerCase()} - nao pode ter "${regra.rotulo.toLowerCase()}"` : undefined
 
   // Trocar o tipo revalida o que ja foi bipado.
   useEffect(() => {
-    setLidos(l => l.map(x => x.status ? { ...x, erro: erroStatus(x.status) } : x))
+    setLidos(l => l.map(x => x.status ? { ...x, erro: erroStatus(x.status, (x as any).termo) } : x))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo])
 
@@ -240,8 +464,8 @@ export function MovimentoIUModal({ onClose, onSuccess }: { onClose: () => void; 
     if (lidos.some(l => l.serial === serial)) { bipe(false); toast({ title: `${serial} ja esta na lista`, variant: 'destructive' }); return }
     try {
       const u = await consultarUnidade(serial)
-      const item: Lido = u
-        ? { serial, produto: u.produto?.descricao, status: u.status, erro: erroStatus(u.status) }
+      const item: Lido & { termo?: number } = u
+        ? { serial, produto: u.produto?.descricao, status: u.status, termo: u.retirada?.numero, erro: erroStatus(u.status, u.retirada?.numero) }
         : { serial, erro: 'Nao cadastrado no Estoque IU' }
       setLidos(l => [item, ...l])
       bipe(!item.erro)
@@ -251,17 +475,14 @@ export function MovimentoIUModal({ onClose, onSuccess }: { onClose: () => void; 
   }
 
   const validos = lidos.filter(l => !l.erro)
-  const camposOk =
-    (!regra.exige.includes('equipe') || !!equipeId) &&
-    (!regra.exige.includes('cliente') || !!cliente.trim()) &&
-    (!regra.exige.includes('motivo') || !!motivo.trim())
+  const camposOk = (!regra.exige.includes('cliente') || !!cliente.trim()) && (!regra.exige.includes('motivo') || !!motivo.trim())
 
   async function salvar() {
     setSalvando(true)
     try {
       const r = await fetch('/api/estoque-iu/movimento', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo, seriais: validos.map(l => l.serial), equipeId: equipeId || null, cliente: cliente || null, chamado: chamado || null, motivo: motivo || null }),
+        body: JSON.stringify({ tipo, seriais: validos.map(l => l.serial), cliente: cliente || null, chamado: chamado || null, motivo: motivo || null }),
       })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error([d.error, d.seriais?.join(', ')].filter(Boolean).join(': ') || 'Erro no movimento')
@@ -274,30 +495,20 @@ export function MovimentoIUModal({ onClose, onSuccess }: { onClose: () => void; 
     }
   }
 
-  const mostraCliente = regra.exige.includes('cliente')
   return (
-    <ModalIU titulo="Saida / uso no Estoque IU" subtitulo="Toda unidade e bipada e o destino fica registrado" icone={ArrowRightLeft} onClose={onClose}>
+    <ModalIU titulo="Outros movimentos do Estoque IU" subtitulo="Saida direta, reversa, devolucao ao fornecedor ou defeito" icone={ArrowRightLeft} onClose={onClose}>
       <div>
         <label htmlFor="iu-tipo" className="block text-sm font-medium text-tema-suave mb-1.5">Tipo de movimento *</label>
-        <select id="iu-tipo" value={tipo} onChange={e => setTipo(e.target.value as TipoSaida)} className="gts-input w-full">
-          {(Object.keys(MOVIMENTOS_IU) as TipoSaida[]).map(t => <option key={t} value={t}>{MOVIMENTOS_IU[t].rotulo}</option>)}
+        <select id="iu-tipo" value={tipo} onChange={e => setTipo(e.target.value as TipoAvulso)} className="gts-input w-full">
+          {TIPOS_AVULSOS.map(tp => <option key={tp} value={tp}>{MOVIMENTOS_IU[tp].rotulo}</option>)}
         </select>
         <p className="text-xs text-tema-apagado mt-1">
-          Vale para unidades {regra.de.map(s => STATUS_IU[s].rotulo.toLowerCase()).join(' ou ')}; passam a ficar {STATUS_IU[regra.para].rotulo.toLowerCase()}.
+          Vale para unidades {origens.map(s => STATUS_IU[s].rotulo.toLowerCase()).join(' ou ')}; passam a ficar {STATUS_IU[regra.para].rotulo.toLowerCase()}.
+          Unidades com tecnico mudam pela conferencia do termo.
         </p>
       </div>
 
-      {regra.exige.includes('equipe') && (
-        <div>
-          <label htmlFor="iu-equipe" className="block text-sm font-medium text-tema-suave mb-1.5">Tecnico / equipe *</label>
-          <select id="iu-equipe" value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input w-full">
-            <option value="">Selecione...</option>
-            {(equipes as any[]).map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-          </select>
-        </div>
-      )}
-
-      {mostraCliente && (
+      {regra.exige.includes('cliente') && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <div className="sm:col-span-2">
             <label htmlFor="iu-cliente" className="block text-sm font-medium text-tema-suave mb-1.5">Cliente *</label>
@@ -348,7 +559,7 @@ export function FichaUnidadeIUModal({ serial, onClose }: { serial: string; onClo
     },
   })
 
-  const ondeEsta = u && (u.status === 'COM_TECNICO' ? `Com ${u.equipeNome}`
+  const ondeEsta = u && (u.status === 'COM_TECNICO' ? `Com ${u.equipeNome}${u.retirada ? ` - termo ${numeroTermo(u.retirada.numero)}` : ''}`
     : u.status === 'INSTALADO' ? [u.cliente, u.chamado && `chamado ${u.chamado}`].filter(Boolean).join(' - ')
       : STATUS_IU[u.status as StatusIU]?.rotulo)
 
@@ -369,9 +580,12 @@ export function FichaUnidadeIUModal({ serial, onClose }: { serial: string; onClo
             {u.movimentos.map((m: any) => (
               <li key={m.id} className="ml-4">
                 <span className="absolute -left-1.5 w-3 h-3 rounded-full bg-orange-500 border-2 border-tema-superficie" />
-                <p className="text-sm font-semibold text-tema-tinta">{ROTULO_MOV_IU[m.tipo as TipoMovIU]}</p>
+                <p className="text-sm font-semibold text-tema-tinta">
+                  {ROTULO_MOV_IU[m.tipo as TipoMovIU]}
+                  {m.retirada && <span className="ml-2 text-xs font-normal text-tema-apagado">termo {numeroTermo(m.retirada.numero)}</span>}
+                </p>
                 <p className="text-xs text-tema-suave">
-                  {[m.equipeNome && `Tecnico: ${m.equipeNome}`, m.cliente && `Cliente: ${m.cliente}`, m.chamado && `Chamado: ${m.chamado}`, m.notaFiscal && `NF: ${m.notaFiscal}`, m.motivo && `Motivo: ${m.motivo}`].filter(Boolean).join(' - ') || '—'}
+                  {[m.equipeNome && `Tecnico: ${m.equipeNome}`, m.cliente && `Cliente: ${m.cliente}`, m.chamado && `Chamado: ${m.chamado}`, m.notaFiscal && `NF: ${m.notaFiscal}`, m.motivo && `Obs.: ${m.motivo}`].filter(Boolean).join(' - ') || '—'}
                 </p>
                 <p className="text-xs text-tema-apagado">{formatDateTime(m.createdAt)} - por {m.usuarioNome}</p>
               </li>

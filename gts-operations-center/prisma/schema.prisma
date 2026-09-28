@@ -1071,10 +1071,12 @@ model UnidadeIU {
   cliente      String?         // onde foi instalada / para quem saiu
   chamado      String?         // numero ou protocolo do chamado
   notaFiscal   String?
+  retiradaId   String?         // termo de retirada em aberto (COM_TECNICO)
   entradaEm    DateTime        @default(now())
   atualizadoEm DateTime        @updatedAt
 
   produto    ProdutoIU     @relation(fields: [produtoId], references: [id])
+  retirada   RetiradaIU?   @relation(fields: [retiradaId], references: [id])
   movimentos MovimentoIU[]
 
   @@index([status])
@@ -1094,11 +1096,41 @@ model MovimentoIU {
   notaFiscal  String?
   usuarioId   String?
   usuarioNome String
+  retiradaId  String?         // termo de retirada (retirada e conferencia)
   createdAt   DateTime        @default(now())
 
-  unidade UnidadeIU @relation(fields: [unidadeId], references: [id])
+  unidade  UnidadeIU   @relation(fields: [unidadeId], references: [id])
+  retirada RetiradaIU? @relation(fields: [retiradaId], references: [id])
 
   @@index([unidadeId])
   @@index([createdAt])
   @@map("iu_movimentos")
+}
+
+enum StatusRetiradaIU {
+  ABERTA
+  CONFERIDA
+}
+
+// Termo de retirada: o tecnico retira unidades do Estoque IU e cada uma
+// precisa ter o destino conferido (instalado, devolvido ou defeito). O termo
+// fecha como CONFERIDA quando nao sobra unidade pendente.
+model RetiradaIU {
+  id           String           @id @default(cuid())
+  numero       Int              @unique @default(autoincrement())
+  equipeId     String
+  equipeNome   String
+  status       StatusRetiradaIU @default(ABERTA)
+  observacao   String?
+  usuarioId    String?
+  usuarioNome  String
+  createdAt    DateTime         @default(now())
+  conferidaEm  DateTime?
+  conferidaPor String?
+
+  unidades   UnidadeIU[]
+  movimentos MovimentoIU[]
+
+  @@index([status])
+  @@map("iu_retiradas")
 }

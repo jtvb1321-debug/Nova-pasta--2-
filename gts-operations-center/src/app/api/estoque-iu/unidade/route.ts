@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
     where: { serial },
     include: {
       produto: { select: { id: true, codigo: true, descricao: true, fabricante: true } },
-      movimentos: { orderBy: { createdAt: 'desc' } },
+      retirada: { select: { id: true, numero: true } },
+      movimentos: { orderBy: { createdAt: 'desc' }, include: { retirada: { select: { numero: true } } } },
     },
   })
   if (!unidade) return NextResponse.json({ error: 'Serial/MAC nao cadastrado no Estoque IU', serial }, { status: 404 })
