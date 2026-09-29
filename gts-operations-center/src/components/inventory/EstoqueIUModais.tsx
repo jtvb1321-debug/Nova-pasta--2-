@@ -12,7 +12,7 @@ import {
 } from '@/lib/estoqueIU'
 
 // Bipe curto de confirmacao/erro para quem esta lendo com o leitor sem olhar a tela.
-function bipe(ok: boolean) {
+export function bipe(ok: boolean) {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
     const osc = ctx.createOscillator(), vol = ctx.createGain()
@@ -50,12 +50,14 @@ function ModalIU({ titulo, subtitulo, icone: Icone, onClose, children, largura =
 
 // Campo para o leitor USB/Bluetooth (que "digita" o codigo e aperta Enter) ou
 // digitacao manual. Volta o foco para si depois de cada leitura.
-function CampoBipagem({ onLer, desabilitado }: { onLer: (serial: string) => void; desabilitado?: boolean }) {
+export function CampoBipagem({ onLer, desabilitado, placeholder, normalizar = normalizarSerial, id = 'iu-bipagem' }: {
+  onLer: (serial: string) => void; desabilitado?: boolean; placeholder?: string; normalizar?: (bruto: string) => string; id?: string
+}) {
   const [valor, setValor] = useState('')
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => { if (!desabilitado) ref.current?.focus() }, [desabilitado])
   function ler() {
-    const s = normalizarSerial(valor)
+    const s = normalizar(valor)
     setValor('')
     if (s) onLer(s)
     ref.current?.focus()
@@ -65,12 +67,12 @@ function CampoBipagem({ onLer, desabilitado }: { onLer: (serial: string) => void
       <ScanBarcode className="w-5 h-5 text-orange-600 flex-shrink-0" />
       <input
         ref={ref}
-        id="iu-bipagem"
+        id={id}
         value={valor}
         onChange={e => setValor(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ler() } }}
         disabled={desabilitado}
-        placeholder="Bipe o serial/MAC (ou digite e aperte Enter)"
+        placeholder={placeholder || 'Bipe o serial/MAC (ou digite e aperte Enter)'}
         className="flex-1 bg-transparent outline-none text-sm font-mono text-tema-tinta placeholder:text-tema-apagado"
         autoComplete="off"
       />

@@ -20,6 +20,11 @@ export async function PATCH(
   try {
     const item = await prisma.itemEstoque.findUnique({ where: { id } })
     if (!item) return NextResponse.json({ error: 'Item nao encontrado' }, { status: 404 })
+    // Item com serial: a quantidade acompanha as unidades bipadas; ajuste manual
+    // deixaria o saldo diferente dos seriais cadastrados.
+    if (item.controlaSerial) {
+      return NextResponse.json({ error: `"${item.descricao}" e controlado por serial: use a entrada bipada e o carregamento por MAC/serial` }, { status: 400 })
+    }
 
     let novaQuantidade = item.quantidadeAtual
 

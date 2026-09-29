@@ -7,7 +7,7 @@ import {
   RefreshCw, ChevronLeft, ChevronRight,
   ArrowUpCircle, ArrowDownCircle, Edit2, Trash2, PackageMinus, History,
   CheckCircle, XCircle, Clock,
-  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft
+  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode
 } from 'lucide-react'
 import { cn, formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { CATEGORIA_LABELS, type CategoriaEstoque } from '@/types'
@@ -24,6 +24,8 @@ import { EntradaDefeitoModal } from './EntradaDefeitoModal'
 import { RelatorioCompletoModal } from './RelatorioCompletoModal'
 import { PorTecnicoTab } from './PorTecnicoTab'
 import { EstoqueIUTab } from './EstoqueIUTab'
+import { EntradaBipadaModal } from './EntradaBipadaModal'
+import { PAPEIS_ENTRADA_BIPADA } from '@/lib/estoqueBipado'
 import { podeUsarEstoqueIU } from '@/lib/estoqueIU'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -157,6 +159,7 @@ export function CentralEstoque({ session }: Props) {
   const [periodoMov, setPeriodoMov] = useState('')
   const [page, setPage] = useState(1)
   const [showNovoItem, setShowNovoItem] = useState(false)
+  const [showEntradaBipada, setShowEntradaBipada] = useState(false)
   const [showImportarNF, setShowImportarNF] = useState(false)
   const [showRetirarMaterial, setShowRetirarMaterial] = useState(false)
   const [showHistoricoRetiradas, setShowHistoricoRetiradas] = useState(false)
@@ -381,6 +384,12 @@ export function CentralEstoque({ session }: Props) {
               <ArrowRightLeft className="w-4 h-4" />
               Transferir Estoque
             </button>
+            {PAPEIS_ENTRADA_BIPADA.includes(role) && (
+              <button onClick={() => setShowEntradaBipada(true)} className="gts-btn-secondary">
+                <ScanBarcode className="w-4 h-4" />
+                Entrada bipada
+              </button>
+            )}
             <button onClick={() => setShowNovoItem(true)} className="gts-btn-primary">
               <Plus className="w-4 h-4" />
               Novo Item
@@ -505,7 +514,10 @@ export function CentralEstoque({ session }: Props) {
                             <td className="px-4">
                               <code className="text-xs text-tema-suave font-mono">{item.codigo}</code>
                             </td>
-                            <td className="px-4 text-tema-tinta font-medium text-sm">{item.descricao}</td>
+                            <td className="px-4 text-tema-tinta font-medium text-sm">
+                              {item.descricao}
+                              {item.controlaSerial && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-500/10 border border-blue-500/25 rounded px-1.5 py-0.5">serial</span>}
+                            </td>
                             <td className="px-4">
                               <span className={cn('status-badge text-xs', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
                                 {CATEGORIA_LABELS[item.categoria as CategoriaEstoque]}
@@ -581,7 +593,10 @@ export function CentralEstoque({ session }: Props) {
                       <div key={item.id} className={cn('p-4', baixo && 'bg-red-500/5')}>
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="min-w-0">
-                            <p className="text-tema-tinta font-medium text-sm truncate">{item.descricao}</p>
+                            <p className="text-tema-tinta font-medium text-sm truncate">
+                              {item.descricao}
+                              {item.controlaSerial && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-500/10 border border-blue-500/25 rounded px-1.5 py-0.5">serial</span>}
+                            </p>
                             <code className="text-xs text-tema-apagado font-mono">{item.codigo}</code>
                           </div>
                           <span className={cn('status-badge text-xs flex-shrink-0', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
@@ -1071,6 +1086,17 @@ export function CentralEstoque({ session }: Props) {
       )}
 
       {/* Modal novo item */}
+      {showEntradaBipada && (
+        <EntradaBipadaModal
+          onClose={() => setShowEntradaBipada(false)}
+          onSuccess={() => {
+            setShowEntradaBipada(false)
+            queryClient.invalidateQueries({ queryKey: ['inventory'] })
+            queryClient.invalidateQueries({ queryKey: ['movements'] })
+          }}
+        />
+      )}
+
       {showNovoItem && (
         <NovoItemModal
           onClose={() => setShowNovoItem(false)}

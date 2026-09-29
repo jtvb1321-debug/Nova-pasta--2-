@@ -31,6 +31,9 @@ export async function POST(
       for (const item of parsed.data.itens) {
         const atual = await tx.itemEstoque.findUnique({ where: { id: item.itemId } })
         if (!atual) throw new Error(`Item nao encontrado: ${item.itemId}`)
+        if (atual.controlaSerial) {
+          throw new Error(`"${atual.descricao}" e controlado por serial: carregue pelo MAC/serial (aba Por Tecnico), nao por quantidade`)
+        }
 
         // quantidadeAtual representa o TOTAL da empresa (central + todas as equipes).
         // O disponivel no central e o total menos o que ja esta alocado nas equipes.

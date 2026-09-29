@@ -177,6 +177,10 @@ model Veiculo {
 model ItemEstoque {
   id               String           @id @default(cuid())
   codigo           String           @unique
+  // Codigo de barras de fabrica, vinculado na primeira leitura (entrada bipada)
+  codigoBarras     String?          @unique
+  // Item controlado por serial/MAC: entra e sai unidade por unidade
+  controlaSerial   Boolean          @default(false)
   descricao        String
   categoria        CategoriaEstoque
   unidade          String           @default("UN")
@@ -217,7 +221,8 @@ model UnidadeEquipamento {
   id         String                   @id @default(cuid())
   itemId     String
   macAddress String                   @unique
-  equipeId   String
+  equipeId   String?                  // null = no estoque central (entrada bipada)
+  notaFiscal String?
   status     StatusUnidadeEquipamento @default(EM_ESTOQUE)
   chamadoId  String?
   usadoPor   String?
@@ -225,7 +230,7 @@ model UnidadeEquipamento {
   createdAt  DateTime                 @default(now())
 
   item    ItemEstoque @relation(fields: [itemId], references: [id])
-  equipe  Equipe      @relation(fields: [equipeId], references: [id])
+  equipe  Equipe?     @relation(fields: [equipeId], references: [id], onDelete: Restrict)
   chamado Chamado?    @relation(fields: [chamadoId], references: [id])
 
   @@map("unidades_equipamento")

@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
       for (const item of itens) {
         const atual = mapaAtuais.get(item.id)
         if (!atual) throw new Error(`Item nao encontrado: ${item.id}`)
+        if (atual.controlaSerial) {
+          throw new Error(`"${atual.descricao}" e controlado por serial: a saida e pelo carregamento por MAC/serial`)
+        }
         if (item.quantidade > atual.quantidadeAtual) {
           throw new Error(`Quantidade insuficiente para "${atual.descricao}". Disponivel: ${atual.quantidadeAtual} ${atual.unidade}`)
         }

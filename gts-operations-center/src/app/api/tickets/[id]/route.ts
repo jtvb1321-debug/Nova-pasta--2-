@@ -204,10 +204,12 @@ export async function PATCH(
     // Equipamentos com MAC utilizados - mesma baixa dupla (equipe + geral) dos
     // materiais acima, so que por unidade rastreada em vez de quantidade.
     if (status === 'FINALIZADO' && equipamentosUtilizadosIds?.length) {
+      // So unidades que estao num carro (as do estoque central nao tem equipe).
       const unidades = await tx.unidadeEquipamento.findMany({
-        where: { id: { in: equipamentosUtilizadosIds }, status: 'EM_ESTOQUE' },
+        where: { id: { in: equipamentosUtilizadosIds }, status: 'EM_ESTOQUE', equipeId: { not: null } },
       })
       for (const u of unidades) {
+        if (!u.equipeId) continue
         await tx.unidadeEquipamento.update({
           where: { id: u.id },
           data: {
