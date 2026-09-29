@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
+import { criarTermoRetirada } from '@/lib/termoEstoque'
 
 const schema = z.object({
   itemId: z.string(),
@@ -29,6 +30,7 @@ export async function POST(
   const { itemId, macAddresses } = parsed.data
   const macsUnicos = Array.from(new Set(macAddresses.map(m => m.toUpperCase())))
   const operadorId = (session.user as any).id
+  const operadorNome = (session.user as any)?.name || (session.user as any)?.email || 'desconhecido'
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -97,8 +99,16 @@ export async function POST(
           tipo: 'TRANSFERENCIA',
           quantidade: macsUnicos.length,
           operadorId,
-          motivo: `Transferencia por MAC: Central -> equipe ${equipeId}`,
+          motivo: `Transferencia por MAC: Central -> equipe ${equipeId} - por ${operadorNome}`,
         },
+      })
+
+      await criarTermoRetirada(tx, {
+        equipeId,
+        origem: 'Carregamento por MAC/serial',
+        itens: [{ itemId, quantidade: macsUnicos.length, seriais: macsUnicos }],
+        usuarioId: operadorId,
+        usuarioNome: operadorNome,
       })
     })
     return NextResponse.json({ ok: true, quantidade: macsUnicos.length })

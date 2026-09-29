@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { abaterTermos, criarTermoRetirada } from '@/lib/termoEstoque'
 
 export async function POST(request: NextRequest) {
   const session = await auth()
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     await prisma.$transaction(async (tx) => {
       const item = await tx.itemEstoque.findUnique({ where: { id: itemId } })
       if (!item) throw new Error('Item nao encontrado')
+      if (item.controlaSerial && (origemTipo === 'TECNICO' || destinoTipo === 'TECNICO')) {
+        throw new Error(`"${item.descricao}" e controlado por serial: para o tecnico, use o carregamento por MAC/serial`)
+      }
 
       // --- Validar e descontar da origem ---
       let origemNome = ''
@@ -113,6 +117,14 @@ export async function POST(request: NextRequest) {
           motivo: `Transferencia: ${origemNome} -> ${destinoNome}${defeito ? ` - Defeito: ${defeito}` : ''}${motivo ? ` - ${motivo}` : ''} - por ${operadorNome}`,
         },
       })
+
+      // Termo de retirada (piloto GTSNET): saida do tecnico abate; entrada no tecnico gera termo.
+      if (origemTipo === 'TECNICO') {
+        await abaterTermos(tx, { equipeId: origemId, itemId, quantidade, tipo: 'TRANSFERENCIA', usuarioNome: operadorNome || 'desconhecido', detalhe: `Para ${destinoNome}` })
+      }
+      if (destinoTipo === 'TECNICO') {
+        await criarTermoRetirada(tx, { equipeId: destinoId, origem: `Transferencia de ${origemNome}`, itens: [{ itemId, quantidade }], usuarioId: operadorId, usuarioNome: operadorNome || 'desconhecido' })
+      }
     })
 
     return NextResponse.json({ ok: true })

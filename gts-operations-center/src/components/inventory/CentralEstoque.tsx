@@ -7,7 +7,7 @@ import {
   RefreshCw, ChevronLeft, ChevronRight,
   ArrowUpCircle, ArrowDownCircle, Edit2, Trash2, PackageMinus, History,
   CheckCircle, XCircle, Clock,
-  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode
+  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode, ClipboardCheck
 } from 'lucide-react'
 import { cn, formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { CATEGORIA_LABELS, type CategoriaEstoque } from '@/types'
@@ -24,13 +24,14 @@ import { EntradaDefeitoModal } from './EntradaDefeitoModal'
 import { RelatorioCompletoModal } from './RelatorioCompletoModal'
 import { PorTecnicoTab } from './PorTecnicoTab'
 import { EstoqueIUTab } from './EstoqueIUTab'
+import { TermosEstoqueTab } from './TermosEstoqueTab'
 import { EntradaBipadaModal } from './EntradaBipadaModal'
 import { PAPEIS_ENTRADA_BIPADA } from '@/lib/estoqueBipado'
 import { podeUsarEstoqueIU } from '@/lib/estoqueIU'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico' | 'estoque-iu'
+type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico' | 'termos' | 'estoque-iu'
 const CATEGORIA_CORES: Record<CategoriaEstoque, string> = {
   GTSNET:      'text-blue-700 bg-blue-500/10',
   EACE:        'text-emerald-700 bg-emerald-500/10',
@@ -329,6 +330,14 @@ export function CentralEstoque({ session }: Props) {
     refetchInterval: 5 * 60 * 1000,
   })
 
+  // Termos de retirada GTSNET parados ha mais de 7 dias (piloto).
+  const { data: resumoTermos } = useQuery({
+    queryKey: ['estoque-termos-resumo'],
+    queryFn: async () => { const r = await fetch('/api/estoque/termos?status=ABERTO'); return r.ok ? r.json() : null },
+    enabled: PAPEIS_ENTRADA_BIPADA.includes(role),
+    refetchInterval: 5 * 60 * 1000,
+  })
+
   const abas = [
     { id: 'estoque'       as Aba, label: 'Estoque',       icon: Package,       badge: criticos,     badgeCor: 'bg-red-500' },
     { id: 'movimentacoes' as Aba, label: 'Movimentacoes', icon: ArrowLeftRight, badge: 0,            badgeCor: '' },
@@ -336,6 +345,9 @@ export function CentralEstoque({ session }: Props) {
     { id: 'reversa'       as Aba, label: 'Reversa ManINFO', icon: Repeat,       badge: 0,            badgeCor: '' },
     { id: 'defeituosos'  as Aba, label: 'Defeituosos ManINFO', icon: PackageX, badge: (defeitosData?.data ?? []).filter((d: any) => d.status === 'PENDENTE_ACEITE').length, badgeCor: 'bg-amber-500' },
     { id: 'por-tecnico'  as Aba, label: 'Por Tecnico',    icon: UserCog,      badge: 0,            badgeCor: '' },
+    ...(PAPEIS_ENTRADA_BIPADA.includes(role)
+      ? [{ id: 'termos' as Aba, label: 'Termos GTSNET', icon: ClipboardCheck, badge: resumoTermos?.parados ?? 0, badgeCor: 'bg-red-500' }]
+      : []),
     // Estoque IU: separado dos demais, so para ADMIN/GESTOR
     ...(podeUsarEstoqueIU(role)
       ? [{ id: 'estoque-iu' as Aba, label: 'Estoque IU', icon: ShieldCheck, badge: resumoTermosIU?.vencidas ?? 0, badgeCor: 'bg-red-500' }]
@@ -1047,6 +1059,8 @@ export function CentralEstoque({ session }: Props) {
 
       {/* ABA POR TECNICO */}
       {aba === 'por-tecnico' && <PorTecnicoTab />}
+
+      {aba === 'termos' && PAPEIS_ENTRADA_BIPADA.includes(role) && <TermosEstoqueTab />}
 
       {aba === 'estoque-iu' && podeUsarEstoqueIU(role) && <EstoqueIUTab />}
 

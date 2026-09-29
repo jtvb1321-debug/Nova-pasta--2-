@@ -24,7 +24,7 @@ export function bipe(ok: boolean) {
   } catch {}
 }
 
-function ModalIU({ titulo, subtitulo, icone: Icone, onClose, children, largura = 'max-w-2xl' }: {
+export function ModalIU({ titulo, subtitulo, icone: Icone, onClose, children, largura = 'max-w-2xl' }: {
   titulo: string; subtitulo?: string; icone: React.ElementType; onClose: () => void; children: React.ReactNode; largura?: string
 }) {
   return (

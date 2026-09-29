@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { abaterTermos } from '@/lib/termoEstoque'
 import {
   notificarACaminho,
   notificarInicioAtendimento,
@@ -171,7 +172,14 @@ export async function PATCH(
           observacao: m.observacao || null,
         })),
       })
+      // Item controlado por serial: a baixa e so pelo serial escolhido (abaixo),
+      // para nao descontar o mesmo equipamento duas vezes.
+      const comSerial = new Set((await tx.itemEstoque.findMany({
+        where: { id: { in: materiaisUtilizados.map((m: any) => m.itemId) }, controlaSerial: true },
+        select: { id: true },
+      })).map(i => i.id))
       for (const m of materiaisUtilizados) {
+        if (comSerial.has(m.itemId)) continue
         // Desconta do estoque da equipe (o material ja saiu do central quando foi carregado no carro)
         if (equipeAlvo) {
           await tx.estoqueEquipe.upsert({
@@ -198,6 +206,9 @@ export async function PATCH(
             motivo:     `Utilizado no chamado (baixa do estoque da equipe)`,
           },
         })
+        if (equipeAlvo) {
+          await abaterTermos(tx, { equipeId: equipeAlvo, itemId: m.itemId, quantidade: m.quantidade, tipo: 'USO', chamadoId: id, usuarioNome: (session.user as any)?.name || (session.user as any)?.email || 'desconhecido' })
+        }
       }
     }
 
@@ -242,6 +253,7 @@ export async function PATCH(
             motivo:     `Equipamento ${u.macAddress} utilizado no chamado (baixa do estoque da equipe)`,
           },
         })
+        await abaterTermos(tx, { equipeId: u.equipeId, itemId: u.itemId, quantidade: 1, tipo: 'USO', chamadoId: id, detalhe: `Serial ${u.macAddress}`, usuarioNome: (session.user as any)?.name || (session.user as any)?.email || 'desconhecido' })
       }
     }
 

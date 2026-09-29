@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
+import { abaterTermos } from '@/lib/termoEstoque'
 
 const schema = z.object({
   itens: z.array(z.object({
@@ -38,6 +39,10 @@ export async function POST(
           const disponivel = registroEquipe?.quantidade ?? 0
           throw new Error(`Quantidade indisponivel no carro. Disponivel: ${disponivel}`)
         }
+        const cadastro = await tx.itemEstoque.findUnique({ where: { id: item.itemId }, select: { descricao: true, controlaSerial: true } })
+        if (cadastro?.controlaSerial) {
+          throw new Error(`"${cadastro.descricao}" e controlado por serial: a devolucao e feita no estoque, bipando o serial (Conferencia do carro)`)
+        }
 
         // Desconta do estoque do carro (equipe). O total (quantidadeAtual) NAO muda -
         // ele representa central + equipes, e o material so volta a ficar "disponivel no central".
@@ -60,6 +65,7 @@ export async function POST(
             motivo:     `Devolucao: equipe ${equipeId} -> Central - devolvido por ${operadorNome}`,
           },
         })
+        await abaterTermos(tx, { equipeId, itemId: item.itemId, quantidade: item.quantidade, tipo: 'DEVOLUCAO', usuarioNome: operadorNome || 'desconhecido' })
       }
     })
 

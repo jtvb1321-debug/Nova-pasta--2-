@@ -211,6 +211,7 @@ model ItemEstoque {
 enum StatusUnidadeEquipamento {
   EM_ESTOQUE
   UTILIZADA
+  EXTRAVIADA // nao encontrada na conferencia do carro
 }
 
 // Rastreio por unidade (MAC) para itens que o operador escolher ler
@@ -1138,4 +1139,84 @@ model RetiradaIU {
 
   @@index([status])
   @@map("iu_retiradas")
+}
+
+// ---------------------------------------------------------------------------
+// Termo de retirada dos estoques gerais (piloto GTSNET): cada carregamento do
+// carro gera um termo; uso no chamado, devolucao, baixa e transferencia abatem
+// do termo mais antigo do tecnico (FIFO) e a conferencia do carro registra
+// divergencias. O termo fecha quando nao sobra quantidade pendente.
+// ---------------------------------------------------------------------------
+
+enum StatusTermoEstoque {
+  ABERTO
+  CONFERIDO
+}
+
+enum TipoEventoTermo {
+  RETIRADA
+  USO
+  DEVOLUCAO
+  BAIXA
+  TRANSFERENCIA
+  DIVERGENCIA
+  CONFERENCIA
+}
+
+model TermoEstoque {
+  id                String             @id @default(cuid())
+  numero            Int                @unique @default(autoincrement())
+  categoria         CategoriaEstoque
+  equipeId          String
+  equipeNome        String
+  origem            String             // carregamento, carregamento por MAC, solicitacao aprovada, transferencia
+  status            StatusTermoEstoque @default(ABERTO)
+  observacao        String?
+  usuarioId         String?
+  usuarioNome       String
+  createdAt         DateTime           @default(now())
+  ultimoMovimentoEm DateTime           @default(now())
+  conferidoEm       DateTime?
+
+  itens   TermoEstoqueItem[]
+  eventos TermoEstoqueEvento[]
+
+  @@index([status])
+  @@index([equipeId])
+  @@map("estoque_termos")
+}
+
+model TermoEstoqueItem {
+  id          String   @id @default(cuid())
+  termoId     String
+  itemId      String
+  quantidade  Float    // retirada
+  usada       Float    @default(0)
+  devolvida   Float    @default(0)
+  transferida Float    @default(0)
+  divergente  Float    @default(0) // baixa ou divergencia na conferencia
+  seriais     String[] @default([])
+
+  termo TermoEstoque @relation(fields: [termoId], references: [id])
+
+  @@unique([termoId, itemId])
+  @@index([itemId])
+  @@map("estoque_termo_itens")
+}
+
+model TermoEstoqueEvento {
+  id          String          @id @default(cuid())
+  termoId     String
+  itemId      String?
+  tipo        TipoEventoTermo
+  quantidade  Float           @default(0)
+  chamadoId   String?
+  detalhe     String?
+  usuarioNome String
+  createdAt   DateTime        @default(now())
+
+  termo TermoEstoque @relation(fields: [termoId], references: [id])
+
+  @@index([termoId])
+  @@map("estoque_termo_eventos")
 }

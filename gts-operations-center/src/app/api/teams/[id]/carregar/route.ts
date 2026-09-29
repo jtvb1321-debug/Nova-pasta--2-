@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
+import { criarTermoRetirada } from '@/lib/termoEstoque'
 const schema = z.object({
   itens: z.array(z.object({
     itemId:           z.string(),
@@ -26,6 +27,7 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
   const operadorId = (session.user as any).id
+  const operadorNome = (session.user as any)?.name || (session.user as any)?.email || 'desconhecido'
   try {
     await prisma.$transaction(async (tx) => {
       for (const item of parsed.data.itens) {
@@ -69,10 +71,19 @@ export async function POST(
             tipo:       'TRANSFERENCIA',
             quantidade: item.quantidade,
             operadorId,
-            motivo:     `Transferencia: Central -> equipe ${equipeId}`,
+            motivo:     `Transferencia: Central -> equipe ${equipeId} - por ${operadorNome}`,
           },
         })
       }
+
+      // Termo de retirada (piloto GTSNET): cada carregamento gera um termo.
+      await criarTermoRetirada(tx, {
+        equipeId,
+        origem: 'Carregamento do carro',
+        itens: parsed.data.itens.map(i => ({ itemId: i.itemId, quantidade: i.quantidade })),
+        usuarioId: operadorId,
+        usuarioNome: operadorNome,
+      })
     })
     return NextResponse.json({ ok: true })
   } catch (error: any) {

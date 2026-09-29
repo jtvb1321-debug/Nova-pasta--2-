@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import { abaterTermos } from '@/lib/termoEstoque'
 
 export async function GET(
   request: NextRequest,
@@ -50,6 +51,10 @@ export async function POST(
     if (!registroEquipe || quantidade > registroEquipe.quantidade) {
       const disponivel = registroEquipe?.quantidade ?? 0
       return NextResponse.json({ error: `Quantidade indisponivel no carro. Disponivel: ${disponivel}` }, { status: 400 })
+    }
+    const cadastro = await prisma.itemEstoque.findUnique({ where: { id: itemId }, select: { descricao: true, controlaSerial: true } })
+    if (cadastro?.controlaSerial) {
+      return NextResponse.json({ error: `"${cadastro.descricao}" e controlado por serial: registre no fechamento do chamado, escolhendo o serial` }, { status: 400 })
     }
 
     const uploadDir = join(process.cwd(), 'public', 'uploads', 'uso-material')
@@ -102,6 +107,7 @@ export async function POST(
           motivo: `Uso em campo - Cliente: ${clienteNome || 'vinculado ao chamado'} - registrado por ${operadorNome}`,
         },
       })
+      await abaterTermos(tx, { equipeId, itemId, quantidade, tipo: 'USO', usuarioNome: operadorNome || 'desconhecido', chamadoId, detalhe: clienteNome ? `Cliente: ${clienteNome}` : null })
 
       return registro
     })

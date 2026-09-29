@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { abaterTermos } from '@/lib/termoEstoque'
 
 export async function POST(
   request: NextRequest,
@@ -32,6 +33,10 @@ export async function POST(
         const disponivel = registroEquipe?.quantidade ?? 0
         throw new Error(`Quantidade indisponivel com o tecnico. Disponivel: ${disponivel}`)
       }
+      const cadastro = await tx.itemEstoque.findUnique({ where: { id: itemId }, select: { descricao: true, controlaSerial: true } })
+      if (cadastro?.controlaSerial) {
+        throw new Error(`"${cadastro.descricao}" e controlado por serial: use a Conferencia do carro, bipando os seriais`)
+      }
 
       // Desconta do carro/tecnico
       await tx.estoqueEquipe.update({
@@ -57,6 +62,7 @@ export async function POST(
           motivo: `Baixa confirmada pelo admin - ${motivo || 'sem motivo informado'} - equipe ${equipeId} - por ${operadorNome}`,
         },
       })
+      await abaterTermos(tx, { equipeId, itemId, quantidade, tipo: 'BAIXA', usuarioNome: operadorNome || 'desconhecido', detalhe: motivo || null })
     })
 
     return NextResponse.json({ ok: true })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { criarTermoRetirada } from '@/lib/termoEstoque'
 
 export async function PATCH(
   request: NextRequest,
@@ -33,6 +34,9 @@ export async function PATCH(
       if (status === 'APROVADA') {
         const item = await tx.itemEstoque.findUnique({ where: { id: atual.itemId } })
         if (!item) throw new Error('Item nao encontrado')
+        if (item.controlaSerial) {
+          throw new Error(`"${item.descricao}" e controlado por serial: carregue pelo MAC/serial na aba Por Tecnico e rejeite esta solicitacao`)
+        }
 
         const agregado = await tx.estoqueEquipe.aggregate({
           where: { itemId: atual.itemId },
@@ -60,6 +64,13 @@ export async function PATCH(
             operadorId,
             motivo: `Solicitacao de material aprovada - equipe ${atual.equipeId} - aprovado por ${resolvedorNome}`,
           },
+        })
+        await criarTermoRetirada(tx, {
+          equipeId: atual.equipeId,
+          origem: 'Solicitacao de material aprovada',
+          itens: [{ itemId: atual.itemId, quantidade: atual.quantidade }],
+          usuarioId: operadorId,
+          usuarioNome: resolvedorNome,
         })
       }
 
