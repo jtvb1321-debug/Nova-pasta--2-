@@ -8,7 +8,7 @@ import {
   Waypoints, PanelRightClose, PanelRightOpen, ChevronRight, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ATRIBUICAO_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
+import { ATRIBUICAO_CARTO, CROSS_ORIGIN_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
 import { temaAtual, useTema } from '@/lib/tema'
 
 // Cor real da caixa de emenda, igual o tecnico ve em campo.
@@ -175,7 +175,9 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       const fundo = L.tileLayer(urlCarto(temaAtual() === 'escuro' ? 'dark_all' : 'light_all', chaveCarto), {
         attribution: ATRIBUICAO_CARTO,
         referrerPolicy: REFERRER_CARTO,
+        crossOrigin: CROSS_ORIGIN_CARTO,
         maxZoom: 19,
+        keepBuffer: 4, // mantem mais imagens em volta ao arrastar o mapa
         className: 'gts-tiles-claro',
       } as any).addTo(map)
       fundoRef.current = { camada: fundo, chave: chaveCarto }

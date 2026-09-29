@@ -16,6 +16,11 @@ export const ATRIBUICAO_CARTO = '&copy; OpenStreetMap contributors &copy; CARTO'
 // Nas imagens do mapa, enviar so a origem do site (sem caminho).
 export const REFERRER_CARTO = 'strict-origin-when-cross-origin'
 
+// Imagens pedidas em modo CORS (a CARTO responde com
+// Access-Control-Allow-Origin: *): so assim o cache do mapa (public/sw-mapa.js)
+// consegue conferir e guardar cada imagem.
+export const CROSS_ORIGIN_CARTO = 'anonymous'
+
 // OpenStreetMap (Central de Monitoramento): sem Referer, o servidor de tiles
 // devolve a imagem "Access blocked"; a politica de uso tambem exige a
 // atribuicao visivel no mapa.
@@ -25,9 +30,17 @@ export const REFERRER_OSM = REFERRER_CARTO
 
 let chaveCarto: Promise<string> | null = null
 
+// Guarda no navegador as imagens do mapa ja vistas (ver public/sw-mapa.js).
+// Se o navegador nao suportar, o mapa funciona igual, so sem o cache.
+function ativarCacheDoMapa() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+  navigator.serviceWorker.register('/sw-mapa.js').catch(() => {})
+}
+
 // Uma busca por carregamento de pagina; em falha, o mapa segue sem chave.
 export function obterChaveCarto(): Promise<string> {
   if (!chaveCarto) {
+    ativarCacheDoMapa()
     chaveCarto = fetch('/api/mapa/basemap')
       .then(r => (r.ok ? r.json() : {}))
       .then((j: { key?: string }) => j.key || '')
