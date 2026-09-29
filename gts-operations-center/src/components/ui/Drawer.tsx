@@ -36,7 +36,7 @@ export function Drawer({ open, onClose, title, subtitle, children, widthClassNam
         onClick={onClose}
       />
       <div className={cn(
-        'relative w-full bg-tema-superficie border-l border-tema-linha h-full flex flex-col shadow-2xl animate-drawer-in',
+        'relative w-full bg-tema-superficie border-l border-tema-linha h-full flex flex-col animate-drawer-in',
         widthClassName
       )}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-tema-linha flex-shrink-0">

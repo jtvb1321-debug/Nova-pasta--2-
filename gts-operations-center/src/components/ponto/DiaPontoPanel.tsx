@@ -186,7 +186,7 @@ export function DiaPontoPanel({ dataInicial, equipeId: equipeIdInicial, onClose,
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-5 pb-4 border-b border-tema-linha">
           <div className="flex items-center gap-2">
             <button onClick={() => trocarDia(-1)} className="gts-btn-secondary py-1.5 px-2">

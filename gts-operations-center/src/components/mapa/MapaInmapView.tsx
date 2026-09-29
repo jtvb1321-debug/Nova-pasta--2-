@@ -206,7 +206,6 @@ export function MapaInmapView({ telaCheia = false }: Props) {
               'width:34px; height:34px; border-radius:50%;' +
               'background:' + cor + '22; border:2px solid ' + cor + ';' +
               'color:' + cor + '; font-weight:700; font-size:12px; font-family:sans-serif;' +
-              (temAlerta ? 'box-shadow:0 0 8px ' + cor + '99;' : '') +
               '">' + qtd + '</div>',
             className: 'gts-cluster-icon',
             iconSize: [34, 34],
@@ -339,7 +338,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
           const icone = L.divIcon({
             className: 'gts-emenda-icon',
-            html: '<span style="display:block; width:11px; height:11px; background:' + cor + '; border:1.5px solid rgba(32,29,23,0.4); transform: rotate(45deg); box-shadow: 0 0 2px rgba(32,29,23,0.35);"></span>',
+            html: '<span style="display:block; width:11px; height:11px; background:' + cor + '; border:1.5px solid rgba(32,29,23,0.4); transform: rotate(45deg);"></span>',
             iconSize: [11, 11],
             iconAnchor: [5, 5],
           })
@@ -487,7 +486,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
         {/* Barra superior: busca */}
         <div className="absolute top-0 left-0 right-0 z-[1000] p-2 sm:p-3 flex flex-wrap items-center gap-2 bg-gradient-to-b from-tema-fundo/95 to-transparent">
-          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-3 py-3 sm:py-1.5 shadow-lg shadow-tema-contraste/[0.1]">
+          <div className="flex-1 min-w-[140px] flex items-center gap-2 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-3 py-3 sm:py-1.5">
             <Search className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
             <input
               type="text"
@@ -518,7 +517,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
         {/* Consulta de viabilidade (prospeccao) */}
         {consulta && (
-          <div className="absolute top-16 sm:top-14 left-2 sm:left-3 z-[1000] w-[calc(100%-1rem)] sm:w-80 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg shadow-lg shadow-tema-contraste/[0.1] p-3 text-sm">
+          <div className="absolute top-16 sm:top-14 left-2 sm:left-3 z-[1000] w-[calc(100%-1rem)] sm:w-80 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg p-3 text-sm">
             <div className="flex items-start justify-between gap-2">
               <span className={cn('text-xs font-bold px-2 py-0.5 rounded-md border', CONSULTA_NIVEL[consulta.nivel].classe)}>
                 {CONSULTA_NIVEL[consulta.nivel].rotulo}
@@ -570,7 +569,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         )}
 
         {/* Legenda */}
-        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-tema-texto space-y-1 sm:space-y-1.5 shadow-lg shadow-tema-contraste/[0.1] max-w-[160px] sm:max-w-none">
+        <div className="absolute bottom-3 left-2 sm:left-3 z-[1000] bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 text-[10px] sm:text-xs text-tema-texto space-y-1 sm:space-y-1.5 max-w-[160px] sm:max-w-none">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#00C853] flex-shrink-0" /> CTO normal
           </div>
@@ -697,7 +696,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
         .gts-caixa-alerta-icon { position: relative; }
         .gts-alerta-ponto {
           position: absolute; top: 7px; left: 7px; width: 8px; height: 8px;
-          border-radius: 50%; background: #ff1744; box-shadow: 0 0 4px #ff1744;
+          border-radius: 50%; background: #ff1744;
         }
         .gts-alerta-pulso {
           position: absolute; top: 0; left: 0; width: 22px; height: 22px;

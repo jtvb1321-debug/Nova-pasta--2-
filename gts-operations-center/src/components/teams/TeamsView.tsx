@@ -170,7 +170,7 @@ export function TeamsView({ session }: { session?: Session }) {
           const materiaisReservados = chamado?.materiaisReservados ?? []
 
           return (
-            <div key={equipe.id} className={cn('bg-tema-superficie border rounded-xl overflow-hidden transition-all shadow-sm shadow-tema-contraste/[0.03]', cfg.bg)}>
+            <div key={equipe.id} className={cn('bg-tema-superficie border rounded-xl overflow-hidden transition-all', cfg.bg)}>
 
               {/* Header do card */}
               <div className={cn('px-5 py-4 flex items-center justify-between')}>

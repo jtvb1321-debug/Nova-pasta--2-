@@ -72,7 +72,7 @@ export function UsarMaterialModal({ equipeId, registro, onClose, onSuccess }: Pr
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] sm:rounded-2xl w-full sm:max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-tema-superficie border border-tema-linha sm:rounded-2xl w-full sm:max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-tema-tinta">Usar Material</h3>

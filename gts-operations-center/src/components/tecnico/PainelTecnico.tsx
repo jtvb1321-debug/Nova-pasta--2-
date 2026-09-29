@@ -186,7 +186,7 @@ export function PainelTecnico({ session }: Props) {
       {/* Sidebar - desktop/tablet largo */}
       <aside className="hidden lg:flex lg:flex-col lg:w-[230px] lg:flex-shrink-0 lg:sticky lg:top-0 lg:min-h-screen bg-tema-superficie border-r border-tema-linha p-3.5 gap-4">
         <div className="flex items-center gap-2.5 px-1">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0 shadow-md shadow-orange-600/25">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0">
             {getInitials(session.user?.name || 'T')}
           </div>
           <div className="min-w-0">
@@ -232,10 +232,10 @@ export function PainelTecnico({ session }: Props) {
       <div className="flex-1 min-w-0 flex flex-col">
 
         {/* Barra superior - celular / tablet estreito */}
-        <header className="lg:hidden sticky top-0 z-20 bg-tema-superficie border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03]">
+        <header className="lg:hidden sticky top-0 z-20 bg-tema-superficie border-b border-tema-linha">
           <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2.5">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm shadow-md shadow-orange-600/20">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
                 {getInitials(session.user?.name || 'T')}
               </div>
               <div className="min-w-0 flex-1">
@@ -299,7 +299,7 @@ export function PainelTecnico({ session }: Props) {
               <button
                 onClick={() => setFiltroStatus(f => f === 'ABERTO' ? '' : 'ABERTO')}
                 className={cn(
-                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-tema-contraste/[0.03]',
+                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97]',
                   filtroStatus === 'ABERTO' ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-tema-linha hover:border-blue-500/30'
                 )}
               >
@@ -312,7 +312,7 @@ export function PainelTecnico({ session }: Props) {
               <button
                 onClick={() => setFiltroStatus(f => f === 'EM_ANDAMENTO' ? '' : 'EM_ANDAMENTO')}
                 className={cn(
-                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97] shadow-sm shadow-tema-contraste/[0.03]',
+                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97]',
                   filtroStatus === 'EM_ANDAMENTO' ? 'border-emerald-500/50 ring-1 ring-emerald-500/30' : 'border-tema-linha hover:border-emerald-500/30'
                 )}
               >
@@ -322,7 +322,7 @@ export function PainelTecnico({ session }: Props) {
                 <p className="text-xl font-bold text-emerald-700">{emAndamento.length}</p>
                 <span className="text-[11px] text-tema-apagado">Em Atendimento</span>
               </button>
-              <div className="bg-tema-superficie border border-tema-linha rounded-xl p-3 shadow-sm shadow-tema-contraste/[0.03]">
+              <div className="bg-tema-superficie border border-tema-linha rounded-xl p-3">
                 <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center mb-2">
                   <Calendar className="w-3.5 h-3.5 text-purple-700" />
                 </div>
@@ -358,7 +358,7 @@ export function PainelTecnico({ session }: Props) {
                   ))
                 : chamadosExibidos.length === 0
                 ? (
-                  <div className="bg-tema-superficie border border-tema-linha rounded-xl p-8 text-center shadow-sm shadow-tema-contraste/[0.03]">
+                  <div className="bg-tema-superficie border border-tema-linha rounded-xl p-8 text-center">
                     <CheckCircle className="w-12 h-12 text-emerald-600/50 mx-auto mb-3" />
                     <p className="text-tema-tinta font-medium">{filtroStatus ? 'Nenhum chamado nesse status' : 'Nenhum chamado pendente'}</p>
                     <p className="text-tema-apagado text-sm mt-1">{filtroStatus ? 'Tente limpar o filtro acima.' : 'Voce esta com a agenda livre!'}</p>
@@ -382,7 +382,7 @@ export function PainelTecnico({ session }: Props) {
                         role="button"
                         tabIndex={0}
                         className={cn(
-                          'relative overflow-hidden w-full text-left bg-tema-superficie border rounded-xl p-4 pl-5 transition-all active:scale-[0.99] hover:border-tema-linha-forte cursor-pointer shadow-sm shadow-tema-contraste/[0.03]',
+                          'relative overflow-hidden w-full text-left bg-tema-superficie border rounded-xl p-4 pl-5 transition-all active:scale-[0.99] hover:border-tema-linha-forte cursor-pointer',
                           prioridade === 'CRITICO' ? 'border-red-500/40' :
                           prioridade === 'URGENTE' ? 'border-amber-500/30' :
                           'border-tema-linha'
@@ -515,7 +515,7 @@ export function PainelTecnico({ session }: Props) {
                 </h2>
                 <div className="space-y-2">
                   {agendados.map((chamado: any) => (
-                    <div key={chamado.id} className="bg-tema-superficie border border-purple-500/20 rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+                    <div key={chamado.id} className="bg-tema-superficie border border-purple-500/20 rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-sm font-bold text-purple-700">{formatarDataAgendada(chamado.dataAgendada)}</span>
                         <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
@@ -538,7 +538,7 @@ export function PainelTecnico({ session }: Props) {
 
           {/* Coluna lateral - Painel Operacional */}
           <aside className="space-y-4 lg:sticky lg:top-20">
-            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
               <h2 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-3 flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-orange-600" /> Acoes Rapidas
               </h2>
@@ -567,7 +567,7 @@ export function PainelTecnico({ session }: Props) {
               </div>
             </div>
 
-            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
               <h3 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-2">Status do Plantao</h3>
               {avisoPlantao?.mostrar ? (
                 <div className="flex items-center gap-2">

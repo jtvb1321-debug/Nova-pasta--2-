@@ -53,7 +53,7 @@ export function AgendaCard({ item, onClick }: { item: AgendaItem; onClick: () =>
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left rounded-lg border p-2 transition-colors bg-tema-superficie hover:bg-tema-contraste/[0.02] shadow-sm shadow-tema-contraste/[0.03]',
+        'w-full text-left rounded-lg border p-2 transition-colors bg-tema-superficie hover:bg-tema-contraste/[0.02]',
         prioridade === 'CRITICO' ? 'border-red-500/40' :
         prioridade === 'URGENTE' ? 'border-amber-500/30' :
         'border-tema-linha'

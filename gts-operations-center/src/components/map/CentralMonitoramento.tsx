@@ -208,7 +208,7 @@ export function CentralMonitoramento() {
                     <div
                       key={v.id}
                       className={cn(
-                        'bg-tema-superficie border rounded-xl overflow-hidden transition-all shadow-sm shadow-tema-contraste/[0.03]',
+                        'bg-tema-superficie border rounded-xl overflow-hidden transition-all',
                         v.alerta ? 'border-red-500/50' :
                         v.online ? 'border-emerald-500/20' : 'border-tema-linha'
                       )}
@@ -307,7 +307,7 @@ export function CentralMonitoramento() {
               {veiculosEnriquecidos.filter(v => v.alerta).map(v => {
                 const cor = getSpeedColor(v.velocidade, VELOCIDADE_ALERTA)
                 return (
-                  <div key={v.id} className="bg-tema-superficie border border-red-500/40 rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+                  <div key={v.id} className="bg-tema-superficie border border-red-500/40 rounded-xl p-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
                         <Truck className="w-6 h-6 text-red-700" />

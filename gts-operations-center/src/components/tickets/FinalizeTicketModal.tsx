@@ -107,7 +107,7 @@ export function FinalizeTicketModal({ chamadoId, materiaisReservados, onClose, o
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha">

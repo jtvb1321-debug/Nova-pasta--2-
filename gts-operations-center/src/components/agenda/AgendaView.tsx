@@ -210,7 +210,7 @@ export function AgendaView() {
                 <div
                   key={chamado.id}
                   className={cn(
-                    'bg-tema-superficie border rounded-xl p-5 transition-all hover:border-tema-linha-forte shadow-sm shadow-tema-contraste/[0.03]',
+                    'bg-tema-superficie border rounded-xl p-5 transition-all hover:border-tema-linha-forte',
                     chamado.clienteAusente ? 'border-orange-500/40' :
                     prioridade === 'CRITICO' ? 'border-red-500/30' :
                     prioridade === 'URGENTE' ? 'border-amber-500/25' :

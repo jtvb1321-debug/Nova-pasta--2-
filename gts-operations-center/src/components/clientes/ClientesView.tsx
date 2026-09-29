@@ -190,7 +190,7 @@ export function ClientesView() {
           const cfg = STATUS_CFG[c.status] || STATUS_CFG.ATIVO
           const ultimaConta = c.contasReceber?.[0]
           return (
-            <div key={c.id} className={cn('bg-tema-superficie shadow-sm shadow-tema-contraste/[0.03] border rounded-xl p-4 sm:p-5', cfg.bg)}>
+            <div key={c.id} className={cn('bg-tema-superficie border rounded-xl p-4 sm:p-5', cfg.bg)}>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-[220px]">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">

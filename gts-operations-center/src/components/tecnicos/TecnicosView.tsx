@@ -253,7 +253,7 @@ function DetalheTecnicoModal({ tecnico, chamadoAtivo, onClose }: { tecnico: Tecn
   const cfg = STATUS_CFG[tecnico.statusHoje]
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 pb-4 border-b border-tema-linha sticky top-0 bg-tema-superficie">
           <div className="flex items-center gap-3">
             <Avatar tecnico={tecnico} tamanho="lg" />

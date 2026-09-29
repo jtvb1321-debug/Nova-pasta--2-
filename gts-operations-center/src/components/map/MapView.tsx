@@ -96,7 +96,6 @@ function MiniMapa({ veiculo, equipe, index }: MiniMapaProps) {
       font-weight:bold;
       color:white;
       white-space:nowrap;
-      box-shadow:0 2px 8px rgba(0,0,0,0.6);
       ${alerta ? 'outline: 2px solid #EF4444;' : ''}
     ">
       ${equipe.nome} - ${equipe.placa}

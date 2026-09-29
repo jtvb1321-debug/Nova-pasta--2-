@@ -63,7 +63,7 @@ export function BaterPontoView() {
 
   return (
     <div className="min-h-screen bg-tema-fundo text-tema-tinta pb-8">
-      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03] px-4 py-4">
+      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha px-4 py-4">
         <div className="flex items-center gap-3">
           <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-tema-contraste/[0.03] rounded-lg">
             <ArrowLeft className="w-5 h-5 text-tema-suave" />
@@ -144,7 +144,7 @@ export function BaterPontoView() {
               ) : historico.map((r: any) => {
                 const cfg = STATUS_CFG[r.statusHorasExtras] || STATUS_CFG.SEM_EXTRA
                 return (
-                  <div key={r.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3">
+                  <div key={r.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-tema-apagado">{new Date(r.data).toLocaleDateString('pt-BR')}</span>
                       <span className={cn('text-xs font-bold', cfg.cor)}>{cfg.label}</span>

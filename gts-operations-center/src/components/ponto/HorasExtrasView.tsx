@@ -431,7 +431,7 @@ export function HorasExtrasView({ session }: Props) {
               const situacaoCfg = SITUACAO_CFG[r.tipoRegistro] || (situacaoTxt === 'Ponto Incompleto' ? SITUACAO_CFG.PONTO_INCOMPLETO : null)
               const semJornada = r.tipoRegistro !== 'TRABALHADO'
               return (
-                <div key={r.id} className={cn('bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]', cfg.bg)}>
+                <div key={r.id} className={cn('bg-tema-superficie border rounded-xl p-4', cfg.bg)}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">

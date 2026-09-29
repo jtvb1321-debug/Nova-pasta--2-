@@ -147,7 +147,7 @@ export function TransferenciaEstoqueModal({ onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center">

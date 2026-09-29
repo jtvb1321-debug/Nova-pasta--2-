@@ -29,7 +29,7 @@ export function ModalIU({ titulo, subtitulo, icone: Icone, onClose, children, la
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={cn('bg-tema-superficie border border-tema-linha rounded-2xl w-full shadow-xl max-h-[92vh] flex flex-col', largura)}>
+      <div className={cn('bg-tema-superficie border border-tema-linha rounded-2xl w-full max-h-[92vh] flex flex-col', largura)}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">

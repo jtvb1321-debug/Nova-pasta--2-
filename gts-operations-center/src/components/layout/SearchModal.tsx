@@ -91,7 +91,7 @@ export function SearchModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center z-50 pt-20 px-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-2xl overflow-hidden">
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-tema-linha">
           {loading

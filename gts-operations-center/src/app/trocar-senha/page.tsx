@@ -56,7 +56,7 @@ export default function TrocarSenhaPage() {
   return (
     <div className="min-h-screen bg-tema-fundo flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 shadow-xl shadow-tema-contraste/[0.04] overflow-hidden">
+        <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 rounded-xl bg-tema-laranja-suave flex items-center justify-center flex-shrink-0 ring-1 ring-orange-500/20">

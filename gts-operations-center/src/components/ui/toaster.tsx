@@ -16,7 +16,7 @@ export function Toaster() {
         <div
           key={toast.id}
           className={cn(
-            'flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300 animate-slide-in',
+            'flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 animate-slide-in',
             toast.variant === 'destructive'
               ? 'bg-tema-superficie border-red-500/30 text-red-800'
               : toast.variant === 'success'

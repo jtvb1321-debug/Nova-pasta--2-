@@ -108,12 +108,12 @@
 
 @layer components {
   .gts-card {
-    @apply bg-tema-superficie/95 backdrop-blur-md border border-tema-linha rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]
+    @apply bg-tema-superficie/95 backdrop-blur-md border border-tema-linha rounded-xl p-4
            transition-colors duration-200;
   }
 
   .gts-card-alert {
-    @apply bg-tema-superficie/95 backdrop-blur-md border border-red-500/40 rounded-xl p-4 shadow-sm shadow-red-500/5;
+    @apply bg-tema-superficie/95 backdrop-blur-md border border-red-500/40 rounded-xl p-4;
   }
 
   .status-badge {
@@ -177,8 +177,7 @@
   .gts-btn-primary {
     @apply bg-orange-600 hover:bg-orange-500 text-white font-medium px-4 py-2 rounded-lg
            transition-all duration-200 flex items-center gap-2 text-sm
-           shadow-md shadow-orange-600/20 hover:shadow-orange-600/30
-           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .gts-btn-secondary {
@@ -225,7 +224,6 @@
   .gts-hud-corner::after {
     content: '';
     @apply absolute w-4 h-4 pointer-events-none border-orange-400;
-    filter: drop-shadow(0 0 4px rgba(251, 146, 60, 0.7));
   }
 
   .gts-hud-corner::before {
@@ -239,7 +237,7 @@
   /* Acento "sinal" (ciano) - contraponto a laranja para dados de rede/live,
      usado com moderacao (ex: destaque secundario ao lado do HUD principal). */
   .gts-signal-glow {
-    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 0 16px rgba(34, 211, 238, 0.25);
+    outline: 1px solid rgba(34, 211, 238, 0.35);
   }
 }
 
@@ -274,6 +272,22 @@
 
 .leaflet-popup-tip {
   background: rgb(var(--c-superficie)) !important;
+}
+
+/* Sem sombras no sistema: o Leaflet traz sombra nos controles, balao e
+   dica; no lugar fica uma borda fina para nao sumirem sobre o mapa. */
+.leaflet-bar,
+.leaflet-control-layers,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip,
+.leaflet-tooltip {
+  box-shadow: none !important;
+}
+
+.leaflet-bar,
+.leaflet-control-layers,
+.leaflet-tooltip {
+  border: 1px solid rgb(var(--c-linha)) !important;
 }
 
 .leaflet-control-zoom a {
@@ -315,17 +329,18 @@ html.dark body {
 }
 
 @keyframes velocityAlert {
-  0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); }
+  0%, 100% { outline-color: rgba(239, 68, 68, 0.35); }
+  50% { outline-color: rgba(239, 68, 68, 1); }
 }
 
 .velocity-alert {
+  outline: 2px solid rgba(239, 68, 68, 0.35);
   animation: velocityAlert 1s ease-in-out infinite;
 }
 
 @keyframes pulsoCritico {
-  0%, 100% { stroke-opacity: 1; filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.8)); }
-  50% { stroke-opacity: 0.4; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 1)); }
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.4; }
 }
 
 .gts-pulso-critico path {

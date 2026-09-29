@@ -187,7 +187,7 @@ export function RelatorioVendasView() {
             </div>
           )
           : porVendedor.map((v: any, i: number) => (
-            <div key={v.vendedorId} className="bg-tema-superficie border border-tema-linha rounded-xl overflow-hidden shadow-sm shadow-tema-contraste/[0.03]">
+            <div key={v.vendedorId} className="bg-tema-superficie border border-tema-linha rounded-xl overflow-hidden">
               {/* Header clicavel */}
               <div
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-tema-contraste/[0.02]"

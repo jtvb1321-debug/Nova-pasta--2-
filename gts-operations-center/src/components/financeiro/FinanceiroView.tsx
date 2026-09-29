@@ -243,7 +243,7 @@ export function FinanceiroView({ session }: Props) {
             const StatusIcon = scfg.icon
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-tema-superficie border border-tema-linha hover:border-tema-linha-forte rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03] transition-all">
+              <div key={s.id} className="bg-tema-superficie border border-tema-linha hover:border-tema-linha-forte rounded-xl p-4 transition-all">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -297,7 +297,7 @@ export function FinanceiroView({ session }: Props) {
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-tema-superficie border border-amber-500/25 rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]">
+              <div key={s.id} className="bg-tema-superficie border border-amber-500/25 rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-tema-tinta font-bold mb-1">{s.titulo}</h3>
@@ -348,7 +348,7 @@ export function FinanceiroView({ session }: Props) {
             const scfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
             const StatusIcon = scfg.icon
             return (
-              <div key={s.id} className="flex items-center gap-4 p-3 bg-tema-superficie border border-tema-linha rounded-xl shadow-sm shadow-tema-contraste/[0.03]">
+              <div key={s.id} className="flex items-center gap-4 p-3 bg-tema-superficie border border-tema-linha rounded-xl">
                 <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0', scfg.cls)}>
                   <StatusIcon className="w-4 h-4" />
                 </div>

@@ -195,7 +195,7 @@ export function EscalaCalendarView({ session, equipeIdFixo }: Props) {
 
       {diaSelecionado && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-tema-tinta">
                 {diaSelecionado.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}

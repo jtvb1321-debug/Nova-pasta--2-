@@ -41,7 +41,7 @@ export function MapFullScreen() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-tema-fundo">
       {/* Topbar flutuante */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] flex items-center gap-3 px-4 py-3 bg-tema-superficie/90 backdrop-blur-md border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03]">
+      <div className="absolute top-0 left-0 right-0 z-[1000] flex items-center gap-3 px-4 py-3 bg-tema-superficie/90 backdrop-blur-md border-b border-tema-linha">
         <Link href="/dashboard" className="text-tema-suave hover:text-tema-tinta transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -89,7 +89,7 @@ export function MapFullScreen() {
 
         {/* Sidebar de veículos */}
         {sidebarOpen && (
-          <div className="w-72 bg-tema-superficie/95 backdrop-blur-md border-l border-tema-linha shadow-lg shadow-tema-contraste/[0.1] overflow-y-auto z-[999]">
+          <div className="w-72 bg-tema-superficie/95 backdrop-blur-md border-l border-tema-linha overflow-y-auto z-[999]">
             <div className="p-4">
               <p className="text-xs text-tema-apagado font-medium uppercase tracking-wider mb-3">
                 Veículos ({filtered.length})

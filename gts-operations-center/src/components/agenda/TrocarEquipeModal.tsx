@@ -54,7 +54,7 @@ export function TrocarEquipeModal({ chamado, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center">

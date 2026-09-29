@@ -16,6 +16,9 @@ const config: Config = {
         '2xl': '1400px',
       },
     },
+    // Sem sombras no sistema: as classes shadow-* e drop-shadow-* nao desenham nada.
+    boxShadow: { sm: '0 0 #0000', DEFAULT: '0 0 #0000', md: '0 0 #0000', lg: '0 0 #0000', xl: '0 0 #0000', '2xl': '0 0 #0000', inner: '0 0 #0000', none: '0 0 #0000' },
+    dropShadow: { sm: '0 0 #0000', DEFAULT: '0 0 #0000', md: '0 0 #0000', lg: '0 0 #0000', xl: '0 0 #0000', '2xl': '0 0 #0000', none: '0 0 #0000' },
     extend: {
       colors: {
         // Paleta GTS Operations Center

@@ -88,7 +88,7 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
   })
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-tema-tinta">{item.descricao}</h3>
@@ -864,7 +864,7 @@ export function CentralEstoque({ session }: Props) {
                   const isAprovada = d.aprovado
                   return (
                     <div key={d.id} className={cn(
-                      'bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]',
+                      'bg-tema-superficie border rounded-xl p-4',
                       isPendente ? 'border-amber-500/30' :
                       isAprovada ? 'border-emerald-500/25' : 'border-red-500/25'
                     )}>
@@ -955,7 +955,7 @@ export function CentralEstoque({ session }: Props) {
                 <p className="text-tema-suave font-medium">Nenhuma reversa registrada</p>
               </div>
             ) : (reversasData?.data ?? []).map((r: any) => (
-              <div key={r.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4">
+              <div key={r.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Package className="w-3.5 h-3.5 text-tema-apagado" />
@@ -1003,7 +1003,7 @@ export function CentralEstoque({ session }: Props) {
                 <p className="text-tema-suave font-medium">Nenhuma entrada defeituosa registrada</p>
               </div>
             ) : (defeitosData?.data ?? []).map((d: any) => (
-              <div key={d.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4">
+              <div key={d.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">

@@ -251,7 +251,7 @@ export function TVDashboard() {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-10 py-5 border-b border-white/10 bg-[#111827]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] bg-gradient-to-br from-orange-500/25 to-orange-500/10 ring-1 ring-orange-500/30 p-2">
+          <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-orange-500/25 to-orange-500/10 ring-1 ring-orange-500/30 p-2">
             <img src="/images/icon.png" alt="GTSNet" className="w-full h-full object-contain" />
           </div>
           <div>

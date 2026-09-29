@@ -65,7 +65,7 @@ export function NovaReversaModal({ onClose, onSuccess, preItemId, preQuantidade,
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-2xl w-full max-w-md p-6 space-y-4">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-pink-500/15 flex items-center justify-center">

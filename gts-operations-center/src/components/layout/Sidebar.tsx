@@ -164,7 +164,7 @@ export function Sidebar() {
       {/* Botao colapsar */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 w-6 h-6 bg-tema-superficie border border-tema-linha-forte rounded-full flex items-center justify-center text-tema-suave hover:text-tema-tinta transition-colors z-10 shadow-sm"
+        className="absolute -right-3 top-6 w-6 h-6 bg-tema-superficie border border-tema-linha-forte rounded-full flex items-center justify-center text-tema-suave hover:text-tema-tinta transition-colors z-10"
       >
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
@@ -232,12 +232,12 @@ export function Sidebar() {
                         )}
                       >
                         {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-500 rounded-r-full shadow-[0_0_8px_rgba(232,114,12,0.5)]" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-500 rounded-r-full" />
                         )}
                         <Icon className={cn('flex-shrink-0 w-4 h-4', isActive ? 'text-orange-600' : '')} />
                         {!collapsed && <span className="truncate">{item.label}</span>}
                         {collapsed && (
-                          <div className="absolute left-full ml-3 px-2 py-1 bg-tema-tinta text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                          <div className="absolute left-full ml-3 px-2 py-1 bg-tema-tinta text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {item.label}
                           </div>
                         )}

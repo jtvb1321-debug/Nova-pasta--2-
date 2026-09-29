@@ -51,7 +51,7 @@ export function KpiRow() {
             <Link
               href={kpi.href}
               className={cn(
-                'relative block rounded-xl border p-4 backdrop-blur-md overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-tema-linha-forte',
+                'relative block rounded-xl border p-4 backdrop-blur-md overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-tema-linha-forte',
                 kpi.key === 'clientesOffline' && 'gts-hud-corner'
               )}
               style={{ backgroundColor: CARD_TRANSLUCIDO, borderColor: 'rgb(var(--c-contraste) / 0.05)' }}

@@ -144,7 +144,7 @@ export function CardChamado({
 
   return (
     <div className={cn(
-      'bg-tema-superficie border rounded-xl transition-all shadow-sm shadow-tema-contraste/[0.03]',
+      'bg-tema-superficie border rounded-xl transition-all',
       prioridade === 'CRITICO' ? 'border-red-500/30' :
       prioridade === 'URGENTE' ? 'border-amber-500/25' :
       'border-tema-linha hover:border-tema-linha-forte'

@@ -129,7 +129,7 @@ export function MeuCarroView({ session }: Props) {
   return (
     <div className="min-h-screen bg-tema-fundo text-tema-tinta pb-8">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha shadow-sm shadow-tema-contraste/[0.03] px-4 py-4">
+      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha px-4 py-4">
         <div className="flex items-center gap-3">
           <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-tema-contraste/[0.03] rounded-lg">
             <ArrowLeft className="w-5 h-5 text-tema-suave" />
@@ -403,7 +403,7 @@ function AbaAbastecimento({ veiculoId, queryClient }: { veiculoId: string; query
 
   return (
     <div className="space-y-5">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-tema-texto">Registrar abastecimento</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -441,7 +441,7 @@ function AbaAbastecimento({ veiculoId, queryClient }: { veiculoId: string; query
         {historico.length === 0 ? (
           <p className="text-tema-apagado text-sm text-center py-6">Nenhum abastecimento registrado</p>
         ) : historico.map((a: any) => (
-          <div key={a.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center gap-3">
+          <div key={a.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-3 flex items-center gap-3">
             <img src={a.fotoComprovante} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-tema-tinta text-sm font-medium">{a.litros}L - R$ {a.valor.toFixed(2)}</p>
@@ -497,7 +497,7 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
 
   return (
     <div className="space-y-5">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-tema-texto">Registrar despesa</p>
 
         <div>
@@ -552,7 +552,7 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
         {historico.length === 0 ? (
           <p className="text-tema-apagado text-sm text-center py-6">Nenhuma despesa registrada</p>
         ) : historico.map((d: any) => (
-          <div key={d.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center gap-3">
+          <div key={d.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-3 flex items-center gap-3">
             <img src={d.fotoComprovante} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-tema-tinta text-sm font-medium">
@@ -692,7 +692,7 @@ function AbaSolicitarMaterial({ equipeId }: { equipeId: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-tema-texto">Solicitar material para o carro</p>
 
         <div>
@@ -812,7 +812,7 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
 
   return (
     <div className="space-y-5">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-medium text-tema-texto">{ehHoje ? 'Registro de hoje' : 'Registro retroativo'}</p>
           <input
@@ -878,7 +878,7 @@ function AbaKm({ veiculoId, queryClient }: { veiculoId: string; queryClient: any
         {registros.length === 0 ? (
           <p className="text-tema-apagado text-sm text-center py-6">Nenhum registro ainda</p>
         ) : registros.map((r: any) => (
-          <div key={r.id} className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-3 flex items-center justify-between">
+          <div key={r.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-3 flex items-center justify-between">
             <p className="text-xs text-tema-apagado">{formatDateTime(r.data)}</p>
             <p className="text-sm text-tema-tinta">
               {r.kmInicial ?? '-'} para {r.kmFinal ?? '-'}
@@ -925,7 +925,7 @@ function AbaManutencao({ veiculoId, queryClient }: { veiculoId: string; queryCli
 
   return (
     <div className="space-y-5">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] rounded-xl p-4 space-y-3">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-tema-texto">Solicitar manutencao</p>
         <textarea
           value={descricao}

@@ -61,7 +61,7 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden shadow-sm shadow-tema-contraste/[0.03]">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden">
 
         {/* Lista de equipes */}
         <div className="w-64 flex-shrink-0 border-r border-tema-linha flex flex-col">

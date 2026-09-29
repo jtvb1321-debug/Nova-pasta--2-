@@ -349,7 +349,7 @@ export function SalesView() {
                   const isPendente = venda.status === 'PENDENTE'
                   const podeMarcarInstalado = venda.status === 'APROVADO' && venda.statusInstalacao !== 'INSTALADA'
                   return (
-                    <div key={venda.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4 hover:border-tema-linha-forte shadow-sm shadow-tema-contraste/[0.03] transition-all">
+                    <div key={venda.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4 hover:border-tema-linha-forte transition-all">
                       <div className="flex items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">

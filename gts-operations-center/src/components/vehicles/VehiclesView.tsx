@@ -41,7 +41,7 @@ function VehicleCard({ veiculo }: { veiculo: VeiculoRastreado }) {
 
   return (
     <div className={cn(
-      'bg-tema-superficie border rounded-xl overflow-hidden transition-all duration-300 shadow-sm shadow-tema-contraste/[0.03]',
+      'bg-tema-superficie border rounded-xl overflow-hidden transition-all duration-300',
       alerta
         ? 'border-red-500/60 velocity-alert'
         : veiculo.online

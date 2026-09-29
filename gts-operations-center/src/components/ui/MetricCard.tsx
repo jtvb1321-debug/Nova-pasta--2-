@@ -42,16 +42,16 @@ export function MetricCard({ label, value, icon: Icon, color = '#f97316', sparkl
 
   const conteudo = (
     <div className={cn(
-      'relative rounded-lg border bg-tema-superficie shadow-sm shadow-tema-contraste/[0.03] overflow-hidden',
+      'relative rounded-lg border bg-tema-superficie overflow-hidden',
       compact ? 'p-3' : 'p-4',
-      alert ? 'border-red-500/40 shadow-lg shadow-red-500/5' : 'border-tema-linha',
+      alert ? 'border-red-500/40' : 'border-tema-linha',
       href && 'transition-all duration-200 hover:-translate-y-0.5 hover:border-tema-linha-forte',
       className
     )}>
       {!compact && (
         <span
           className="absolute top-0 left-0 right-0 h-[3px]"
-          style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}80` }}
+          style={{ backgroundColor: color }}
         />
       )}
       <div className={cn('flex items-center justify-between', compact ? 'mb-1.5' : 'mb-2')}>

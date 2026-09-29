@@ -128,7 +128,7 @@ export function SolicitacoesEquipeView() {
           const cfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
           const Icon = s.tipo === 'MANUTENCAO' ? Wrench : PackagePlus
           return (
-            <div key={`${s.tipo}-${s.id}`} className={cn('bg-tema-superficie border rounded-xl p-4 shadow-sm shadow-tema-contraste/[0.03]', cfg.bg)}>
+            <div key={`${s.tipo}-${s.id}`} className={cn('bg-tema-superficie border rounded-xl p-4', cfg.bg)}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">

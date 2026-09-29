@@ -229,7 +229,7 @@ async function marcarClienteAusente() {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-tema-superficie border border-tema-linha shadow-sm shadow-tema-contraste/[0.03] w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-tema-superficie border border-tema-linha w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-tema-linha bg-tema-superficie flex-shrink-0">

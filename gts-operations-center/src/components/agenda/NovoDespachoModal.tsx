@@ -187,7 +187,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
@@ -333,7 +333,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               {!eace && mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
                 <div
                   onMouseDown={(e) => e.preventDefault()}
-                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-tema-superficie border border-tema-linha rounded-lg shadow-xl"
+                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-tema-superficie border border-tema-linha rounded-lg"
                 >
                   {sugestoesClientes.slice(0, 8).map((c: any) => (
                     <button

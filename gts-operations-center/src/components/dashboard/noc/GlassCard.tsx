@@ -17,7 +17,7 @@ export function GlassCard({ children, className = '', noPadding = false, delay =
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
-      className={`rounded-xl border backdrop-blur-md shadow-lg ${noPadding ? '' : 'p-4'} ${className}`}
+      className={`rounded-xl border backdrop-blur-md ${noPadding ? '' : 'p-4'} ${className}`}
       style={{
         backgroundColor: CARD_TRANSLUCIDO,
         borderColor: 'rgb(var(--c-contraste) / 0.05)',

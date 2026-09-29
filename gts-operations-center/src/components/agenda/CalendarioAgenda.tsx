@@ -309,14 +309,14 @@ export function CalendarioAgenda({
         >
           <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             {carregandoDetalhe || !chamadoDetalhe ? (
-              <div className="bg-tema-superficie border border-tema-linha rounded-2xl p-8 flex items-center justify-center shadow-xl">
+              <div className="bg-tema-superficie border border-tema-linha rounded-2xl p-8 flex items-center justify-center">
                 <Loader2 className="w-6 h-6 text-tema-apagado animate-spin" />
               </div>
             ) : (
               <div className="relative">
                 <button
                   onClick={() => setDetalheId(null)}
-                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-tema-superficie border border-tema-linha rounded-full flex items-center justify-center text-tema-suave hover:text-tema-tinta shadow-sm"
+                  className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-tema-superficie border border-tema-linha rounded-full flex items-center justify-center text-tema-suave hover:text-tema-tinta"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -539,7 +539,7 @@ function VisaoMes({
 
       {diaSelecionado && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => onSelecionarDia(null)}>
-          <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5 text-orange-600" />

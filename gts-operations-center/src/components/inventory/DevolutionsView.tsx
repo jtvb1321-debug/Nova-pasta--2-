@@ -161,7 +161,7 @@ export function DevolutionsView() {
                 <div
                   key={d.id}
                   className={cn(
-                    'bg-tema-superficie border rounded-xl p-5 transition-all shadow-sm shadow-tema-contraste/[0.03]',
+                    'bg-tema-superficie border rounded-xl p-5 transition-all',
                     isPendente ? 'border-amber-500/30' :
                     isAprovada ? 'border-emerald-500/25' :
                     'border-red-500/25'

@@ -67,7 +67,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center px-12 animate-fade-in-up">
-          <div className="w-56 h-56 mb-6 drop-shadow-xl">
+          <div className="w-56 h-56 mb-6">
             <img
               src="/images/logo.png"
               alt="GTSNet"
@@ -95,8 +95,8 @@ export default function LoginPage() {
               <div
                 key={i}
                 className={cn(
-                  'flex items-center gap-3 p-3 bg-tema-superficie border rounded-xl shadow-sm shadow-tema-contraste/[0.03]',
-                  'transition-all duration-200 hover:shadow-md hover:border-orange-500/30 hover:-translate-y-0.5',
+                  'flex items-center gap-3 p-3 bg-tema-superficie border rounded-xl',
+                  'transition-all duration-200 hover:border-orange-500/30 hover:-translate-y-0.5',
                   'animate-fade-in-up',
                   f.destaque ? 'border-orange-500/30 gts-hud-corner' : 'border-tema-linha'
                 )}
@@ -144,7 +144,7 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 shadow-xl shadow-tema-contraste/[0.04] overflow-hidden">
+          <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl overflow-hidden bg-tema-laranja-suave p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
@@ -216,8 +216,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 rounded-lg
                   transition-all duration-200 flex items-center justify-center gap-2
-                  shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98] mt-2"
+                  disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-2"
               >
                 {loading
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>

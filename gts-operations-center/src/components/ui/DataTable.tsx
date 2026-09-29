@@ -40,7 +40,7 @@ export function DataTable<T>({
   toolbar, pagination, onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="rounded-lg border border-tema-linha bg-tema-superficie shadow-sm shadow-tema-contraste/[0.03] overflow-hidden">
+    <div className="rounded-lg border border-tema-linha bg-tema-superficie overflow-hidden">
       {toolbar && (
         <div className="p-3 border-b border-tema-linha">{toolbar}</div>
       )}

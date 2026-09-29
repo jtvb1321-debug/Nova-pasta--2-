@@ -38,7 +38,7 @@ export function AlertasPanel({ onClose }: Props) {
   })
 
   return (
-    <div className="fixed top-0 right-0 h-full w-80 bg-tema-superficie border-l border-tema-linha shadow-2xl z-50 flex flex-col">
+    <div className="fixed top-0 right-0 h-full w-80 bg-tema-superficie border-l border-tema-linha z-50 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-tema-linha">
         <div className="flex items-center gap-2">
