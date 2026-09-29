@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import {
   Search, Loader2, AlertTriangle, CheckCircle2, Box, Cable,
-  Waypoints, PanelRightClose, PanelRightOpen, ChevronRight, X,
+  Waypoints, PanelRightClose, PanelRightOpen, ChevronRight, X, MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ATRIBUICAO_CARTO, CROSS_ORIGIN_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
@@ -60,7 +60,8 @@ interface OpcaoCto {
   ativa: boolean // tem cliente ligado (caixa comprovadamente instalada)
 }
 
-type Precisao = 'exata' | 'rua' | 'bairro'
+// trecho = consulta pela rua inteira (todos os trechos dela no bairro escolhido)
+type Precisao = 'exata' | 'rua' | 'trecho' | 'bairro'
 
 interface Consulta {
   rotulo: string
@@ -133,6 +134,128 @@ async function localizarEndereco(texto: string): Promise<{ lat: number; lng: num
   return ponto ? { ...ponto, rotulo: texto } : null
 }
 
+// ---------------------------------------------------------------- Busca por nome de rua
+// 1. ViaCEP (Correios) lista as ruas de Teresina com aquele nome, por bairro.
+// 2. A pessoa escolhe; o Nominatim devolve o desenho da rua naquele bairro.
+// 3. A viabilidade considera caixas perto de qualquer trecho da rua.
+
+const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+// O ViaCEP nao entende abreviacao ("Av Frei Serafim" nao acha nada).
+const ABREVIACOES_RUA = /^(av|av\.|r|r\.|tv|tv\.|trav|trav\.|pc|pç|pca|pça|pc\.|al|al\.|rod|rod\.|est|est\.)\s+/i
+// Para comparar o nome dos Correios com o do mapa ("Rua Anísio de Abreu" = "Rua Anisio de Abreu").
+const TIPOS_RUA = /^(rua|avenida|travessa|alameda|praca|estrada|rodovia|quadra|vila|conjunto|residencial|av|r|tv)\.?\s+/
+
+const nucleoRua = (t: string) => semAcento(t).replace(TIPOS_RUA, '').replace(/\s+/g, ' ')
+
+interface RuaEncontrada {
+  logradouro: string
+  bairro: string
+  cep: string
+  faixas: string[] // ex.: "lado par", "de 966 a 1202"
+}
+
+// "Sao Jose" | "Rua Sao Jose, 123" | "Sao Jose, Parque Brasil" | "Sao Jose, 123, Parque Brasil"
+function separarBusca(texto: string): { rua: string; numero: string | null; bairro: string } {
+  const partes = texto.split(',').map(p => p.trim()).filter(Boolean)
+  const rua = (partes[0] || '').replace(ABREVIACOES_RUA, '')
+  const resto = partes.slice(1)
+  const numero = resto.find(p => /^(n[ºo°.]?\s*)?\d{1,5}[a-z]?$/i.test(p))?.replace(/\D+$/, '').replace(/^\D+/, '') || null
+  const bairro = resto.filter(p => !/^(n[ºo°.]?\s*)?\d{1,5}[a-z]?$/i.test(p) && !/^teresina$|^pi$/i.test(p)).join(' ')
+  return { rua, numero, bairro }
+}
+
+async function buscarRuasViaCep(rua: string, bairro: string): Promise<RuaEncontrada[]> {
+  if (rua.trim().length < 3) return []
+  const res = await fetch(`https://viacep.com.br/ws/PI/Teresina/${encodeURIComponent(rua.trim())}/json/`).catch(() => null)
+  const lista = res?.ok ? await res.json().catch(() => []) : []
+  if (!Array.isArray(lista)) return []
+  // O mesmo trecho aparece com varios CEPs (lado par/impar, faixas de numero).
+  const porRua = new Map<string, RuaEncontrada>()
+  for (const v of lista) {
+    if (!v?.logradouro) continue
+    const chave = semAcento(`${v.logradouro}|${v.bairro || ''}`)
+    const atual: RuaEncontrada = porRua.get(chave) || { logradouro: v.logradouro, bairro: v.bairro || '', cep: v.cep, faixas: [] }
+    if (v.complemento && !atual.faixas.includes(v.complemento)) atual.faixas.push(v.complemento)
+    porRua.set(chave, atual)
+  }
+  const filtroBairro = semAcento(bairro)
+  // Nome exato primeiro ("Rua Sao Jose"), depois os que comecam igual, depois o resto.
+  const buscado = nucleoRua(rua)
+  const ordem = (r: RuaEncontrada) => { const n = nucleoRua(r.logradouro); return n === buscado ? 0 : n.startsWith(buscado) ? 1 : 2 }
+  return [...porRua.values()]
+    .filter(r => !filtroBairro || semAcento(r.bairro).includes(filtroBairro))
+    .sort((a, b) => ordem(a) - ordem(b) || a.logradouro.localeCompare(b.logradouro, 'pt-BR') || a.bairro.localeCompare(b.bairro, 'pt-BR'))
+}
+
+type Trecho = [number, number][] // [lat, lng]
+
+function trechosDaGeometria(g: any): Trecho[] {
+  const inverter = (l: [number, number][]) => l.map(([lng, lat]) => [lat, lng] as [number, number])
+  if (g?.type === 'LineString') return [inverter(g.coordinates)]
+  if (g?.type === 'MultiLineString') return g.coordinates.map(inverter)
+  if (g?.type === 'Polygon') return [inverter(g.coordinates[0])]
+  if (g?.type === 'MultiPolygon') return g.coordinates.map((p: any) => inverter(p[0]))
+  return []
+}
+
+type LocalRua =
+  | { tipo: 'ponto'; lat: number; lng: number; precisao: Precisao }
+  | { tipo: 'rua'; trechos: Trecho[] }
+
+async function localizarRua(r: RuaEncontrada, numero: string | null): Promise<LocalRua | null> {
+  const enc = encodeURIComponent
+  // Com numero: tenta a casa exata (nem toda casa de Teresina esta no mapa).
+  if (numero) {
+    const casa = await buscarNominatim(`q=${enc(`${r.logradouro}, ${numero}, ${r.bairro}, Teresina, PI`)}`)
+    if (casa?.precisao === 'exata') return { tipo: 'ponto', ...casa }
+  }
+
+  // Rua inteira no bairro escolhido.
+  const res = await fetch(
+    `${NOMINATIM.replace('limit=1', 'limit=10')}&addressdetails=1&polygon_geojson=1&q=${enc(`${r.logradouro}, ${r.bairro}, Teresina, PI`)}`,
+    { referrerPolicy: 'strict-origin-when-cross-origin' },
+  ).catch(() => null)
+  const lista: any[] = res?.ok ? await res.json().catch(() => []) : []
+  const nome = nucleoRua(r.logradouro)
+  const bairro = semAcento(r.bairro)
+  const mesmaRua = (Array.isArray(lista) ? lista : []).filter(v => v.class === 'highway' && nucleoRua(v.address?.road || v.name || '') === nome)
+  const bairroDe = (v: any) => [v.address?.suburb, v.address?.neighbourhood, v.address?.quarter, v.address?.city_district].filter(Boolean).map(semAcento)
+  // Ruas com o mesmo nome em outro bairro ficam de fora; sem bairro no mapa, aceita.
+  const doBairro = mesmaRua.filter(v => { const b = bairroDe(v); return b.length === 0 || !bairro || b.includes(bairro) })
+  const trechos = doBairro.flatMap(v => trechosDaGeometria(v.geojson)).filter(t => t.length > 0)
+  if (trechos.length) return { tipo: 'rua', trechos }
+
+  // A rua nao esta no mapa aberto: centro do bairro.
+  const centro = r.bairro && await buscarNominatim(`q=${enc(`${r.bairro}, Teresina, PI`)}`)
+  return centro ? { tipo: 'ponto', ...centro, precisao: 'bairro' } : null
+}
+
+// Menor distancia (m) de um ponto ate a rua (todos os trechos).
+function distanciaAteTrechos(lat: number, lng: number, trechos: Trecho[]) {
+  const kx = 111320 * Math.cos((lat * Math.PI) / 180), ky = 110540
+  let menor = Infinity
+  for (const t of trechos) {
+    for (let i = 0; i < t.length; i++) {
+      const [aLat, aLng] = t[i]
+      const [bLat, bLng] = t[Math.min(i + 1, t.length - 1)]
+      const ax = (aLng - lng) * kx, ay = (aLat - lat) * ky
+      const bx = (bLng - lng) * kx, by = (bLat - lat) * ky
+      const dx = bx - ax, dy = by - ay
+      const comp = dx * dx + dy * dy
+      const u = comp ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / comp)) : 0
+      menor = Math.min(menor, Math.hypot(ax + u * dx, ay + u * dy))
+    }
+  }
+  return menor
+}
+
+interface ResultadosBusca {
+  ctos: any[]
+  ruas: RuaEncontrada[]
+  numero: string | null
+}
+
 interface Props {
   // Tela do tecnico: sem AppShell, entao o mapa deve ocupar 100% da altura
   // da tela (nao h-[calc(100vh-64px)], que reserva espaco de um cabecalho
@@ -151,6 +274,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   const consultaCamadaRef = useRef<any>(null)
   const [busca, setBusca] = useState('')
   const [buscando, setBuscando] = useState(false)
+  const [resultados, setResultados] = useState<ResultadosBusca | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [painelAberto, setPainelAberto] = useState(!telaCheia)
   const [totalCaixas, setTotalCaixas] = useState(0)
@@ -394,16 +518,14 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
   // Caixas com porta livre perto do ponto: ate 200 m com cliente ligado = viavel;
   // ate 400 m (ou so caixas ainda sem clientes) = a confirmar; alem disso = sem.
-  function avaliarPonto(lat: number, lng: number, rotulo: string, precisao: Precisao) {
-    const { L, map, marcadoresCtos } = camadasRef.current
-    if (!L || !map) return
-
+  function classificarCaixas(distanciaDaCaixa: (lat: number, lng: number) => number) {
+    const { marcadoresCtos } = camadasRef.current
     const candidatas: OpcaoCto[] = (marcadoresCtos || [])
       .map((m: any) => {
         const p = m.feature?.properties || {}
         return {
           nome: p.nome || 'CTO',
-          distancia: distanciaMetros(lat, lng, m._lat, m._lng),
+          distancia: distanciaDaCaixa(m._lat, m._lng),
           livres: Number(p.livres ?? 0),
           capacidade: Number(p.capacidade ?? 0),
           ativa: Number(p.totalLogins ?? 0) > 0,
@@ -416,6 +538,13 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       candidatas.some(c => c.ativa && c.distancia <= RAIO_VIAVEL) ? 'viavel'
         : candidatas.some(c => c.distancia <= RAIO_CONFIRMAR) ? 'confirmar'
           : 'sem'
+    return { candidatas, nivel }
+  }
+
+  function avaliarPonto(lat: number, lng: number, rotulo: string, precisao: Precisao) {
+    const { L, map } = camadasRef.current
+    if (!L || !map) return
+    const { candidatas, nivel } = classificarCaixas((cLat, cLng) => distanciaMetros(lat, lng, cLat, cLng))
 
     limparMarcaConsulta()
     consultaCamadaRef.current = L.layerGroup([
@@ -434,29 +563,87 @@ export function MapaInmapView({ telaCheia = false }: Props) {
     })
   }
 
+  // Rua inteira: caixas com porta livre perto de qualquer trecho dela.
+  function avaliarRua(trechos: Trecho[], rotulo: string) {
+    const { L, map } = camadasRef.current
+    if (!L || !map) return
+    const { candidatas, nivel } = classificarCaixas((cLat, cLng) => distanciaAteTrechos(cLat, cLng, trechos))
+
+    limparMarcaConsulta()
+    const linha = L.polyline(trechos, { color: '#EA580C', weight: 6, opacity: 0.85, interactive: false })
+    consultaCamadaRef.current = L.layerGroup([linha]).addTo(map)
+    map.fitBounds(linha.getBounds(), { padding: [60, 60], maxZoom: 17 })
+
+    consultaAtivaRef.current = true
+    setConsulta({
+      rotulo,
+      precisao: 'trecho',
+      nivel,
+      opcoes: candidatas.filter(c => c.distancia <= RAIO_CONFIRMAR).slice(0, 3).map(({ nome, distancia, livres, ativa }) => ({ nome, distancia, livres, ativa })),
+      distanciaMaisProxima: candidatas[0]?.distancia ?? null,
+    })
+  }
+
+  async function escolherRua(r: RuaEncontrada, numero: string | null) {
+    setResultados(null)
+    setBuscando(true)
+    const rotulo = `${r.logradouro}${numero ? `, ${numero}` : ''} - ${r.bairro || 'Teresina'}`
+    try {
+      const local = await localizarRua(r, numero)
+      if (!local) {
+        limparMarcaConsulta()
+        consultaAtivaRef.current = true
+        setConsulta({ rotulo, precisao: 'exata', nivel: 'nao_encontrado', opcoes: [], distanciaMaisProxima: null })
+      } else if (local.tipo === 'rua') {
+        avaliarRua(local.trechos, rotulo)
+      } else {
+        avaliarPonto(local.lat, local.lng, rotulo, local.precisao)
+      }
+    } catch (err) {
+      console.error('Erro ao localizar a rua:', err)
+    } finally {
+      setBuscando(false)
+    }
+  }
+
+  function escolherCto(marcador: any) {
+    setResultados(null)
+    const { grupoCtos } = camadasRef.current
+    grupoCtos?.zoomToShowLayer(marcador, () => marcador.openPopup())
+  }
+
   async function buscarEndereco() {
     if (!busca.trim()) return
+    setResultados(null)
     setBuscando(true)
     try {
-      const { grupoCtos, marcadoresCtos } = camadasRef.current
+      const { marcadoresCtos } = camadasRef.current
       const buscaLower = busca.toLowerCase()
       const ehConsultaDireta = /^\s*\d{5}-?\d{3}\s*$/.test(busca) || extrairCoordenadas(busca) !== null
 
-      // 1. Busca interna: nome/endereco da propria caixa (CEP, coordenada e
-      // link do Maps vao direto para a consulta de viabilidade)
-      const encontrada = !ehConsultaDireta && marcadoresCtos.find((m: any) => {
-        const p = m.feature?.properties
-        const texto = ((p?.nome || '') + ' ' + (p?.endereco || '')).toLowerCase()
-        return texto.includes(buscaLower)
-      })
+      // 1. Texto livre: caixas com esse nome/endereco + ruas de Teresina com
+      // esse nome (por bairro). Um resultado so abre direto; varios viram lista.
+      // CEP, coordenada e link do Maps vao direto para a consulta de viabilidade.
+      if (!ehConsultaDireta) {
+        const ctos = (marcadoresCtos || []).filter((m: any) => {
+          const p = m.feature?.properties
+          const texto = ((p?.nome || '') + ' ' + (p?.endereco || '')).toLowerCase()
+          return texto.includes(buscaLower)
+        }).slice(0, 5)
+        const { rua, numero, bairro } = separarBusca(busca)
+        const ruas = await buscarRuasViaCep(rua, bairro)
 
-      if (encontrada) {
-        grupoCtos.zoomToShowLayer(encontrada, () => encontrada.openPopup())
-        setBuscando(false)
-        return
+        if (ruas.length === 0 && ctos.length === 1) { escolherCto(ctos[0]); return }
+        if (ctos.length === 0 && ruas.length === 1) { await escolherRua(ruas[0], numero); return }
+        if (ruas.length + ctos.length > 0) {
+          fecharConsulta()
+          setResultados({ ctos, ruas: ruas.slice(0, 30), numero })
+          return
+        }
       }
 
-      // 2. CEP, coordenada, link do Maps ou endereco: localiza e consulta a viabilidade
+      // 2. CEP, coordenada, link do Maps ou endereco sem rua nos Correios:
+      // localiza e consulta a viabilidade
       const local = await localizarEndereco(busca)
       if (local) {
         avaliarPonto(local.lat, local.lng, local.rotulo, local.precisao)
@@ -495,7 +682,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && buscarEndereco()}
-              placeholder="Buscar CEP, rua, CTO, coordenada ou link do Google Maps..."
+              placeholder="Buscar rua, CEP, CTO, coordenada ou link do Google Maps..."
               className="flex-1 min-w-0 bg-transparent text-tema-tinta text-sm outline-none placeholder:text-tema-apagado"
             />
             <button onClick={buscarEndereco} disabled={buscando} className="text-orange-600 hover:text-orange-500 disabled:opacity-50 flex-shrink-0">
@@ -517,6 +704,54 @@ export function MapaInmapView({ telaCheia = false }: Props) {
           </button>
         </div>
 
+        {/* Resultados da busca: ruas (por bairro) e caixas */}
+        {resultados && (
+          <div className="absolute top-16 sm:top-14 left-2 sm:left-3 z-[1001] w-[calc(100%-1rem)] sm:w-96 max-h-[60vh] flex flex-col bg-tema-superficie border border-tema-linha rounded-lg text-sm">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-tema-linha">
+              <span className="text-xs font-semibold text-tema-tinta">
+                {resultados.ruas.length > 0 ? 'Escolha a rua e o bairro' : 'Escolha a caixa'}
+                {resultados.numero && <span className="font-normal text-tema-apagado"> - numero {resultados.numero}</span>}
+              </span>
+              <button onClick={() => setResultados(null)} className="text-tema-apagado hover:text-tema-tinta" aria-label="Fechar resultados" title="Fechar">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ul className="overflow-y-auto divide-y divide-tema-linha">
+              {resultados.ruas.map(r => (
+                <li key={`${r.logradouro}|${r.bairro}`}>
+                  <button onClick={() => escolherRua(r, resultados.numero)} className="w-full text-left flex items-start gap-2 px-3 py-2 hover:bg-orange-500/10 focus:bg-orange-500/10 outline-none">
+                    <MapPin className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <span className="min-w-0">
+                      <span className="block text-tema-tinta font-medium">{r.logradouro}</span>
+                      <span className="block text-xs text-tema-suave">{r.bairro || 'Bairro nao informado'} <span className="font-mono text-tema-apagado">- {r.cep}</span></span>
+                      {r.faixas.length > 0 && <span className="block text-[11px] text-tema-apagado truncate">{r.faixas.join(' | ')}</span>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {resultados.ctos.map((m: any, i: number) => {
+                const p = m.feature?.properties || {}
+                return (
+                  <li key={`cto-${i}`}>
+                    <button onClick={() => escolherCto(m)} className="w-full text-left flex items-start gap-2 px-3 py-2 hover:bg-orange-500/10 focus:bg-orange-500/10 outline-none">
+                      <Box className="w-3.5 h-3.5 text-blue-700 mt-0.5 flex-shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-tema-tinta font-medium">{p.nome || 'CTO'}</span>
+                        {p.endereco && <span className="block text-xs text-tema-suave truncate">{p.endereco}</span>}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+            {resultados.ruas.length > 0 && (
+              <p className="text-[11px] text-tema-apagado px-3 py-2 border-t border-tema-linha">
+                Ruas de Teresina pelos Correios. Para um endereco exato, busque com o numero (ex.: Sao Jose, 123).
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Consulta de viabilidade (prospeccao) */}
         {consulta && (
           <div className="absolute top-16 sm:top-14 left-2 sm:left-3 z-[1000] w-[calc(100%-1rem)] sm:w-80 bg-tema-superficie/95 backdrop-blur border border-tema-linha rounded-lg p-3 text-sm">
@@ -532,11 +767,15 @@ export function MapaInmapView({ telaCheia = false }: Props) {
 
             {consulta.nivel === 'nao_encontrado' ? (
               <p className="text-xs text-tema-suave mt-1.5">
-                Tente rua e bairro (ex.: Rua Tal, Bairro Tal) ou clique no mapa no local desejado.
+                Tente so o nome da rua (ex.: Sao Jose) ou clique no mapa no local desejado.
               </p>
             ) : (
               <>
-                {consulta.precisao !== 'exata' && (
+                {consulta.precisao === 'trecho' ? (
+                  <p className="text-xs text-tema-suave mt-1.5">
+                    Rua inteira (em laranja no mapa): caixas perto de qualquer trecho dela. Para uma casa, clique no ponto no mapa ou busque com o numero.
+                  </p>
+                ) : consulta.precisao !== 'exata' && (
                   <p className="text-xs text-amber-700 mt-1.5">
                     {consulta.precisao === 'rua' ? 'Local aproximado: meio da rua (sem o numero exato).' : 'Local aproximado: centro do bairro (a rua nao foi encontrada no mapa).'} Clique no mapa no ponto certo ou cole o link do Google Maps da casa.
                   </p>
