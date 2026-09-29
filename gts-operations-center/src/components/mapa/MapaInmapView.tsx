@@ -130,7 +130,7 @@ async function localizarEndereco(texto: string): Promise<{ lat: number; lng: num
       (v.bairro && await buscarNominatim(`q=${enc(`${v.bairro}, ${v.localidade}, ${v.uf}`)}`).then(p => p && { ...p, precisao: 'bairro' as Precisao }))
     return ponto ? { ...ponto, rotulo: `CEP ${texto.trim()} - ${rotulo}` } : null
   }
-  const ponto = await buscarNominatim(`q=${encodeURIComponent(texto + ', Teresina, PI')}`)
+  const ponto = await buscarNominatim(`q=${encodeURIComponent(expandirNomeRua(texto) + ', Teresina, PI')}`)
   return ponto ? { ...ponto, rotulo: texto } : null
 }
 
@@ -141,8 +141,46 @@ async function localizarEndereco(texto: string): Promise<{ lat: number; lng: num
 
 const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 
-// O ViaCEP nao entende abreviacao ("Av Frei Serafim" nao acha nada).
-const ABREVIACOES_RUA = /^(av|av\.|r|r\.|tv|tv\.|trav|trav\.|pc|pç|pca|pça|pc\.|al|al\.|rod|rod\.|est|est\.)\s+/i
+// Tipo da rua no inicio (por extenso ou abreviado) sai antes de consultar os
+// Correios: o ViaCEP nao entende abreviacao ("Av Frei Serafim" nao acha nada) e
+// o tipo por extenso restringe a busca ("Rua Marechal Deodoro" nao acha a Praca).
+// A lista de resultados mostra o tipo certo de cada rua.
+const ABREVIACOES_RUA = /^(rua|avenida|travessa|alameda|pra[cç]a|estrada|rodovia|av|av\.|r|r\.|tv|tv\.|trav|trav\.|pc|pç|pca|pça|pc\.|al|al\.|rod|rod\.|est|est\.)\s+/i
+
+// Titulos abreviados no nome da rua. Os Correios so conhecem por extenso
+// ("Dr. Nicanor Barreto" da erro; "Doutor Nicanor Barreto" acha).
+const TITULOS_RUA: Record<string, string> = {
+  dr: 'Doutor', dra: 'Doutora', prof: 'Professor', profa: 'Professora', des: 'Desembargador',
+  gov: 'Governador', pres: 'Presidente', sen: 'Senador', dep: 'Deputado', ver: 'Vereador',
+  min: 'Ministro', eng: 'Engenheiro', mal: 'Marechal', gal: 'General', gen: 'General',
+  cel: 'Coronel', maj: 'Major', cap: 'Capitao', ten: 'Tenente', sgt: 'Sargento', cmte: 'Comandante',
+  alm: 'Almirante', brig: 'Brigadeiro', pe: 'Padre', mons: 'Monsenhor', con: 'Conego', fr: 'Frei',
+  sto: 'Santo', sta: 'Santa', s: 'Sao',
+}
+// Sem ponto, so os que nao se confundem com palavras comuns ("Mal", "Ver", "Sen"...).
+const TITULOS_SEM_PONTO = new Set(['dr', 'dra', 'prof', 'profa', 'des', 'gov', 'cel', 'pe', 'sto', 'sta', 'eng', 'maj', 'sgt', 'cmte'])
+
+function expandirNomeRua(texto: string): string {
+  return texto
+    .replace(ABREVIACOES_RUA, '')
+    .replace(/\bn\.?\s*s(?:ra|a)?\.?(?=\s|$)/gi, 'Nossa Senhora')
+    .split(/\s+/)
+    .map(p => {
+      const chave = semAcento(p).replace(/\.$/, '')
+      const titulo = TITULOS_RUA[chave]
+      return titulo && (p.endsWith('.') || TITULOS_SEM_PONTO.has(chave)) ? titulo : p
+    })
+    .join(' ')
+    .replace(/\./g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// "Doutor Nicanor Barreto" -> "Nicanor Barreto" (segunda tentativa nos Correios).
+const semTitulos = (rua: string) => {
+  const titulos = new Set(Object.values(TITULOS_RUA).map(semAcento).concat(['nossa', 'senhora']))
+  return rua.split(' ').filter(p => !titulos.has(semAcento(p))).join(' ')
+}
 // Para comparar o nome dos Correios com o do mapa ("Rua Anísio de Abreu" = "Rua Anisio de Abreu").
 const TIPOS_RUA = /^(rua|avenida|travessa|alameda|praca|estrada|rodovia|quadra|vila|conjunto|residencial|av|r|tv)\.?\s+/
 
@@ -156,20 +194,36 @@ interface RuaEncontrada {
 }
 
 // "Sao Jose" | "Rua Sao Jose, 123" | "Sao Jose, Parque Brasil" | "Sao Jose, 123, Parque Brasil"
-function separarBusca(texto: string): { rua: string; numero: string | null; bairro: string } {
+const TIPO_POR_ABREVIACAO: Record<string, string> = {
+  r: 'rua', av: 'avenida', tv: 'travessa', trav: 'travessa', pc: 'praca', 'pç': 'praca', pca: 'praca', 'pça': 'praca',
+  al: 'alameda', rod: 'rodovia', est: 'estrada',
+}
+
+function separarBusca(texto: string): { rua: string; numero: string | null; bairro: string; tipo: string } {
   const partes = texto.split(',').map(p => p.trim()).filter(Boolean)
-  const rua = (partes[0] || '').replace(ABREVIACOES_RUA, '')
+  const rua = expandirNomeRua(partes[0] || '')
+  // Tipo digitado (Rua, Av...): so desempata a ordem da lista.
+  const m = (partes[0] || '').match(ABREVIACOES_RUA)
+  const tipoDigitado = m ? m[1].toLowerCase().replace(/\.$/, '') : ''
+  const tipo = TIPO_POR_ABREVIACAO[tipoDigitado] || semAcento(tipoDigitado)
   const resto = partes.slice(1)
   const numero = resto.find(p => /^(n[ºo°.]?\s*)?\d{1,5}[a-z]?$/i.test(p))?.replace(/\D+$/, '').replace(/^\D+/, '') || null
   const bairro = resto.filter(p => !/^(n[ºo°.]?\s*)?\d{1,5}[a-z]?$/i.test(p) && !/^teresina$|^pi$/i.test(p)).join(' ')
-  return { rua, numero, bairro }
+  return { rua, numero, bairro, tipo }
 }
 
-async function buscarRuasViaCep(rua: string, bairro: string): Promise<RuaEncontrada[]> {
+async function consultarViaCep(rua: string): Promise<any[]> {
   if (rua.trim().length < 3) return []
   const res = await fetch(`https://viacep.com.br/ws/PI/Teresina/${encodeURIComponent(rua.trim())}/json/`).catch(() => null)
   const lista = res?.ok ? await res.json().catch(() => []) : []
-  if (!Array.isArray(lista)) return []
+  return Array.isArray(lista) ? lista : []
+}
+
+async function buscarRuasViaCep(rua: string, bairro: string, tipo = ''): Promise<RuaEncontrada[]> {
+  let lista = await consultarViaCep(rua)
+  // Titulo escrito diferente do cadastro dos Correios: tenta so com o nome.
+  const soNome = semTitulos(rua)
+  if (!lista.length && soNome && soNome !== rua) lista = await consultarViaCep(soNome)
   // O mesmo trecho aparece com varios CEPs (lado par/impar, faixas de numero).
   const porRua = new Map<string, RuaEncontrada>()
   for (const v of lista) {
@@ -182,7 +236,11 @@ async function buscarRuasViaCep(rua: string, bairro: string): Promise<RuaEncontr
   const filtroBairro = semAcento(bairro)
   // Nome exato primeiro ("Rua Sao Jose"), depois os que comecam igual, depois o resto.
   const buscado = nucleoRua(rua)
-  const ordem = (r: RuaEncontrada) => { const n = nucleoRua(r.logradouro); return n === buscado ? 0 : n.startsWith(buscado) ? 1 : 2 }
+  const ordem = (r: RuaEncontrada) => {
+    const n = nucleoRua(r.logradouro)
+    const nome = n === buscado ? 0 : n.startsWith(buscado) ? 1 : 2
+    return nome * 2 + (tipo && !semAcento(r.logradouro).startsWith(tipo) ? 1 : 0)
+  }
   return [...porRua.values()]
     .filter(r => !filtroBairro || semAcento(r.bairro).includes(filtroBairro))
     .sort((a, b) => ordem(a) - ordem(b) || a.logradouro.localeCompare(b.logradouro, 'pt-BR') || a.bairro.localeCompare(b.bairro, 'pt-BR'))
@@ -630,8 +688,8 @@ export function MapaInmapView({ telaCheia = false }: Props) {
           const texto = ((p?.nome || '') + ' ' + (p?.endereco || '')).toLowerCase()
           return texto.includes(buscaLower)
         }).slice(0, 5)
-        const { rua, numero, bairro } = separarBusca(busca)
-        const ruas = await buscarRuasViaCep(rua, bairro)
+        const { rua, numero, bairro, tipo } = separarBusca(busca)
+        const ruas = await buscarRuasViaCep(rua, bairro, tipo)
 
         if (ruas.length === 0 && ctos.length === 1) { escolherCto(ctos[0]); return }
         if (ctos.length === 0 && ruas.length === 1) { await escolherRua(ruas[0], numero); return }
