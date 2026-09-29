@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   // Valida cada linha e junta os seriais para checar duplicidade.
   const todosSeriais: string[] = []
-  const linhas = []
+  const linhas: { item: (typeof itens)[number]; quantidade: number; seriais: string[] }[] = []
   for (const l of parsed.data.linhas) {
     const item = porId.get(l.itemId)
     if (!item) return NextResponse.json({ error: 'Item nao encontrado' }, { status: 404 })
