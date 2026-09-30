@@ -4,17 +4,20 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { X, Loader2, Trash2, CheckCircle } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { X, Loader2, Trash2, CheckCircle, FileDown } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { TIPO_CHAMADO_LABELS } from '@/types'
 import { cn, formatDateTime } from '@/lib/utils'
 import { META_SLA_RESPOSTA_MINUTOS, META_SLA_RESOLUCAO_MINUTOS } from '@/lib/slaMetas'
+import { numeroOS } from '@/lib/ordemServico'
 
 // Nova Ordem de Servico (Central de Chamados -> Novo Despacho).
 // Duas modalidades no mesmo fluxo de despacho/equipe/status/Telegram:
 // GTS NET (cliente do provedor, com busca no IXC) e EACE (escola do contrato,
-// marcada com eace = true e com os campos proprios da escola).
+// marcada com eace = true e com os campos proprios da escola). No EACE nao ha
+// tipo de atividade na tela: vai como Manutencao, o tipo de quase todos os
+// chamados de escola. Depois de abrir, a O.S. em PDF e gerada pelo sistema.
 
 const schema = z.object({
   eace: z.boolean().optional(),
@@ -106,7 +109,10 @@ function Leitura({ children, fraco }: { children: React.ReactNode; fraco?: boole
 
 export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   const [materiais, setMateriais] = useState<Material[]>([])
-  const [arquivoPDF, setArquivoPDF] = useState<File | null>(null)
+  // O.S. aberta: a tela vira a confirmacao com o botao de baixar o PDF.
+  const [aberta, setAberta] = useState<any>(null)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
+  const queryClient = useQueryClient()
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false)
   const [clienteVinculado, setClienteVinculado] = useState(!!initialData?.cliente)
   // Id do cadastro de cliente (IXC) selecionado no autocomplete - guardado a
@@ -117,7 +123,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'INSTALACAO', prioridade: 'NORMAL', eace: false, ...initialData },
+    defaultValues: { tipo: initialData?.eace ? 'MANUTENCAO' : 'INSTALACAO', prioridade: 'NORMAL', eace: false, ...initialData },
   })
 
   const prioridade = watch('prioridade')
@@ -186,6 +192,8 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   function escolherModalidade(ehEace: boolean) {
     if (ehEace === eace) return
     setValue('eace', ehEace)
+    setValue('tipo', ehEace ? 'MANUTENCAO' : 'INSTALACAO')
+    setValue('subCategoria', undefined)
     if (ehEace) { setClienteVinculado(false); setClienteIdSelecionado(null); setMostrarSugestoes(false) }
   }
 
@@ -224,9 +232,11 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
       if (!res.ok) throw new Error('Erro ao abrir a O.S.')
       return res.json()
     },
-    onSuccess: () => {
+    onSuccess: (chamado, dados) => {
       toast({ title: 'O.S. aberta e enviada para a equipe', variant: 'success' })
-      onSuccess()
+      // Atualiza as listas ja; a tela fica aberta so para baixar a O.S.
+      for (const k of ['agenda', 'chamados-ativos', 'chamados-eace', 'teams']) queryClient.invalidateQueries({ queryKey: [k] })
+      setAberta({ chamado, veiculo: veiculo ?? null, materiais: [...materiais], eace: !!dados.eace })
     },
     onError: () => toast({ title: 'Nao foi possivel abrir a O.S.', variant: 'destructive' }),
   })
@@ -248,6 +258,20 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   function atualizarQtd(itemId: string, quantidade: number) {
     setMateriais(prev => prev.map(m => m.itemId === itemId ? { ...m, quantidade } : m))
+  }
+
+  async function baixarOS() {
+    if (!aberta) return
+    setGerandoPdf(true)
+    try {
+      const { gerarPDFOrdemServico } = await import('@/utils/pdf-os')
+      gerarPDFOrdemServico(aberta.chamado, { veiculo: aberta.veiculo, materiais: aberta.materiais })
+    } catch (e) {
+      console.error('Erro ao gerar a O.S.:', e)
+      toast({ title: 'Nao foi possivel gerar o PDF da O.S.', variant: 'destructive' })
+    } finally {
+      setGerandoPdf(false)
+    }
   }
 
   const equipesDisponiveis = equipes.filter((e: any) => e.status === 'AGUARDANDO')
@@ -308,7 +332,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               <h2 className="text-base font-semibold text-tema-tinta">Nova Ordem de Servico</h2>
               <p className="text-xs text-tema-apagado mt-0.5">A O.S. e enviada direto para a equipe escolhida.</p>
             </div>
-            <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta transition-colors p-1.5 -m-1.5 rounded-md" aria-label="Fechar">
+            <button onClick={aberta ? onSuccess : onClose} className="text-tema-apagado hover:text-tema-tinta transition-colors p-1.5 -m-1.5 rounded-md" aria-label="Fechar">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -320,6 +344,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                 role="tab"
                 aria-selected={eace === ehEace}
                 onClick={() => escolherModalidade(ehEace)}
+                disabled={!!aberta}
                 className={cn(
                   'pb-2.5 -mb-px text-sm font-medium border-b-2 transition-colors',
                   eace === ehEace ? 'border-orange-600 text-tema-tinta' : 'border-transparent text-tema-apagado hover:text-tema-suave',
@@ -331,6 +356,28 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
           </div>
         </div>
 
+        {aberta ? (
+          <div className="px-6 py-8 space-y-5">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-tema-tinta">
+                  O.S. <span className="font-mono">{numeroOS(aberta.chamado.id)}</span> aberta
+                </p>
+                <p className="text-xs text-tema-suave mt-0.5">
+                  {aberta.eace ? 'EACE' : 'GTS NET'} - {aberta.chamado.cliente}
+                  {aberta.chamado.equipe?.nome && <> - enviada para {aberta.chamado.equipe.nome}</>}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-end border-t border-tema-linha pt-4">
+              <button type="button" onClick={onSuccess} className="gts-btn-secondary justify-center">Concluir</button>
+              <button type="button" onClick={baixarOS} disabled={gerandoPdf} className="gts-btn-primary justify-center">
+                {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />} Baixar O.S. (PDF)
+              </button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
@@ -462,14 +509,16 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
             {/* 03 - Despacho operacional */}
             <Secao numero="03" titulo="Despacho operacional">
-              <Campo rotulo="Tipo de atividade *">
-                <select {...register('tipo')} className="w-full gts-input">
-                  {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(t => (
-                    <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
-                  ))}
-                </select>
-              </Campo>
-              {SUBCATEGORIAS[tipo] ? (
+              {!eace && (
+                <Campo rotulo="Tipo de atividade *">
+                  <select {...register('tipo')} className="w-full gts-input">
+                    {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(t => (
+                      <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
+                    ))}
+                  </select>
+                </Campo>
+              )}
+              {eace ? null : SUBCATEGORIAS[tipo] ? (
                 <Campo rotulo="Detalhe">
                   <select {...register('subCategoria')} className="w-full gts-input">
                     <option value="">Selecionar...</option>
@@ -538,9 +587,9 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               </Campo>
             </Secao>
 
-            {/* 04 - Materiais e anexo */}
-            <Secao numero="04" titulo="Materiais e anexo">
-              <Campo rotulo="Adicionar material" className="col-span-2">
+            {/* 04 - Materiais */}
+            <Secao numero="04" titulo="Materiais">
+              <Campo rotulo="Adicionar material" className="col-span-2 md:col-span-4">
                 <select
                   className="w-full gts-input"
                   onChange={e => { if (e.target.value) adicionarMaterial(e.target.value) }}
@@ -554,21 +603,6 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
                   ))}
                 </select>
               </Campo>
-              <div className="col-span-2 min-w-0">
-                <span className="block text-xs font-medium text-tema-suave mb-1">Ordem de servico (PDF)</span>
-                <div className="flex items-center gap-2">
-                  <input type="file" accept=".pdf,application/pdf" onChange={e => setArquivoPDF(e.target.files?.[0] || null)} className="hidden" id="os-despacho" />
-                  <label htmlFor="os-despacho" className="gts-btn-secondary cursor-pointer flex-shrink-0 py-2">Anexar PDF</label>
-                  <span className={cn('text-xs truncate', arquivoPDF ? 'text-tema-tinta' : 'text-tema-apagado')}>
-                    {arquivoPDF ? `${arquivoPDF.name} (${(arquivoPDF.size / 1024).toFixed(0)} KB)` : 'Nenhum arquivo'}
-                  </span>
-                  {arquivoPDF && (
-                    <button type="button" onClick={() => setArquivoPDF(null)} className="text-tema-apagado hover:text-red-700" aria-label="Remover anexo">
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
               {materiais.length > 0 && (
                 <div className="col-span-2 md:col-span-4 border border-tema-linha rounded-lg divide-y divide-tema-linha">
                   {materiais.map(m => (
@@ -607,6 +641,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
             </div>
           </div>
         </form>
+        )}
       </div>
     </div>
   )

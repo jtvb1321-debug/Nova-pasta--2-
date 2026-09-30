@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Zap, Clock, CheckCircle, XCircle, MapPin, User, Package, Calendar,
   ChevronDown, ChevronUp, MessageCircle, Navigation, Ban, Repeat, Send, StopCircle,
-  CalendarClock, GraduationCap, Hash, Brain, RotateCw,
+  CalendarClock, GraduationCap, Hash, Brain, RotateCw, FileDown,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
@@ -87,6 +87,22 @@ export function CardChamado({
 }) {
   const prioridade = detectarPrioridade(chamado.observacao)
   const pCor = PRIORIDADE_COR[prioridade]
+  const [gerandoOS, setGerandoOS] = useState(false)
+
+  // O.S. em PDF gerada pelo sistema (GTS NET e EACE); a biblioteca de PDF so
+  // carrega quando alguem pede a O.S.
+  async function baixarOS() {
+    setGerandoOS(true)
+    try {
+      const { gerarPDFOrdemServico } = await import('@/utils/pdf-os')
+      gerarPDFOrdemServico(chamado)
+    } catch (e) {
+      console.error('Erro ao gerar a O.S.:', e)
+      toast({ title: 'Nao foi possivel gerar o PDF da O.S.', variant: 'destructive' })
+    } finally {
+      setGerandoOS(false)
+    }
+  }
   const sCfg = STATUS_CONFIG[chamado.status as StatusChamado] || STATUS_CONFIG.ABERTO
   const StatusIcon = sCfg.icon
   const materiaisCount = chamado.materiaisReservados?.length ?? 0
@@ -478,6 +494,14 @@ export function CardChamado({
                   {diagnosticoRemotoMutation.isPending ? 'Diagnosticando...' : 'Iniciar Diagnostico Remoto'}
                 </button>
               )}
+              <button
+                onClick={(e) => { e.stopPropagation(); baixarOS() }}
+                disabled={gerandoOS}
+                className="flex items-center gap-1.5 px-3 py-2 border border-tema-linha-forte hover:border-tema-apagado rounded-lg text-xs font-medium text-tema-suave hover:text-tema-tinta transition-colors disabled:opacity-50"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Baixar O.S.
+              </button>
               {chamado.telefone && (
                 <button
                   onClick={() => window.open(`https://wa.me/55${chamado.telefone.replace(/\D/g, '')}`, '_blank')}
