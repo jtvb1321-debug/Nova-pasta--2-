@@ -3,6 +3,7 @@
 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { textoNaLargura } from './pdfTexto'
 import { TIPO_CHAMADO_LABELS } from '@/types'
 import { formatarHorasHM, situacaoLabel, diaSemanaAbrev, ehSabado } from '@/lib/jornada'
 
@@ -44,11 +45,13 @@ function cabecalho(doc: jsPDF, titulo: string, subtitulo?: string) {
   doc.setTextColor(156, 163, 175)
   doc.text('GTSNet - Sistema de Gestao Operacional', 12, 24)
 
-  // Titulo do relatorio
-  doc.setFontSize(11)
+  // Titulo do relatorio (sem encostar no texto da direita)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  const larguraSubtitulo = subtitulo ? Math.min(doc.getTextWidth(subtitulo), (width - 24) / 2) : 0
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...CORES.branco)
-  doc.text(titulo, 12, 34)
+  textoNaLargura(doc, titulo, 12, 34, width - 24 - larguraSubtitulo - (subtitulo ? 8 : 0), { tamanho: 11, minimo: 8 })
 
   // Data e hora no canto direito
   const agora = new Date()
@@ -59,7 +62,7 @@ function cabecalho(doc: jsPDF, titulo: string, subtitulo?: string) {
 
   if (subtitulo) {
     doc.setTextColor(...CORES.branco)
-    doc.text(subtitulo, width - 12, 34, { align: 'right' })
+    textoNaLargura(doc, subtitulo, width - 12, 34, (width - 24) / 2, { tamanho: 8, minimo: 6.5, alinhar: 'right' })
   }
 
   return 48 // Retorna Y inicial apos cabecalho
@@ -101,15 +104,15 @@ function kpiBox(doc: jsPDF, label: string, value: string, x: number, y: number, 
   doc.setFillColor(...cor)
   doc.roundedRect(x, y, 3, 20, 1, 1, 'F')
 
-  doc.setFontSize(7)
+  // Texto cabe no cartao: 6 mm da faixa colorida + 3 mm de respiro na direita.
+  const largura = w - 9
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(...CORES.cinza)
-  doc.text(label, x + 6, y + 7)
+  textoNaLargura(doc, label, x + 6, y + 7, largura, { tamanho: 7, minimo: 6 })
 
-  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...CORES.dark)
-  doc.text(value, x + 6, y + 16)
+  textoNaLargura(doc, value, x + 6, y + 16, largura, { tamanho: 12, minimo: 8 })
 }
 
 function textoVazio(doc: jsPDF, mensagem: string, y: number): number {
@@ -747,15 +750,14 @@ function desenharCardTecnico(doc: jsPDF, t: any, x: number, y: number, w: number
   doc.setFillColor(...CORES.azul)
   doc.roundedRect(x, y, 3, 34, 1, 1, 'F')
 
-  doc.setFontSize(9)
+  const largura = w - 9
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...CORES.dark)
-  doc.text(t.nome, x + 6, y + 6)
+  textoNaLargura(doc, t.nome, x + 6, y + 6, largura, { tamanho: 9, minimo: 7 })
 
-  doc.setFontSize(6.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(...CORES.cinza)
-  doc.text(t.equipeNome, x + 6, y + 10.5)
+  textoNaLargura(doc, t.equipeNome, x + 6, y + 10.5, largura, { tamanho: 6.5, minimo: 5.5 })
 
   doc.setFontSize(7.5)
   doc.setFont('helvetica', 'bold')
@@ -777,9 +779,8 @@ function desenharCardTecnico(doc: jsPDF, t: any, x: number, y: number, w: number
   if (t.faltas > 0) extras.push(`${t.faltas} falta(s)`)
   if (t.atestados > 0) extras.push(`${t.atestados} atestado(s)`)
   if (t.folgas > 0) extras.push(`${t.folgas} folga(s)`)
-  doc.setFontSize(6.5)
   doc.setTextColor(...CORES.cinza)
-  doc.text(extras.length > 0 ? extras.join('  -  ') : 'Sem faltas, atestados ou folgas no periodo', x + 6, y + 31)
+  textoNaLargura(doc, extras.length > 0 ? extras.join('  -  ') : 'Sem faltas, atestados ou folgas no periodo', x + 6, y + 31, largura, { tamanho: 6.5, minimo: 5.5 })
 }
 
 function cardsPorTecnico(doc: jsPDF, porTecnico: any[], y: number): number {
@@ -1101,8 +1102,8 @@ export function gerarPDFCancelados(dados: any, mesLabel: string) {
 
   const boxW = (width - 24 - 6) / 3
   kpiBox(doc, 'Total de Cancelamentos', String(dados.total), 12, y, boxW, CORES.vermelho)
-  kpiBox(doc, 'Principal Motivo', dados.porMotivo[0]?.motivo?.slice(0, 28) || '-', 12 + boxW + 3, y, boxW, CORES.amarelo)
-  kpiBox(doc, 'Cidade com Mais Cancelamentos', dados.porCidade[0]?.cidade?.slice(0, 24) || '-', 12 + (boxW + 3) * 2, y, boxW, CORES.azul)
+  kpiBox(doc, 'Principal Motivo', dados.porMotivo[0]?.motivo || '-', 12 + boxW + 3, y, boxW, CORES.amarelo)
+  kpiBox(doc, 'Cidade com Mais Cancelamentos', dados.porCidade[0]?.cidade || '-', 12 + (boxW + 3) * 2, y, boxW, CORES.azul)
   y += 28
 
   if (dados.porCidade.length > 0) {

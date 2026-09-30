@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { textoNaLargura } from './pdfTexto'
 
 const CORES = {
   laranja:  [255, 122, 0]  as [number, number, number],
@@ -81,14 +82,14 @@ function kpiBox(doc: jsPDF, label: string, value: string, x: number, y: number, 
   doc.roundedRect(x, y, w, 20, 2, 2, 'FD')
   doc.setFillColor(...cor)
   doc.roundedRect(x, y, 3, 20, 1, 1, 'F')
-  doc.setFontSize(7)
+  // Texto cabe no cartao: 6 mm da faixa colorida + 3 mm de respiro na direita.
+  const largura = w - 9
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(...CORES.cinza)
-  doc.text(label, x + 6, y + 7)
-  doc.setFontSize(12)
+  textoNaLargura(doc, label, x + 6, y + 7, largura, { tamanho: 7, minimo: 6 })
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...CORES.dark)
-  doc.text(value, x + 6, y + 16)
+  textoNaLargura(doc, value, x + 6, y + 16, largura, { tamanho: 12, minimo: 8 })
 }
 
 export function gerarPDFRelatorioVendas(data: any, dataInicio: string, dataFim: string) {
