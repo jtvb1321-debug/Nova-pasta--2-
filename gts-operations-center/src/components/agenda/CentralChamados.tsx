@@ -4,15 +4,14 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ClipboardList, Plus, Zap, Clock, CheckCircle,
-  AlertTriangle, RefreshCw, Search, Calendar,
+  ClipboardList, Plus, CheckCircle, RefreshCw, Search, Calendar,
   Phone, MessageCircle, Repeat, GraduationCap,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { NovoDespachoModal } from './NovoDespachoModal'
 import { CalendarioAgenda } from './CalendarioAgenda'
-import { CardChamado, detectarPrioridade } from './CardChamado'
+import { CardChamado, CabecalhoListaChamados, PainelChamado, detectarPrioridade } from './CardChamado'
 import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
@@ -73,11 +72,13 @@ export function CentralChamados({ session }: { session: Session }) {
   const [filtroTipo, setFiltroTipo] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [page, setPage] = useState(1)
-  const [expandido, setExpandido] = useState<string | null>(null)
+  // Chamado aberto no painel lateral. Guarda as mesmas opcoes da lista de
+  // onde veio (cada aba libera acoes diferentes, como antes).
+  const [selecao, setSelecao] = useState<{ id: string; reserva: any; mostrarFinalizar: boolean; acaoRapidaEncerrar?: boolean; encaminhar?: boolean } | null>(null)
   const searchParams = useSearchParams()
 
   // Deep-link vindo do historico de diagnostico (/agenda?chamadoId=...) - abre
-  // direto na aba certa com o card ja expandido, sem duplicar nenhum card.
+  // direto na aba certa com o painel do chamado aberto, sem duplicar nenhum card.
   useEffect(() => {
     const chamadoId = searchParams.get('chamadoId')
     if (!chamadoId) return
@@ -85,10 +86,11 @@ export function CentralChamados({ session }: { session: Session }) {
       .then(res => res.ok ? res.json() : null)
       .then(chamado => {
         if (!chamado) return
-        if (chamado.status === 'ABERTO' || chamado.status === 'AGENDADO') setAba('despacho')
+        const naFila = chamado.status === 'ABERTO' || chamado.status === 'AGENDADO'
+        if (naFila) setAba('despacho')
         else if (chamado.status === 'EM_ANDAMENTO') setAba('ativos')
         else setAba('historico')
-        setExpandido(chamadoId)
+        setSelecao({ id: chamadoId, reserva: chamado, mostrarFinalizar: naFila || chamado.status === 'EM_ANDAMENTO', encaminhar: naFila })
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,24 +265,31 @@ export function CentralChamados({ session }: { session: Session }) {
   const totalAtivos   = ativos.length
   const totalCriticos = agenda.filter((c: any) => detectarPrioridade(c.observacao) === 'CRITICO').length
 
-  // KPIs gerais
+  // Indicadores: numero neutro; a cor so aparece quando ha algo a olhar.
   const kpis = [
-    { label: 'Na Fila',       value: totalAbertos,  cor: 'text-blue-700',    bg: 'bg-blue-500/10',    icon: Clock },
-    { label: 'Em Andamento',  value: totalAtivos,   cor: 'text-amber-700',  bg: 'bg-amber-500/10',  icon: Zap },
-    { label: 'Criticos',      value: totalCriticos, cor: 'text-red-700',     bg: 'bg-red-500/10',     icon: AlertTriangle },
-    { label: 'Reincidentes',  value: totalReincidentes, cor: 'text-orange-700', bg: 'bg-orange-500/10', icon: Repeat },
-    { label: 'Finalizados Hoje', value: historicoData?.totalHoje ?? 0, cor: 'text-emerald-700', bg: 'bg-emerald-500/10', icon: CheckCircle },
+    { label: 'Na fila',          value: totalAbertos,      ponto: 'bg-blue-500',    alerta: '' },
+    { label: 'Em andamento',     value: totalAtivos,       ponto: 'bg-blue-500',    alerta: '' },
+    { label: 'Criticos',         value: totalCriticos,     ponto: 'bg-red-500',     alerta: 'text-red-700' },
+    { label: 'Reincidentes',     value: totalReincidentes, ponto: 'bg-purple-500',  alerta: '' },
+    { label: 'Finalizados hoje', value: historicoData?.totalHoje ?? 0, ponto: 'bg-emerald-500', alerta: '' },
   ]
 
   const abas = [
-    { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos, badgeCor: 'bg-blue-500' },
-    { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length, badgeCor: 'bg-orange-500' },
-    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos, badgeCor: 'bg-amber-500' },
-    { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes, badgeCor: 'bg-orange-500' },
-    { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks, badgeCor: 'bg-purple-500' },
-    { id: 'historico'    as Aba, label: 'Historico',     badge: 0, badgeCor: '' },
-    { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0, badgeCor: '' },
+    { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos },
+    { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length },
+    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos },
+    { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes },
+    { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks },
+    { id: 'historico'    as Aba, label: 'Historico',     badge: 0 },
+    { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0 },
   ]
+
+  // Painel lateral: sempre com os dados mais recentes das listas.
+  const selecionado = selecao
+    ? [...agenda, ...ativos, ...eace, ...historico, ...reincidentes].find((c: any) => c.id === selecao.id) ?? selecao.reserva
+    : null
+  const abrirChamado = (c: any, opcoes: { mostrarFinalizar: boolean; acaoRapidaEncerrar?: boolean; encaminhar?: boolean }) =>
+    setSelecao({ id: c.id, reserva: c, ...opcoes })
   return (
     <div className="space-y-5 animate-fade-in">
       <PageHeader
@@ -310,44 +319,47 @@ export function CentralChamados({ session }: { session: Session }) {
         }
       />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {kpis.map((kpi, i) => {
-          const Icon = kpi.icon
-          return (
-            <div key={i} className="gts-card">
-              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mb-2', kpi.bg)}>
-                <Icon className={cn('w-4 h-4', kpi.cor)} />
-              </div>
-              <p className={cn('text-2xl font-bold', kpi.cor)}>{kpi.value}</p>
-              <p className="text-xs text-tema-apagado mt-1">{kpi.label}</p>
-            </div>
-          )
-        })}
+      {/* Indicadores */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {kpis.map(kpi => (
+          <div key={kpi.label} className="bg-tema-superficie border border-tema-linha rounded-lg px-4 py-3">
+            <p className="flex items-center gap-1.5 text-xs text-tema-suave">
+              <span className={cn('w-1.5 h-1.5 rounded-full', kpi.ponto)} aria-hidden />
+              {kpi.label}
+            </p>
+            <p className={cn('mt-1 text-2xl font-semibold tabular-nums leading-none', kpi.value > 0 && kpi.alerta ? kpi.alerta : 'text-tema-tinta')}>
+              {kpi.value}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1">
+      <nav className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1" aria-label="Visoes da central">
         {abas.map(a => (
           <button
             key={a.id}
             onClick={() => { setAba(a.id); setPage(1) }}
+            aria-current={aba === a.id ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
+              '-mb-px flex items-center gap-2 px-3 py-2.5 text-sm border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
               aba === a.id
-                ? 'border-orange-600 text-orange-600'
-                : 'border-transparent text-tema-suave hover:text-tema-tinta'
+                ? 'border-orange-600 text-tema-tinta font-semibold'
+                : 'border-transparent text-tema-suave hover:text-tema-tinta font-medium'
             )}
           >
             {a.label}
             {a.badge > 0 && (
-              <span className={cn('text-xs px-1.5 py-0.5 rounded-full text-white font-bold', a.badgeCor)}>
+              <span className={cn(
+                'min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
+                aba === a.id ? 'bg-orange-600 text-white' : 'bg-tema-contraste/[0.06] text-tema-suave'
+              )}>
                 {a.badge}
               </span>
             )}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
@@ -393,9 +405,9 @@ export function CentralChamados({ session }: { session: Session }) {
 
       {/* DESPACHO NOC */}
       {aba === 'despacho' && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {loadingAgenda
-            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
             : filtrar(agenda).length === 0
             ? (
               <div className="gts-card text-center py-16">
@@ -406,14 +418,13 @@ export function CentralChamados({ session }: { session: Session }) {
                 </button>
               </div>
             )
-            : filtrar(agenda).map((c: any) => (
+            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(agenda).map((c: any) => (
               <CardChamado
                 key={c.id}
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar
-                expandido={expandido === c.id}
-                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onToggle={() => abrirChamado(c, { mostrarFinalizar: true, encaminhar: true })}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
                 onEncerrarAdmin={handleEncerrarAdmin}
@@ -421,16 +432,16 @@ export function CentralChamados({ session }: { session: Session }) {
                 onAlterarTipo={handleAlterarTipo}
                 onEncaminhar={id => encaminharMutation.mutate(id)}
               />
-            ))
+            ))]
           }
         </div>
       )}
 
       {/* EM ANDAMENTO */}
       {aba === 'ativos' && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {loadingAtivos
-            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
             : filtrar(ativos).length === 0
             ? (
               <div className="gts-card text-center py-16">
@@ -438,21 +449,20 @@ export function CentralChamados({ session }: { session: Session }) {
                 <p className="text-tema-suave font-medium">Nenhum chamado em andamento</p>
               </div>
             )
-            : filtrar(ativos).map((c: any) => (
+            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(ativos).map((c: any) => (
               <CardChamado
                 key={c.id}
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar
-                expandido={expandido === c.id}
-                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onToggle={() => abrirChamado(c, { mostrarFinalizar: true })}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
                 onEncerrarAdmin={handleEncerrarAdmin}
                 isOperador={isOperador}
                 onAlterarTipo={handleAlterarTipo}
               />
-            ))
+            ))]
           }
         </div>
       )}
@@ -460,9 +470,9 @@ export function CentralChamados({ session }: { session: Session }) {
       {/* REINCIDENTES */}
       {aba === 'reincidentes' && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/25 rounded-xl">
-            <Repeat className="w-4 h-4 text-orange-600 flex-shrink-0" />
-            <p className="text-sm text-orange-800">
+          <div className="flex items-center gap-2 px-3 py-2 border-l-2 border-purple-500 bg-tema-contraste/[0.02] rounded-r-lg">
+            <Repeat className="w-4 h-4 text-purple-700 flex-shrink-0" />
+            <p className="text-xs text-tema-suave">
               Chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente.
             </p>
           </div>
@@ -472,7 +482,7 @@ export function CentralChamados({ session }: { session: Session }) {
           )}
 
           {loadingReincidentes
-            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
             : filtrar(reincidentes).length === 0
             ? (
               <div className="gts-card text-center py-16">
@@ -481,22 +491,21 @@ export function CentralChamados({ session }: { session: Session }) {
                 <p className="text-tema-apagado text-sm mt-1">Nenhum cliente reabriu chamado dentro da janela de 7 dias</p>
               </div>
             )
-            : filtrar(reincidentes).map((c: any) => (
+            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(reincidentes).map((c: any) => (
               <CardChamado
                 key={c.id}
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar={c.status !== 'FINALIZADO' && c.status !== 'CANCELADO'}
                 acaoRapidaEncerrar
-                expandido={expandido === c.id}
-                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onToggle={() => abrirChamado(c, { mostrarFinalizar: c.status !== 'FINALIZADO' && c.status !== 'CANCELADO', acaoRapidaEncerrar: true })}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
                 onEncerrarAdmin={handleEncerrarAdmin}
                 isOperador={isOperador}
                 onAlterarTipo={handleAlterarTipo}
               />
-            ))
+            ))]
           }
 
           {reincidentesTotalPages > 1 && (
@@ -526,9 +535,9 @@ export function CentralChamados({ session }: { session: Session }) {
       {/* FEEDBACK */}
       {aba === 'feedback' && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 bg-purple-500/10 border border-purple-500/25 rounded-xl">
-            <MessageCircle className="w-4 h-4 text-purple-700 flex-shrink-0" />
-            <p className="text-sm text-purple-800">
+          <div className="flex items-center gap-2 px-3 py-2 border-l-2 border-blue-500 bg-tema-contraste/[0.02] rounded-r-lg">
+            <MessageCircle className="w-4 h-4 text-blue-700 flex-shrink-0" />
+            <p className="text-xs text-tema-suave">
               Chamados finalizados com pedido de feedback enviado ao cliente via WhatsApp. Confirme apos ler a resposta.
             </p>
           </div>
@@ -547,10 +556,10 @@ export function CentralChamados({ session }: { session: Session }) {
               </div>
             )
             : feedbacks.map((c: any) => (
-              <div key={c.id} className="gts-card space-y-3">
+              <div key={c.id} className="bg-tema-superficie border border-tema-linha rounded-lg px-4 py-3 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-tema-tinta">{c.cliente}</p>
+                    <p className="text-sm font-semibold text-tema-tinta">{c.cliente}</p>
                     <p className="text-xs text-tema-apagado mt-0.5">
                       {TIPO_CHAMADO_LABELS[c.tipo as TipoChamado] || c.tipo} - {c.cidade}
                     </p>
@@ -561,11 +570,11 @@ export function CentralChamados({ session }: { session: Session }) {
                     )}
                   </div>
                   {c.feedbackConfirmado ? (
-                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-700 font-medium flex-shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 font-medium flex-shrink-0">
                       Confirmado
                     </span>
                   ) : (
-                    <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-700 font-medium flex-shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded bg-tema-contraste/[0.05] text-tema-suave font-medium flex-shrink-0">
                       Aguardando
                     </span>
                   )}
@@ -634,7 +643,7 @@ export function CentralChamados({ session }: { session: Session }) {
           )}
 
           {loadingHistorico
-            ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />)
+            ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
             : historico.length === 0
             ? (
               <div className="gts-card text-center py-16">
@@ -642,16 +651,15 @@ export function CentralChamados({ session }: { session: Session }) {
                 <p className="text-tema-suave font-medium">Nenhum chamado no historico</p>
               </div>
             )
-            : historico.map((c: any) => (
+            : [<CabecalhoListaChamados key="cabecalho" />, ...historico.map((c: any) => (
               <CardChamado
                 key={c.id}
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar={false}
-                expandido={expandido === c.id}
-                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onToggle={() => abrirChamado(c, { mostrarFinalizar: false })}
               />
-            ))
+            ))]
           }
 
           {/* Paginacao */}
@@ -694,9 +702,9 @@ export function CentralChamados({ session }: { session: Session }) {
 
       {/* EACE */}
       {aba === 'eace' && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {loadingEace
-            ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
             : filtrar(eace).length === 0
             ? (
               <div className="gts-card text-center py-16">
@@ -707,14 +715,13 @@ export function CentralChamados({ session }: { session: Session }) {
                 </button>
               </div>
             )
-            : filtrar(eace).map((c: any) => (
+            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(eace).map((c: any) => (
               <CardChamado
                 key={c.id}
                 chamado={c}
                 isAdmin={isAdmin}
                 mostrarFinalizar
-                expandido={expandido === c.id}
-                onToggle={() => setExpandido(expandido === c.id ? null : c.id)}
+                onToggle={() => abrirChamado(c, { mostrarFinalizar: true, encaminhar: true })}
                 onFinalizar={setChamadoFinalizar}
                 onIniciar={id => iniciarMutation.mutate(id)}
                 onEncerrarAdmin={handleEncerrarAdmin}
@@ -722,9 +729,26 @@ export function CentralChamados({ session }: { session: Session }) {
                 onAlterarTipo={handleAlterarTipo}
                 onEncaminhar={id => encaminharMutation.mutate(id)}
               />
-            ))
+            ))]
           }
         </div>
+      )}
+
+      {/* Painel lateral do chamado (detalhes + todas as acoes) */}
+      {selecionado && selecao && (
+        <PainelChamado
+          chamado={selecionado}
+          isAdmin={isAdmin}
+          isOperador={isOperador}
+          mostrarFinalizar={selecao.mostrarFinalizar}
+          acaoRapidaEncerrar={selecao.acaoRapidaEncerrar}
+          onFinalizar={setChamadoFinalizar}
+          onIniciar={id => iniciarMutation.mutate(id)}
+          onEncerrarAdmin={handleEncerrarAdmin}
+          onAlterarTipo={handleAlterarTipo}
+          onEncaminhar={selecao.encaminhar ? (id => encaminharMutation.mutate(id)) : undefined}
+          onClose={() => setSelecao(null)}
+        />
       )}
 
       {/* Modal despacho (padrao ou EACE, mesmo fluxo) */}
