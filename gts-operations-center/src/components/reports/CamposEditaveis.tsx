@@ -49,6 +49,29 @@ export function CampoNumero({ value, onChange, className, step }: CampoNumeroPro
   )
 }
 
+// Percentual que pode nao existir (ex.: equipe sem SLA medido): vazio = "-".
+export function CampoPercentual({ value, onChange, className }: {
+  value: number | null | undefined
+  onChange: (valor: number | null) => void
+  className?: string
+}) {
+  return (
+    <input
+      type="number"
+      step={0.1}
+      min={0}
+      max={100}
+      value={value ?? ''}
+      placeholder="-"
+      onChange={e => onChange(e.target.value === '' ? null : Number(e.target.value))}
+      className={cn(
+        'bg-transparent border-b border-transparent hover:border-tema-linha-forte focus:border-orange-500 outline-none w-full transition-colors placeholder:text-tema-apagado',
+        className
+      )}
+    />
+  )
+}
+
 export function BotaoRemoverLinha({ onClick, title = 'Remover do relatorio' }: { onClick: () => void; title?: string }) {
   return (
     <button

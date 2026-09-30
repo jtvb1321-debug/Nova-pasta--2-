@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { CampoTexto, CampoNumero, BotaoRemoverLinha, atualizarItem, removerItem } from './CamposEditaveis'
+import { CampoTexto, CampoNumero, CampoPercentual, BotaoRemoverLinha, atualizarItem, removerItem } from './CamposEditaveis'
+import { calcularDesempenhoEquipes, totalDesempenho, type LinhaEquipe } from './desempenhoEquipes'
 
 type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados'
 
@@ -80,7 +81,8 @@ export function ReportsView() {
   const [dadosCancelados, setDadosCancelados] = useState<any>(null)
   const [carregandoCancelados, setCarregandoCancelados] = useState(false)
 
-  const [dadosChamadosQualidade, setDadosChamadosQualidade] = useState<{ chamados: any[]; qualidade: any } | null>(null)
+  const [dadosChamadosQualidade, setDadosChamadosQualidade] = useState<{ chamados: any[]; qualidade: any; porEquipe: LinhaEquipe[]; totalNoPeriodo: number } | null>(null)
+  const [recalculandoEquipes, setRecalculandoEquipes] = useState(false)
   const [carregandoChamadosQualidade, setCarregandoChamadosQualidade] = useState(false)
 
   const [dadosEstoque, setDadosEstoque] = useState<any[] | null>(null)
@@ -144,7 +146,9 @@ export function ReportsView() {
       ])
       const chamadosData = await chamadosRes.json()
       const qualidade = await qualidadeRes.json()
-      setDadosChamadosQualidade({ chamados: chamadosData.data || [], qualidade })
+      const chamados = chamadosData.data || []
+      const porEquipe = await calcularDesempenhoEquipes(chamados)
+      setDadosChamadosQualidade({ chamados, qualidade, porEquipe, totalNoPeriodo: chamadosData.total ?? chamados.length })
     } catch (err) {
       console.error(err)
       toast({ title: 'Erro ao carregar chamados e qualidade', variant: 'destructive' })
@@ -221,7 +225,8 @@ export function ReportsView() {
         pdfUtils.gerarPDFChamadosQualidade(
           dadosChamadosQualidade.chamados,
           dadosChamadosQualidade.qualidade,
-          { periodo: mesLabel, equipe: equipeId ? equipes.find((e: any) => e.id === equipeId)?.nome : undefined }
+          { periodo: mesLabel, equipe: equipeId ? equipes.find((e: any) => e.id === equipeId)?.nome : undefined },
+          dadosChamadosQualidade.porEquipe,
         )
       } else if (tipo === 'estoque' && dadosEstoque) {
         pdfUtils.gerarPDFEstoque(dadosEstoque)
@@ -250,6 +255,19 @@ export function ReportsView() {
   }
 
   const relatorioAtual = RELATORIOS.find(r => r.id === tipo)!
+
+  // Refaz o quadro por equipe a partir da lista atual (depois de remover
+  // chamados da revisao, por exemplo). Descarta as correcoes feitas no quadro.
+  async function recalcularEquipes() {
+    if (!dadosChamadosQualidade) return
+    setRecalculandoEquipes(true)
+    try {
+      const porEquipe = await calcularDesempenhoEquipes(dadosChamadosQualidade.chamados)
+      setDadosChamadosQualidade(d => d && ({ ...d, porEquipe }))
+    } finally {
+      setRecalculandoEquipes(false)
+    }
+  }
 
   // ---- KPIs recalculados ao vivo a partir dos dados (ja editados/filtrados) ----
   const chamadosAtual = dadosChamadosQualidade?.chamados ?? []
@@ -462,6 +480,88 @@ export function ReportsView() {
                     <p className="text-[11px] text-tema-apagado">Abertos</p>
                     <p className="text-xl font-bold text-tema-suave">{kpisChamados.abertos}</p>
                   </div>
+                </div>
+
+                {/* Desempenho por equipe (editavel, vai para o PDF) */}
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <p className="text-xs font-semibold text-tema-suave">
+                      Desempenho por Equipe{equipeId ? '' : ' - todas as equipes'}
+                    </p>
+                    <button
+                      onClick={recalcularEquipes}
+                      disabled={recalculandoEquipes}
+                      className="text-xs text-tema-suave hover:text-tema-tinta inline-flex items-center gap-1 disabled:opacity-50"
+                      title="Refaz o quadro a partir da lista de chamados abaixo (descarta as correcoes feitas no quadro)"
+                    >
+                      {recalculandoEquipes ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Recalcular
+                    </button>
+                  </div>
+                  {dadosChamadosQualidade.porEquipe.length === 0 ? (
+                    <p className="text-xs text-tema-apagado">Nenhum chamado no periodo.</p>
+                  ) : (
+                    <div className="overflow-x-auto border border-tema-linha rounded-lg">
+                      <table className="w-full text-xs tabular-nums">
+                        <thead>
+                          <tr className="text-tema-apagado border-b border-tema-linha bg-tema-contraste/[0.02]">
+                            <th className="text-left font-medium py-2 px-2">Equipe</th>
+                            <th className="text-right font-medium py-2 px-2">Chamados</th>
+                            <th className="text-right font-medium py-2 px-2">Finalizados</th>
+                            <th className="text-right font-medium py-2 px-2">Instalacoes</th>
+                            <th className="text-right font-medium py-2 px-2" title="Chamados reincidentes (ate 7 dias) gerados por um atendimento anterior desta equipe">Rechamados</th>
+                            <th className="text-right font-medium py-2 px-2" title="% dentro do SLA de resposta (inicio do atendimento)">SLA resp. %</th>
+                            <th className="text-right font-medium py-2 px-2" title="% dentro do SLA de resolucao">SLA resol. %</th>
+                            <th className="w-6"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dadosChamadosQualidade.porEquipe.map((l, i) => {
+                            const mudar = (campos: Partial<LinhaEquipe>) =>
+                              setDadosChamadosQualidade(d => d && ({ ...d, porEquipe: atualizarItem(d.porEquipe, i, campos) }))
+                            return (
+                              <tr key={l.equipe + i} className="border-b border-tema-linha last:border-b-0">
+                                <td className="py-1 px-2 min-w-[140px]">
+                                  <CampoTexto value={l.equipe} onChange={v => mudar({ equipe: v })} className="text-tema-tinta font-medium" />
+                                </td>
+                                <td className="py-1 px-2"><CampoNumero value={l.chamados} onChange={v => mudar({ chamados: v })} className="text-right text-tema-tinta w-16 ml-auto block" /></td>
+                                <td className="py-1 px-2"><CampoNumero value={l.finalizados} onChange={v => mudar({ finalizados: v })} className="text-right text-tema-texto w-16 ml-auto block" /></td>
+                                <td className="py-1 px-2"><CampoNumero value={l.instalacoes} onChange={v => mudar({ instalacoes: v })} className="text-right text-tema-texto w-16 ml-auto block" /></td>
+                                <td className="py-1 px-2"><CampoNumero value={l.rechamados} onChange={v => mudar({ rechamados: v })} className={cn('text-right w-16 ml-auto block', l.rechamados > 0 ? 'text-orange-700 font-semibold' : 'text-tema-texto')} /></td>
+                                <td className="py-1 px-2"><CampoPercentual value={l.slaResposta} onChange={v => mudar({ slaResposta: v })} className="text-right text-tema-texto w-16 ml-auto block" /></td>
+                                <td className="py-1 px-2"><CampoPercentual value={l.slaResolucao} onChange={v => mudar({ slaResolucao: v })} className="text-right text-tema-texto w-16 ml-auto block" /></td>
+                                <td className="py-1 pr-2">
+                                  <BotaoRemoverLinha onClick={() => setDadosChamadosQualidade(d => d && ({ ...d, porEquipe: removerItem(d.porEquipe, i) }))} />
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                        {(() => {
+                          const t = totalDesempenho(dadosChamadosQualidade.porEquipe)
+                          return (
+                            <tfoot>
+                              <tr className="border-t border-tema-linha-forte bg-tema-contraste/[0.02] font-semibold text-tema-tinta">
+                                <td className="py-2 px-2">Total</td>
+                                <td className="py-2 px-2 text-right">{t.chamados}</td>
+                                <td className="py-2 px-2 text-right">{t.finalizados}</td>
+                                <td className="py-2 px-2 text-right">{t.instalacoes}</td>
+                                <td className="py-2 px-2 text-right">{t.rechamados}</td>
+                                <td className="py-2 px-2 text-right">{t.slaResposta ?? '-'}</td>
+                                <td className="py-2 px-2 text-right">{t.slaResolucao ?? '-'}</td>
+                                <td></td>
+                              </tr>
+                            </tfoot>
+                          )
+                        })()}
+                      </table>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-tema-apagado mt-1.5">
+                    Rechamado conta para a equipe do atendimento anterior. Instalacoes = finalizadas. Corrija qualquer valor antes de gerar o PDF (nao altera os chamados).
+                    {dadosChamadosQualidade.totalNoPeriodo > chamadosAtual.length && (
+                      <span className="block text-orange-700">Atencao: o periodo tem {dadosChamadosQualidade.totalNoPeriodo} chamados e so os {chamadosAtual.length} mais recentes foram carregados.</span>
+                    )}
+                  </p>
                 </div>
 
                 <div>

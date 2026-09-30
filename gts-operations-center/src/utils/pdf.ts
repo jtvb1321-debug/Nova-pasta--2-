@@ -133,7 +133,10 @@ const CORES_TOKEN: Record<string, [number, number, number]> = {
 // =============================================
 // Chamados e Qualidade/SLA saem juntos no mesmo PDF (mesmo periodo mensal) -
 // evita gerar dois arquivos separados para uma conferencia que sempre anda junta.
-export function gerarPDFChamadosQualidade(chamados: any[], qualidade: any, filtros: { periodo: string; equipe?: string }) {
+export function gerarPDFChamadosQualidade(
+  chamados: any[], qualidade: any, filtros: { periodo: string; equipe?: string },
+  porEquipe: { equipe: string; chamados: number; finalizados: number; instalacoes: number; rechamados: number; slaResposta: number | null; slaResolucao: number | null; medidosResposta: number; medidosResolucao: number }[] = [],
+) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const width = doc.internal.pageSize.getWidth()
 
@@ -151,6 +154,36 @@ export function gerarPDFChamadosQualidade(chamados: any[], qualidade: any, filtr
   kpiBox(doc, 'Em Andamento',      String(andamento),   12 + (boxW+3)*2, y, boxW, CORES.amarelo)
   kpiBox(doc, 'Abertos',           String(abertos),     12 + (boxW+3)*3, y, boxW, CORES.cinza)
   y += 28
+
+  // Desempenho por equipe (valores da revisao, ja corrigidos na tela)
+  if (porEquipe.length > 0) {
+    y = secao(doc, 'Desempenho por Equipe', y)
+    const pct = (v: number | null) => (v == null ? '-' : `${v}%`)
+    const soma = (k: 'chamados' | 'finalizados' | 'instalacoes' | 'rechamados') => porEquipe.reduce((s, l) => s + (Number(l[k]) || 0), 0)
+    const ponderado = (k: 'slaResposta' | 'slaResolucao', peso: 'medidosResposta' | 'medidosResolucao') => {
+      const linhas = porEquipe.filter(l => l[k] != null && l[peso] > 0)
+      const pesos = linhas.reduce((s, l) => s + l[peso], 0)
+      return pesos > 0 ? Math.round((linhas.reduce((s, l) => s + (l[k] as number) * l[peso], 0) / pesos) * 10) / 10 : null
+    }
+    autoTable(doc, {
+      startY: y,
+      margin: { left: 12, right: 12 },
+      head: [['Equipe', 'Chamados', 'Finalizados', 'Instalacoes', 'Rechamados', 'SLA resposta', 'SLA resolucao']],
+      body: porEquipe.map(l => [l.equipe, l.chamados, l.finalizados, l.instalacoes, l.rechamados, pct(l.slaResposta), pct(l.slaResolucao)]),
+      foot: [['Total', soma('chamados'), soma('finalizados'), soma('instalacoes'), soma('rechamados'), pct(ponderado('slaResposta', 'medidosResposta')), pct(ponderado('slaResolucao', 'medidosResolucao'))]],
+      headStyles: { fillColor: CORES.dark, textColor: CORES.branco, fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8, textColor: CORES.dark },
+      footStyles: { fillColor: [229, 231, 235], textColor: CORES.dark, fontSize: 8, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: CORES.fundo },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...CORES.cinza)
+    doc.text('Rechamado: chamado reincidente (ate 7 dias) atribuido a equipe do atendimento anterior. Instalacoes: finalizadas no periodo.', 12, y - 3)
+    y += 4
+  }
 
   y = secao(doc, 'Detalhamento dos Chamados', y)
 
