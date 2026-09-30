@@ -1,15 +1,8 @@
 import { prisma } from './prisma'
+import { META_SLA_RESPOSTA_MINUTOS, META_SLA_RESOLUCAO_MINUTOS } from './slaMetas'
 
-// Metas de SLA em minutos. Ajuste aqui quando tiver os prazos reais da GTS.
-export const META_SLA_RESPOSTA_MINUTOS = 2 * 60 // 2h para iniciar o atendimento
-
-export const META_SLA_RESOLUCAO_MINUTOS: Record<string, number> = {
-  SUPORTE: 24 * 60,
-  MANUTENCAO: 24 * 60,
-  INSTALACAO: 48 * 60,
-  RETIRADA: 48 * 60,
-  ROMPIMENTO_MASSIVO: 24 * 60,
-}
+// Metas de SLA: ficam em ./slaMetas (sem banco) para as telas tambem usarem.
+export { META_SLA_RESPOSTA_MINUTOS, META_SLA_RESOLUCAO_MINUTOS }
 
 // Janela de reincidencia: chamado novo aberto em ate 7 dias apos a
 // FINALIZACAO de um chamado anterior do mesmo cliente conta como reincidente.

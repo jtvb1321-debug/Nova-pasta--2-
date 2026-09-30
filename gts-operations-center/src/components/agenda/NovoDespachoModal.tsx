@@ -5,14 +5,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import {
-  X, Loader2, Package, Trash2, FileText,
-  CheckCircle, MapPin, Phone, AlertTriangle,
-  Clock, Users, Zap, Search, WifiOff, GraduationCap, Hash, Link2,
-} from 'lucide-react'
+import { X, Loader2, Trash2, CheckCircle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { TIPO_CHAMADO_LABELS } from '@/types'
-import { cn } from '@/lib/utils'
+import { cn, formatDateTime } from '@/lib/utils'
+import { META_SLA_RESPOSTA_MINUTOS, META_SLA_RESOLUCAO_MINUTOS } from '@/lib/slaMetas'
+
+// Nova Ordem de Servico (Central de Chamados -> Novo Despacho).
+// Duas modalidades no mesmo fluxo de despacho/equipe/status/Telegram:
+// GTS NET (cliente do provedor, com busca no IXC) e EACE (escola do contrato,
+// marcada com eace = true e com os campos proprios da escola).
 
 const schema = z.object({
   eace: z.boolean().optional(),
@@ -31,6 +33,9 @@ const schema = z.object({
   escolaResponsavel: z.string().optional(),
   escolaCodigoInep: z.string().optional(),
   localizacaoLink: z.string().optional(),
+  // So na tela: vao para o texto do chamado (observacao) que a equipe recebe.
+  referenciaEace: z.string().optional(),
+  falha: z.string().optional(),
   tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
   prioridade: z.enum(['NORMAL', 'URGENTE', 'CRITICO']),
   equipeId: z.string().min(1, 'Selecione uma equipe'),
@@ -55,10 +60,48 @@ interface Props {
   initialData?: Partial<FormData>
 }
 
+// Cores sutis: so um ponto e o texto; fundo apenas na opcao escolhida.
 const PRIORIDADE_CONFIG = {
-  NORMAL:  { label: 'Normal',  cor: 'text-blue-700 border-blue-500/30 bg-blue-500/10' },
-  URGENTE: { label: 'Urgente', cor: 'text-amber-700 border-amber-500/30 bg-amber-500/10' },
-  CRITICO: { label: 'Critico', cor: 'text-red-700 border-red-500/30 bg-red-500/10' },
+  NORMAL:  { label: 'Normal',  ponto: 'bg-blue-500',  ativo: 'border-blue-500/50 bg-blue-500/[0.06] text-blue-700' },
+  URGENTE: { label: 'Urgente', ponto: 'bg-amber-500', ativo: 'border-amber-500/50 bg-amber-500/[0.06] text-amber-700' },
+  CRITICO: { label: 'Critico', ponto: 'bg-red-500',   ativo: 'border-red-500/50 bg-red-500/[0.06] text-red-700' },
+}
+
+const SUBCATEGORIAS: Partial<Record<FormData['tipo'], string[]>> = {
+  MANUTENCAO: ['Lentidao', 'Oscilacao', 'Problemas de conexao'],
+  SUPORTE: ['LOSS - Perda de Sinal', 'Equipamento com defeito'],
+}
+
+const horas = (min: number) => `${Math.round(min / 60)}h`
+
+function Secao({ numero, titulo, children }: { numero: string; titulo: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-tema-apagado">
+        <span className="font-mono text-tema-suave">{numero}</span>
+        <span>{titulo}</span>
+        <span className="flex-1 h-px bg-tema-linha" aria-hidden />
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">{children}</div>
+    </section>
+  )
+}
+
+function Campo({ rotulo, erro, className, children }: { rotulo: string; erro?: string; className?: string; children: React.ReactNode }) {
+  return (
+    <label className={cn('block min-w-0', className)}>
+      <span className="block text-xs font-medium text-tema-suave mb-1">{rotulo}</span>
+      {children}
+      {erro && <span className="block text-[11px] text-red-700 mt-1">{erro}</span>}
+    </label>
+  )
+}
+
+// Informacao gerada pelo sistema (nao editavel), com a mesma altura de um campo.
+function Leitura({ children, fraco }: { children: React.ReactNode; fraco?: boolean }) {
+  return (
+    <div className={cn('gts-input bg-tema-contraste/[0.03] truncate', fraco && 'text-tema-apagado')}>{children}</div>
+  )
 }
 
 export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
@@ -70,6 +113,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   // parte pois nao e um campo do formulario, so acompanha o despacho pra
   // permitir cruzar o chamado com o cadastro depois (plano, diagnostico etc).
   const [clienteIdSelecionado, setClienteIdSelecionado] = useState<string | null>(null)
+  const [abertura] = useState(() => new Date())
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -77,7 +121,9 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
   })
 
   const prioridade = watch('prioridade')
-  const eace = watch('eace')
+  const eace = !!watch('eace')
+  const tipo = watch('tipo')
+  const equipeId = watch('equipeId')
   const agora = new Date()
   const horaAtual = agora.getHours()
   const ehPlantaoPosHorario = horaAtual >= 18
@@ -93,6 +139,11 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
     const t = setTimeout(() => setBuscaCliente((clienteDigitado || '').trim()), 350)
     return () => clearTimeout(t)
   }, [clienteDigitado])
+
+  // Subcategoria so vale para manutencao/suporte.
+  useEffect(() => {
+    if (!SUBCATEGORIAS[tipo]) setValue('subCategoria', undefined)
+  }, [tipo, setValue])
 
   const {
     data: sugestoesClientes = [],
@@ -130,6 +181,14 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
     setMostrarSugestoes(false)
   }
 
+  // Trocar de aba troca a modalidade; o vinculo com o cadastro do IXC so vale
+  // para GTS NET.
+  function escolherModalidade(ehEace: boolean) {
+    if (ehEace === eace) return
+    setValue('eace', ehEace)
+    if (ehEace) { setClienteVinculado(false); setClienteIdSelecionado(null); setMostrarSugestoes(false) }
+  }
+
   const { data: equipes = [] } = useQuery({
     queryKey: ['teams-despacho'],
     queryFn: async () => {
@@ -148,19 +207,28 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
+      const { referenciaEace, falha, ...resto } = data
+      // EACE: referencia, falha e observacoes seguem juntas no texto do chamado.
+      const observacao = data.eace
+        ? [
+            referenciaEace?.trim() && `Ref. EACE: ${referenciaEace.trim()}`,
+            falha?.trim() && `Falha: ${falha.trim()}`,
+            data.observacao?.trim() && `Obs.: ${data.observacao.trim()}`,
+          ].filter(Boolean).join('\n')
+        : data.observacao
       const res = await fetch('/api/agenda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, materiais, clienteId: clienteIdSelecionado ?? undefined }),
+        body: JSON.stringify({ ...resto, observacao, materiais, clienteId: data.eace ? undefined : clienteIdSelecionado ?? undefined }),
       })
-      if (!res.ok) throw new Error('Erro ao despachar chamado')
+      if (!res.ok) throw new Error('Erro ao abrir a O.S.')
       return res.json()
     },
     onSuccess: () => {
-      toast({ title: 'Chamado despachado com sucesso!', variant: 'success' })
+      toast({ title: 'O.S. aberta e enviada para a equipe', variant: 'success' })
       onSuccess()
     },
-    onError: () => toast({ title: 'Erro ao despachar chamado', variant: 'destructive' }),
+    onError: () => toast({ title: 'Nao foi possivel abrir a O.S.', variant: 'destructive' }),
   })
 
   function adicionarMaterial(itemId: string) {
@@ -184,515 +252,359 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
 
   const equipesDisponiveis = equipes.filter((e: any) => e.status === 'AGUARDANDO')
   const equipesOcupadas = equipes.filter((e: any) => e.status !== 'AGUARDANDO')
+  const equipeEscolhida = equipes.find((e: any) => e.id === equipeId)
+  const veiculo = equipeEscolhida?.veiculo
+  const slaResolucao = META_SLA_RESOLUCAO_MINUTOS[tipo] ?? META_SLA_RESOLUCAO_MINUTOS.SUPORTE
+
+  // ---------------------------------------------------------------- campos compartilhados
+  const campoPrioridade = (
+    <div className={cn('col-span-2 min-w-0', eace && 'md:col-span-1')}>
+      <span className="block text-xs font-medium text-tema-suave mb-1">Prioridade</span>
+      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Prioridade">
+        {(['NORMAL', 'URGENTE', 'CRITICO'] as const).map(p => (
+          <label key={p} className="cursor-pointer">
+            <input {...register('prioridade')} type="radio" value={p} className="sr-only peer" />
+            <span className={cn(
+              'flex items-center justify-center gap-1.5 h-[38px] text-xs font-medium border rounded-lg transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-orange-500/40',
+              prioridade === p ? PRIORIDADE_CONFIG[p].ativo : 'border-tema-linha-forte text-tema-suave hover:text-tema-tinta',
+            )}>
+              <span className={cn('w-1.5 h-1.5 rounded-full', PRIORIDADE_CONFIG[p].ponto)} aria-hidden />
+              {PRIORIDADE_CONFIG[p].label}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  )
+
+  const camposEndereco = (
+    <>
+      <Campo rotulo="CEP *" erro={errors.cep?.message}>
+        <input {...register('cep')} placeholder="00000-000" className="w-full gts-input" />
+      </Campo>
+      <Campo rotulo="Endereco *" erro={errors.endereco?.message} className="col-span-2">
+        <input {...register('endereco')} placeholder="Rua, avenida..." className="w-full gts-input" />
+      </Campo>
+      <Campo rotulo="Numero *" erro={errors.numero?.message}>
+        <input {...register('numero')} placeholder="N." className="w-full gts-input" />
+      </Campo>
+      <Campo rotulo="Bairro *" erro={errors.bairro?.message}>
+        <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
+      </Campo>
+      <Campo rotulo="Complemento">
+        <input {...register('complemento')} placeholder="Complemento" className="w-full gts-input" />
+      </Campo>
+    </>
+  )
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-tema-superficie border border-tema-linha rounded-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-tema-superficie border border-tema-linha rounded-xl w-full max-w-4xl max-h-[95vh] flex flex-col">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-tema-linha sticky top-0 bg-tema-superficie z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center">
-              {eace
-                ? <GraduationCap className="w-4 h-4 text-orange-600" />
-                : <Zap className="w-4 h-4 text-orange-600" />
-              }
-            </div>
+        {/* Cabecalho + abas da modalidade */}
+        <div className="px-6 pt-4 border-b border-tema-linha flex-shrink-0">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-tema-tinta">{eace ? 'Novo Despacho EACE' : 'Novo Despacho NOC'}</h2>
-              <p className="text-xs text-tema-apagado">
-                {eace ? 'Chamado de escola - sera enviado diretamente para a equipe' : 'O chamado sera enviado diretamente para a equipe'}
-              </p>
+              <h2 className="text-base font-semibold text-tema-tinta">Nova Ordem de Servico</h2>
+              <p className="text-xs text-tema-apagado mt-0.5">A O.S. e enviada direto para a equipe escolhida.</p>
             </div>
+            <button onClick={onClose} className="text-tema-apagado hover:text-tema-tinta transition-colors p-1.5 -m-1.5 rounded-md" aria-label="Fechar">
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta transition-colors p-2 -m-2 rounded-lg hover:bg-tema-contraste/[0.04] flex-shrink-0">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex gap-6 mt-3" role="tablist" aria-label="Modalidade da O.S.">
+            {([[false, 'GTS NET'], [true, 'EACE']] as const).map(([ehEace, rotulo]) => (
+              <button
+                key={rotulo}
+                type="button"
+                role="tab"
+                aria-selected={eace === ehEace}
+                onClick={() => escolherModalidade(ehEace)}
+                className={cn(
+                  'pb-2.5 -mb-px text-sm font-medium border-b-2 transition-colors',
+                  eace === ehEace ? 'border-orange-600 text-tema-tinta' : 'border-transparent text-tema-apagado hover:text-tema-suave',
+                )}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
-          {/* Toggle EACE */}
-          <label className={cn(
-            'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-            eace ? 'border-orange-500/40 bg-orange-500/10' : 'border-tema-linha-forte bg-tema-contraste/[0.02] hover:border-orange-500/30'
-          )}>
-            <input {...register('eace')} type="checkbox" className="w-4 h-4 accent-orange-500" />
-            <GraduationCap className={cn('w-4 h-4 flex-shrink-0', eace ? 'text-orange-600' : 'text-tema-apagado')} />
-            <div>
-              <p className="text-sm font-medium text-tema-texto">Chamado EACE (escola)</p>
-              <p className="text-xs text-tema-apagado">Marque se este chamado e de uma escola do contrato EACE</p>
-            </div>
-          </label>
+            {/* 01 - Identificacao */}
+            <Secao numero="01" titulo="Identificacao do chamado">
+              <Campo rotulo="Numero da O.S.">
+                <Leitura fraco>Gerado ao abrir</Leitura>
+              </Campo>
+              {eace ? (
+                <Campo rotulo="Referencia EACE">
+                  <input {...register('referenciaEace')} placeholder="Protocolo / referencia" className="w-full gts-input" />
+                </Campo>
+              ) : (
+                <Campo rotulo="Data de abertura">
+                  <Leitura>{formatDateTime(abertura)}</Leitura>
+                </Campo>
+              )}
+              {campoPrioridade}
+              {eace && (
+                <Campo rotulo="Data de abertura">
+                  <Leitura>{formatDateTime(abertura)}</Leitura>
+                </Campo>
+              )}
+            </Secao>
 
-          {/* Prioridade */}
-          <div>
-            <label className="block text-sm font-medium text-tema-texto mb-2">Prioridade</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['NORMAL', 'URGENTE', 'CRITICO'] as const).map(p => (
-                <label key={p} className="cursor-pointer">
-                  <input {...register('prioridade')} type="radio" value={p} className="sr-only peer" />
-                  <div className={cn(
-                    'px-3 py-2 text-xs text-center font-bold border rounded-lg transition-all peer-checked:ring-1',
-                    PRIORIDADE_CONFIG[p].cor,
-                    prioridade === p ? 'ring-1' : 'opacity-50 hover:opacity-80'
-                  )}>
-                    {p === 'CRITICO' && <AlertTriangle className="w-3 h-3 inline mr-1" />}
-                    {PRIORIDADE_CONFIG[p].label}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Tipo */}
-          <div>
-            <label className="block text-sm font-medium text-tema-texto mb-2">Tipo de Atividade *</label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(tipo => (
-                <label key={tipo} className="cursor-pointer">
-                  <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
-                  <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha-forte rounded-lg
-                                  peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                  text-tema-suave hover:border-tema-apagado transition-colors">
-                    {TIPO_CHAMADO_LABELS[tipo]}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-          {(watch('tipo') === 'MANUTENCAO' || watch('tipo') === 'SUPORTE') && (
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-2">Detalhe da Solicitacao</label>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {(watch('tipo') === 'MANUTENCAO'
-                  ? ['Lentidao', 'Oscilacao', 'Problemas de conexao']
-                  : ['LOSS - Perda de Sinal', 'Equipamento com defeito']
-                ).map((opcao) => (
-                  <label key={opcao} className="cursor-pointer">
-                    <input {...register('subCategoria')} type="radio" value={opcao} className="sr-only peer" />
-                    <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha-forte rounded-lg
-                                    peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:text-orange-700
-                                    text-tema-suave hover:border-tema-apagado transition-colors">
-                      {opcao}
+            {/* 02 - Dados da escola (EACE) ou do cliente (GTS NET) */}
+            {eace ? (
+              <Secao numero="02" titulo="Dados da escola">
+                <Campo rotulo="Escola *" erro={errors.cliente?.message} className="col-span-2">
+                  <input {...clienteRegister} placeholder="Nome da escola" autoComplete="off" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="INEP">
+                  <input {...register('escolaCodigoInep')} placeholder="00000000" inputMode="numeric" className="w-full gts-input font-mono" />
+                </Campo>
+                <Campo rotulo="Cidade *" erro={errors.cidade?.message}>
+                  <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Responsavel" className="col-span-2">
+                  <input {...register('escolaResponsavel')} placeholder="Diretor(a) ou responsavel" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Tel. escola">
+                  <input {...register('telefone')} placeholder="(00) 00000-0000" inputMode="tel" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="UF">
+                  <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
+                </Campo>
+                {camposEndereco}
+                <Campo rotulo="Link do Google Maps" className="col-span-2 md:col-span-1">
+                  <input {...register('localizacaoLink')} placeholder="Cole o link" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Falha" className="col-span-2 md:col-span-4">
+                  <textarea {...register('falha')} rows={3} placeholder="Descreva a falha relatada pela escola: o que parou, desde quando, equipamentos, acesso ao local..." className="w-full gts-input resize-y" />
+                </Campo>
+              </Secao>
+            ) : (
+              <Secao numero="02" titulo="Dados do cliente">
+                <div className="relative col-span-2">
+                  <Campo rotulo="Cliente *" erro={errors.cliente?.message}>
+                    <div className="relative">
+                      <input
+                        {...clienteRegister}
+                        onChange={(e) => {
+                          clienteRegister.onChange(e)
+                          setClienteVinculado(false)
+                          setClienteIdSelecionado(null)
+                          setMostrarSugestoes(true)
+                        }}
+                        onFocus={() => setMostrarSugestoes(true)}
+                        onBlur={(e) => {
+                          clienteRegister.onBlur(e)
+                          setTimeout(() => setMostrarSugestoes(false), 150)
+                        }}
+                        placeholder="Nome, CPF/CNPJ ou telefone"
+                        autoComplete="off"
+                        className="w-full gts-input pr-8"
+                      />
+                      {buscandoClientes && <Loader2 className="w-3.5 h-3.5 text-tema-apagado animate-spin absolute right-3 top-1/2 -translate-y-1/2" />}
+                      {!buscandoClientes && clienteVinculado && <CheckCircle className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-1/2 -translate-y-1/2" />}
                     </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Cliente */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="relative">
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">
-                {eace
-                  ? <GraduationCap className="w-3.5 h-3.5 inline mr-1" />
-                  : <Phone className="w-3.5 h-3.5 inline mr-1" />
-                }
-                {eace ? 'Nome da Escola *' : 'Cliente *'}
-              </label>
-              <div className="relative">
-                <input
-                  {...clienteRegister}
-                  onChange={(e) => {
-                    clienteRegister.onChange(e)
-                    setClienteVinculado(false)
-                    setClienteIdSelecionado(null)
-                    setMostrarSugestoes(true)
-                  }}
-                  onFocus={() => setMostrarSugestoes(true)}
-                  onBlur={(e) => {
-                    clienteRegister.onBlur(e)
-                    setTimeout(() => setMostrarSugestoes(false), 150)
-                  }}
-                  placeholder={eace ? 'Nome da escola' : 'Nome, CPF/CNPJ ou telefone do cliente'}
-                  autoComplete="off"
-                  className="w-full gts-input pr-8"
-                />
-                {!eace && buscandoClientes && (
-                  <Loader2 className="w-3.5 h-3.5 text-tema-apagado animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
-                )}
-                {!eace && !buscandoClientes && clienteVinculado && (
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600 absolute right-3 top-1/2 -translate-y-1/2" />
-                )}
-              </div>
-              {errors.cliente && <p className="text-xs text-red-700 mt-1">{errors.cliente.message}</p>}
-
-              {!eace && clienteVinculado && !errors.cliente && (
-                <p className="text-xs text-emerald-700 mt-1 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Dados preenchidos a partir do cadastro do cliente
-                </p>
-              )}
-              {!eace && mostrarSugestoes && !clienteVinculado && erroBuscaClientes && (
-                <p className="text-xs text-amber-700 mt-1 flex items-center gap-1">
-                  <WifiOff className="w-3 h-3" /> Nao foi possivel buscar o cliente agora. Preencha os dados manualmente.
-                </p>
-              )}
-
-              {!eace && mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
-                <div
-                  onMouseDown={(e) => e.preventDefault()}
-                  className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-tema-superficie border border-tema-linha rounded-lg"
-                >
-                  {sugestoesClientes.slice(0, 8).map((c: any) => (
-                    <button
-                      type="button"
-                      key={c.id}
-                      onClick={() => selecionarClienteIxc(c)}
-                      className="w-full text-left px-3 py-2 hover:bg-tema-contraste/[0.03] transition-colors border-b border-tema-linha last:border-b-0 flex items-center gap-2"
+                  </Campo>
+                  {clienteVinculado && !errors.cliente && (
+                    <p className="text-[11px] text-emerald-700 mt-1">Dados preenchidos a partir do cadastro do IXC</p>
+                  )}
+                  {mostrarSugestoes && !clienteVinculado && erroBuscaClientes && (
+                    <p className="text-[11px] text-amber-700 mt-1">Busca no IXC indisponivel agora. Preencha os dados manualmente.</p>
+                  )}
+                  {mostrarSugestoes && !clienteVinculado && sugestoesClientes.length > 0 && (
+                    <div
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-tema-superficie border border-tema-linha rounded-lg"
                     >
-                      <Search className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm text-tema-tinta truncate">{c.nome}</p>
-                        <p className="text-xs text-tema-apagado truncate">
-                          {[c.cpfCnpj, c.telefone, c.cidade].filter(Boolean).join(' - ') || 'Sem dados adicionais'}
-                        </p>
-                      </div>
+                      {sugestoesClientes.slice(0, 8).map((c: any) => (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onClick={() => selecionarClienteIxc(c)}
+                          className="w-full text-left px-3 py-2 hover:bg-tema-contraste/[0.03] transition-colors border-b border-tema-linha last:border-b-0"
+                        >
+                          <p className="text-sm text-tema-tinta truncate">{c.nome}</p>
+                          <p className="text-xs text-tema-apagado truncate">
+                            {[c.cpfCnpj, c.telefone, c.cidade].filter(Boolean).join(' - ') || 'Sem dados adicionais'}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Campo rotulo="Telefone">
+                  <input {...register('telefone')} placeholder="(00) 00000-0000" inputMode="tel" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Cidade *" erro={errors.cidade?.message}>
+                  <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
+                </Campo>
+                {camposEndereco}
+                <Campo rotulo="UF">
+                  <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
+                </Campo>
+                <Campo rotulo="Condominio" className="col-span-2">
+                  <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Bloco">
+                  <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
+                </Campo>
+                <Campo rotulo="Apartamento">
+                  <input {...register('apartamento')} placeholder="Apto" className="w-full gts-input" />
+                </Campo>
+              </Secao>
+            )}
+
+            {/* 03 - Despacho operacional */}
+            <Secao numero="03" titulo="Despacho operacional">
+              <Campo rotulo="Tipo de atividade *">
+                <select {...register('tipo')} className="w-full gts-input">
+                  {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(t => (
+                    <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
+                  ))}
+                </select>
+              </Campo>
+              {SUBCATEGORIAS[tipo] ? (
+                <Campo rotulo="Detalhe">
+                  <select {...register('subCategoria')} className="w-full gts-input">
+                    <option value="">Selecionar...</option>
+                    {SUBCATEGORIAS[tipo]!.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </Campo>
+              ) : (
+                <div className="hidden md:block" aria-hidden />
+              )}
+              <Campo rotulo="Data">
+                <input {...register('dataAgendada')} type="date" className="w-full gts-input" />
+              </Campo>
+              <Campo rotulo="Horario">
+                <input {...register('horaAgendada')} type="time" className="w-full gts-input" />
+              </Campo>
+
+              <Campo rotulo="Equipe responsavel *" erro={errors.equipeId?.message} className="col-span-2">
+                <select {...register('equipeId')} className="w-full gts-input">
+                  <option value="">Selecionar equipe...</option>
+                  {equipesDisponiveis.length > 0 && (
+                    <optgroup label="Disponiveis">
+                      {equipesDisponiveis.map((e: any) => (
+                        <option key={e.id} value={e.id}>
+                          {e.nome}{e.funcionarios?.length ? ` - ${e.funcionarios.map((f: any) => f.nome).join(', ')}` : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {equipesOcupadas.length > 0 && (
+                    <optgroup label="Em atividade (podem receber chamado)">
+                      {equipesOcupadas.map((e: any) => (
+                        <option key={e.id} value={e.id}>{e.nome} - {e.status}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </Campo>
+              <Campo rotulo="Veiculo">
+                <Leitura fraco={!veiculo}>
+                  {!equipeEscolhida ? 'Conforme a equipe' : veiculo ? `${veiculo.placa} - ${veiculo.modelo}` : 'Sem veiculo vinculado'}
+                </Leitura>
+              </Campo>
+              <Campo rotulo="SLA">
+                <Leitura>
+                  Inicio {horas(META_SLA_RESPOSTA_MINUTOS)} <span className="text-tema-apagado">/</span> resolucao {horas(slaResolucao)}
+                </Leitura>
+              </Campo>
+
+              {(ehPlantaoPosHorario || ehPlantaoAlmoco) && !watch('dataAgendada') && (
+                <p className="col-span-2 md:col-span-4 text-xs text-tema-suave border-l-2 border-orange-500 pl-3 py-1">
+                  {ehPlantaoPosHorario
+                    ? <>Passou das 18h: sem data definida, a O.S. sera <strong className="text-tema-tinta">agendada para {textoProximoDiaUtil} as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.</>
+                    : <>Plantao do almoco (12h-14h): sem data definida, a O.S. sera <strong className="text-tema-tinta">agendada para hoje as 14h</strong>, quando a equipe volta.</>}
+                </p>
+              )}
+
+              <Campo rotulo={eace ? 'Observacoes' : 'Solicitacao / observacoes'} className="col-span-2 md:col-span-4">
+                <textarea
+                  {...register('observacao')}
+                  rows={3}
+                  placeholder={eace
+                    ? 'Orientacoes para a equipe: acesso, contato no local, horario da escola...'
+                    : 'Atividade a realizar, problema relatado, equipamentos, acesso ao local...'}
+                  className="w-full gts-input resize-y"
+                />
+              </Campo>
+            </Secao>
+
+            {/* 04 - Materiais e anexo */}
+            <Secao numero="04" titulo="Materiais e anexo">
+              <Campo rotulo="Adicionar material" className="col-span-2">
+                <select
+                  className="w-full gts-input"
+                  onChange={e => { if (e.target.value) adicionarMaterial(e.target.value) }}
+                  value=""
+                >
+                  <option value="">Selecionar item do estoque...</option>
+                  {estoque?.data?.map((item: any) => (
+                    <option key={item.id} value={item.id}>
+                      [{item.codigo}] {item.descricao} - {item.quantidadeAtual} {item.unidade}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <div className="col-span-2 min-w-0">
+                <span className="block text-xs font-medium text-tema-suave mb-1">Ordem de servico (PDF)</span>
+                <div className="flex items-center gap-2">
+                  <input type="file" accept=".pdf,application/pdf" onChange={e => setArquivoPDF(e.target.files?.[0] || null)} className="hidden" id="os-despacho" />
+                  <label htmlFor="os-despacho" className="gts-btn-secondary cursor-pointer flex-shrink-0 py-2">Anexar PDF</label>
+                  <span className={cn('text-xs truncate', arquivoPDF ? 'text-tema-tinta' : 'text-tema-apagado')}>
+                    {arquivoPDF ? `${arquivoPDF.name} (${(arquivoPDF.size / 1024).toFixed(0)} KB)` : 'Nenhum arquivo'}
+                  </span>
+                  {arquivoPDF && (
+                    <button type="button" onClick={() => setArquivoPDF(null)} className="text-tema-apagado hover:text-red-700" aria-label="Remover anexo">
+                      <X className="w-4 h-4" />
                     </button>
+                  )}
+                </div>
+              </div>
+              {materiais.length > 0 && (
+                <div className="col-span-2 md:col-span-4 border border-tema-linha rounded-lg divide-y divide-tema-linha">
+                  {materiais.map(m => (
+                    <div key={m.itemId} className="flex items-center gap-3 px-3 py-2">
+                      <span className="flex-1 text-sm text-tema-texto truncate">{m.descricao}</span>
+                      <input
+                        type="number" min={0.01} step={0.01} value={m.quantidade}
+                        onChange={e => atualizarQtd(m.itemId, Number(e.target.value))}
+                        className="w-20 gts-input py-1 text-center text-sm"
+                        aria-label={`Quantidade de ${m.descricao}`}
+                      />
+                      <span className="text-xs text-tema-apagado w-8">{m.unidade}</span>
+                      <button type="button" onClick={() => removerMaterial(m.itemId)} className="text-tema-apagado hover:text-red-700" aria-label={`Remover ${m.descricao}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Telefone</label>
-              <input {...register('telefone')} placeholder="(00) 00000-0000" className="w-full gts-input" />
-            </div>
+            </Secao>
           </div>
 
-          {/* Condominio / Bloco / Apartamento - nao se aplica a escolas */}
-          {!eace && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5">Condominio</label>
-                <input {...register('condominio')} placeholder="Nome do condominio" className="w-full gts-input" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5">Bloco</label>
-                <input {...register('bloco')} placeholder="Bloco" className="w-full gts-input" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5">Apartamento</label>
-                <input {...register('apartamento')} placeholder="Apartamento" className="w-full gts-input" />
-              </div>
-            </div>
-          )}
-
-          {/* Dados da escola (apenas EACE) */}
-          {eace && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5">Responsavel pela Escola</label>
-                <input {...register('escolaResponsavel')} placeholder="Nome do responsavel/diretor(a)" className="w-full gts-input" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5">
-                  <Hash className="w-3.5 h-3.5 inline mr-1" />
-                  Codigo INEP
-                </label>
-                <input {...register('escolaCodigoInep')} placeholder="00000000" className="w-full gts-input" />
-              </div>
-            </div>
-          )}
-
-          {/* CEP / Endereco / Numero */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">CEP *</label>
-              <input {...register('cep')} placeholder="00000-000" className="w-full gts-input" />
-              {errors.cep && <p className="text-xs text-red-700 mt-1">{errors.cep.message}</p>}
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">
-                <MapPin className="w-3.5 h-3.5 inline mr-1" />
-                Endereco *
-              </label>
-              <input {...register('endereco')} placeholder="Rua, avenida..." className="w-full gts-input" />
-              {errors.endereco && <p className="text-xs text-red-700 mt-1">{errors.endereco.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Numero *</label>
-              <input {...register('numero')} placeholder="Numero" className="w-full gts-input" />
-              {errors.numero && <p className="text-xs text-red-700 mt-1">{errors.numero.message}</p>}
-            </div>
-          </div>
-
-          {/* Complemento / Bairro */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Complemento</label>
-              <input {...register('complemento')} placeholder="Complemento" className="w-full gts-input" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Bairro *</label>
-              <input {...register('bairro')} placeholder="Bairro" className="w-full gts-input" />
-              {errors.bairro && <p className="text-xs text-red-700 mt-1">{errors.bairro.message}</p>}
-            </div>
-          </div>
-
-          {/* Cidade / UF */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Cidade *</label>
-              <input {...register('cidade')} placeholder="Cidade" className="w-full gts-input" />
-              {errors.cidade && <p className="text-xs text-red-700 mt-1">{errors.cidade.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">UF</label>
-              <input {...register('uf')} placeholder="UF" maxLength={2} className="w-full gts-input uppercase" />
-            </div>
-          </div>
-
-          {/* Localizacao (apenas EACE) */}
-          {eace && (
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">
-                <Link2 className="w-3.5 h-3.5 inline mr-1" />
-                Link do Google Maps
-              </label>
-              <input {...register('localizacaoLink')} placeholder="Cole aqui o link compartilhado do Google Maps" className="w-full gts-input" />
-              <p className="text-xs text-tema-apagado mt-1">As coordenadas sao extraidas automaticamente do link, quando possivel.</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">
-                <Clock className="w-3.5 h-3.5 inline mr-1" />
-                Data Agendada
-              </label>
-              <input {...register('dataAgendada')} type="date" className="w-full gts-input" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-tema-texto mb-1.5">Hora</label>
-              <input {...register('horaAgendada')} type="time" className="w-full gts-input" />
-            </div>
-          </div>
-
-          {ehPlantaoPosHorario && !watch('dataAgendada') && (
-            <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/25 rounded-lg">
-              <Clock className="w-4 h-4 text-orange-600 flex-shrink-0" />
-              <p className="text-xs text-orange-800">
-                Ja passou das 18h: se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para {textoProximoDiaUtil} as 07:30</strong> e entra na agenda enviada ao Telegram ao fim do plantao.
-              </p>
-            </div>
-          )}
-
-          {ehPlantaoAlmoco && !watch('dataAgendada') && (
-            <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/25 rounded-lg">
-              <Clock className="w-4 h-4 text-orange-600 flex-shrink-0" />
-              <p className="text-xs text-orange-800">
-                Plantao do almoco (12h-14h): se voce nao definir uma data acima, este chamado sera <strong>agendado automaticamente para hoje as 14h</strong>, quando a equipe volta do almoco.
-              </p>
-            </div>
-          )}
-
-          {/* Equipe */}
-          <div>
-            <label className="block text-sm font-medium text-tema-texto mb-2">
-              <Users className="w-3.5 h-3.5 inline mr-1" />
-              Equipe Responsavel *
-            </label>
-            <select {...register('equipeId')} className="w-full gts-input">
-              <option value="">Selecionar equipe...</option>
-              {equipesDisponiveis.length > 0 && (
-                <optgroup label="Disponiveis">
-                  {equipesDisponiveis.map((e: any) => (
-                    <option key={e.id} value={e.id}>
-                      {e.nome} - {e.funcionarios?.map((f: any) => f.nome).join(', ')}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {equipesOcupadas.length > 0 && (
-                <optgroup label="Em Atividade (podem receber chamado)">
-                  {equipesOcupadas.map((e: any) => (
-                    <option key={e.id} value={e.id}>
-                      {e.nome} - {e.status}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
-            {errors.equipeId && <p className="text-xs text-red-700 mt-1">{errors.equipeId.message}</p>}
-
-            {/* Preview das equipes disponiveis */}
-            {equipesDisponiveis.length > 0 && (
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {equipesDisponiveis.map((e: any) => (
-                  <span key={e.id} className="text-xs px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 rounded-full">
-                    {e.nome} disponivel
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Observacao / Solicitacao */}
-          <div>
-            <label className="block text-sm font-medium text-tema-texto mb-1.5">
-              {eace ? 'Informacoes passadas pelo cliente' : 'Solicitacao / Observacoes *'}
-            </label>
-            <textarea
-              {...register('observacao')}
-              rows={4}
-              placeholder={eace
-                ? 'Descreva o que foi relatado pela escola: problema, acesso ao local, ponto de instalacao, etc...'
-                : 'Descreva detalhadamente a atividade a ser realizada, problema relatado, equipamentos envolvidos, acesso ao local, etc...'
-              }
-              className="w-full gts-input resize-none"
-            />
-          </div>
-
-          {/* Upload O.S PDF */}
-          <div>
-            <label className="block text-sm font-medium text-tema-texto mb-1.5">
-              <FileText className="w-3.5 h-3.5 inline mr-1" />
-              Ordem de Servico (PDF)
-            </label>
-            <input
-              type="file"
-              accept=".pdf,application/pdf"
-              onChange={e => setArquivoPDF(e.target.files?.[0] || null)}
-              className="hidden"
-              id="os-despacho"
-            />
-            <label
-              htmlFor="os-despacho"
-              className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg cursor-pointer transition-all',
-                arquivoPDF
-                  ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-tema-linha-forte bg-tema-contraste/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5'
-              )}
-            >
-              <div className={cn(
-                'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                arquivoPDF ? 'bg-emerald-500/15' : 'bg-red-500/10'
-              )}>
-                {arquivoPDF
-                  ? <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  : <FileText className="w-4 h-4 text-red-600" />
-                }
-              </div>
-              <div className="flex-1">
-                {arquivoPDF ? (
-                  <>
-                    <p className="text-sm text-emerald-700 font-medium">{arquivoPDF.name}</p>
-                    <p className="text-xs text-tema-apagado">{(arquivoPDF.size / 1024).toFixed(0)} KB</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm text-tema-texto">Clique para anexar a O.S</p>
-                    <p className="text-xs text-tema-apagado">O PDF sera enviado junto com o chamado para a equipe</p>
-                  </>
-                )}
-              </div>
-              {arquivoPDF && (
-                <button
-                  type="button"
-                  onClick={e => { e.preventDefault(); setArquivoPDF(null) }}
-                  className="text-tema-apagado hover:text-red-700 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </label>
-          </div>
-
-          {/* Materiais */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-tema-texto flex items-center gap-1.5">
-                <Package className="w-4 h-4" />
-                Materiais a Enviar com a Equipe
-              </label>
-              <select
-                className="gts-input py-1 text-xs w-auto"
-                onChange={e => { if (e.target.value) adicionarMaterial(e.target.value) }}
-                value=""
-              >
-                <option value="">+ Adicionar material</option>
-                {estoque?.data?.map((item: any) => (
-                  <option key={item.id} value={item.id}>
-                    [{item.codigo}] {item.descricao} - {item.quantidadeAtual} {item.unidade}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {materiais.length > 0 ? (
-              <div className="space-y-2">
-                {materiais.map(m => (
-                  <div key={m.itemId} className="flex items-center gap-3 p-2.5 bg-tema-contraste/[0.02] rounded-lg border border-tema-linha">
-                    <span className="flex-1 text-sm text-tema-texto truncate">{m.descricao}</span>
-                    <input
-                      type="number" min={0.01} step={0.01} value={m.quantidade}
-                      onChange={e => atualizarQtd(m.itemId, Number(e.target.value))}
-                      className="w-20 gts-input py-1 text-center text-sm"
-                    />
-                    <span className="text-xs text-tema-apagado w-8">{m.unidade}</span>
-                    <button
-                      type="button"
-                      onClick={() => removerMaterial(m.itemId)}
-                      className="text-tema-apagado hover:text-red-700 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-tema-apagado text-center py-3 border border-dashed border-tema-linha-forte rounded-lg">
-                Nenhum material selecionado
-              </p>
-            )}
-          </div>
-
-          {/* Resumo do despacho */}
-          <div className={cn(
-            'p-4 rounded-xl border',
-            prioridade === 'CRITICO' ? 'bg-red-500/5 border-red-500/25' :
-            prioridade === 'URGENTE' ? 'bg-amber-500/5 border-amber-500/25' :
-            'bg-blue-500/5 border-blue-500/25'
-          )}>
-            <p className={cn(
-              'text-xs font-bold mb-1',
-              prioridade === 'CRITICO' ? 'text-red-700' :
-              prioridade === 'URGENTE' ? 'text-amber-700' :
-              'text-blue-700'
-            )}>
-              {prioridade === 'CRITICO' ? 'Despacho Critico' :
-               prioridade === 'URGENTE' ? 'Despacho Urgente' :
-               'Despacho Normal'}
+          {/* Rodape fixo */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-6 py-3 border-t border-tema-linha flex-shrink-0">
+            <p className="flex-1 text-xs text-tema-apagado">
+              <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle', PRIORIDADE_CONFIG[prioridade].ponto)} aria-hidden />
+              {eace ? 'EACE' : 'GTS NET'} - prioridade {PRIORIDADE_CONFIG[prioridade].label.toLowerCase()}.
+              {' '}A equipe passa para <span className="text-tema-suave">Em deslocamento</span>
+              {materiais.length > 0 && <> e {materiais.length} material(is) fica(m) reservado(s)</>}.
             </p>
-            <p className="text-xs text-tema-suave">
-              Ao confirmar, o chamado sera criado e a equipe selecionada mudara automaticamente para status
-              <span className="text-amber-700 font-medium"> Em Deslocamento</span>.
-              {arquivoPDF && <span className="text-emerald-700"> A O.S em PDF sera anexada.</span>}
-              {materiais.length > 0 && <span className="text-blue-700"> {materiais.length} material(is) sera(o) reservado(s).</span>}
-            </p>
-          </div>
-
-          {/* Botoes */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 gts-btn-secondary justify-center">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className={cn(
-                'flex-1 justify-center gts-btn-primary',
-                prioridade === 'CRITICO' && 'bg-red-600 hover:bg-red-500',
-                prioridade === 'URGENTE' && 'bg-amber-600 hover:bg-amber-500',
-              )}
-            >
-              {mutation.isPending
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Despachando...</>
-                : <><Zap className="w-4 h-4" /> Despachar para Equipe</>
-              }
-            </button>
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="gts-btn-secondary justify-center">Cancelar</button>
+              <button type="submit" disabled={mutation.isPending} className="gts-btn-primary justify-center min-w-[128px]">
+                {mutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Abrindo...</> : 'Abrir O.S.'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
