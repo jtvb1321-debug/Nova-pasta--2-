@@ -8,7 +8,8 @@ import {
   Waypoints, PanelRightClose, PanelRightOpen, ChevronRight, X, MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ATRIBUICAO_CARTO, CROSS_ORIGIN_CARTO, REFERRER_CARTO, obterChaveCarto, urlCarto } from '@/lib/basemap'
+import { ATRIBUICAO_CARTO, CROSS_ORIGIN_CARTO, REFERRER_CARTO, obterChaveCarto, obterChaveGoogle, urlCarto } from '@/lib/basemap'
+import { ATRIBUICAO_GOOGLE_PADRAO, REFERRER_GOOGLE, creditosGoogle, esquecerSessoesGoogle, sessaoGoogle, urlGoogle } from '@/lib/basemapGoogle'
 import { temaAtual, useTema } from '@/lib/tema'
 
 // Cor real da caixa de emenda, igual o tecnico ve em campo.
@@ -308,6 +309,19 @@ function distanciaAteTrechos(lat: number, lng: number, trechos: Trecho[]) {
   return menor
 }
 
+// Fundo do mapa: Google (mapa ou satelite) quando houver chave; CARTO ("Simples")
+// sempre como reserva. A escolha fica no navegador de cada pessoa.
+type Fundo = 'carto' | 'roadmap' | 'satellite'
+const CHAVE_FUNDO = 'gts-mapa-fundo'
+const ROTULO_FUNDO: Record<Fundo, string> = { roadmap: 'Mapa', satellite: 'Satelite', carto: 'Simples' }
+
+function lerFundoPreferido(): Fundo {
+  try {
+    const v = localStorage.getItem(CHAVE_FUNDO)
+    return v === 'carto' || v === 'satellite' || v === 'roadmap' ? v : 'roadmap'
+  } catch { return 'roadmap' }
+}
+
 interface ResultadosBusca {
   ctos: any[]
   ruas: RuaEncontrada[]
@@ -325,7 +339,12 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const camadasRef = useRef<any>({})
-  const fundoRef = useRef<{ camada: any; chave: string } | null>(null)
+  const fundoRef = useRef<{ camada: any; chaveCarto: string; chaveGoogle: string; tipo: Fundo; sessao?: string } | null>(null)
+  const trocaFundoRef = useRef(0)
+  const creditosRef = useRef<{ texto: string | null; timer: any }>({ texto: null, timer: null })
+  const [fundo, setFundo] = useState<Fundo>('carto')
+  const [googleDisponivel, setGoogleDisponivel] = useState(false)
+  const [avisoFundo, setAvisoFundo] = useState<string | null>(null)
   const tema = useTema()
   const [consulta, setConsulta] = useState<Consulta | null>(null)
   const consultaAtivaRef = useRef(false)
@@ -348,23 +367,18 @@ export function MapaInmapView({ telaCheia = false }: Props) {
       const L = await import('leaflet')
       ;(window as any).L = L
       await import('leaflet.markercluster')
-      const chaveCarto = await obterChaveCarto()
+      const [chaveCarto, chaveGoogle] = await Promise.all([obterChaveCarto(), obterChaveGoogle()])
 
       if (!mapRef.current || mapInstance.current) return
 
       const map = L.map(mapRef.current, { zoomControl: false }).setView([-5.0892, -42.8019], 12)
       L.control.zoom({ position: 'bottomright' }).addTo(map)
-      const fundo = L.tileLayer(urlCarto(temaAtual() === 'escuro' ? 'dark_all' : 'light_all', chaveCarto), {
-        attribution: ATRIBUICAO_CARTO,
-        referrerPolicy: REFERRER_CARTO,
-        crossOrigin: CROSS_ORIGIN_CARTO,
-        maxZoom: 19,
-        keepBuffer: 4, // mantem mais imagens em volta ao arrastar o mapa
-        className: 'gts-tiles-claro',
-      } as any).addTo(map)
-      fundoRef.current = { camada: fundo, chave: chaveCarto }
-
       mapInstance.current = map
+      fundoRef.current = { camada: null, chaveCarto, chaveGoogle, tipo: 'carto' }
+      setGoogleDisponivel(!!chaveGoogle)
+      // Sem chave do Google: CARTO, como antes.
+      montarFundo(chaveGoogle ? lerFundoPreferido() : 'carto')
+      map.on('moveend', agendarCreditosGoogle)
 
       // Com uma consulta de viabilidade aberta, clicar no mapa consulta o ponto
       // exato (cliques em caixas/cabos continuam abrindo o popup deles).
@@ -549,11 +563,112 @@ export function MapaInmapView({ telaCheia = false }: Props) {
     return () => { ativo = false }
   }, [])
 
-  // Fundo do mapa acompanha o tema claro/escuro.
+  // Fundo do mapa acompanha o tema claro/escuro (satelite nao muda).
   useEffect(() => {
     const f = fundoRef.current
-    if (f) f.camada.setUrl(urlCarto(tema === 'escuro' ? 'dark_all' : 'light_all', f.chave))
+    if (!f?.camada) return
+    if (f.tipo === 'carto') f.camada.setUrl(urlCarto(tema === 'escuro' ? 'dark_all' : 'light_all', f.chaveCarto))
+    else if (f.tipo === 'roadmap') montarFundo('roadmap')
   }, [tema])
+
+  useEffect(() => {
+    if (!avisoFundo) return
+    const t = setTimeout(() => setAvisoFundo(null), 10000)
+    return () => clearTimeout(t)
+  }, [avisoFundo])
+
+  function camadaCarto(L: any) {
+    return L.tileLayer(urlCarto(temaAtual() === 'escuro' ? 'dark_all' : 'light_all', fundoRef.current?.chaveCarto || ''), {
+      attribution: ATRIBUICAO_CARTO,
+      referrerPolicy: REFERRER_CARTO,
+      crossOrigin: CROSS_ORIGIN_CARTO,
+      maxZoom: 19,
+      keepBuffer: 4, // mantem mais imagens em volta ao arrastar o mapa
+      className: 'gts-tiles-claro',
+    } as any)
+  }
+
+  // Troca o fundo. Qualquer falha do Google (sem sessao, chave recusada, cota
+  // do dia estourada) cai na CARTO, para o mapa nunca ficar em branco.
+  async function montarFundo(pedido: Fundo) {
+    const map = mapInstance.current
+    const L = (window as any).L
+    const f = fundoRef.current
+    if (!map || !L || !f) return
+    const vez = ++trocaFundoRef.current
+
+    let tipo: Fundo = pedido
+    let camada: any = null
+    let sessao: string | undefined
+    if (pedido !== 'carto' && f.chaveGoogle) {
+      const s = await sessaoGoogle(f.chaveGoogle, pedido, temaAtual() === 'escuro')
+      if (vez !== trocaFundoRef.current) return // outra troca comecou depois desta
+      if (s) {
+        sessao = s
+        camada = L.tileLayer(urlGoogle(s, f.chaveGoogle), {
+          attribution: ATRIBUICAO_GOOGLE_PADRAO,
+          referrerPolicy: REFERRER_GOOGLE,
+          maxZoom: 20,
+          keepBuffer: 2,
+        } as any)
+        vigiarFalhasGoogle(camada)
+      } else {
+        setAvisoFundo('O mapa do Google nao respondeu. Usando o mapa simples.')
+      }
+    }
+    if (!camada) { tipo = 'carto'; camada = camadaCarto(L) }
+
+    if (f.camada) map.removeLayer(f.camada)
+    camada.addTo(map)
+    camada.bringToBack()
+    fundoRef.current = { ...f, camada, tipo, sessao }
+    setFundo(tipo)
+    trocarCreditos(null)
+    if (tipo !== 'carto') agendarCreditosGoogle()
+  }
+
+  function escolherFundo(tipo: Fundo) {
+    try { localStorage.setItem(CHAVE_FUNDO, tipo) } catch {}
+    setAvisoFundo(null)
+    montarFundo(tipo)
+  }
+
+  // Varias imagens com erro e nenhuma carregada: chave recusada ou cota do dia.
+  function vigiarFalhasGoogle(camada: any) {
+    let carregadas = 0, erros = 0
+    camada.on('tileload', () => { carregadas++ })
+    camada.on('tileerror', () => {
+      erros++
+      if (erros >= 4 && carregadas === 0 && fundoRef.current?.camada === camada) {
+        esquecerSessoesGoogle()
+        setAvisoFundo('O mapa do Google nao carregou (chave ou limite do dia). Voltei para o mapa simples.')
+        montarFundo('carto')
+      }
+    })
+  }
+
+  // Creditos do Google da area visivel, obrigatorios junto da marca "Google Maps".
+  function trocarCreditos(texto: string | null) {
+    const map = mapInstance.current
+    if (!map?.attributionControl) return
+    if (creditosRef.current.texto) map.attributionControl.removeAttribution(creditosRef.current.texto)
+    creditosRef.current.texto = texto
+    if (texto) map.attributionControl.addAttribution(texto)
+  }
+
+  function agendarCreditosGoogle() {
+    clearTimeout(creditosRef.current.timer)
+    creditosRef.current.timer = setTimeout(async () => {
+      const map = mapInstance.current
+      const f = fundoRef.current
+      if (!map || !f?.sessao || f.tipo === 'carto') return
+      const b = map.getBounds()
+      const texto = await creditosGoogle(f.sessao, f.chaveGoogle, map.getZoom(), {
+        norte: b.getNorth(), sul: b.getSouth(), leste: b.getEast(), oeste: b.getWest(),
+      })
+      if (texto && fundoRef.current?.sessao === f.sessao) trocarCreditos(texto)
+    }, 700)
+  }
 
   function focarAlerta(alerta: AlertaCaixa) {
     const { grupoCtos, marcadoresPorId } = camadasRef.current
@@ -748,6 +863,18 @@ export function MapaInmapView({ telaCheia = false }: Props) {
             </button>
           </div>
 
+          {googleDisponivel && (
+            <div className="flex rounded-lg border border-tema-linha overflow-hidden bg-tema-superficie/95 text-xs flex-shrink-0" role="group" aria-label="Fundo do mapa">
+              {(['roadmap', 'satellite', 'carto'] as Fundo[]).map(t => (
+                <button key={t} onClick={() => escolherFundo(t)} aria-pressed={fundo === t}
+                  title={t === 'carto' ? 'Mapa simples (sem custo do Google)' : `Google ${ROTULO_FUNDO[t]}`}
+                  className={cn('px-2.5 py-3 sm:py-1.5 transition-colors', fundo === t ? 'bg-orange-600 text-white' : 'text-tema-suave hover:text-tema-tinta')}>
+                  {ROTULO_FUNDO[t]}
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={() => setPainelAberto(v => !v)}
             className="relative flex items-center gap-1.5 px-3 py-3 sm:py-1.5 rounded-lg border border-tema-linha bg-tema-superficie/95 text-tema-suave hover:text-tema-tinta transition-colors flex-shrink-0"
@@ -761,6 +888,14 @@ export function MapaInmapView({ telaCheia = false }: Props) {
             )}
           </button>
         </div>
+
+        {avisoFundo && (
+          <div className="absolute top-16 sm:top-14 right-2 sm:right-3 z-[1001] max-w-xs bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-300 rounded-lg px-3 py-2 text-xs flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            <span className="flex-1">{avisoFundo}</span>
+            <button onClick={() => setAvisoFundo(null)} aria-label="Fechar aviso"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
 
         {/* Resultados da busca: ruas (por bairro) e caixas */}
         {resultados && (

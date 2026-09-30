@@ -28,7 +28,7 @@ export const URL_OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 export const ATRIBUICAO_OSM = '&copy; OpenStreetMap contributors'
 export const REFERRER_OSM = REFERRER_CARTO
 
-let chaveCarto: Promise<string> | null = null
+let chaves: Promise<{ key: string; google: string }> | null = null
 
 // Guarda no navegador as imagens do mapa ja vistas (ver public/sw-mapa.js).
 // Se o navegador nao suportar, o mapa funciona igual, so sem o cache.
@@ -37,16 +37,26 @@ function ativarCacheDoMapa() {
   navigator.serviceWorker.register('/sw-mapa.js').catch(() => {})
 }
 
-// Uma busca por carregamento de pagina; em falha, o mapa segue sem chave.
-export function obterChaveCarto(): Promise<string> {
-  if (!chaveCarto) {
+// Uma busca por carregamento de pagina (chaves da CARTO e do Google); em
+// falha, o mapa segue sem chave.
+function obterChaves() {
+  if (!chaves) {
     ativarCacheDoMapa()
-    chaveCarto = fetch('/api/mapa/basemap')
+    chaves = fetch('/api/mapa/basemap')
       .then(r => (r.ok ? r.json() : {}))
-      .then((j: { key?: string }) => j.key || '')
-      .catch(() => '')
+      .then((j: { key?: string; google?: string }) => ({ key: j.key || '', google: j.google || '' }))
+      .catch(() => ({ key: '', google: '' }))
   }
-  return chaveCarto
+  return chaves
+}
+
+export function obterChaveCarto(): Promise<string> {
+  return obterChaves().then(c => c.key)
+}
+
+// Vazia enquanto GOOGLE_MAPS_TILES_KEY nao estiver no painel (ver basemapGoogle.ts).
+export function obterChaveGoogle(): Promise<string> {
+  return obterChaves().then(c => c.google)
 }
 
 export function urlCarto(estilo: EstiloCarto, chave: string): string {
