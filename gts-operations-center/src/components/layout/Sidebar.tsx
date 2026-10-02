@@ -43,6 +43,7 @@ const TODOS_GRUPOS: MenuGroup[] = [
       { href: '/agenda',       label: 'Chamados',      icon: ClipboardList, permissao: 'verChamados' },
       { href: '/teams',        label: 'Equipes',       icon: Users,         permissao: 'verEquipes' },
       { href: '/tecnicos',     label: 'Tecnicos',      icon: HardHat,       permissao: 'verEquipes' },
+      { href: '/desempenho',   label: 'Desempenho das Equipes', icon: TrendingUp, permissao: 'verDesempenho' },
       { href: '/solicitacoes', label: 'Solicitacoes de Equipe', icon: ClipboardCheck, permissao: 'verSolicitacoes' },
       { href: '/horas-extras', label: 'Horas Extras', icon: Clock, permissao: 'verHorasExtras' },
       { href: '/escala', label: 'Escala de Trabalho', icon: CalendarDays, permissao: 'verEscala' },

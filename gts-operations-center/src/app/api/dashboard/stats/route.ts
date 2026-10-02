@@ -131,7 +131,10 @@ export async function GET() {
       where: {
         status: 'ABERTO',
         dataInicio: null,
-        dataAbertura: { lte: new Date(agora.getTime() - META_SLA_RESPOSTA_MINUTOS * 60 * 1000) },
+        OR: [
+          { inicioSla: { lte: new Date(agora.getTime() - META_SLA_RESPOSTA_MINUTOS * 60 * 1000) } },
+          { inicioSla: null, dataAbertura: { lte: new Date(agora.getTime() - META_SLA_RESPOSTA_MINUTOS * 60 * 1000) } },
+        ],
       },
     }),
   ])

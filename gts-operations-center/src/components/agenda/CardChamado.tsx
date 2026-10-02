@@ -11,6 +11,7 @@ import { cn, timeAgo, formatDateTime, formatarEnderecoCompleto } from '@/lib/uti
 import { TIPO_CHAMADO_LABELS, type TipoChamado, type StatusChamado } from '@/types'
 import { TrocarEquipeModal } from './TrocarEquipeModal'
 import { ReagendarModal } from './ReagendarModal'
+import { FechamentoChamado, PainelRechamada, statusRechamadaDoChamado } from './FechamentoChamado'
 import { toast } from '@/hooks/use-toast'
 import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL, ORIGEM_LABEL, type OrigemProvavel } from '@/lib/diagnosticoEngine'
 import { medirVelocidadeGts } from '@/lib/speedtestClient'
@@ -332,9 +333,7 @@ export function CardChamado({
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-sm font-semibold text-tema-tinta truncate">{chamado.cliente}</h3>
             {chamado.eace && <span className="flex-shrink-0 text-[10px] font-semibold tracking-wide px-1.5 py-px rounded border border-tema-linha-forte text-tema-suave">EACE</span>}
-            {chamado.reincidente && (
-              <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-px rounded bg-purple-500/10 text-purple-700" title="Este cliente abriu outro chamado recentemente">Reincidente</span>
-            )}
+            <SeloRechamada chamado={chamado} className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-px rounded" />
           </div>
           <p className="mt-0.5 text-xs text-tema-apagado truncate">
             <span className="font-mono">{numeroOS(chamado.id)}</span>
@@ -390,6 +389,24 @@ export function CardChamado({
       {showTrocarEquipe && <TrocarEquipeModal chamado={chamado} onClose={() => setShowTrocarEquipe(false)} />}
       {showReagendar && <ReagendarModal chamado={chamado} onClose={() => setShowReagendar(false)} />}
     </div>
+  )
+}
+
+// Reincidencia automatica = possivel rechamada; o supervisor confirma ou descarta.
+const SELO_RECHAMADA = {
+  POSSIVEL: { rotulo: 'Possível rechamada', cls: 'bg-purple-500/10 text-purple-700' },
+  CONFIRMADA: { rotulo: 'Rechamada confirmada', cls: 'bg-red-500/10 text-red-700' },
+  DESCARTADA: { rotulo: 'Rechamada descartada', cls: 'bg-tema-contraste/[0.05] text-tema-suave' },
+} as const
+
+function SeloRechamada({ chamado, className }: { chamado: any; className: string }) {
+  const status = statusRechamadaDoChamado(chamado)
+  if (!status) return null
+  const cfg = SELO_RECHAMADA[status as keyof typeof SELO_RECHAMADA]
+  return (
+    <span className={cn(className, cfg.cls)} title="O mesmo cliente teve outro chamado finalizado nos 7 dias anteriores">
+      {cfg.rotulo}
+    </span>
   )
 }
 
@@ -623,8 +640,12 @@ export function DetalhesChamado(p: AcoesChamadoProps) {
         </Bloco>
       )}
 
+      <PainelRechamada chamado={chamado} />
+
+      {chamado.status === 'FINALIZADO' && <FechamentoChamado chamado={chamado} />}
+
       {/* Feedback pos-atendimento - envio e automatico (1h apos o encerramento) */}
-      {chamado.status === 'FINALIZADO' && (
+      {chamado.status === 'FINALIZADO' && !chamado.avaliacao?.respondidoEm && (
         <p className="flex items-center gap-1.5 text-xs text-tema-apagado">
           {chamado.feedbackEnviado ? <CheckCircle className="w-3.5 h-3.5" /> : <MessageCircle className="w-3.5 h-3.5" />}
           {chamado.feedbackEnviado
@@ -708,7 +729,7 @@ export function PainelChamado({ onClose, ...p }: AcoesChamadoProps & { onClose: 
               {prioridade !== 'NORMAL' && (
                 <span className={cn('inline-flex items-center gap-1.5', pLinha.texto)}><span className={cn('w-1.5 h-1.5 rounded-full', pLinha.ponto)} />{pLinha.rotulo}</span>
               )}
-              {c.reincidente && <span className="px-1.5 py-px rounded bg-purple-500/10 text-purple-700 font-semibold">Reincidente</span>}
+              <SeloRechamada chamado={c} className="px-1.5 py-px rounded font-semibold" />
               <span className="text-tema-apagado">aberto {timeAgo(c.createdAt)}</span>
             </div>
           </div>

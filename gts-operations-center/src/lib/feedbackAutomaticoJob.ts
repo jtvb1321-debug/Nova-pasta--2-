@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { enviarWhatsApp } from './whatsapp'
+import { garantirAvaliacao, urlAvaliacao } from './avaliacao'
 
 const ATRASO_FEEDBACK_MS = 60 * 60 * 1000 // 1 hora apos o chamado ser finalizado
 const JANELA_MAXIMA_MS = 48 * 60 * 60 * 1000 // nao manda feedback de chamados fechados ha mais de 48h
@@ -12,8 +13,16 @@ function aguardar(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function montarMensagem(cliente: string) {
-  return `Olá, ${cliente}! 😊\n\nA GTSNET gostaria de saber como foi a sua experiência com o atendimento da sua solicitação.\n\nSeu atendimento ocorreu de forma tranquila? O serviço foi realizado dentro do prazo esperado e nossa equipe atendeu às suas expectativas?\n\nSua opinião é muito importante para nós e nos ajuda a melhorar cada vez mais. Agradecemos pelo seu feedback!`
+// A pesquisa leva o mesmo link do QR code mostrado pelo tecnico - a resposta
+// cai no mesmo registro de avaliacao (ver lib/avaliacao.ts).
+export function mensagemPesquisaAvaliacao(cliente: string, link: string) {
+  return `Olá, ${cliente}! 😊
+
+A GTSNET gostaria de saber como foi o seu atendimento. Leva menos de 1 minuto:
+
+${link}
+
+Sua opinião é muito importante para nós e nos ajuda a melhorar cada vez mais. Obrigado!`
 }
 
 async function verificar() {
@@ -33,6 +42,8 @@ async function verificar() {
         // pra clientes de semanas/meses atras nem processar um backlog
         // gigante de uma vez (isso ja travou o servidor uma vez).
         dataFim: { lte: limite, gte: janelaMinima },
+        // Cliente que ja avaliou pelo QR code na hora nao recebe a pesquisa.
+        OR: [{ avaliacao: null }, { avaliacao: { respondidoEm: null } }],
       },
       select: { id: true, cliente: true, telefone: true },
       take: LOTE_MAXIMO,
@@ -49,7 +60,11 @@ async function verificar() {
       })
       if (claim.count === 0) continue
 
-      const enviado = await enviarWhatsApp(chamado.telefone, montarMensagem(chamado.cliente))
+      const avaliacao = await garantirAvaliacao(chamado.id)
+      const enviado = await enviarWhatsApp(
+        chamado.telefone,
+        mensagemPesquisaAvaliacao(chamado.cliente, urlAvaliacao(avaliacao.token, 'WHATSAPP'))
+      )
       if (!enviado) {
         // WhatsApp indisponivel/numero invalido - libera a reivindicacao
         // para tentar de novo no proximo ciclo.

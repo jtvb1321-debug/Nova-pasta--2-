@@ -11,6 +11,7 @@ import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { CampoTexto, CampoNumero, CampoPercentual, BotaoRemoverLinha, atualizarItem, removerItem } from './CamposEditaveis'
 import { calcularDesempenhoEquipes, totalDesempenho, type LinhaEquipe } from './desempenhoEquipes'
+import { IndiceAvaliacao } from './IndiceAvaliacao'
 
 type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados'
 
@@ -648,6 +649,13 @@ export function ReportsView() {
                       />
                     </div>
                   </div>
+
+                  {dadosChamadosQualidade.qualidade.avaliacoes && (
+                    <IndiceAvaliacao
+                      avaliacoes={dadosChamadosQualidade.qualidade.avaliacoes}
+                      rechamadas={dadosChamadosQualidade.qualidade.rechamadas}
+                    />
+                  )}
 
                   <p className="text-[11px] text-tema-apagado mb-1.5">Clientes com Chamados Reincidentes</p>
                   <div className="space-y-1 mb-4">

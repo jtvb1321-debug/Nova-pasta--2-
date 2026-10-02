@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getVeiculosRastreados } from '@/services/rastreamento.service'
 import { comCache } from '@/lib/inmapCache'
-import { calcularProgressoSlaEmAndamento } from '@/lib/sla'
+import { calcularProgressoSlaEmAndamento, inicioSlaEfetivo } from '@/lib/sla'
 
 export async function GET() {
   const session = await auth()
@@ -26,7 +26,7 @@ export async function GET() {
             where: { status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
             orderBy: { dataInicio: 'desc' },
             take: 1,
-            select: { id: true, cliente: true, cidade: true, tipo: true, dataAbertura: true },
+            select: { id: true, cliente: true, cidade: true, tipo: true, dataAbertura: true, inicioSla: true },
           },
         },
       }),
@@ -47,7 +47,7 @@ export async function GET() {
     const tecnicos = equipes.map(e => {
       const gps = e.veiculo ? mapaGps.get(e.veiculo.placa) : undefined
       const chamado = e.chamados[0]
-      const sla = chamado ? calcularProgressoSlaEmAndamento(chamado.dataAbertura, chamado.tipo) : null
+      const sla = chamado ? calcularProgressoSlaEmAndamento(inicioSlaEfetivo(chamado), chamado.tipo) : null
       const pontoBatidoHoje = e.funcionarios.some(f => funcionariosComPontoHoje.has(f.id))
 
       return {

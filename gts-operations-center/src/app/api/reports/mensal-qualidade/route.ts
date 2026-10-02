@@ -15,7 +15,9 @@ async function calcularMes(inicio: Date, fim: Date) {
     select: {
       id: true, cliente: true, telefone: true, tipo: true, status: true,
       reincidente: true, dentroSlaResposta: true, dentroSlaResolucao: true,
-      slaRespostaMinutos: true, slaResolucaoMinutos: true,
+      slaRespostaMinutos: true, slaResolucaoMinutos: true, statusRechamada: true,
+      equipe: { select: { nome: true } },
+      avaliacao: { select: { nota: true, problemaResolvido: true, canal: true, respondidoEm: true, statusAnalise: true } },
     },
   })
 
@@ -43,8 +45,60 @@ async function calcularMes(inicio: Date, fim: Date) {
   const comSlaResolucao = chamados.filter(c => c.dentroSlaResolucao !== null)
   const dentroSlaResolucao = comSlaResolucao.filter(c => c.dentroSlaResolucao === true)
 
+  // Indice de avaliacao: respostas dos clientes (QR code ou WhatsApp) para os
+  // chamados abertos no mes. Participacao = respondidas / finalizados.
+  // So avaliacao APROVADA pelo admin entra na media/distribuicao; a
+  // participacao conta todas as respondidas que nao foram invalidadas.
+  const finalizados = chamados.filter(c => c.status === 'FINALIZADO')
+  const todasRespondidas = chamados.filter(c => c.avaliacao?.respondidoEm && c.avaliacao.nota != null)
+  const respondidasValidas = todasRespondidas.filter(c => c.avaliacao!.statusAnalise !== 'INVALIDADA')
+  const respondidas = todasRespondidas.filter(c => c.avaliacao!.statusAnalise === 'APROVADA')
+  const pendentesAnalise = todasRespondidas.filter(c => c.avaliacao!.statusAnalise === 'PENDENTE').length
+  const somaNotas = respondidas.reduce((s, c) => s + (c.avaliacao!.nota as number), 0)
+  const distribuicao: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
+  const resolucao: Record<string, number> = { SIM: 0, PARCIAL: 0, NAO: 0 }
+  const porCanal: Record<string, number> = { QR: 0, WHATSAPP: 0 }
+  const porEquipeMapa = new Map<string, { equipe: string; quantidade: number; soma: number }>()
+  for (const c of respondidas) {
+    const av = c.avaliacao!
+    distribuicao[String(av.nota)]++
+    if (av.problemaResolvido) resolucao[av.problemaResolvido]++
+    if (av.canal) porCanal[av.canal] = (porCanal[av.canal] ?? 0) + 1
+    const equipe = c.equipe?.nome || 'Sem equipe'
+    const atual = porEquipeMapa.get(equipe) || { equipe, quantidade: 0, soma: 0 }
+    atual.quantidade++
+    atual.soma += av.nota as number
+    porEquipeMapa.set(equipe, atual)
+  }
+  const porEquipe = Array.from(porEquipeMapa.values())
+    .map(e => ({ equipe: e.equipe, quantidade: e.quantidade, media: Math.round((e.soma / e.quantidade) * 100) / 100 }))
+    .sort((a, b) => b.media - a.media)
+
+  // Rechamadas: reincidentes antigos sem status contam como possiveis.
+  const statusRechamada = (c: typeof chamados[number]) => c.statusRechamada ?? (c.reincidente ? 'POSSIVEL' : null)
+  const rechamadas = {
+    possiveis: chamados.filter(c => statusRechamada(c) === 'POSSIVEL').length,
+    confirmadas: chamados.filter(c => statusRechamada(c) === 'CONFIRMADA').length,
+    descartadas: chamados.filter(c => statusRechamada(c) === 'DESCARTADA').length,
+    percentualConfirmadas: totalChamados > 0
+      ? Math.round((chamados.filter(c => statusRechamada(c) === 'CONFIRMADA').length / totalChamados) * 1000) / 10
+      : 0,
+  }
+
   return {
     periodo: { inicio, fim },
+    avaliacoes: {
+      respondidas: respondidas.length,
+      pendentesAnalise,
+      finalizados: finalizados.length,
+      participacao: finalizados.length > 0 ? Math.round((respondidasValidas.length / finalizados.length) * 1000) / 10 : null,
+      media: respondidas.length > 0 ? Math.round((somaNotas / respondidas.length) * 100) / 100 : null,
+      distribuicao,
+      resolucao,
+      porCanal,
+      porEquipe,
+    },
+    rechamadas,
     totalChamados,
     reincidencia: {
       total: reincidencias.length,

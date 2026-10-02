@@ -98,13 +98,13 @@ model Usuario {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  vendas       Venda[]
-  logs         Log[]
-  funcionario  Funcionario?
-  solicitacoes SolicitacaoPagamento[] @relation("solicitacoes")
-  aprovacoes   SolicitacaoPagamento[] @relation("aprovacoes")
-  baixasRealizadas ContaReceber[]
-  clientes     Cliente[]
+  vendas              Venda[]
+  logs                Log[]
+  funcionario         Funcionario?
+  solicitacoes        SolicitacaoPagamento[] @relation("solicitacoes")
+  aprovacoes          SolicitacaoPagamento[] @relation("aprovacoes")
+  baixasRealizadas    ContaReceber[]
+  clientes            Cliente[]
   diagnosticosRemotos Diagnostico[]
 
   @@map("usuarios")
@@ -119,15 +119,16 @@ model Equipe {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
- funcionarios Funcionario[]
-  chamados     Chamado[]
-  veiculo      Veiculo?
-  estoque      EstoqueEquipe[]
-  usosMaterial UsoMaterial[]
+  funcionarios         Funcionario[]
+  chamados             Chamado[]
+  veiculo              Veiculo?
+  estoque              EstoqueEquipe[]
+  usosMaterial         UsoMaterial[]
   solicitacoesMaterial SolicitacaoMaterial[]
-  escalas EscalaTrabalho[]
-  diagnosticos Diagnostico[]
-  unidadesEquipamento UnidadeEquipamento[]
+  escalas              EscalaTrabalho[]
+  diagnosticos         Diagnostico[]
+  unidadesEquipamento  UnidadeEquipamento[]
+
   @@map("equipes")
 }
 
@@ -143,12 +144,12 @@ model Funcionario {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  equipe   Equipe                 @relation(fields: [equipeId], references: [id])
-  usuario  Usuario?               @relation(fields: [usuarioId], references: [id])
-  despesas SolicitacaoPagamento[]
-  registrosPonto RegistroPonto[]
-  diagnosticos Diagnostico[] @relation("DiagnosticoFuncionario")
-  diagnosticosValidados Diagnostico[] @relation("DiagnosticoValidador")
+  equipe                Equipe                 @relation(fields: [equipeId], references: [id])
+  usuario               Usuario?               @relation(fields: [usuarioId], references: [id])
+  despesas              SolicitacaoPagamento[]
+  registrosPonto        RegistroPonto[]
+  diagnosticos          Diagnostico[]          @relation("DiagnosticoFuncionario")
+  diagnosticosValidados Diagnostico[]          @relation("DiagnosticoValidador")
 
   @@map("funcionarios")
 }
@@ -166,11 +167,12 @@ model Veiculo {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
- equipe Equipe? @relation(fields: [equipeId], references: [id])
+  equipe         Equipe?                 @relation(fields: [equipeId], references: [id])
   abastecimentos Abastecimento[]
   registrosKm    RegistroKm[]
   manutencoes    SolicitacaoManutencao[]
   despesas       DespesaViagem[]
+
   @@map("veiculos")
 }
 
@@ -194,17 +196,18 @@ model ItemEstoque {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  movimentacoes       Movimentacao[]
-  materiaisUtilizados MaterialUtilizado[]
-  materiaisDevolvidos MaterialDevolvido[]
-  materiaisReservados MaterialReservado[]
-  estoqueEquipes      EstoqueEquipe[]
-  usosMaterial   UsoMaterial[]
-  reversas       ReversaEstoque[]
+  movimentacoes        Movimentacao[]
+  materiaisUtilizados  MaterialUtilizado[]
+  materiaisDevolvidos  MaterialDevolvido[]
+  materiaisReservados  MaterialReservado[]
+  estoqueEquipes       EstoqueEquipe[]
+  usosMaterial         UsoMaterial[]
+  reversas             ReversaEstoque[]
   solicitacoesMaterial SolicitacaoMaterial[]
-  entradasDefeito EntradaDefeito[]
-  saldosLocais    EstoqueLocalCentral[]
-  unidadesEquipamento UnidadeEquipamento[]
+  entradasDefeito      EntradaDefeito[]
+  saldosLocais         EstoqueLocalCentral[]
+  unidadesEquipamento  UnidadeEquipamento[]
+
   @@map("estoques")
 }
 
@@ -236,6 +239,7 @@ model UnidadeEquipamento {
 
   @@map("unidades_equipamento")
 }
+
 model Movimentacao {
   id         String           @id @default(cuid())
   itemId     String
@@ -254,73 +258,83 @@ model Movimentacao {
 }
 
 model Chamado {
-  id           String        @id @default(cuid())
-  cliente      String
-  endereco     String
-  numero       String?
-  complemento  String?
-  bairro       String?
-  condominio   String?
-  bloco        String?
-  apartamento  String?
-  cep          String?
-  cidade       String
-  uf           String?
-  telefone     String?
-  tipo         TipoChamado
-  observacao   String?
-  relato       String?
-  fotos        String?
-  equipeId     String?
-  status       StatusChamado @default(ABERTO)
- dataAbertura DateTime      @default(now())
-  dataAgendada DateTime?
-  agendadoPor  String?
-  dataACaminho DateTime?
-  dataInicio   DateTime?
-  dataFim      DateTime?
-  clienteAusente    Boolean   @default(false)
-  horarioRedisparo  DateTime?
-  fechadoAdmin      Boolean   @default(false)
-  feedbackEnviado   Boolean   @default(false)
-  feedbackEnviadoEm DateTime?
-  feedbackResposta     String?
-  feedbackRespostaEm   DateTime?
-  feedbackConfirmado   Boolean   @default(false)
-  feedbackConfirmadoEm DateTime?
-  feedbackConfirmadoPor String?
-  aguardandoAprovacao Boolean   @default(false)
-  aprovadoPor          String?
-  aprovadoEm           DateTime?
-  origemAutomatica     String?
-  clientesAfetados     Int?
-  subCategoria         String?
-  idOnuSmartOlt        String?
-  slaRespostaMinutos    Int?
-  slaResolucaoMinutos   Int?
-  dentroSlaResposta     Boolean?
-  dentroSlaResolucao    Boolean?
-  reincidente           Boolean   @default(false)
+  id                          String           @id @default(cuid())
+  cliente                     String
+  endereco                    String
+  numero                      String?
+  complemento                 String?
+  bairro                      String?
+  condominio                  String?
+  bloco                       String?
+  apartamento                 String?
+  cep                         String?
+  cidade                      String
+  uf                          String?
+  telefone                    String?
+  tipo                        TipoChamado
+  observacao                  String?
+  relato                      String?
+  fotos                       String?
+  equipeId                    String?
+  status                      StatusChamado    @default(ABERTO)
+  dataAbertura                DateTime         @default(now())
+  dataAgendada                DateTime?
+  agendadoPor                 String?
+  dataACaminho                DateTime?
+  dataInicio                  DateTime?
+  dataFim                     DateTime?
+  clienteAusente              Boolean          @default(false)
+  horarioRedisparo            DateTime?
+  fechadoAdmin                Boolean          @default(false)
+  feedbackEnviado             Boolean          @default(false)
+  feedbackEnviadoEm           DateTime?
+  feedbackResposta            String?
+  feedbackRespostaEm          DateTime?
+  feedbackConfirmado          Boolean          @default(false)
+  feedbackConfirmadoEm        DateTime?
+  feedbackConfirmadoPor       String?
+  aguardandoAprovacao         Boolean          @default(false)
+  aprovadoPor                 String?
+  aprovadoEm                  DateTime?
+  origemAutomatica            String?
+  clientesAfetados            Int?
+  subCategoria                String?
+  idOnuSmartOlt               String?
+  slaRespostaMinutos          Int?
+  slaResolucaoMinutos         Int?
+  dentroSlaResposta           Boolean?
+  dentroSlaResolucao          Boolean?
+  reincidente                 Boolean          @default(false)
   chamadoOrigemReincidenciaId String?
+  // Momento em que o SLA comeca a contar: a data agendada (agendamento
+  // futuro, ou automatico apos 18h/no almoco) ou a abertura. Nulo nos
+  // chamados anteriores a esta regra - ai vale dataAbertura (ver lib/sla.ts).
+  inicioSla                   DateTime?
+  // Reincidencia detectada automaticamente vira POSSIVEL; so o supervisor
+  // (ADMIN/GESTOR) confirma ou descarta. Nulo = nao e' possivel rechamada.
+  statusRechamada             StatusRechamada?
+  rechamadaValidadaPor        String?
+  rechamadaValidadaEm         DateTime?
+  rechamadaMotivo             String?
   // Chamados EACE (escolas) - reaproveitam o mesmo fluxo de despacho/equipe/
   // status/Telegram; so ganham esse sinalizador e os campos proprios da
   // escola. "cliente" guarda o nome da escola, "observacao" guarda as
   // informacoes passadas pelo cliente - sem duplicar campo.
-  eace                  Boolean   @default(false)
-  escolaResponsavel     String?
-  escolaCodigoInep      String?
-  localizacaoLink       String?
-  latitude              Float?
-  longitude             Float?
+  eace                        Boolean          @default(false)
+  escolaResponsavel           String?
+  escolaCodigoInep            String?
+  localizacaoLink             String?
+  latitude                    Float?
+  longitude                   Float?
   // Vinculo opcional com o cadastro de cliente (IXC) capturado no momento do
   // despacho - hoje "cliente" acima e so um nome copiado, sem ligacao com o
   // registro de origem. Nullable pois nem todo chamado tem match confiavel.
-  clienteId    String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  clienteId                   String?
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
 
-  equipe              Equipe?             @relation(fields: [equipeId], references: [id])
-  clienteCadastro     Cliente?            @relation(fields: [clienteId], references: [id])
+  equipe              Equipe?               @relation(fields: [equipeId], references: [id])
+  clienteCadastro     Cliente?              @relation(fields: [clienteId], references: [id])
   movimentacoes       Movimentacao[]
   materiaisUtilizados MaterialUtilizado[]
   materiaisDevolvidos MaterialDevolvido[]
@@ -328,6 +342,7 @@ model Chamado {
   usosMaterial        UsoMaterial[]
   diagnosticos        Diagnostico[]
   unidadesEquipamento UnidadeEquipamento[]
+  avaliacao           AvaliacaoAtendimento?
 
   // Filtros usados o tempo todo pelos jobs em background (feedback, agenda
   // diaria) e pelas telas de chamados/relatorios - tabela sem nenhum indice
@@ -338,7 +353,64 @@ model Chamado {
   @@index([feedbackEnviado])
   @@index([equipeId])
   @@index([clienteId])
+  @@index([statusRechamada])
   @@map("chamados")
+}
+
+enum StatusRechamada {
+  POSSIVEL
+  CONFIRMADA
+  DESCARTADA
+}
+
+enum ResolucaoProblema {
+  SIM
+  PARCIAL
+  NAO
+}
+
+enum StatusAnaliseAvaliacao {
+  PENDENTE
+  APROVADA
+  INVALIDADA
+}
+
+// Avaliacao do cliente, uma por chamado: o QR code mostrado pelo tecnico e o
+// link enviado por WhatsApp abrem a mesma pagina publica (/avaliar/<token>)
+// e gravam neste mesmo registro - so a primeira resposta vale. Os IPs e
+// navegadores ficam guardados para a auditoria do gestor (detectar a equipe
+// avaliando o proprio atendimento).
+model AvaliacaoAtendimento {
+  id                      String                 @id @default(cuid())
+  chamadoId               String                 @unique
+  token                   String                 @unique
+  expiraEm                DateTime
+  nota                    Int?
+  problemaResolvido       ResolucaoProblema?
+  comentario              String?
+  canal                   String?
+  ipFinalizacao           String?
+  acessos                 Int                    @default(0)
+  primeiroAcessoEm        DateTime?
+  primeiroAcessoIp        String?
+  primeiroAcessoUserAgent String?
+  respondidoEm            DateTime?
+  respostaIp              String?
+  respostaUserAgent       String?
+  // Analise do admin: so' avaliacao APROVADA conta na media e nos indicadores;
+  // a INVALIDADA (ex: feita pela propria equipe) fica no historico sem pesar.
+  statusAnalise           StatusAnaliseAvaliacao @default(PENDENTE)
+  analisadaPor            String?
+  analisadaEm             DateTime?
+  motivoAnalise           String?
+  createdAt               DateTime               @default(now())
+
+  chamado Chamado @relation(fields: [chamadoId], references: [id])
+
+  @@index([respondidoEm])
+  @@index([statusAnalise])
+  @@index([respostaIp])
+  @@map("avaliacoes_atendimento")
 }
 
 model MaterialReservado {
@@ -587,7 +659,7 @@ model ContaReceber {
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
-  cliente Cliente @relation(fields: [clienteId], references: [id])
+  cliente      Cliente  @relation(fields: [clienteId], references: [id])
   usuarioBaixa Usuario? @relation(fields: [usuarioIdBaixa], references: [id])
 
   @@unique([clienteId, competencia])
@@ -620,8 +692,8 @@ model Venda {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  vendedor Usuario  @relation(fields: [vendedorId], references: [id])
-  cliente  Cliente? @relation(fields: [clienteId], references: [id])
+  vendedor Usuario   @relation(fields: [vendedorId], references: [id])
+  cliente  Cliente?  @relation(fields: [clienteId], references: [id])
   comissao Comissao?
 
   @@map("vendas")
@@ -643,15 +715,15 @@ model Comissao {
 // Dados de monitoramento de clientes de Link Dedicado que nao vem disponiveis
 // via IXC/SmartOLT e precisam ser preenchidos manualmente (IP e potencia optica).
 model MonitoramentoLinkDedicado {
-  id               String    @id @default(cuid())
-  codigoIxc        String    @unique
+  id               String   @id @default(cuid())
+  codigoIxc        String   @unique
   ipManual         String?
   potenciaRxManual Float?
   potenciaTxManual Float?
   observacao       String?
   atualizadoPor    String?
-  updatedAt        DateTime  @updatedAt
-  createdAt        DateTime  @default(now())
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
 
   @@map("monitoramento_link_dedicado")
 }
@@ -722,9 +794,9 @@ model SolicitacaoPagamento {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
-  responsavel Usuario              @relation("solicitacoes", fields: [responsavelId], references: [id])
-  aprovador   Usuario?             @relation("aprovacoes",   fields: [aprovadorId],  references: [id])
-  tecnico     Funcionario?         @relation(fields: [tecnicoId], references: [id])
+  responsavel Usuario               @relation("solicitacoes", fields: [responsavelId], references: [id])
+  aprovador   Usuario?              @relation("aprovacoes", fields: [aprovadorId], references: [id])
+  tecnico     Funcionario?          @relation(fields: [tecnicoId], references: [id])
   historico   HistoricoFinanceiro[]
 
   @@map("solicitacoes_pagamento")
@@ -755,6 +827,7 @@ model OrcamentoFinanceiro {
   @@unique([centroCusto, mes, ano])
   @@map("orcamentos_financeiros")
 }
+
 enum StatusManutencao {
   PENDENTE
   EM_ANDAMENTO
@@ -763,12 +836,12 @@ enum StatusManutencao {
 }
 
 model EstoqueEquipe {
-  id                String   @id @default(cuid())
-  equipeId          String
-  itemId            String
-  quantidade        Float    @default(0)
-  quantidadeMinima  Float    @default(0)
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  equipeId         String
+  itemId           String
+  quantidade       Float    @default(0)
+  quantidadeMinima Float    @default(0)
+  updatedAt        DateTime @updatedAt
 
   equipe Equipe      @relation(fields: [equipeId], references: [id])
   item   ItemEstoque @relation(fields: [itemId], references: [id])
@@ -778,20 +851,19 @@ model EstoqueEquipe {
 }
 
 model Abastecimento {
-  id             String   @id @default(cuid())
-  veiculoId      String
-  data           DateTime @default(now())
-  litros         Float
-  valor          Float
+  id              String   @id @default(cuid())
+  veiculoId       String
+  data            DateTime @default(now())
+  litros          Float
+  valor           Float
   fotoComprovante String
-  registradoPor  String
-  createdAt      DateTime @default(now())
+  registradoPor   String
+  createdAt       DateTime @default(now())
 
   veiculo Veiculo @relation(fields: [veiculoId], references: [id])
 
   @@map("abastecimentos")
 }
-
 
 enum TipoDespesaViagem {
   ALIMENTACAO
@@ -856,6 +928,7 @@ model ReversaEstoque {
 
   @@map("reversas_estoque")
 }
+
 enum OrigemEntradaDefeito {
   TECNICO
   CLIENTE
@@ -882,9 +955,9 @@ model EntradaDefeito {
   createdAt     DateTime             @default(now())
 
   item ItemEstoque @relation(fields: [itemId], references: [id])
+
   @@map("entradas_defeito")
 }
-
 
 model LocalEstoque {
   id        String   @id @default(cuid())
@@ -912,14 +985,14 @@ model EstoqueLocalCentral {
 }
 
 model RegistroKm {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   veiculoId     String
-  data          DateTime  @default(now())
+  data          DateTime @default(now())
   kmInicial     Float?
   kmFinal       Float?
   registradoPor String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   veiculo Veiculo @relation(fields: [veiculoId], references: [id])
 
@@ -927,15 +1000,15 @@ model RegistroKm {
 }
 
 model SolicitacaoManutencao {
-  id            String            @id @default(cuid())
+  id            String           @id @default(cuid())
   veiculoId     String
   descricao     String
-  status        StatusManutencao  @default(PENDENTE)
+  status        StatusManutencao @default(PENDENTE)
   solicitadoPor String
   resolvidoEm   DateTime?
   observacao    String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   veiculo Veiculo @relation(fields: [veiculoId], references: [id])
 
@@ -966,6 +1039,7 @@ model SolicitacaoMaterial {
 
   @@map("solicitacoes_material")
 }
+
 enum StatusHorasExtras {
   PENDENTE
   APROVADA
@@ -1006,6 +1080,7 @@ enum TipoRegistroPonto {
   AUSENCIA_JUSTIFICADA
   AUSENCIA_NAO_JUSTIFICADA
 }
+
 enum TipoEscala {
   TRABALHO
   FOLGA

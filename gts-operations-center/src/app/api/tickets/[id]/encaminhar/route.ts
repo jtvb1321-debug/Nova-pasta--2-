@@ -26,9 +26,13 @@ export async function POST(
     return NextResponse.json({ error: 'Este chamado nao esta agendado' }, { status: 400 })
   }
 
+  // Ativado antes da data agendada: o SLA comeca agora, nao na data original.
+  const agora = new Date()
+  const antecipado = chamado.inicioSla && chamado.inicioSla.getTime() > agora.getTime()
+
   const atualizado = await prisma.chamado.update({
     where: { id },
-    data: { status: 'ABERTO' },
+    data: { status: 'ABERTO', ...(antecipado ? { inicioSla: agora } : {}) },
   })
 
   return NextResponse.json(atualizado)

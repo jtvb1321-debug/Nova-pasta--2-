@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
   const status         = searchParams.get('status')         || undefined
   const equipeId       = searchParams.get('equipeId')       || undefined
   const reincidente    = searchParams.get('reincidente')    || undefined
+  const statusRechamada = searchParams.get('statusRechamada') || undefined
   const feedbackEnviado = searchParams.get('feedbackEnviado') || undefined
   const eace           = searchParams.get('eace')            || undefined
   const dataInicio     = searchParams.get('dataInicio')     || undefined
@@ -45,6 +46,16 @@ export async function GET(request: NextRequest) {
   if (status)      where.status      = status
   if (equipeId)     where.equipeId     = equipeId
   if (reincidente === 'true') where.reincidente = true
+  if (statusRechamada && ['POSSIVEL', 'CONFIRMADA', 'DESCARTADA'].includes(statusRechamada)) {
+    // Chamados reincidentes de antes desta regra nao tem statusRechamada -
+    // continuam aparecendo como possiveis rechamadas ate o supervisor decidir.
+    where.AND = [
+      ...(where.AND ?? []),
+      statusRechamada === 'POSSIVEL'
+        ? { OR: [{ statusRechamada: 'POSSIVEL' }, { statusRechamada: null, reincidente: true }] }
+        : { statusRechamada },
+    ]
+  }
   if (feedbackEnviado === 'true') where.feedbackEnviado = true
   if (eace === 'true') where.eace = true
   if (dataInicio || dataFim) {
@@ -77,6 +88,13 @@ export async function GET(request: NextRequest) {
         materiaisReservados: { include: { item: true } },
         materiaisUtilizados: { include: { item: true } },
         diagnosticos: { where: { fase: 'REMOTO' }, orderBy: { iniciadoEm: 'desc' }, take: 1, include: { testes: true } },
+        // Tecnico ve so as estrelas; o restante (resolvido, comentario) e' da
+        // gestao. IPs e navegador ficam so em /api/tickets/[id]/avaliacao.
+        avaliacao: {
+          select: role === 'TECNICO'
+            ? { nota: true, respondidoEm: true }
+            : { nota: true, problemaResolvido: true, comentario: true, canal: true, respondidoEm: true, statusAnalise: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip,

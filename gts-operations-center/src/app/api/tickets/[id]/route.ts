@@ -9,7 +9,9 @@ import {
   notificarReagendamento,
 } from '@/lib/telegram'
 import { enviarWhatsApp } from '@/lib/whatsapp'
-import { calcularSlaResposta, calcularSlaResolucao } from '@/lib/sla'
+import { calcularSlaResposta, calcularSlaResolucao, calcularInicioSla, inicioSlaEfetivo } from '@/lib/sla'
+import { garantirAvaliacao } from '@/lib/avaliacao'
+import { getClientIp } from '@/lib/getClientIp'
 
 export async function GET(
   _: NextRequest,
@@ -27,6 +29,11 @@ export async function GET(
       materiaisReservados: { include: { item: true } },
       materiaisUtilizados: { include: { item: true } },
       materiaisDevolvidos: { include: { item: true } },
+      avaliacao: {
+        select: (session.user as any)?.role === 'TECNICO'
+          ? { nota: true, respondidoEm: true }
+          : { nota: true, problemaResolvido: true, comentario: true, canal: true, respondidoEm: true, statusAnalise: true },
+      },
     },
   })
 
@@ -82,13 +89,20 @@ export async function PATCH(
       dataUpdate.horarioRedisparo = new Date()
       dataUpdate.agendadoPor = (session.user as any)?.name || (session.user as any)?.email
       if (!dataUpdate.status) dataUpdate.status = 'AGENDADO'
+      // Reagendado antes de comecar o atendimento: o SLA passa a contar da
+      // nova data (mesma regra do agendamento na abertura).
+      if (chamadoAtual && !chamadoAtual.dataInicio) {
+        dataUpdate.inicioSla = calcularInicioSla(new Date(), dataUpdate.dataAgendada)
+      }
     }
 
     if (status === 'ABERTO' && !clienteAusente) dataUpdate.dataACaminho = new Date()
 
     if (status === 'EM_ANDAMENTO' && chamadoAtual && !chamadoAtual.dataInicio) {
       dataUpdate.dataInicio = new Date()
-      const { slaRespostaMinutos, dentroSlaResposta } = calcularSlaResposta(chamadoAtual.dataAbertura, dataUpdate.dataInicio)
+      const { slaRespostaMinutos, dentroSlaResposta } = calcularSlaResposta(
+        dataUpdate.inicioSla ?? inicioSlaEfetivo(chamadoAtual), dataUpdate.dataInicio
+      )
       dataUpdate.slaRespostaMinutos = slaRespostaMinutos
       dataUpdate.dentroSlaResposta  = dentroSlaResposta
     }
@@ -96,7 +110,7 @@ export async function PATCH(
     if (status === 'FINALIZADO' && chamadoAtual) {
       dataUpdate.dataFim = new Date()
       const { slaResolucaoMinutos, dentroSlaResolucao } = calcularSlaResolucao(
-        chamadoAtual.dataAbertura, dataUpdate.dataFim, dataUpdate.tipo || chamadoAtual.tipo
+        inicioSlaEfetivo(chamadoAtual), dataUpdate.dataFim, dataUpdate.tipo || chamadoAtual.tipo
       )
       dataUpdate.slaResolucaoMinutos = slaResolucaoMinutos
       dataUpdate.dentroSlaResolucao  = dentroSlaResolucao
@@ -272,6 +286,19 @@ export async function PATCH(
     return updated
   })
 
+  // Avaliacao do cliente nasce na finalizacao - o tecnico mostra o QR code
+  // na hora e o job de feedback manda o mesmo link por WhatsApp. O IP de quem
+  // finalizou fica guardado para a auditoria comparar com o IP de quem avaliou.
+  let avaliacaoToken: string | null = null
+  if (status === 'FINALIZADO') {
+    try {
+      const avaliacao = await garantirAvaliacao(id, getClientIp(request))
+      avaliacaoToken = avaliacao.token
+    } catch (err) {
+      console.error('Erro ao criar avaliacao do chamado:', err)
+    }
+  }
+
   // Notificar finalizacao com fotos e tecnico - NUNCA quando encerrado diretamente pelo admin
   if (status === 'FINALIZADO' && !fechadoAdmin) {
     try {
@@ -343,5 +370,5 @@ export async function PATCH(
     }
   }
 
-  return NextResponse.json(chamado)
+  return NextResponse.json({ ...chamado, avaliacaoToken })
 }

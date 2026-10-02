@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth'
 import { z } from 'zod'
 import { notificarNovoChamado } from '@/lib/telegram'
 import { ativarChamadosAgendados } from '@/lib/ativarAgendados'
-import { detectarReincidencia } from '@/lib/sla'
+import { detectarReincidencia, calcularInicioSla } from '@/lib/sla'
 import { extrairCoordenadasDeLinkMaps } from '@/lib/googleMaps'
 
 const createSchema = z.object({
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
   ].filter(Boolean).join(' — ')
 
   const dataAbertura = agora
-  const { reincidente, chamadoOrigemReincidenciaId } = await detectarReincidencia({
+  const { reincidente, chamadoOrigemReincidenciaId, statusRechamada } = await detectarReincidencia({
     cliente: chamadoData.cliente,
     telefone: chamadoData.telefone,
     dataAbertura,
@@ -175,6 +175,8 @@ export async function POST(request: NextRequest) {
             : undefined,
           reincidente,
           chamadoOrigemReincidenciaId,
+          statusRechamada,
+          inicioSla:    calcularInicioSla(dataAbertura, dataAgendadaCompleta),
           clienteId:         chamadoData.clienteId,
           eace:              chamadoData.eace ?? false,
           escolaResponsavel: chamadoData.escolaResponsavel,

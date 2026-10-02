@@ -270,7 +270,7 @@ export function CentralChamados({ session }: { session: Session }) {
     { label: 'Na fila',          value: totalAbertos,      ponto: 'bg-blue-500',    alerta: '' },
     { label: 'Em andamento',     value: totalAtivos,       ponto: 'bg-blue-500',    alerta: '' },
     { label: 'Criticos',         value: totalCriticos,     ponto: 'bg-red-500',     alerta: 'text-red-700' },
-    { label: 'Reincidentes',     value: totalReincidentes, ponto: 'bg-purple-500',  alerta: '' },
+    { label: 'Rechamadas',       value: totalReincidentes, ponto: 'bg-purple-500',  alerta: '' },
     { label: 'Finalizados hoje', value: historicoData?.totalHoje ?? 0, ponto: 'bg-emerald-500', alerta: '' },
   ]
 
@@ -278,7 +278,7 @@ export function CentralChamados({ session }: { session: Session }) {
     { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos },
     { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length },
     { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos },
-    { id: 'reincidentes' as Aba, label: 'Reincidentes',  badge: totalReincidentes },
+    { id: 'reincidentes' as Aba, label: 'Rechamadas',  badge: totalReincidentes },
     { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks },
     { id: 'historico'    as Aba, label: 'Historico',     badge: 0 },
     { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0 },
@@ -473,12 +473,12 @@ export function CentralChamados({ session }: { session: Session }) {
           <div className="flex items-center gap-2 px-3 py-2 border-l-2 border-purple-500 bg-tema-contraste/[0.02] rounded-r-lg">
             <Repeat className="w-4 h-4 text-purple-700 flex-shrink-0" />
             <p className="text-xs text-tema-suave">
-              Chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente.
+              Possiveis rechamadas: chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente. O supervisor confirma ou descarta cada uma dentro do chamado.
             </p>
           </div>
 
           {totalReincidentes > 0 && (
-            <p className="text-xs text-tema-apagado">{totalReincidentes} chamado(s) reincidente(s) encontrado(s)</p>
+            <p className="text-xs text-tema-apagado">{totalReincidentes} possivel(is) rechamada(s) encontrada(s)</p>
           )}
 
           {loadingReincidentes

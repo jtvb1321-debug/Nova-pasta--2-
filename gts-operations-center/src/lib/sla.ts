@@ -9,16 +9,30 @@ export { META_SLA_RESPOSTA_MINUTOS, META_SLA_RESOLUCAO_MINUTOS }
 export const JANELA_REINCIDENCIA_DIAS = 7
 
 function diferencaMinutos(inicio: Date, fim: Date) {
-  return Math.round((fim.getTime() - inicio.getTime()) / 60000)
+  return Math.max(0, Math.round((fim.getTime() - inicio.getTime()) / 60000))
 }
 
-export function calcularSlaResposta(dataAbertura: Date, dataInicio: Date) {
-  const minutos = diferencaMinutos(dataAbertura, dataInicio)
+// O SLA conta a partir de quando o chamado deveria comecar a ser atendido:
+// agendado para o futuro (manual, ou automatico apos 18h / no almoco) conta
+// da data agendada, nao do momento em que foi cadastrado - senao um chamado
+// aberto as 19h para as 07:30 do dia seguinte ja nasceria estourado.
+export function calcularInicioSla(dataAbertura: Date, dataAgendada?: Date | null) {
+  if (dataAgendada && dataAgendada.getTime() > dataAbertura.getTime()) return dataAgendada
+  return dataAbertura
+}
+
+// Chamados anteriores a regra nao tem inicioSla - para eles vale a abertura.
+export function inicioSlaEfetivo(chamado: { inicioSla?: Date | null; dataAbertura: Date }) {
+  return chamado.inicioSla ?? chamado.dataAbertura
+}
+
+export function calcularSlaResposta(inicioSla: Date, dataInicio: Date) {
+  const minutos = diferencaMinutos(inicioSla, dataInicio)
   return { slaRespostaMinutos: minutos, dentroSlaResposta: minutos <= META_SLA_RESPOSTA_MINUTOS }
 }
 
-export function calcularSlaResolucao(dataAbertura: Date, dataFim: Date, tipo: string) {
-  const minutos = diferencaMinutos(dataAbertura, dataFim)
+export function calcularSlaResolucao(inicioSla: Date, dataFim: Date, tipo: string) {
+  const minutos = diferencaMinutos(inicioSla, dataFim)
   const meta = META_SLA_RESOLUCAO_MINUTOS[tipo] ?? META_SLA_RESOLUCAO_MINUTOS.SUPORTE
   return { slaResolucaoMinutos: minutos, dentroSlaResolucao: minutos <= meta }
 }
@@ -28,9 +42,9 @@ export type PrioridadeChamado = 'CRITICA' | 'ALTA' | 'MEDIA' | 'NORMAL'
 // Progresso do SLA de um chamado ainda ABERTO/EM_ANDAMENTO (sem dataFim) -
 // usado no painel de chamados em andamento e no estado calculado de equipe
 // da TV, para nao duplicar a mesma formula em dois lugares.
-export function calcularProgressoSlaEmAndamento(dataAbertura: Date, tipo: string) {
+export function calcularProgressoSlaEmAndamento(inicioSla: Date, tipo: string) {
   const metaMinutos = META_SLA_RESOLUCAO_MINUTOS[tipo] ?? META_SLA_RESOLUCAO_MINUTOS.SUPORTE
-  const minutosDecorridos = diferencaMinutos(dataAbertura, new Date())
+  const minutosDecorridos = diferencaMinutos(inicioSla, new Date())
   const percentualSla = Math.min(100, Math.round((minutosDecorridos / metaMinutos) * 100))
   const slaEstourado = percentualSla >= 100
   const prioridade: PrioridadeChamado = tipo === 'ROMPIMENTO_MASSIVO'
@@ -66,5 +80,7 @@ export async function detectarReincidencia(dados: { cliente: string; telefone?: 
     select: { id: true },
   })
 
-  return anterior ? { reincidente: true, chamadoOrigemReincidenciaId: anterior.id } : { reincidente: false, chamadoOrigemReincidenciaId: null }
+  return anterior
+    ? { reincidente: true, chamadoOrigemReincidenciaId: anterior.id, statusRechamada: 'POSSIVEL' as const }
+    : { reincidente: false, chamadoOrigemReincidenciaId: null, statusRechamada: null }
 }

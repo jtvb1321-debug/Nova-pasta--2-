@@ -11,6 +11,7 @@ import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 import { DiagnosticoRunner } from './DiagnosticoRunner'
+import { QrAvaliacao } from './QrAvaliacao'
 import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
 
 const MIN_FOTOS = 3
@@ -53,6 +54,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   const [nenhumEquipamentoUsado, setNenhumEquipamentoUsado] = useState(false)
   const [showDiagnostico, setShowDiagnostico] = useState(false)
   const [mostrarDiagnosticoCompleto, setMostrarDiagnosticoCompleto] = useState(false)
+  const [tokenAvaliacao, setTokenAvaliacao] = useState<string | null>(null)
   const inputFotoRef = useRef<HTMLInputElement>(null)
 
   const prioridade = detectarPrioridade(chamado.observacao)
@@ -108,6 +110,7 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
         body: JSON.stringify({ status: novoStatus, ...dadosExtra }),
       })
       if (!res.ok) throw new Error()
+      const corpo = await res.json().catch(() => ({}))
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['meus-chamados'] }),
@@ -115,10 +118,10 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
         queryClient.invalidateQueries({ queryKey: ['agenda'] }),
       ])
 
-      return true
+      return corpo ?? {}
     } catch {
       toast({ title: 'Erro ao atualizar chamado', variant: 'destructive' })
-      return false
+      return null
     } finally {
       setLoading(false)
     }
@@ -223,7 +226,10 @@ async function marcarClienteAusente() {
 
     if (ok) {
       toast({ title: 'Atendimento finalizado! Evidencias enviadas ao Telegram.', variant: 'success' })
-      onClose()
+      // Mostra o QR code da avaliacao antes de fechar; sem token (falha ao
+      // criar a avaliacao) fecha direto - o cliente ainda recebe o link pelo WhatsApp.
+      if (ok.avaliacaoToken) setTokenAvaliacao(ok.avaliacaoToken)
+      else onClose()
     }
   }
 
@@ -248,6 +254,14 @@ async function marcarClienteAusente() {
 
         {/* Conteudo */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {tokenAvaliacao ? (
+            <QrAvaliacao
+              chamado={chamado}
+              tipoLabel={TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
+              token={tokenAvaliacao}
+              onConcluir={onClose}
+            />
+          ) : (<>
 
           {/* Info */}
           <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-2">
@@ -650,6 +664,7 @@ async function marcarClienteAusente() {
               </div>
             </div>
           )}
+          </>)}
         </div>
       </div>
 

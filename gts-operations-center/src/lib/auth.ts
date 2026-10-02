@@ -14,8 +14,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const usuario = await prisma.usuario.findUnique({
-          where: { email: credentials.email as string },
+        // Celular costuma digitar "Admin@..." com maiuscula e espaco no fim -
+        // o e-mail nao diferencia maiusculas, entao normaliza antes de buscar.
+        const email = (credentials.email as string).trim()
+        const usuario = await prisma.usuario.findFirst({
+          where: { email: { equals: email, mode: 'insensitive' } },
         })
 
         if (!usuario || !usuario.ativo) return null

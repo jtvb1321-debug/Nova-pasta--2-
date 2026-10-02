@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calcularProgressoSlaEmAndamento } from '@/lib/sla'
+import { calcularProgressoSlaEmAndamento, inicioSlaEfetivo } from '@/lib/sla'
 
 export async function GET() {
   const session = await auth()
@@ -16,7 +16,7 @@ export async function GET() {
     })
 
     const dados = chamados.map(c => {
-      const { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos } = calcularProgressoSlaEmAndamento(c.dataAbertura, c.tipo)
+      const { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos } = calcularProgressoSlaEmAndamento(inicioSlaEfetivo(c), c.tipo)
 
       return {
         id: c.id,

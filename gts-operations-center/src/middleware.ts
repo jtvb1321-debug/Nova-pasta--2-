@@ -5,6 +5,9 @@ const PUBLIC_ROUTES = [
   '/login',
   '/api/auth',
   '/403',
+  // Avaliacao do cliente (QR code / link do WhatsApp) - sem login.
+  '/avaliar/',
+  '/api/avaliacao/',
 ]
 
 const ROTAS_TECNICO = [
