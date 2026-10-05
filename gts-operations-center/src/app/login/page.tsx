@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2, AlertCircle, Wifi, Map, Users, Package, BarChart3, Bell } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle, Wifi, MapPin, ClipboardList, Package, BarChart3, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
@@ -16,15 +16,55 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
+// "Lembrar meu e-mail": so o e-mail fica neste navegador para vir preenchido.
+// Nao mexe na sessao nem no login.
+const CHAVE_EMAIL_LEMBRADO = 'gts-login-email'
+
+const RECURSOS = [
+  { icon: MapPin, titulo: 'Monitoramento em tempo real', texto: 'Acompanhe veículos e equipes em campo com total visibilidade.' },
+  { icon: ClipboardList, titulo: 'Gestão de chamados', texto: 'Atendimento mais ágil e organizado.' },
+  { icon: Package, titulo: 'Controle de estoque', texto: 'Rastreabilidade de materiais e equipamentos.' },
+  { icon: BarChart3, titulo: 'Dashboards e indicadores', texto: 'Dados para decisões mais assertivas.' },
+]
+
+function MarcaGts({ tamanho = 'md' }: { tamanho?: 'sm' | 'md' }) {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <img
+        src="/images/icon.png"
+        alt=""
+        className={cn('flex-shrink-0 object-contain', tamanho === 'sm' ? 'w-9 h-9' : 'w-11 h-11 xl:w-12 xl:h-12')}
+      />
+      <div className="min-w-0 leading-tight">
+        <p className={cn('font-black tracking-tight', tamanho === 'sm' ? 'text-lg' : 'text-xl xl:text-2xl')}>
+          <span className="text-white">GTS</span><span className="text-[#ff7a00]">net</span>
+        </p>
+        <p className={cn('font-medium uppercase tracking-[0.18em] text-white/60', tamanho === 'sm' ? 'text-[10px]' : 'text-[11px]')}>
+          Operations Center
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [lembrarEmail, setLembrarEmail] = useState(false)
+  const [mostrarAjudaSenha, setMostrarAjudaSenha] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
+
+  useEffect(() => {
+    try {
+      const salvo = localStorage.getItem(CHAVE_EMAIL_LEMBRADO)
+      if (salvo) { setValue('email', salvo); setLembrarEmail(true) }
+    } catch {}
+  }, [setValue])
 
   async function onSubmit(data: LoginForm) {
     setLoading(true)
@@ -48,191 +88,182 @@ export default function LoginPage() {
     }
   }
 
+  // Guarda (ou esquece) o e-mail conforme a opcao e segue para o login de sempre.
+  function enviar(data: LoginForm) {
+    try {
+      if (lembrarEmail) localStorage.setItem(CHAVE_EMAIL_LEMBRADO, data.email)
+      else localStorage.removeItem(CHAVE_EMAIL_LEMBRADO)
+    } catch {}
+    return onSubmit(data)
+  }
+
+  const classeInput = (comErro: boolean) => cn(
+    'w-full min-h-[48px] rounded-[10px] border bg-[#202226] px-3.5 text-base lg:text-[15px] text-white',
+    'placeholder:text-white/35 outline-none transition-colors',
+    'focus:border-[#ff7a00] focus:ring-2 focus:ring-[#ff7a00]/25',
+    comErro ? 'border-red-500/70' : 'border-[#34373d]',
+  )
+
   return (
-    <div className="min-h-screen flex bg-tema-fundo">
+    <div className="relative min-h-[100dvh] w-full overflow-x-hidden bg-[#0b0c0e] text-white">
+      {/* Fundo: rede de fibra ao entardecer + camada escura para leitura */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/images/login-bg.svg)' }}
+      />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/70 lg:bg-gradient-to-r lg:from-black/50 lg:via-black/15 lg:to-black/60" />
 
-      {/* Lado esquerdo */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-tema-laranja-suave/60 via-tema-fundo to-[#FFE9D2]/40 border-r border-tema-linha">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-orange-400/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-400/8 rounded-full blur-3xl" />
-          <div
-            className="absolute inset-0 opacity-[0.35]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(32,29,23,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(32,29,23,0.05) 1px, transparent 1px)`,
-              backgroundSize: '40px 40px',
-              maskImage: 'radial-gradient(circle at 50% 40%, black, transparent 75%)',
-            }}
-          />
-        </div>
+      <div
+        className="relative z-10 min-h-[100dvh] grid grid-cols-1 lg:grid-cols-[58fr_42fr] xl:grid-cols-[65fr_35fr]"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {/* Area institucional (notebook e desktop) */}
+        <section className="hidden lg:flex flex-col justify-between gap-8 px-[clamp(32px,5vw,96px)] py-[clamp(28px,6vh,72px)] min-w-0">
+          <MarcaGts />
 
-        <div className="relative z-10 flex flex-col items-center text-center px-12 animate-fade-in-up">
-          <div className="w-56 h-56 mb-6">
-            <img
-              src="/images/logo.png"
-              alt="GTSNet"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-
-          <h1 className="text-5xl font-black mb-3 tracking-tight">
-            <span className="text-tema-tinta">GTS</span>
-            <span className="bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">net</span>
-            <span className="text-tema-tinta"> Operations Center</span>
-          </h1>
-          <p className="text-tema-suave text-lg mb-10">
-            Centro de Operacoes Inteligente
-          </p>
-
-          <div className="space-y-3 text-left w-full max-w-sm">
-            {[
-              { icon: Map, text: 'Monitoramento de veiculos em tempo real', destaque: true },
-              { icon: Users, text: 'Gestao completa das equipes de campo' },
-              { icon: Package, text: 'Controle de estoque e materiais' },
-              { icon: BarChart3, text: 'Dashboard executivo com KPIs ao vivo' },
-              { icon: Bell, text: 'Alertas inteligentes e notificacoes' },
-            ].map((f, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'flex items-center gap-3 p-3 bg-tema-superficie border rounded-xl',
-                  'transition-all duration-200 hover:border-orange-500/30 hover:-translate-y-0.5',
-                  'animate-fade-in-up',
-                  f.destaque ? 'border-orange-500/30 gts-hud-corner' : 'border-tema-linha'
-                )}
-                style={{ animationDelay: `${120 + i * 70}ms` }}
-              >
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/15 to-orange-500/5 flex items-center justify-center flex-shrink-0">
-                  <f.icon className="w-4 h-4 text-orange-600" />
-                </div>
-                <p className="text-sm text-tema-texto">{f.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute bottom-6 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#187A45] animate-pulse" />
-            <span className="text-[#187A45] text-xs font-mono tracking-wider">SISTEMA ONLINE</span>
-          </div>
-          <p className="text-tema-apagado text-xs">GTSNet — Provedor de Internet</p>
-        </div>
-      </div>
-
-      {/* Lado direito */}
-      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center px-8 relative bg-tema-fundo-2">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-400/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="w-full max-w-sm relative animate-fade-in-up">
-          {/* Logo mobile */}
-          <div className="flex flex-col items-center mb-8 lg:hidden">
-            <div className="w-24 h-24 mb-4">
-              <img
-                src="/images/logo.png"
-                alt="GTSNet"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <h1 className="text-xl font-bold">
-              <span className="text-tema-tinta">GTS</span>
-              <span className="text-orange-600">net</span>
-              <span className="text-tema-tinta"> Operations</span>
+          <div className="max-w-[640px] min-w-0">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#ff7a00]">Centro de Operações Inteligente</p>
+            <h1 className="mt-3 font-black tracking-tight leading-[1.05] text-[clamp(34px,3.6vw,58px)] text-balance">
+              GTS<span className="text-[#ff7a00]">net</span> Operations Center
             </h1>
+            <ul className="mt-[clamp(20px,4vh,40px)] grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-[clamp(14px,2.4vh,24px)] [@media(max-height:760px)]:hidden">
+              {RECURSOS.map(r => (
+                <li key={r.titulo} className="flex gap-3 min-w-0">
+                  <span className="w-10 h-10 rounded-lg border border-[#ff7a00]/35 bg-[#ff7a00]/10 flex items-center justify-center flex-shrink-0">
+                    <r.icon className="w-[18px] h-[18px] text-[#ff8a2a]" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-white">{r.titulo}</span>
+                    <span className="block text-sm text-white/65 leading-snug">{r.texto}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Card */}
-          <div className="relative bg-tema-superficie border border-tema-linha rounded-xl p-8 overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600" />
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl overflow-hidden bg-tema-laranja-suave p-1.5 flex-shrink-0 ring-1 ring-orange-500/20">
-                <img
-                  src="/images/icon.png"
-                  alt="GTSNet"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-tema-tinta">Bem-vindo!</h2>
-                <p className="text-tema-apagado text-xs">Entre com suas credenciais</p>
-              </div>
-            </div>
+          <p className="text-sm text-white/55">Conectando pessoas, impulsionando negócios.</p>
+        </section>
 
-            <form onSubmit={handleSubmit(onSubmit)} method="post" className="space-y-4">
+        {/* Login */}
+        <main className="flex flex-col items-center justify-center gap-6 px-4 py-8 sm:px-8 lg:px-[clamp(24px,3vw,56px)] [@media(max-height:700px)]:py-5 min-w-0">
+          {/* Celular e tablet: marca reduzida */}
+          <div className="lg:hidden flex flex-col items-center text-center gap-2">
+            <MarcaGts tamanho="sm" />
+            <p className="hidden md:block text-sm text-white/65">Centro de Operações Inteligente</p>
+          </div>
+
+          <div
+            className="w-full max-w-[440px] rounded-[18px] border border-[rgba(255,102,0,0.35)] bg-[rgba(15,15,15,0.90)] backdrop-blur-[16px] p-6 sm:p-8 [@media(max-height:700px)]:p-5"
+            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.45)' }}
+          >
+            <img src="/images/icon.png" alt="GTSNet" className="w-10 h-10 object-contain" />
+            <h2 className="mt-4 text-2xl font-bold text-white">Bem-vindo!</h2>
+            <p className="mt-1 text-sm text-white/65 leading-relaxed">
+              Entre com suas credenciais para acessar o GTSNet Operations Center.
+            </p>
+
+            <form onSubmit={handleSubmit(enviar)} method="post" className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-tema-suave mb-1.5">E-mail</label>
+                <label htmlFor="login-email" className="block text-sm font-medium text-white/80 mb-1.5">E-mail</label>
                 <input
                   {...register('email')}
+                  id="login-email"
                   type="email"
+                  inputMode="email"
                   placeholder="seu@email.com"
-                  autoComplete="email"
-                  className={`w-full bg-tema-fundo-2 border rounded-lg px-3 py-2.5 text-sm text-tema-tinta
-                    placeholder:text-tema-apagado focus:outline-none focus:ring-1 transition-colors
-                    ${errors.email
-                      ? 'border-red-500/50 focus:ring-red-500'
-                      : 'border-tema-linha-forte focus:ring-orange-600 focus:border-orange-600'
-                    }`}
+                  autoComplete="username"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? 'login-email-erro' : undefined}
+                  className={classeInput(!!errors.email)}
                 />
-                {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+                {errors.email && <p id="login-email-erro" className="text-sm text-red-400 mt-1.5">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-tema-suave mb-1.5">Senha</label>
+                <label htmlFor="login-senha" className="block text-sm font-medium text-white/80 mb-1.5">Senha</label>
                 <div className="relative">
                   <input
                     {...register('password')}
+                    id="login-senha"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className={`w-full bg-tema-fundo-2 border rounded-lg px-3 py-2.5 pr-10 text-sm text-tema-tinta
-                      placeholder:text-tema-apagado focus:outline-none focus:ring-1 transition-colors
-                      ${errors.password
-                        ? 'border-red-500/50 focus:ring-red-500'
-                        : 'border-tema-linha-forte focus:ring-orange-600 focus:border-orange-600'
-                      }`}
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? 'login-senha-erro' : undefined}
+                    className={cn(classeInput(!!errors.password), 'pr-12')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-tema-apagado hover:text-tema-tinta transition-colors"
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-pressed={showPassword}
+                    className="absolute right-0.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-white/55 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/60 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+                {errors.password && <p id="login-senha-erro" className="text-sm text-red-400 mt-1.5">{errors.password.message}</p>}
               </div>
 
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                <label htmlFor="login-lembrar" className="inline-flex items-center gap-2.5 min-h-[44px] cursor-pointer text-sm text-white/75 select-none">
+                  <input
+                    id="login-lembrar"
+                    type="checkbox"
+                    checked={lembrarEmail}
+                    onChange={e => setLembrarEmail(e.target.checked)}
+                    className="w-[18px] h-[18px] rounded border-[#34373d] bg-[#202226] accent-[#ff7a00] cursor-pointer"
+                  />
+                  Lembrar meu e-mail
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setMostrarAjudaSenha(v => !v)}
+                  aria-expanded={mostrarAjudaSenha}
+                  aria-controls="login-ajuda-senha"
+                  className="min-h-[44px] text-sm font-medium text-[#ff8a2a] hover:text-[#ffa24d] focus-visible:outline-none focus-visible:underline"
+                >
+                  Esqueceu a senha?
+                </button>
+              </div>
+              {mostrarAjudaSenha && (
+                <p id="login-ajuda-senha" className="text-sm text-white/75 border-l-2 border-[#ff7a00] pl-3 -mt-1">
+                  Peça ao administrador do sistema para redefinir sua senha (menu Usuários).
+                </p>
+              )}
+
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                  <p className="text-sm text-red-700">{error}</p>
+                <div role="alert" className="flex items-start gap-2 rounded-[10px] border border-red-500/40 bg-red-500/10 px-3 py-2.5">
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 rounded-lg
-                  transition-all duration-200 flex items-center justify-center gap-2
-                  disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-2"
+                className="w-full min-h-[48px] rounded-[10px] bg-gradient-to-r from-[#ff7a00] to-[#ff5a00] px-4 text-base font-semibold text-white
+                  flex items-center justify-center gap-2 transition-[filter,transform] duration-150
+                  [@media(hover:hover)]:hover:brightness-110 active:scale-[0.99]
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f0f]
+                  disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>
-                  : 'Entrar no Sistema'
+                  : <>Entrar no Sistema <ArrowRight className="w-4 h-4" aria-hidden /></>
                 }
               </button>
             </form>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <Wifi className="w-3.5 h-3.5 text-orange-600" />
-            <span className="text-xs text-orange-700">Sistema Online</span>
-            <span className="text-tema-apagado text-xs mx-2">·</span>
-            <span className="text-tema-apagado text-xs">GTSNet © {new Date().getFullYear()}</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-white/55">
+            <Wifi className="w-3.5 h-3.5 text-[#ff7a00]" aria-hidden />
+            <span className="text-white/75">Sistema Online</span>
+            <span aria-hidden>·</span>
+            <span>GTSNet © {new Date().getFullYear()}</span>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   )
