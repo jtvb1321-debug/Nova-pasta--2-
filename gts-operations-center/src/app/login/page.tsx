@@ -6,8 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2, AlertCircle, Wifi, MapPin, ClipboardList, Package, BarChart3, ArrowRight } from 'lucide-react'
+import { Poppins } from 'next/font/google'
+import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Fonte da marca Orbia, so nesta pagina.
+const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' })
 
 const loginSchema = z.object({
   email: z.string().email('E-mail invalido'),
@@ -20,35 +24,20 @@ type LoginForm = z.infer<typeof loginSchema>
 // Nao mexe na sessao nem no login.
 const CHAVE_EMAIL_LEMBRADO = 'gts-login-email'
 
-const RECURSOS = [
-  { icon: MapPin, titulo: 'Monitoramento em tempo real', texto: 'Acompanhe veículos e equipes em campo com total visibilidade.' },
-  { icon: ClipboardList, titulo: 'Gestão de chamados', texto: 'Atendimento mais ágil e organizado.' },
-  { icon: Package, titulo: 'Controle de estoque', texto: 'Rastreabilidade de materiais e equipamentos.' },
-  { icon: BarChart3, titulo: 'Dashboards e indicadores', texto: 'Dados para decisões mais assertivas.' },
-]
+// Simbolo Orbia: arquivo oficial (public/images/orbia-simbolo.svg), cores originais.
+function SimboloOrbia({ className }: { className?: string }) {
+  return <img src="/images/orbia-simbolo.svg" alt="" aria-hidden className={cn('object-contain', className)} />
+}
 
-// Marca GTSnet: globo num selo discreto + nome (o logo.png tem "GTS" escuro,
-// que some no fundo preto).
-function MarcaGts({ tamanho = 'md' }: { tamanho?: 'sm' | 'md' }) {
-  const pequena = tamanho === 'sm'
+// Assinatura discreta: o Orbia e um sistema da GTSNet.
+function AssinaturaGts({ className }: { className?: string }) {
   return (
-    <div className={cn('flex items-center min-w-0', pequena ? 'gap-3' : 'gap-4')}>
-      <span className={cn(
-        'flex-shrink-0 flex items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/10',
-        pequena ? 'w-12 h-12' : 'w-14 h-14 xl:w-16 xl:h-16',
-      )}>
-        <img src="/images/icon.png" alt="" className={cn('object-contain', pequena ? 'w-8 h-8' : 'w-9 h-9 xl:w-11 xl:h-11')} />
+    <p className={cn('items-center gap-2 text-xs text-white/50', className)}>
+      <img src="/images/gts-globo.svg" alt="" className="w-5 h-5 object-contain" />
+      <span>
+        <span className="sr-only">Um sistema </span>GTSNet
       </span>
-      <div className="min-w-0 leading-none">
-        <p className={cn('font-black tracking-[-0.02em]', pequena ? 'text-[22px]' : 'text-[26px] xl:text-[30px]')}>
-          <span className="text-white">GTS</span><span className="text-[#ff7a00]">net</span>
-        </p>
-        <p className={cn('flex items-center gap-2 font-semibold uppercase text-white/70', pequena ? 'mt-1 text-[10px] tracking-[0.24em]' : 'mt-1.5 text-[11px] tracking-[0.28em]')}>
-          <span aria-hidden className="h-px w-4 xl:w-5 bg-[#ff7a00]" />
-          Operations Center
-        </p>
-      </div>
-    </div>
+    </p>
   )
 }
 
@@ -103,82 +92,70 @@ export default function LoginPage() {
   }
 
   const classeInput = (comErro: boolean) => cn(
-    'w-full min-h-[48px] rounded-[10px] border bg-[#202226] px-3.5 text-base lg:text-[15px] text-white',
-    'placeholder:text-white/35 outline-none transition-colors',
+    'w-full h-[50px] rounded-[9px] border bg-[#18191d]/90 px-3.5 text-base lg:text-[15px] text-white',
+    'placeholder:text-white/40 outline-none transition-colors',
     'focus:border-[#ff7a00] focus:ring-2 focus:ring-[#ff7a00]/25',
-    comErro ? 'border-red-500/70' : 'border-[#34373d]',
+    comErro ? 'border-red-500/70' : 'border-[#2f3139]',
   )
 
   return (
-    <div className="relative min-h-[100dvh] w-full overflow-x-hidden bg-[#0b0c0e] text-white">
-      {/* Fundo: rede de fibra ao entardecer + camada escura para leitura */}
+    <div className="relative min-h-[100dvh] w-full overflow-x-hidden bg-[#070606] text-white">
+      {/* Fundo: cidade e telecom a noite + camada escura (mais forte a esquerda, para o texto) */}
       <div
         aria-hidden
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/images/login-bg.svg)' }}
+        style={{ backgroundImage: 'url(/images/login-bg.webp)' }}
       />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/70 lg:bg-gradient-to-r lg:from-black/50 lg:via-black/15 lg:to-black/60" />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 lg:bg-gradient-to-r lg:from-black/75 lg:via-black/55 lg:to-black/60" />
 
-      <div
-        className="relative z-10 min-h-[100dvh] grid grid-cols-1 lg:grid-cols-[58fr_42fr] xl:grid-cols-[65fr_35fr]"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      {/* Marca Orbia (notebook e desktop): posicoes da referencia */}
+      <SimboloOrbia className="hidden lg:block absolute z-10 left-[7.5%] top-[6.5%] w-[clamp(76px,6.8vw,132px)] h-auto" />
+      <div className={cn('hidden lg:block absolute z-10 left-[6%] top-[23%] max-w-[52%]', poppins.className)}>
+        <h1 className="font-bold leading-[0.95] tracking-[-0.02em] text-[clamp(64px,7vw,120px)]">
+          Orbi<span className="text-[#ff6a00]">a</span>
+        </h1>
+        <p className="mt-[clamp(10px,1.6vh,20px)] font-semibold leading-[1.08] tracking-[-0.01em] text-[clamp(28px,2.9vw,54px)]">
+          Gestão, monitoramento e<br />controle em um só lugar.
+        </p>
+      </div>
+      <AssinaturaGts className="hidden lg:flex absolute z-10 left-[6%] bottom-[4%]" />
+
+      {/* Login */}
+      <main
+        className="relative z-10 min-h-[100dvh] flex flex-col items-center justify-center gap-6 px-4 py-8 sm:px-8 lg:items-end lg:pr-[5.5%] [@media(max-height:760px)]:py-4"
+        style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
-        {/* Area institucional (notebook e desktop) */}
-        <section className="hidden lg:flex flex-col justify-between gap-8 px-[clamp(32px,5vw,96px)] py-[clamp(28px,6vh,72px)] min-w-0">
-          <MarcaGts />
-
-          <div className="max-w-[640px] min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#ff7a00]">Centro de Operações Inteligente</p>
-            <h1 className="mt-3 font-black tracking-tight leading-[1.05] text-[clamp(34px,3.6vw,58px)] text-balance">
-              GTS<span className="text-[#ff7a00]">net</span> Operations Center
-            </h1>
-            <ul className="mt-[clamp(20px,4vh,40px)] grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-[clamp(14px,2.4vh,24px)] [@media(max-height:760px)]:hidden">
-              {RECURSOS.map(r => (
-                <li key={r.titulo} className="flex gap-3 min-w-0">
-                  <span className="w-10 h-10 rounded-lg border border-[#ff7a00]/35 bg-[#ff7a00]/10 flex items-center justify-center flex-shrink-0">
-                    <r.icon className="w-[18px] h-[18px] text-[#ff8a2a]" aria-hidden />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block font-semibold text-white">{r.titulo}</span>
-                    <span className="block text-sm text-white/65 leading-snug">{r.texto}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="text-sm text-white/55">Conectando pessoas, impulsionando negócios.</p>
-        </section>
-
-        {/* Login */}
-        <main className="flex flex-col items-center justify-center gap-6 px-4 py-8 sm:px-8 lg:px-[clamp(24px,3vw,56px)] [@media(max-height:700px)]:py-5 min-w-0">
-          {/* Celular e tablet: marca reduzida */}
-          <div className="lg:hidden flex flex-col items-center text-center gap-2">
-            <MarcaGts tamanho="sm" />
-            <p className="hidden md:block text-sm text-white/65">Centro de Operações Inteligente</p>
-          </div>
-
-          <div
-            className="w-full max-w-[440px] rounded-[18px] border border-[rgba(255,102,0,0.35)] bg-[rgba(15,15,15,0.90)] backdrop-blur-[16px] p-6 sm:p-8 [@media(max-height:700px)]:p-5"
-            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.45)' }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#ff7a00]/10 ring-1 ring-[#ff7a00]/30">
-                <img src="/images/icon.png" alt="GTSNet" className="w-7 h-7 object-contain" />
-              </span>
-              {/* Celular/tablet: o nome ja aparece na marca acima do card */}
-              <p className="hidden lg:block text-lg font-black tracking-[-0.02em] leading-none">
-                <span className="text-white">GTS</span><span className="text-[#ff7a00]">net</span>
-              </p>
-            </div>
-            <h2 className="mt-5 text-2xl font-bold text-white">Bem-vindo!</h2>
-            <p className="mt-1 text-sm text-white/65 leading-relaxed">
-              Entre com suas credenciais para acessar o GTSNet Operations Center.
+        {/* Celular e tablet: marca Orbia resumida */}
+        <div className={cn('lg:hidden flex flex-col items-center text-center', poppins.className)}>
+          <div className="flex items-center gap-3">
+            <SimboloOrbia className="w-14 h-14" />
+            <p className="text-[44px] font-bold leading-none tracking-[-0.02em]">
+              Orbi<span className="text-[#ff6a00]">a</span>
             </p>
+          </div>
+          <p className="mt-3 text-base sm:text-lg font-semibold leading-snug text-white/90 max-w-[26ch]">
+            Gestão, monitoramento e controle em um só lugar.
+          </p>
+        </div>
 
-            <form onSubmit={handleSubmit(enviar)} method="post" className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="login-email" className="block text-sm font-medium text-white/80 mb-1.5">E-mail</label>
+        <div
+          className="w-full max-w-[460px] lg:w-[clamp(400px,29vw,480px)] lg:max-w-none rounded-[22px] border border-[rgba(255,106,0,0.55)] bg-[rgba(10,10,11,0.74)] backdrop-blur-[14px]
+            px-6 py-8 sm:px-11 sm:py-9 [@media(max-height:760px)]:py-6"
+          style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.45), 0 0 28px rgba(255,90,0,0.12)' }}
+        >
+          <div className="flex flex-col items-center text-center">
+            <SimboloOrbia className="w-[84px] h-[84px] sm:w-[96px] sm:h-[96px] [@media(max-height:760px)]:w-[72px] [@media(max-height:760px)]:h-[72px]" />
+            <h2 className={cn('mt-4 text-[28px] sm:text-[30px] font-semibold text-white', poppins.className)}>Bem-vindo!</h2>
+            <p className="mt-2 text-[15px] text-white/80 leading-relaxed max-w-[32ch] text-balance">
+              Entre com suas credenciais para acessar a plataforma Orbia.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(enviar)} method="post" className="mt-6 space-y-4 [@media(max-height:760px)]:mt-5">
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-medium text-white/90 mb-1.5">E-mail</label>
+              <div className="relative">
+                <Mail aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-white/70" />
                 <input
                   {...register('email')}
                   id="login-email"
@@ -188,96 +165,92 @@ export default function LoginPage() {
                   autoComplete="username"
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? 'login-email-erro' : undefined}
-                  className={classeInput(!!errors.email)}
+                  className={cn(classeInput(!!errors.email), 'pl-11')}
                 />
-                {errors.email && <p id="login-email-erro" className="text-sm text-red-400 mt-1.5">{errors.email.message}</p>}
               </div>
+              {errors.email && <p id="login-email-erro" className="text-sm text-red-400 mt-1.5">{errors.email.message}</p>}
+            </div>
 
-              <div>
-                <label htmlFor="login-senha" className="block text-sm font-medium text-white/80 mb-1.5">Senha</label>
-                <div className="relative">
-                  <input
-                    {...register('password')}
-                    id="login-senha"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    aria-invalid={!!errors.password}
-                    aria-describedby={errors.password ? 'login-senha-erro' : undefined}
-                    className={cn(classeInput(!!errors.password), 'pr-12')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                    aria-pressed={showPassword}
-                    className="absolute right-0.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-white/55 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/60 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
-                  </button>
-                </div>
-                {errors.password && <p id="login-senha-erro" className="text-sm text-red-400 mt-1.5">{errors.password.message}</p>}
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                <label htmlFor="login-lembrar" className="inline-flex items-center gap-2.5 min-h-[44px] cursor-pointer text-sm text-white/75 select-none">
-                  <input
-                    id="login-lembrar"
-                    type="checkbox"
-                    checked={lembrarEmail}
-                    onChange={e => setLembrarEmail(e.target.checked)}
-                    className="w-[18px] h-[18px] rounded border-[#34373d] bg-[#202226] accent-[#ff7a00] cursor-pointer"
-                  />
-                  Lembrar meu e-mail
-                </label>
+            <div>
+              <label htmlFor="login-senha" className="block text-sm font-medium text-white/90 mb-1.5">Senha</label>
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  id="login-senha"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'login-senha-erro' : undefined}
+                  className={cn(classeInput(!!errors.password), 'pr-12')}
+                />
                 <button
                   type="button"
-                  onClick={() => setMostrarAjudaSenha(v => !v)}
-                  aria-expanded={mostrarAjudaSenha}
-                  aria-controls="login-ajuda-senha"
-                  className="min-h-[44px] text-sm font-medium text-[#ff8a2a] hover:text-[#ffa24d] focus-visible:outline-none focus-visible:underline"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a00]/60 transition-colors"
                 >
-                  Esqueceu a senha?
+                  {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
               </div>
-              {mostrarAjudaSenha && (
-                <p id="login-ajuda-senha" className="text-sm text-white/75 border-l-2 border-[#ff7a00] pl-3 -mt-1">
-                  Peça ao administrador do sistema para redefinir sua senha (menu Usuários).
-                </p>
-              )}
+              {errors.password && <p id="login-senha-erro" className="text-sm text-red-400 mt-1.5">{errors.password.message}</p>}
+            </div>
 
-              {error && (
-                <div role="alert" className="flex items-start gap-2 rounded-[10px] border border-red-500/40 bg-red-500/10 px-3 py-2.5">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-200">{error}</p>
-                </div>
-              )}
-
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              <label htmlFor="login-lembrar" className="inline-flex items-center gap-2.5 min-h-[44px] cursor-pointer text-sm text-white/85 select-none">
+                <input
+                  id="login-lembrar"
+                  type="checkbox"
+                  checked={lembrarEmail}
+                  onChange={e => setLembrarEmail(e.target.checked)}
+                  className="w-5 h-5 rounded accent-[#ff6a00] cursor-pointer"
+                />
+                Lembrar meu e-mail
+              </label>
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full min-h-[48px] rounded-[10px] bg-gradient-to-r from-[#ff7a00] to-[#ff5a00] px-4 text-base font-semibold text-white
-                  flex items-center justify-center gap-2 transition-[filter,transform] duration-150
-                  [@media(hover:hover)]:hover:brightness-110 active:scale-[0.99]
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f0f]
-                  disabled:opacity-60 disabled:cursor-not-allowed"
+                type="button"
+                onClick={() => setMostrarAjudaSenha(v => !v)}
+                aria-expanded={mostrarAjudaSenha}
+                aria-controls="login-ajuda-senha"
+                className="min-h-[44px] text-sm font-medium text-[#ff7a1a] hover:text-[#ffa24d] focus-visible:outline-none focus-visible:underline"
               >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>
-                  : <>Entrar no Sistema <ArrowRight className="w-4 h-4" aria-hidden /></>
-                }
+                Esqueceu a senha?
               </button>
-            </form>
-          </div>
+            </div>
+            {mostrarAjudaSenha && (
+              <p id="login-ajuda-senha" className="text-sm text-white/75 border-l-2 border-[#ff7a00] pl-3 -mt-1">
+                Peça ao administrador do sistema para redefinir sua senha (menu Usuários).
+              </p>
+            )}
 
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-white/55">
-            <Wifi className="w-3.5 h-3.5 text-[#ff7a00]" aria-hidden />
-            <span className="text-white/75">Sistema Online</span>
-            <span aria-hidden>·</span>
-            <span>GTSNet © {new Date().getFullYear()}</span>
-          </div>
-        </main>
-      </div>
+            {error && (
+              <div role="alert" className="flex items-start gap-2 rounded-[9px] border border-red-500/40 bg-red-500/10 px-3 py-2.5">
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-200">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-[52px] rounded-[11px] bg-gradient-to-r from-[#ffa040] to-[#ff6a00] px-4 text-base font-semibold text-white
+                flex items-center justify-center gap-2 transition-[filter,transform] duration-150
+                [@media(hover:hover)]:hover:brightness-110 active:scale-[0.98]
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0b]
+                disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</>
+                : <>Entrar no Sistema <ArrowRight className="w-4 h-4" aria-hidden /></>
+              }
+            </button>
+          </form>
+        </div>
+
+        {/* Celular e tablet: assinatura GTSNet abaixo do card */}
+        <AssinaturaGts className="lg:hidden flex self-start sm:self-center" />
+      </main>
     </div>
   )
 }

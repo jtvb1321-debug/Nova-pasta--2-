@@ -149,13 +149,13 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-3 border-b border-tema-linha flex-shrink-0">
         <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-orange-500/15 to-transparent p-1 ring-1 ring-orange-500/25">
-          <img src="/images/icon.png" alt="GTSNet" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src="/images/orbia-simbolo.svg" alt="Orbia" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="font-bold text-sm leading-tight">
-              <span className="text-tema-tinta">GTS</span>
-              <span className="text-orange-600">net</span>
+              <span className="text-tema-tinta">Orbi</span>
+              <span className="text-orange-600">a</span>
             </p>
             <p className="text-tema-apagado text-xs">Operations Center</p>
           </div>

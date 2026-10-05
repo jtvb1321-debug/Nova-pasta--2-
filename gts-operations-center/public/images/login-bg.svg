@@ -1,124 +1,154 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
-  <!-- Fundo da tela de login: rede de fibra ao entardecer (postes, cabos e cidade). -->
+  <!-- Fundo do login Orbia: cidade e telecom a noite, luzes laranja,
+       arcos de conexao e rastros de luz na estrada. -->
   <defs>
     <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#060708"/>
-      <stop offset="0.45" stop-color="#121014"/>
-      <stop offset="0.72" stop-color="#2a170c"/>
-      <stop offset="0.86" stop-color="#6a2c08"/>
-      <stop offset="1" stop-color="#140b06"/>
+      <stop offset="0" stop-color="#050506"/>
+      <stop offset="0.35" stop-color="#0d0b0b"/>
+      <stop offset="0.6" stop-color="#1c120c"/>
+      <stop offset="0.78" stop-color="#2a170b"/>
+      <stop offset="1" stop-color="#0a0706"/>
     </linearGradient>
-    <radialGradient id="sol" cx="0.66" cy="0.84" r="0.42">
-      <stop offset="0" stop-color="#ff7a1a" stop-opacity="0.75"/>
-      <stop offset="0.35" stop-color="#ff5a00" stop-opacity="0.28"/>
+    <radialGradient id="neblina" cx="0.58" cy="0.62" r="0.55">
+      <stop offset="0" stop-color="#ff6a10" stop-opacity="0.32"/>
+      <stop offset="0.45" stop-color="#ff5a00" stop-opacity="0.10"/>
       <stop offset="1" stop-color="#ff5a00" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="neblina2" cx="0.92" cy="0.55" r="0.35">
+      <stop offset="0" stop-color="#ff7a1a" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+    </radialGradient>
     <linearGradient id="chao" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0d0b0a"/>
-      <stop offset="1" stop-color="#050506"/>
-    </linearGradient>
-    <linearGradient id="fibra" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ff8a2a" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#ff8a2a" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/>
+      <stop offset="0" stop-color="#0b0807"/>
+      <stop offset="1" stop-color="#030303"/>
     </linearGradient>
     <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3"/>
+      <feGaussianBlur stdDeviation="4"/>
     </filter>
-    <pattern id="janelas" width="18" height="22" patternUnits="userSpaceOnUse">
-      <rect x="4" y="5" width="4" height="6" fill="#ffb15c" fill-opacity="0.22"/>
-      <rect x="11" y="13" width="4" height="6" fill="#ffd29a" fill-opacity="0.12"/>
+    <filter id="brilho-forte" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <pattern id="janelas" width="16" height="20" patternUnits="userSpaceOnUse">
+      <rect x="3" y="4" width="3" height="4" fill="#ff9a3c" fill-opacity="0.55"/>
+      <rect x="10" y="12" width="3" height="4" fill="#ffb866" fill-opacity="0.3"/>
     </pattern>
+    <pattern id="janelas-esparsas" width="28" height="26" patternUnits="userSpaceOnUse">
+      <rect x="5" y="6" width="3" height="4" fill="#ff8a2a" fill-opacity="0.45"/>
+      <rect x="19" y="17" width="3" height="3" fill="#ffc07a" fill-opacity="0.25"/>
+    </pattern>
+    <g id="torre">
+      <path d="M-34 0L0 -330L34 0M-26 -80H26M-20 -160H20M-13 -240H13M-26 -80L20 -160M26 -80L-20 -160M-20 -160L13 -240M20 -160L-13 -240M-13 -240L0 -330M13 -240L0 -330" fill="none" stroke="#0a0a0c" stroke-width="5" stroke-linejoin="round"/>
+      <rect x="-3" y="-372" width="6" height="44" fill="#0a0a0c"/>
+      <rect x="-16" y="-300" width="10" height="24" rx="2" fill="#0a0a0c"/>
+      <rect x="7" y="-286" width="10" height="24" rx="2" fill="#0a0a0c"/>
+    </g>
   </defs>
 
   <rect width="1920" height="1080" fill="url(#ceu)"/>
-  <rect width="1920" height="1080" fill="url(#sol)"/>
+  <rect width="1920" height="1080" fill="url(#neblina)"/>
+  <rect width="1920" height="1080" fill="url(#neblina2)"/>
 
-  <!-- Grade discreta no ceu (rede) -->
-  <g stroke="#ffffff" stroke-opacity="0.025" stroke-width="1">
-    <path d="M0 160H1920M0 320H1920M0 480H1920M0 640H1920"/>
-    <path d="M240 0V760M480 0V760M720 0V760M960 0V760M1200 0V760M1440 0V760M1680 0V760"/>
+  <!-- Nuvens escuras -->
+  <g fill="#000000" fill-opacity="0.35">
+    <ellipse cx="380" cy="120" rx="520" ry="90"/>
+    <ellipse cx="1500" cy="70" rx="600" ry="80"/>
+    <ellipse cx="1050" cy="230" rx="420" ry="50"/>
   </g>
 
-  <!-- Cidade ao fundo -->
-  <g fill="#0f0f12">
-    <path d="M0 860V760h70v-40h60v60h50V700h90v80h40V740h70v-70h40v-40h50v40h40v120h60V720h80v60h50V680h30v-30h60v30h30v130h70V730h90v70h50V700h40v-50h70v50h40v110h60V740h80v60h40V690h100v130h50V720h80v80h60V710h40v-60h50v60h40v100h70V740h60v60h50V680h90v130h40V760h60v100z"/>
+  <!-- Cidade ao fundo (camada distante, mais clara) -->
+  <path d="M0 720V660h40v-30h50v40h40v-60h60v50h30v-80h50v60h40v-40h60v70h30v-90h40v-40h40v40h30v100h50v-70h60v50h40v-110h70v120h40v-60h60v40h30v-90h50v100h40v-70h70v60h40v-120h50v-40h40v40h40v140h50v-80h60v70h40v-100h60v110h40v-60h60v50h40v-90h50v100h40v-70h50v60h40V720z" fill="#120d0b"/>
+  <path d="M0 720V660h40v-30h50v40h40v-60h60v50h30v-80h50v60h40v-40h60v70h30v-90h40v-40h40v40h30v100h50v-70h60v50h40v-110h70v120h40v-60h60v40h30v-90h50v100h40v-70h70v60h40v-120h50v-40h40v40h40v140h50v-80h60v70h40v-100h60v110h40v-60h60v50h40v-90h50v100h40v-70h50v60h40V720z" fill="url(#janelas-esparsas)"/>
+
+  <!-- Torres de telecom com luzes -->
+  <use href="#torre" transform="translate(1010 640) scale(1.15)"/>
+  <use href="#torre" transform="translate(760 700) scale(0.72)"/>
+  <use href="#torre" transform="translate(1640 690) scale(0.9)"/>
+  <use href="#torre" transform="translate(420 760) scale(0.55)"/>
+  <g fill="#ff3d00">
+    <circle cx="1010" cy="212" r="4"/>
+    <circle cx="760" cy="432" r="3"/>
+    <circle cx="1640" cy="355" r="3.4"/>
+    <circle cx="420" cy="555" r="2.6"/>
+    <circle cx="992" cy="300" r="2.4"/>
+    <circle cx="1030" cy="330" r="2.4"/>
   </g>
-  <g fill="url(#janelas)">
-    <rect x="180" y="700" width="90" height="140"/>
-    <rect x="500" y="635" width="50" height="200"/>
-    <rect x="800" y="650" width="60" height="180"/>
-    <rect x="1100" y="650" width="70" height="170"/>
-    <rect x="1330" y="690" width="100" height="140"/>
-    <rect x="1590" y="650" width="50" height="180"/>
+  <g fill="#ff5a00" filter="url(#brilho)" opacity="0.95">
+    <circle cx="1010" cy="212" r="12"/>
+    <circle cx="760" cy="432" r="9"/>
+    <circle cx="1640" cy="355" r="10"/>
+    <circle cx="420" cy="555" r="8"/>
+  </g>
+
+  <!-- Cidade (camada principal, com janelas acesas) -->
+  <path d="M0 860V760h60v-50h70v70h40v-110h80v90h50v-60h60v120h40v-150h70v130h50v-80h60v60h40v-120h60v40h50v-70h80v120h40v-50h50v-90h70v140h50v-60h40v-100h80v120h40v-70h60v90h50v-130h70v110h40v-60h60v80h50v-120h60v130h40v-70h60v60h50v-110h70v120h40v-50h60V860z" fill="#0c0908"/>
+  <path d="M0 860V760h60v-50h70v70h40v-110h80v90h50v-60h60v120h40v-150h70v130h50v-80h60v60h40v-120h60v40h50v-70h80v120h40v-50h50v-90h70v140h50v-60h40v-100h80v120h40v-70h60v90h50v-130h70v110h40v-60h60v80h50v-120h60v130h40v-70h60v60h50v-110h70v120h40v-50h60V860z" fill="url(#janelas)" opacity="0.85"/>
+
+  <!-- Arcos de conexao (linhas luminosas com pontos) -->
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#ff6a00" stroke-width="7" stroke-opacity="0.28" filter="url(#brilho)">
+      <path d="M-40 470Q520 360 1010 212"/>
+      <path d="M1010 212Q1400 260 1980 330"/>
+      <path d="M260 980Q620 600 1010 760"/>
+      <path d="M560 520Q900 300 1260 470"/>
+      <path d="M1010 212Q860 420 760 432"/>
+      <path d="M1120 900Q1450 640 1980 700"/>
+    </g>
+    <g stroke="#ff9a3c" stroke-width="1.8" stroke-opacity="0.85">
+      <path d="M-40 470Q520 360 1010 212"/>
+      <path d="M1010 212Q1400 260 1980 330"/>
+      <path d="M260 980Q620 600 1010 760"/>
+      <path d="M560 520Q900 300 1260 470"/>
+      <path d="M1010 212Q860 420 760 432" stroke-opacity="0.6"/>
+      <path d="M1120 900Q1450 640 1980 700"/>
+    </g>
+  </g>
+  <g fill="#ffcf9e">
+    <circle cx="300" cy="420" r="3"/>
+    <circle cx="640" cy="336" r="3.4"/>
+    <circle cx="1240" cy="252" r="3"/>
+    <circle cx="1600" cy="300" r="2.6"/>
+    <circle cx="560" cy="742" r="3.2"/>
+    <circle cx="820" cy="408" r="3"/>
+    <circle cx="1130" cy="400" r="2.6"/>
+    <circle cx="1420" cy="740" r="3"/>
+  </g>
+  <g fill="#ff7a1a" filter="url(#brilho)">
+    <circle cx="300" cy="420" r="8"/>
+    <circle cx="640" cy="336" r="9"/>
+    <circle cx="1240" cy="252" r="8"/>
+    <circle cx="1600" cy="300" r="7"/>
+    <circle cx="560" cy="742" r="9"/>
+    <circle cx="820" cy="408" r="8"/>
+    <circle cx="1130" cy="400" r="7"/>
+    <circle cx="1420" cy="740" r="8"/>
   </g>
 
   <!-- Chao -->
   <path d="M0 850Q960 820 1920 850V1080H0z" fill="url(#chao)"/>
 
-  <!-- Cabos entre os postes (fibra) -->
+  <!-- Estrada em curva com rastros de luz -->
   <g fill="none" stroke-linecap="round">
-    <path d="M-40 452Q230 540 470 470T980 420T1480 470T2000 440" stroke="#1b1b1f" stroke-width="3"/>
-    <path d="M-40 480Q230 572 470 500T980 452T1480 502T2000 470" stroke="#1b1b1f" stroke-width="2.5"/>
-    <path d="M-40 520Q230 610 470 540T980 492T1480 540T2000 512" stroke="#19191c" stroke-width="2"/>
-    <path d="M-40 452Q230 540 470 470T980 420T1480 470T2000 440" stroke="url(#fibra)" stroke-width="1.6"/>
-    <path d="M-40 520Q230 610 470 540T980 492T1480 540T2000 512" stroke="url(#fibra)" stroke-width="1.2" stroke-opacity="0.7"/>
+    <path d="M1980 1010Q1500 960 1180 900T880 830" stroke="#ff5a00" stroke-width="22" stroke-opacity="0.18" filter="url(#brilho-forte)"/>
+    <path d="M1980 1000Q1500 950 1180 890T880 822" stroke="#ff7a1a" stroke-width="2.4" stroke-opacity="0.95"/>
+    <path d="M1980 1018Q1500 968 1182 906T884 836" stroke="#ffb066" stroke-width="1.6" stroke-opacity="0.8"/>
+    <path d="M1980 1034Q1500 984 1186 920T890 848" stroke="#ff5a00" stroke-width="2" stroke-opacity="0.85"/>
+    <path d="M1980 1050Q1510 1000 1192 934T896 860" stroke="#ff8a2a" stroke-width="1.2" stroke-opacity="0.6"/>
   </g>
 
-  <!-- Pulsos de dados nos cabos -->
-  <g fill="#ffa24d" filter="url(#brilho)">
-    <circle cx="300" cy="512" r="6"/>
-    <circle cx="760" cy="440" r="5"/>
-    <circle cx="1210" cy="452" r="6"/>
-    <circle cx="1700" cy="458" r="5"/>
-    <circle cx="610" cy="520" r="4"/>
-    <circle cx="1360" cy="522" r="4"/>
+  <!-- Postes e predios em primeiro plano (silhuetas) -->
+  <g fill="#040404">
+    <path d="M0 1080V900h70v-60h60v80h40v-120h90v140h50v-50h60v190z"/>
+    <rect x="300" y="760" width="10" height="320"/>
+    <rect x="270" y="790" width="70" height="7"/>
+    <rect x="610" y="800" width="8" height="280"/>
+    <rect x="586" y="826" width="56" height="6"/>
+    <path d="M1700 1080V950h60v-70h80v90h80V1080z"/>
   </g>
-  <g fill="#ffd6ad">
-    <circle cx="300" cy="512" r="2.2"/>
-    <circle cx="760" cy="440" r="2"/>
-    <circle cx="1210" cy="452" r="2.2"/>
-    <circle cx="1700" cy="458" r="2"/>
-    <circle cx="610" cy="520" r="1.6"/>
-    <circle cx="1360" cy="522" r="1.6"/>
+  <g fill="#ff8a2a" fill-opacity="0.7">
+    <rect x="96" y="878" width="4" height="5"/>
+    <rect x="200" y="828" width="4" height="5"/>
+    <rect x="214" y="852" width="4" height="5"/>
+    <rect x="1780" y="908" width="4" height="5"/>
+    <rect x="1862" y="928" width="4" height="5"/>
   </g>
-
-  <!-- Postes (silhuetas), com cruzeta e caixa de emenda -->
-  <g fill="#08080a">
-    <!-- poste 1 -->
-    <rect x="462" y="400" width="16" height="520"/>
-    <rect x="410" y="452" width="120" height="10" rx="2"/>
-    <rect x="426" y="500" width="88" height="8" rx="2"/>
-    <rect x="478" y="560" width="30" height="46" rx="4"/>
-    <!-- poste 2 -->
-    <rect x="972" y="352" width="18" height="560"/>
-    <rect x="912" y="404" width="138" height="11" rx="2"/>
-    <rect x="930" y="454" width="102" height="9" rx="2"/>
-    <rect x="990" y="520" width="34" height="52" rx="4"/>
-    <!-- poste 3 -->
-    <rect x="1472" y="404" width="16" height="520"/>
-    <rect x="1420" y="456" width="120" height="10" rx="2"/>
-    <rect x="1436" y="504" width="88" height="8" rx="2"/>
-    <rect x="1446" y="566" width="28" height="44" rx="4"/>
-  </g>
-  <!-- LEDs das caixas -->
-  <g fill="#ff7a00">
-    <circle cx="493" cy="572" r="2.4"/>
-    <circle cx="1007" cy="534" r="2.6"/>
-    <circle cx="1460" cy="578" r="2.4"/>
-  </g>
-  <g fill="#ff7a00" filter="url(#brilho)" opacity="0.8">
-    <circle cx="493" cy="572" r="6"/>
-    <circle cx="1007" cy="534" r="7"/>
-    <circle cx="1460" cy="578" r="6"/>
-  </g>
-
-  <!-- Poste em primeiro plano, a direita -->
-  <g fill="#050506">
-    <rect x="1812" y="180" width="34" height="900"/>
-    <rect x="1700" y="250" width="250" height="16" rx="3"/>
-    <rect x="1730" y="320" width="190" height="13" rx="3"/>
-  </g>
-  <path d="M1829 258Q1500 330 1190 300" fill="none" stroke="#0b0b0d" stroke-width="5"/>
-  <path d="M1829 326Q1540 410 1210 380" fill="none" stroke="#0b0b0d" stroke-width="4"/>
 </svg>
