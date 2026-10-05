@@ -27,19 +27,24 @@ const RECURSOS = [
   { icon: BarChart3, titulo: 'Dashboards e indicadores', texto: 'Dados para decisões mais assertivas.' },
 ]
 
+// Marca GTSnet: globo num selo discreto + nome (o logo.png tem "GTS" escuro,
+// que some no fundo preto).
 function MarcaGts({ tamanho = 'md' }: { tamanho?: 'sm' | 'md' }) {
+  const pequena = tamanho === 'sm'
   return (
-    <div className="flex items-center gap-3 min-w-0">
-      <img
-        src="/images/icon.png"
-        alt=""
-        className={cn('flex-shrink-0 object-contain', tamanho === 'sm' ? 'w-9 h-9' : 'w-11 h-11 xl:w-12 xl:h-12')}
-      />
-      <div className="min-w-0 leading-tight">
-        <p className={cn('font-black tracking-tight', tamanho === 'sm' ? 'text-lg' : 'text-xl xl:text-2xl')}>
+    <div className={cn('flex items-center min-w-0', pequena ? 'gap-3' : 'gap-4')}>
+      <span className={cn(
+        'flex-shrink-0 flex items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/10',
+        pequena ? 'w-12 h-12' : 'w-14 h-14 xl:w-16 xl:h-16',
+      )}>
+        <img src="/images/icon.png" alt="" className={cn('object-contain', pequena ? 'w-8 h-8' : 'w-9 h-9 xl:w-11 xl:h-11')} />
+      </span>
+      <div className="min-w-0 leading-none">
+        <p className={cn('font-black tracking-[-0.02em]', pequena ? 'text-[22px]' : 'text-[26px] xl:text-[30px]')}>
           <span className="text-white">GTS</span><span className="text-[#ff7a00]">net</span>
         </p>
-        <p className={cn('font-medium uppercase tracking-[0.18em] text-white/60', tamanho === 'sm' ? 'text-[10px]' : 'text-[11px]')}>
+        <p className={cn('flex items-center gap-2 font-semibold uppercase text-white/70', pequena ? 'mt-1 text-[10px] tracking-[0.24em]' : 'mt-1.5 text-[11px] tracking-[0.28em]')}>
+          <span aria-hidden className="h-px w-4 xl:w-5 bg-[#ff7a00]" />
           Operations Center
         </p>
       </div>
@@ -157,8 +162,16 @@ export default function LoginPage() {
             className="w-full max-w-[440px] rounded-[18px] border border-[rgba(255,102,0,0.35)] bg-[rgba(15,15,15,0.90)] backdrop-blur-[16px] p-6 sm:p-8 [@media(max-height:700px)]:p-5"
             style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.45)' }}
           >
-            <img src="/images/icon.png" alt="GTSNet" className="w-10 h-10 object-contain" />
-            <h2 className="mt-4 text-2xl font-bold text-white">Bem-vindo!</h2>
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#ff7a00]/10 ring-1 ring-[#ff7a00]/30">
+                <img src="/images/icon.png" alt="GTSNet" className="w-7 h-7 object-contain" />
+              </span>
+              {/* Celular/tablet: o nome ja aparece na marca acima do card */}
+              <p className="hidden lg:block text-lg font-black tracking-[-0.02em] leading-none">
+                <span className="text-white">GTS</span><span className="text-[#ff7a00]">net</span>
+              </p>
+            </div>
+            <h2 className="mt-5 text-2xl font-bold text-white">Bem-vindo!</h2>
             <p className="mt-1 text-sm text-white/65 leading-relaxed">
               Entre com suas credenciais para acessar o GTSNet Operations Center.
             </p>
