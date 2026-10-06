@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { signOut } from 'next-auth/react'
 import {
   ClipboardList, MapPin, Phone, Clock, LogOut, Map,
-  AlertTriangle, CheckCircle, Zap, Truck,
+  CheckCircle, Zap, Truck,
   RefreshCw, Calendar, ChevronRight, Navigation, MessageCircle, Loader2, Brain,
 } from 'lucide-react'
 import { cn, timeAgo, formatarEnderecoCompleto, getInitials } from '@/lib/utils'
@@ -90,11 +90,6 @@ async function fetchMeusChamados() {
   if (!res.ok) return { data: [] }
   return res.json()
 }
-async function fetchAvisoPlantao() {
-  const res = await fetch('/api/escala/aviso-plantao')
-  if (!res.ok) return { mostrar: false }
-  return res.json()
-}
 
 interface Props {
   session: Session
@@ -122,10 +117,6 @@ export function PainelTecnico({ session }: Props) {
     queryKey: ['meus-chamados'],
     queryFn: fetchMeusChamados,
     refetchInterval: 15000,
-  })
-  const { data: avisoPlantao } = useQuery({
-    queryKey: ['aviso-plantao'],
-    queryFn: fetchAvisoPlantao,
   })
   const { data: meuPonto } = useQuery({
     queryKey: ['meu-ponto-painel'],
@@ -177,7 +168,6 @@ export function PainelTecnico({ session }: Props) {
     { href: '/meu-carro',     label: 'Meu Carro / Estoque', icon: Truck },
     { href: '/mapa-inmap',    label: 'InMap / Rotas', icon: Map },
     { href: '/ponto',         label: 'Ponto', icon: Clock },
-    { href: '/escala',        label: 'Escala', icon: Calendar },
   ]
 
   return (
@@ -283,16 +273,6 @@ export function PainelTecnico({ session }: Props) {
 
           {/* Coluna principal */}
           <div className="space-y-5 min-w-0">
-
-            {avisoPlantao?.mostrar && (
-              <div className="p-4 bg-amber-500/10 border border-amber-500/25 border-l-4 border-l-amber-500 rounded-xl flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800">
-                  <span className="font-bold">Atencao:</span> Voce esta escalado para o plantao do proximo sabado, dia{' '}
-                  {new Date(avisoPlantao.dataSabado).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}.
-                </p>
-              </div>
-            )}
 
             {/* Resumo - clicavel, filtra a lista abaixo */}
             <div className="grid grid-cols-3 gap-2.5">
@@ -557,31 +537,7 @@ export function PainelTecnico({ session }: Props) {
                   <Truck className="w-5 h-5" />
                   <span className="text-xs font-medium">Meu Carro</span>
                 </Link>
-                <Link
-                  href="/escala"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-purple-500/10 border border-tema-linha hover:border-purple-500/30 rounded-xl text-tema-suave hover:text-purple-700 transition-colors text-center"
-                >
-                  <Calendar className="w-5 h-5" />
-                  <span className="text-xs font-medium">Escala</span>
-                </Link>
               </div>
-            </div>
-
-            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
-              <h3 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-2">Status do Plantao</h3>
-              {avisoPlantao?.mostrar ? (
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
-                  <p className="text-sm text-amber-700">
-                    Escalado para sabado, {new Date(avisoPlantao.dataSabado).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-tema-linha-forte flex-shrink-0" />
-                  <p className="text-sm text-tema-apagado">Sem plantao agendado no momento.</p>
-                </div>
-              )}
             </div>
           </aside>
         </div>

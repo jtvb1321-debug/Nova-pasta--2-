@@ -16,7 +16,6 @@ export interface Permission {
   verSolicitacoes:   boolean
   verPonto:          boolean
   verHorasExtras:    boolean
-  verEscala:         boolean
   verClientes:       boolean
   verMapaInmap:      boolean
   verSmartOLT:       boolean
@@ -50,7 +49,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   true,
     verPonto:          false,
     verHorasExtras:    true,
-    verEscala:         true,
     verClientes:       true,
     verMapaInmap:      true,
     verSmartOLT:       true,
@@ -82,7 +80,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   true,
     verPonto:          false,
     verHorasExtras:    true,
-    verEscala:         true,
     verClientes:       true,
     verMapaInmap:      true,
     verSmartOLT:       true,
@@ -114,7 +111,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   false,
     verPonto:          false,
     verHorasExtras:    false,
-    verEscala:         false,
     verClientes:       true,
     verMapaInmap:      true,
     verSmartOLT:       true,
@@ -146,7 +142,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   false,
     verPonto:          false,
     verHorasExtras:    false,
-    verEscala:         false,
     verClientes:       true,
     verMapaInmap:      false,
     verSmartOLT:       false,
@@ -178,7 +173,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   false,
     verPonto:          true,
     verHorasExtras:    false,
-    verEscala:         true,
     verClientes:       false,
     verMapaInmap:      true,
     verSmartOLT:       false,
@@ -210,7 +204,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verSolicitacoes:   false,
     verPonto:          false,
     verHorasExtras:    false,
-    verEscala:         false,
     verClientes:       false,
     verMapaInmap:      false,
     verSmartOLT:       false,

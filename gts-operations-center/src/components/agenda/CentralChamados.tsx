@@ -1,55 +1,76 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ClipboardList, Plus, CheckCircle, RefreshCw, Search, Calendar,
-  Phone, MessageCircle, Repeat, GraduationCap,
+  Plus, CheckCircle, Search, Calendar, CalendarClock, CalendarDays, FileText, Clock, SlidersHorizontal,
+  ChevronLeft, ChevronRight, MessageCircle, Phone, ArrowLeft, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { cn, timeAgo, formatDateTime } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { NovoDespachoModal } from './NovoDespachoModal'
 import { CalendarioAgenda } from './CalendarioAgenda'
-import { CardChamado, CabecalhoListaChamados, PainelChamado, detectarPrioridade } from './CardChamado'
+import { PainelChamado } from './CardChamado'
+import { CardChamadoGeral, CardChamadoEace } from './ChamadoCards'
 import { FinalizeTicketModal } from '@/components/tickets/FinalizeTicketModal'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { SOMBRA_CARD } from '@/components/dashboard/noc/GlassCard'
 
-type Aba = 'despacho' | 'ativos' | 'reincidentes' | 'feedback' | 'historico' | 'calendario' | 'eace'
+type Categoria = 'todos' | 'gerais' | 'eace'
+type Visao = 'lista' | 'calendario' | 'feedback'
 
-async function fetchAgenda() {
-  const res = await fetch('/api/agenda')
-  if (!res.ok) return []
-  return res.json()
+const POR_PAGINA = 10
+
+const CATEGORIAS: { id: Categoria; rotulo: string }[] = [
+  { id: 'todos', rotulo: 'Todos' },
+  { id: 'gerais', rotulo: 'Chamados gerais' },
+  { id: 'eace', rotulo: 'EACE' },
+]
+
+// Status reais do sistema (nao existe "Pendente"; o que espera data e' "Agendado").
+const STATUS_OPCOES = [
+  { valor: 'ABERTO', rotulo: 'Abertos' },
+  { valor: 'EM_ANDAMENTO', rotulo: 'Em atendimento' },
+  { valor: 'AGENDADO', rotulo: 'Agendados' },
+  { valor: 'FINALIZADO', rotulo: 'Concluídos' },
+  { valor: 'CANCELADO', rotulo: 'Cancelados' },
+]
+
+const TIPOS: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']
+
+interface Filtros {
+  busca: string
+  status: string
+  equipeId: string
+  tipo: string
+  cidade: string
+  dataInicio: string
+  dataFim: string
+  soRechamada: boolean
 }
 
-async function fetchAtivos() {
-  const res = await fetch('/api/tickets?status=EM_ANDAMENTO&limit=50')
-  if (!res.ok) return { data: [] }
-  return res.json()
+const FILTROS_VAZIOS: Filtros = { busca: '', status: '', equipeId: '', tipo: '', cidade: '', dataInicio: '', dataFim: '', soRechamada: false }
+
+// Parametros comuns da lista e dos indicadores (tudo menos status e pagina).
+function paramsBase(categoria: Categoria, f: Filtros) {
+  const q = new URLSearchParams()
+  if (categoria === 'eace') q.set('eace', 'true')
+  if (categoria === 'gerais') q.set('eace', 'false')
+  if (f.busca) q.set('search', f.busca)
+  if (f.equipeId) q.set('equipeId', f.equipeId)
+  if (categoria !== 'eace' && f.tipo) q.set('tipo', f.tipo)
+  if (categoria === 'eace' && f.cidade) q.set('cidade', f.cidade)
+  if (f.dataInicio) q.set('dataInicio', f.dataInicio)
+  if (f.dataFim) q.set('dataFim', f.dataFim)
+  if (f.soRechamada) q.set('reincidente', 'true')
+  return q
 }
 
-async function fetchEace() {
-  const res = await fetch('/api/tickets?eace=true&limit=50')
-  if (!res.ok) return { data: [] }
-  return res.json()
-}
-
-async function fetchHistorico(filtroStatus: string, busca: string, page: number) {
-  const q = new URLSearchParams({ limit: '20', page: String(page) })
-  if (filtroStatus) q.set('status', filtroStatus)
-  if (busca) q.set('search', busca)
-  const res = await fetch(`/api/tickets?${q}`)
-  if (!res.ok) return { data: [], total: 0, totalPages: 1 }
-  return res.json()
-}
-
-async function fetchReincidentes(page: number) {
-  const q = new URLSearchParams({ limit: '20', page: String(page), reincidente: 'true' })
-  const res = await fetch(`/api/tickets?${q}`)
-  if (!res.ok) return { data: [], total: 0, totalPages: 1 }
+async function pedir(url: string) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Falha ao carregar')
   return res.json()
 }
 
@@ -60,25 +81,53 @@ async function fetchFeedbacks(page: number) {
   return res.json()
 }
 
+async function fetchEquipes() {
+  const res = await fetch('/api/teams')
+  if (!res.ok) return []
+  return res.json()
+}
+
 export function CentralChamados({ session }: { session: Session }) {
   const isAdmin = (session.user as any)?.role === 'ADMIN'
   const isOperador = (session.user as any)?.role === 'OPERADOR'
   const queryClient = useQueryClient()
-  const [aba, setAba] = useState<Aba>('despacho')
-  const [showDespacho, setShowDespacho] = useState(false)
-  const [despachoInicialEace, setDespachoInicialEace] = useState(false)
-  const [chamadoFinalizar, setChamadoFinalizar] = useState<any>(null)
-  const [busca, setBusca] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('')
+
+  const [categoria, setCategoria] = useState<Categoria>('todos')
+  const [visao, setVisao] = useState<Visao>('lista')
+  const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS)
+  const [buscaDigitada, setBuscaDigitada] = useState('')
   const [page, setPage] = useState(1)
-  // Chamado aberto no painel lateral. Guarda as mesmas opcoes da lista de
-  // onde veio (cada aba libera acoes diferentes, como antes).
-  const [selecao, setSelecao] = useState<{ id: string; reserva: any; mostrarFinalizar: boolean; acaoRapidaEncerrar?: boolean; encaminhar?: boolean } | null>(null)
+  const [pageFeedback, setPageFeedback] = useState(1)
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [showDespacho, setShowDespacho] = useState(false)
+  const [chamadoFinalizar, setChamadoFinalizar] = useState<any>(null)
+  // Chamado aberto no painel lateral. Guarda as opcoes de acao da situacao dele.
+  const [selecao, setSelecao] = useState<{ id: string; reserva: any; mostrarFinalizar: boolean; encaminhar?: boolean } | null>(null)
   const searchParams = useSearchParams()
+  const painelFiltrosRef = useRef<HTMLDivElement>(null)
+
+  // Busca com pequena espera para nao consultar a cada tecla.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFiltros(f => (f.busca === buscaDigitada.trim() ? f : { ...f, busca: buscaDigitada.trim() }))
+      setPage(1)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [buscaDigitada])
+
+  useEffect(() => {
+    if (!filtrosAbertos) return
+    function fora(e: MouseEvent) {
+      if (painelFiltrosRef.current && !painelFiltrosRef.current.contains(e.target as Node)) setFiltrosAbertos(false)
+    }
+    function esc(e: KeyboardEvent) { if (e.key === 'Escape') setFiltrosAbertos(false) }
+    document.addEventListener('mousedown', fora)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', fora); document.removeEventListener('keydown', esc) }
+  }, [filtrosAbertos])
 
   // Deep-link vindo do historico de diagnostico (/agenda?chamadoId=...) - abre
-  // direto na aba certa com o painel do chamado aberto, sem duplicar nenhum card.
+  // o painel do chamado sem duplicar nenhum card.
   useEffect(() => {
     const chamadoId = searchParams.get('chamadoId')
     if (!chamadoId) return
@@ -87,53 +136,51 @@ export function CentralChamados({ session }: { session: Session }) {
       .then(chamado => {
         if (!chamado) return
         const naFila = chamado.status === 'ABERTO' || chamado.status === 'AGENDADO'
-        if (naFila) setAba('despacho')
-        else if (chamado.status === 'EM_ANDAMENTO') setAba('ativos')
-        else setAba('historico')
         setSelecao({ id: chamadoId, reserva: chamado, mostrarFinalizar: naFila || chamado.status === 'EM_ANDAMENTO', encaminhar: naFila })
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const { data: agendaData = [], isLoading: loadingAgenda, refetch: refetchAgenda } = useQuery({
-    queryKey: ['agenda'],
-    queryFn: fetchAgenda,
-    refetchInterval: 10000,
+  const base = paramsBase(categoria, filtros)
+  const baseTexto = base.toString()
+
+  const listaQuery = useQuery({
+    queryKey: ['chamados-lista', baseTexto, filtros.status, page],
+    queryFn: () => {
+      const q = new URLSearchParams(base)
+      if (filtros.status) q.set('status', filtros.status)
+      q.set('page', String(page))
+      q.set('limit', String(POR_PAGINA))
+      return pedir(`/api/tickets?${q}`)
+    },
+    refetchInterval: 15000,
+    enabled: visao === 'lista',
+    placeholderData: prev => prev,
   })
 
-  const { data: ativosData, isLoading: loadingAtivos } = useQuery({
-    queryKey: ['chamados-ativos'],
-    queryFn: fetchAtivos,
-    refetchInterval: 10000,
+  const resumoQuery = useQuery({
+    queryKey: ['chamados-resumo', baseTexto],
+    queryFn: () => pedir(`/api/tickets/resumo?${baseTexto}`),
+    refetchInterval: 15000,
+    enabled: visao === 'lista',
+    placeholderData: prev => prev,
   })
 
-  const { data: eaceData, isLoading: loadingEace } = useQuery({
-    queryKey: ['chamados-eace'],
-    queryFn: fetchEace,
-    refetchInterval: 10000,
-  })
+  const { data: equipes = [] } = useQuery({ queryKey: ['equipes-filtro'], queryFn: fetchEquipes, staleTime: 5 * 60 * 1000 })
 
-  const { data: historicoData, isLoading: loadingHistorico } = useQuery({
-    queryKey: ['chamados-historico', filtroStatus, busca, page],
-    queryFn: () => fetchHistorico(filtroStatus, busca, page),
-    refetchInterval: 60000,
-    enabled: aba === 'historico',
-  })
-
-  const paginaReincidentes = aba === 'reincidentes' ? page : 1
-  const { data: reincidentesData, isLoading: loadingReincidentes } = useQuery({
-    queryKey: ['chamados-reincidentes', paginaReincidentes],
-    queryFn: () => fetchReincidentes(paginaReincidentes),
-    refetchInterval: 60000,
-  })
-
-  const paginaFeedbacks = aba === 'feedback' ? page : 1
   const { data: feedbacksData, isLoading: loadingFeedbacks } = useQuery({
-    queryKey: ['chamados-feedback', paginaFeedbacks],
-    queryFn: () => fetchFeedbacks(paginaFeedbacks),
+    queryKey: ['chamados-feedback', pageFeedback],
+    queryFn: () => fetchFeedbacks(pageFeedback),
     refetchInterval: 30000,
+    enabled: visao === 'feedback',
   })
+
+  function refrescarListas() {
+    for (const k of ['chamados-lista', 'chamados-resumo', 'agenda', 'chamados-ativos', 'chamados-eace', 'chamados-historico', 'teams', 'dashboard-stats']) {
+      queryClient.invalidateQueries({ queryKey: [k] })
+    }
+  }
 
   const iniciarMutation = useMutation({
     mutationFn: async (chamadoId: string) => {
@@ -146,10 +193,7 @@ export function CentralChamados({ session }: { session: Session }) {
       return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agenda'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      refrescarListas()
       toast({ title: 'Atividade iniciada!', variant: 'success' })
     },
   })
@@ -169,11 +213,7 @@ export function CentralChamados({ session }: { session: Session }) {
       return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agenda'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-historico'] })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      refrescarListas()
       toast({ title: 'Chamado encerrado administrativamente.', variant: 'success' })
     },
     onError: () => toast({ title: 'Erro ao encerrar chamado', variant: 'destructive' }),
@@ -190,9 +230,7 @@ export function CentralChamados({ session }: { session: Session }) {
       return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agenda'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-historico'] })
+      refrescarListas()
       toast({ title: 'Tipo do chamado alterado!', variant: 'success' })
     },
     onError: () => toast({ title: 'Erro ao alterar tipo', variant: 'destructive' }),
@@ -205,9 +243,7 @@ export function CentralChamados({ session }: { session: Session }) {
       return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agenda'] })
-      queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      refrescarListas()
       toast({ title: 'Chamado encaminhado para a equipe!', variant: 'success' })
     },
     onError: () => toast({ title: 'Erro ao encaminhar chamado', variant: 'destructive' }),
@@ -237,303 +273,316 @@ export function CentralChamados({ session }: { session: Session }) {
     if (confirmar) encerrarAdminMutation.mutate(chamadoId)
   }
 
-  const agenda = agendaData
-  const ativos = ativosData?.data ?? []
-  const eace = eaceData?.data ?? []
-  const historico = historicoData?.data ?? []
-  const totalPages = historicoData?.totalPages ?? 1
-  const totalHistorico = historicoData?.total ?? 0
-  const reincidentes = reincidentesData?.data ?? []
-  const reincidentesTotalPages = reincidentesData?.totalPages ?? 1
-  const totalReincidentes = reincidentesData?.total ?? 0
+  function mudarCategoria(nova: Categoria) {
+    setVisao('lista')
+    setCategoria(nova)
+    // Filtros exclusivos de uma categoria nao valem na outra.
+    setFiltros(f => ({ ...f, tipo: nova === 'eace' ? '' : f.tipo, cidade: nova === 'eace' ? f.cidade : '' }))
+    setPage(1)
+  }
+
+  function alterarFiltro(parcial: Partial<Filtros>) {
+    setFiltros(f => ({ ...f, ...parcial }))
+    setPage(1)
+  }
+
+  function limparFiltros() {
+    setFiltros(FILTROS_VAZIOS)
+    setBuscaDigitada('')
+    setPage(1)
+  }
+
+  const lista: any[] = listaQuery.data?.data ?? []
+  const total: number = listaQuery.data?.total ?? 0
+  const totalPaginas: number = listaQuery.data?.totalPages ?? 1
+  const resumo = resumoQuery.data
   const feedbacks = feedbacksData?.data ?? []
   const feedbacksTotalPages = feedbacksData?.totalPages ?? 1
   const totalFeedbacks = feedbacksData?.total ?? 0
 
-  function filtrar(lista: any[]) {
-    return lista.filter(c => {
-      const matchBusca = !busca ||
-        c.cliente?.toLowerCase().includes(busca.toLowerCase()) ||
-        c.cidade?.toLowerCase().includes(busca.toLowerCase()) ||
-        c.endereco?.toLowerCase().includes(busca.toLowerCase())
-      const matchTipo = !filtroTipo || c.tipo === filtroTipo
-      return matchBusca && matchTipo
-    })
+  const filtrosAvancados = (filtros.dataInicio || filtros.dataFim ? 1 : 0) + (filtros.soRechamada ? 1 : 0)
+  const algumFiltro = !!(filtros.busca || filtros.status || filtros.equipeId || filtros.tipo || filtros.cidade) || filtrosAvancados > 0
+
+  const selecionado = selecao ? lista.find((c: any) => c.id === selecao.id) ?? selecao.reserva : null
+  function verChamado(c: any) {
+    const ativo = c.status !== 'FINALIZADO' && c.status !== 'CANCELADO'
+    const naFila = c.status === 'ABERTO' || c.status === 'AGENDADO'
+    setSelecao({ id: c.id, reserva: c, mostrarFinalizar: ativo, encaminhar: naFila })
   }
 
-  const totalAbertos  = agenda.filter((c: any) => c.status === 'ABERTO').length
-  const totalAtivos   = ativos.length
-  const totalCriticos = agenda.filter((c: any) => detectarPrioridade(c.observacao) === 'CRITICO').length
-
-  // Indicadores: numero neutro; a cor so aparece quando ha algo a olhar.
-  const kpis = [
-    { label: 'Na fila',          value: totalAbertos,      ponto: 'bg-blue-500',    alerta: '' },
-    { label: 'Em andamento',     value: totalAtivos,       ponto: 'bg-blue-500',    alerta: '' },
-    { label: 'Criticos',         value: totalCriticos,     ponto: 'bg-red-500',     alerta: 'text-red-700' },
-    { label: 'Rechamadas',       value: totalReincidentes, ponto: 'bg-purple-500',  alerta: '' },
-    { label: 'Finalizados hoje', value: historicoData?.totalHoje ?? 0, ponto: 'bg-emerald-500', alerta: '' },
+  const indicadores = [
+    { chave: 'abertos', rotulo: 'Abertos', icone: FileText, valor: resumo?.abertos, status: 'ABERTO' },
+    { chave: 'andamento', rotulo: 'Em atendimento', icone: Clock, valor: resumo?.emAtendimento, status: 'EM_ANDAMENTO' },
+    { chave: 'agendados', rotulo: 'Agendados', icone: CalendarClock, valor: resumo?.agendados, status: 'AGENDADO' },
+    { chave: 'concluidos', rotulo: 'Concluídos hoje', icone: CheckCircle, valor: resumo?.concluidosHoje, status: '' },
   ]
 
-  const abas = [
-    { id: 'despacho'     as Aba, label: 'Despacho NOC',  badge: totalAbertos },
-    { id: 'eace'         as Aba, label: 'EACE',          badge: eace.length },
-    { id: 'ativos'       as Aba, label: 'Em Andamento',  badge: totalAtivos },
-    { id: 'reincidentes' as Aba, label: 'Rechamadas',  badge: totalReincidentes },
-    { id: 'feedback'     as Aba, label: 'Feedback',      badge: totalFeedbacks },
-    { id: 'historico'    as Aba, label: 'Historico',     badge: 0 },
-    { id: 'calendario'   as Aba, label: 'Calendario',    badge: 0 },
-  ]
+  const placeholderBusca =
+    categoria === 'eace' ? 'Buscar por escola, INEP ou chamado'
+      : categoria === 'gerais' ? 'Buscar por cliente, número ou endereço'
+        : 'Buscar por cliente, escola, INEP ou número'
 
-  // Painel lateral: sempre com os dados mais recentes das listas.
-  const selecionado = selecao
-    ? [...agenda, ...ativos, ...eace, ...historico, ...reincidentes].find((c: any) => c.id === selecao.id) ?? selecao.reserva
-    : null
-  const abrirChamado = (c: any, opcoes: { mostrarFinalizar: boolean; acaoRapidaEncerrar?: boolean; encaminhar?: boolean }) =>
-    setSelecao({ id: c.id, reserva: c, ...opcoes })
+  const selectCls = 'gts-input py-2 text-sm w-full sm:w-auto'
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title="Central de Chamados"
-        subtitle={
-          totalCriticos > 0
-            ? `Despacho, monitoramento e historico unificados · ${totalCriticos} critico(s)`
-            : 'Despacho, monitoramento e historico unificados'
-        }
-        actions={
-          <>
-            <button onClick={() => { refetchAgenda(); queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] }) }} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            {aba === 'eace' ? (
-              <button onClick={() => { setDespachoInicialEace(true); setShowDespacho(true) }} className="gts-btn-primary">
-                <GraduationCap className="w-4 h-4" />
-                Novo Despacho EACE
+    <div className="space-y-4">
+      {/* Cabecalho */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Chamados</h1>
+        <div className="flex items-center gap-2">
+          {visao === 'lista' && (
+            <div className="relative" ref={painelFiltrosRef}>
+              <button
+                type="button"
+                onClick={() => setFiltrosAbertos(a => !a)}
+                aria-expanded={filtrosAbertos}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+                style={{ boxShadow: SOMBRA_CARD }}
+              >
+                <SlidersHorizontal className="w-4 h-4" aria-hidden />
+                Filtros
+                {filtrosAvancados > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-semibold">{filtrosAvancados}</span>
+                )}
               </button>
-            ) : (
-              <button onClick={() => { setDespachoInicialEace(false); setShowDespacho(true) }} className="gts-btn-primary">
-                <Plus className="w-4 h-4" />
-                Novo Despacho
-              </button>
-            )}
-          </>
-        }
-      />
-
-      {/* Indicadores */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {kpis.map(kpi => (
-          <div key={kpi.label} className="bg-tema-superficie border border-tema-linha rounded-lg px-4 py-3">
-            <p className="flex items-center gap-1.5 text-xs text-tema-suave">
-              <span className={cn('w-1.5 h-1.5 rounded-full', kpi.ponto)} aria-hidden />
-              {kpi.label}
-            </p>
-            <p className={cn('mt-1 text-2xl font-semibold tabular-nums leading-none', kpi.value > 0 && kpi.alerta ? kpi.alerta : 'text-tema-tinta')}>
-              {kpi.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Abas */}
-      <nav className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1" aria-label="Visoes da central">
-        {abas.map(a => (
-          <button
-            key={a.id}
-            onClick={() => { setAba(a.id); setPage(1) }}
-            aria-current={aba === a.id ? 'page' : undefined}
-            className={cn(
-              '-mb-px flex items-center gap-2 px-3 py-2.5 text-sm border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
-              aba === a.id
-                ? 'border-orange-600 text-tema-tinta font-semibold'
-                : 'border-transparent text-tema-suave hover:text-tema-tinta font-medium'
-            )}
-          >
-            {a.label}
-            {a.badge > 0 && (
-              <span className={cn(
-                'min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
-                aba === a.id ? 'bg-orange-600 text-white' : 'bg-tema-contraste/[0.06] text-tema-suave'
-              )}>
-                {a.badge}
-              </span>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
-          <input
-            type="search"
-            value={busca}
-            onChange={e => { setBusca(e.target.value); setPage(1) }}
-            placeholder="Buscar cliente, cidade, endereco..."
-            className="w-full gts-input pl-9 text-sm"
-          />
-        </div>
-        <select
-          value={filtroTipo}
-          onChange={e => setFiltroTipo(e.target.value)}
-          className="gts-input py-2 text-sm w-auto"
-        >
-          <option value="">Todos os tipos</option>
-          {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
-            <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
-          ))}
-        </select>
-        {aba === 'historico' && (
-          <select
-            value={filtroStatus}
-            onChange={e => { setFiltroStatus(e.target.value); setPage(1) }}
-            className="gts-input py-2 text-sm w-auto"
-          >
-            <option value="">Todos os status</option>
-            <option value="FINALIZADO">Finalizados</option>
-            <option value="CANCELADO">Cancelados</option>
-            <option value="ABERTO">Abertos</option>
-            <option value="EM_ANDAMENTO">Em Andamento</option>
-          </select>
-        )}
-        {(busca || filtroTipo || filtroStatus) && (
-          <button onClick={() => { setBusca(''); setFiltroTipo(''); setFiltroStatus(''); setPage(1) }} className="text-xs text-tema-suave hover:text-tema-tinta">
-            Limpar
-          </button>
-        )}
-      </div>
-
-      {/* DESPACHO NOC */}
-      {aba === 'despacho' && (
-        <div className="space-y-2">
-          {loadingAgenda
-            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
-            : filtrar(agenda).length === 0
-            ? (
-              <div className="gts-card text-center py-16">
-                <Calendar className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum chamado na fila</p>
-                <button onClick={() => { setDespachoInicialEace(false); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
-                  <Plus className="w-4 h-4" /> Novo Despacho
-                </button>
-              </div>
-            )
-            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(agenda).map((c: any) => (
-              <CardChamado
-                key={c.id}
-                chamado={c}
-                isAdmin={isAdmin}
-                mostrarFinalizar
-                onToggle={() => abrirChamado(c, { mostrarFinalizar: true, encaminhar: true })}
-                onFinalizar={setChamadoFinalizar}
-                onIniciar={id => iniciarMutation.mutate(id)}
-                onEncerrarAdmin={handleEncerrarAdmin}
-                isOperador={isOperador}
-                onAlterarTipo={handleAlterarTipo}
-                onEncaminhar={id => encaminharMutation.mutate(id)}
-              />
-            ))]
-          }
-        </div>
-      )}
-
-      {/* EM ANDAMENTO */}
-      {aba === 'ativos' && (
-        <div className="space-y-2">
-          {loadingAtivos
-            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
-            : filtrar(ativos).length === 0
-            ? (
-              <div className="gts-card text-center py-16">
-                <CheckCircle className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum chamado em andamento</p>
-              </div>
-            )
-            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(ativos).map((c: any) => (
-              <CardChamado
-                key={c.id}
-                chamado={c}
-                isAdmin={isAdmin}
-                mostrarFinalizar
-                onToggle={() => abrirChamado(c, { mostrarFinalizar: true })}
-                onFinalizar={setChamadoFinalizar}
-                onIniciar={id => iniciarMutation.mutate(id)}
-                onEncerrarAdmin={handleEncerrarAdmin}
-                isOperador={isOperador}
-                onAlterarTipo={handleAlterarTipo}
-              />
-            ))]
-          }
-        </div>
-      )}
-
-      {/* REINCIDENTES */}
-      {aba === 'reincidentes' && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 px-3 py-2 border-l-2 border-purple-500 bg-tema-contraste/[0.02] rounded-r-lg">
-            <Repeat className="w-4 h-4 text-purple-700 flex-shrink-0" />
-            <p className="text-xs text-tema-suave">
-              Possiveis rechamadas: chamados abertos em ate <strong>7 dias</strong> apos a finalizacao de um chamado anterior do mesmo cliente. O supervisor confirma ou descarta cada uma dentro do chamado.
-            </p>
-          </div>
-
-          {totalReincidentes > 0 && (
-            <p className="text-xs text-tema-apagado">{totalReincidentes} possivel(is) rechamada(s) encontrada(s)</p>
-          )}
-
-          {loadingReincidentes
-            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
-            : filtrar(reincidentes).length === 0
-            ? (
-              <div className="gts-card text-center py-16">
-                <CheckCircle className="w-10 h-10 text-emerald-600/40 mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum chamado reincidente</p>
-                <p className="text-tema-apagado text-sm mt-1">Nenhum cliente reabriu chamado dentro da janela de 7 dias</p>
-              </div>
-            )
-            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(reincidentes).map((c: any) => (
-              <CardChamado
-                key={c.id}
-                chamado={c}
-                isAdmin={isAdmin}
-                mostrarFinalizar={c.status !== 'FINALIZADO' && c.status !== 'CANCELADO'}
-                acaoRapidaEncerrar
-                onToggle={() => abrirChamado(c, { mostrarFinalizar: c.status !== 'FINALIZADO' && c.status !== 'CANCELADO', acaoRapidaEncerrar: true })}
-                onFinalizar={setChamadoFinalizar}
-                onIniciar={id => iniciarMutation.mutate(id)}
-                onEncerrarAdmin={handleEncerrarAdmin}
-                isOperador={isOperador}
-                onAlterarTipo={handleAlterarTipo}
-              />
-            ))]
-          }
-
-          {reincidentesTotalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-tema-apagado">Pagina {page} de {reincidentesTotalPages}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setPage(p => Math.min(reincidentesTotalPages, p + 1))}
-                  disabled={page === reincidentesTotalPages}
-                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
-                >
-                  Proxima
-                </button>
-              </div>
+              {filtrosAbertos && (
+                <div className="absolute right-0 top-full mt-2 z-30 w-72 rounded-xl border border-tema-linha bg-tema-superficie p-4 space-y-3" style={{ boxShadow: '0 8px 24px rgba(16, 24, 40, 0.12)' }}>
+                  <fieldset className="space-y-2">
+                    <legend className="text-xs font-semibold text-tema-tinta mb-1">Período de abertura</legend>
+                    <label className="flex items-center justify-between gap-2 text-xs text-tema-suave">
+                      De
+                      <input type="date" value={filtros.dataInicio} onChange={e => alterarFiltro({ dataInicio: e.target.value })} className="gts-input py-1.5 text-sm w-40" />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-xs text-tema-suave">
+                      Até
+                      <input type="date" value={filtros.dataFim} onChange={e => alterarFiltro({ dataFim: e.target.value })} className="gts-input py-1.5 text-sm w-40" />
+                    </label>
+                  </fieldset>
+                  <label className="flex items-center gap-2 text-sm text-tema-tinta">
+                    <input type="checkbox" checked={filtros.soRechamada} onChange={e => alterarFiltro({ soRechamada: e.target.checked })} className="w-4 h-4 accent-orange-600" />
+                    Somente rechamadas
+                  </label>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => alterarFiltro({ dataInicio: '', dataFim: '', soRechamada: false })}
+                      className="text-xs text-tema-suave hover:text-tema-tinta"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => setShowDespacho(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
+          >
+            <Plus className="w-4 h-4" aria-hidden />
+            Novo chamado
+          </button>
         </div>
+      </div>
+
+      {/* Abas: categoria + visoes complementares */}
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <nav className="inline-flex rounded-xl border border-tema-linha bg-tema-superficie overflow-hidden" style={{ boxShadow: SOMBRA_CARD }} aria-label="Categorias de chamados">
+          {CATEGORIAS.map(c => {
+            const ativa = visao === 'lista' && categoria === c.id
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => mudarCategoria(c.id)}
+                aria-current={ativa ? 'page' : undefined}
+                className={cn(
+                  'px-5 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
+                  ativa ? 'bg-orange-500/10 text-orange-700 font-semibold border-orange-500' : 'border-transparent text-tema-suave hover:text-tema-tinta font-medium'
+                )}
+              >
+                {c.rotulo}
+              </button>
+            )
+          })}
+        </nav>
+        <div className="flex items-center gap-1 text-sm" aria-label="Outras visões">
+          {([['calendario', 'Calendário', CalendarDays], ['feedback', 'Feedback', MessageCircle]] as const).map(([id, rotulo, Icone]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setVisao(id)}
+              aria-current={visao === id ? 'page' : undefined}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+                visao === id ? 'bg-orange-500/10 text-orange-700 font-semibold' : 'text-tema-suave hover:text-tema-tinta hover:bg-tema-contraste/[0.04] font-medium'
+              )}
+            >
+              <Icone className="w-4 h-4" aria-hidden />
+              {rotulo}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {visao !== 'lista' && (
+        <button type="button" onClick={() => setVisao('lista')} className="inline-flex items-center gap-1.5 text-sm text-tema-suave hover:text-tema-tinta">
+          <ArrowLeft className="w-4 h-4" aria-hidden /> Voltar para a lista
+        </button>
+      )}
+
+      {/* LISTA */}
+      {visao === 'lista' && (
+        <>
+          {/* Indicadores: seguem a aba e os filtros (menos o status). */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            {indicadores.map(i => {
+              const Icone = i.icone
+              const clicavel = !!i.status
+              const selecionadoNoFiltro = clicavel && filtros.status === i.status
+              const conteudo = (
+                <>
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-tema-contraste/[0.05] text-tema-suave">
+                    <Icone className="w-[18px] h-[18px]" aria-hidden />
+                  </span>
+                  <span className="min-w-0 text-left">
+                    <span className="block text-sm text-tema-suave">{i.rotulo}</span>
+                    <span className="block mt-0.5 text-2xl font-bold leading-none tabular-nums text-tema-tinta">
+                      {resumoQuery.isError ? <span className="text-sm font-semibold text-tema-suave">Indisponível</span> : i.valor == null ? '···' : i.valor.toLocaleString('pt-BR')}
+                    </span>
+                  </span>
+                </>
+              )
+              const cls = cn(
+                'flex items-center gap-3 rounded-xl border bg-tema-superficie px-4 py-3',
+                selecionadoNoFiltro ? 'border-orange-500' : 'border-tema-linha',
+              )
+              return clicavel ? (
+                <button
+                  key={i.chave}
+                  type="button"
+                  onClick={() => alterarFiltro({ status: selecionadoNoFiltro ? '' : i.status })}
+                  aria-pressed={selecionadoNoFiltro}
+                  title={selecionadoNoFiltro ? 'Remover filtro de status' : `Filtrar por ${i.rotulo.toLowerCase()}`}
+                  className={cn(cls, 'transition-colors hover:border-tema-linha-forte focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40')}
+                  style={{ boxShadow: SOMBRA_CARD }}
+                >
+                  {conteudo}
+                </button>
+              ) : (
+                <div key={i.chave} className={cls} style={{ boxShadow: SOMBRA_CARD }} title="Chamados finalizados hoje (data de conclusão, no fuso configurado)">
+                  {conteudo}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Busca e filtros */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-3">
+            <div className="relative sm:col-span-2 lg:flex-1 lg:min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
+              <input
+                type="search"
+                value={buscaDigitada}
+                onChange={e => setBuscaDigitada(e.target.value)}
+                placeholder={placeholderBusca}
+                aria-label="Buscar chamados"
+                className="w-full gts-input pl-9 text-sm"
+              />
+            </div>
+            <select value={filtros.status} onChange={e => alterarFiltro({ status: e.target.value })} aria-label="Status" className={selectCls}>
+              <option value="">Status</option>
+              {STATUS_OPCOES.map(s => <option key={s.valor} value={s.valor}>{s.rotulo}</option>)}
+            </select>
+            <select value={filtros.equipeId} onChange={e => alterarFiltro({ equipeId: e.target.value })} aria-label="Equipe" className={selectCls}>
+              <option value="">Equipe</option>
+              {equipes.map((e: any) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+            </select>
+            {categoria === 'eace' ? (
+              <select value={filtros.cidade} onChange={e => alterarFiltro({ cidade: e.target.value })} aria-label="Cidade" className={selectCls}>
+                <option value="">Cidade</option>
+                {(resumo?.cidades ?? []).map((c: string) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            ) : (
+              <select value={filtros.tipo} onChange={e => alterarFiltro({ tipo: e.target.value })} aria-label="Tipo de serviço" className={selectCls}>
+                <option value="">Tipo de serviço</option>
+                {TIPOS.map(t => <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>)}
+              </select>
+            )}
+            {algumFiltro && (
+              <button type="button" onClick={limparFiltros} className="text-sm text-orange-600 hover:text-orange-700 font-medium text-left">
+                Limpar filtros
+              </button>
+            )}
+          </div>
+
+          {/* Cards */}
+          {listaQuery.isLoading ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" aria-busy="true">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-44 skeleton rounded-xl" />)}
+            </div>
+          ) : listaQuery.isError ? (
+            <div className="rounded-xl border border-tema-linha bg-tema-superficie text-center py-14 px-4" style={{ boxShadow: SOMBRA_CARD }}>
+              <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+              <p className="font-medium text-tema-tinta">Não foi possível carregar os chamados</p>
+              <p className="text-sm text-tema-suave mt-1">Verifique a conexão e tente novamente.</p>
+              <button type="button" onClick={() => { listaQuery.refetch(); resumoQuery.refetch() }} className="gts-btn-secondary mx-auto mt-4">
+                Tentar novamente
+              </button>
+            </div>
+          ) : lista.length === 0 ? (
+            <div className="rounded-xl border border-tema-linha bg-tema-superficie text-center py-14 px-4" style={{ boxShadow: SOMBRA_CARD }}>
+              <Calendar className="w-9 h-9 text-tema-apagado mx-auto mb-3" aria-hidden />
+              {algumFiltro ? (
+                <>
+                  <p className="font-medium text-tema-tinta">Nenhum resultado para os filtros</p>
+                  <button type="button" onClick={limparFiltros} className="gts-btn-secondary mx-auto mt-4">Limpar filtros</button>
+                </>
+              ) : (
+                <p className="font-medium text-tema-tinta">Nenhum chamado cadastrado</p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className={cn('grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch transition-opacity', listaQuery.isFetching && listaQuery.isPlaceholderData && 'opacity-60')}>
+                {lista.map((c: any) => c.eace
+                  ? <CardChamadoEace key={c.id} chamado={c} onVer={() => verChamado(c)} />
+                  : <CardChamadoGeral key={c.id} chamado={c} onVer={() => verChamado(c)} />
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-tema-suave">
+                <p>Mostrando {(page - 1) * POR_PAGINA + 1}–{Math.min(page * POR_PAGINA, total)} de {total.toLocaleString('pt-BR')}</p>
+                {totalPaginas > 1 && (
+                  <nav className="flex items-center gap-1" aria-label="Paginação">
+                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Página anterior"
+                      className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-tema-linha bg-tema-superficie disabled:opacity-40 hover:bg-tema-contraste/[0.03]">
+                      <ChevronLeft className="w-4 h-4" aria-hidden />
+                    </button>
+                    {janelaPaginas(page, totalPaginas).map((p, i) => p === null
+                      ? <span key={`r${i}`} className="px-1" aria-hidden>…</span>
+                      : (
+                        <button key={p} type="button" onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
+                          className={cn('min-w-8 h-8 px-2 rounded-lg border text-xs font-semibold',
+                            p === page ? 'bg-orange-600 border-orange-600 text-white' : 'border-tema-linha bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03]')}>
+                          {p}
+                        </button>
+                      ))}
+                    <button type="button" onClick={() => setPage(p => Math.min(totalPaginas, p + 1))} disabled={page === totalPaginas} aria-label="Próxima página"
+                      className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-tema-linha bg-tema-superficie disabled:opacity-40 hover:bg-tema-contraste/[0.03]">
+                      <ChevronRight className="w-4 h-4" aria-hidden />
+                    </button>
+                  </nav>
+                )}
+              </div>
+            </>
+          )}
+        </>
       )}
 
       {/* FEEDBACK */}
-      {aba === 'feedback' && (
+      {visao === 'feedback' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-3 py-2 border-l-2 border-blue-500 bg-tema-contraste/[0.02] rounded-r-lg">
             <MessageCircle className="w-4 h-4 text-blue-700 flex-shrink-0" />
@@ -597,7 +646,7 @@ export function CentralChamados({ session }: { session: Session }) {
                     disabled={confirmarFeedbackMutation.isPending}
                     className="gts-btn-primary text-xs py-2 px-3 disabled:opacity-50"
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
+                    {confirmarFeedbackMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                     Confirmar e encerrar acompanhamento
                   </button>
                 )}
@@ -612,71 +661,18 @@ export function CentralChamados({ session }: { session: Session }) {
 
           {feedbacksTotalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-tema-apagado">Pagina {page} de {feedbacksTotalPages}</p>
+              <p className="text-xs text-tema-apagado">Pagina {pageFeedback} de {feedbacksTotalPages}</p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
+                  onClick={() => setPageFeedback(p => Math.max(1, p - 1))}
+                  disabled={pageFeedback === 1}
                   className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
                 >
                   Anterior
                 </button>
                 <button
-                  onClick={() => setPage(p => Math.min(feedbacksTotalPages, p + 1))}
-                  disabled={page === feedbacksTotalPages}
-                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
-                >
-                  Proxima
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* HISTORICO */}
-      {aba === 'historico' && (
-        <div className="space-y-3">
-          {/* Info total */}
-          {totalHistorico > 0 && (
-            <p className="text-xs text-tema-apagado">{totalHistorico} chamado(s) encontrado(s)</p>
-          )}
-
-          {loadingHistorico
-            ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
-            : historico.length === 0
-            ? (
-              <div className="gts-card text-center py-16">
-                <ClipboardList className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum chamado no historico</p>
-              </div>
-            )
-            : [<CabecalhoListaChamados key="cabecalho" />, ...historico.map((c: any) => (
-              <CardChamado
-                key={c.id}
-                chamado={c}
-                isAdmin={isAdmin}
-                mostrarFinalizar={false}
-                onToggle={() => abrirChamado(c, { mostrarFinalizar: false })}
-              />
-            ))]
-          }
-
-          {/* Paginacao */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
+                  onClick={() => setPageFeedback(p => Math.min(feedbacksTotalPages, p + 1))}
+                  disabled={pageFeedback === feedbacksTotalPages}
                   className="gts-btn-secondary py-2 px-3 text-xs disabled:opacity-30"
                 >
                   Proxima
@@ -688,7 +684,7 @@ export function CentralChamados({ session }: { session: Session }) {
       )}
 
       {/* CALENDARIO */}
-      {aba === 'calendario' && (
+      {visao === 'calendario' && (
         <CalendarioAgenda
           isAdmin={isAdmin}
           isOperador={isOperador}
@@ -700,40 +696,6 @@ export function CentralChamados({ session }: { session: Session }) {
         />
       )}
 
-      {/* EACE */}
-      {aba === 'eace' && (
-        <div className="space-y-2">
-          {loadingEace
-            ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-lg" />)
-            : filtrar(eace).length === 0
-            ? (
-              <div className="gts-card text-center py-16">
-                <GraduationCap className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum chamado EACE encontrado</p>
-                <button onClick={() => { setDespachoInicialEace(true); setShowDespacho(true) }} className="gts-btn-primary mx-auto mt-4">
-                  <GraduationCap className="w-4 h-4" /> Novo Despacho EACE
-                </button>
-              </div>
-            )
-            : [<CabecalhoListaChamados key="cabecalho" />, ...filtrar(eace).map((c: any) => (
-              <CardChamado
-                key={c.id}
-                chamado={c}
-                isAdmin={isAdmin}
-                mostrarFinalizar
-                onToggle={() => abrirChamado(c, { mostrarFinalizar: true, encaminhar: true })}
-                onFinalizar={setChamadoFinalizar}
-                onIniciar={id => iniciarMutation.mutate(id)}
-                onEncerrarAdmin={handleEncerrarAdmin}
-                isOperador={isOperador}
-                onAlterarTipo={handleAlterarTipo}
-                onEncaminhar={id => encaminharMutation.mutate(id)}
-              />
-            ))]
-          }
-        </div>
-      )}
-
       {/* Painel lateral do chamado (detalhes + todas as acoes) */}
       {selecionado && selecao && (
         <PainelChamado
@@ -741,7 +703,6 @@ export function CentralChamados({ session }: { session: Session }) {
           isAdmin={isAdmin}
           isOperador={isOperador}
           mostrarFinalizar={selecao.mostrarFinalizar}
-          acaoRapidaEncerrar={selecao.acaoRapidaEncerrar}
           onFinalizar={setChamadoFinalizar}
           onIniciar={id => iniciarMutation.mutate(id)}
           onEncerrarAdmin={handleEncerrarAdmin}
@@ -751,17 +712,14 @@ export function CentralChamados({ session }: { session: Session }) {
         />
       )}
 
-      {/* Modal despacho (padrao ou EACE, mesmo fluxo) */}
+      {/* Modal de despacho: o mesmo fluxo de sempre (na aba EACE ja abre como EACE) */}
       {showDespacho && (
         <NovoDespachoModal
-          initialData={despachoInicialEace ? { eace: true } : undefined}
+          initialData={categoria === 'eace' ? { eace: true } : undefined}
           onClose={() => setShowDespacho(false)}
           onSuccess={() => {
             setShowDespacho(false)
-            queryClient.invalidateQueries({ queryKey: ['agenda'] })
-            queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-            queryClient.invalidateQueries({ queryKey: ['chamados-eace'] })
-            queryClient.invalidateQueries({ queryKey: ['teams'] })
+            refrescarListas()
           }}
         />
       )}
@@ -774,14 +732,23 @@ export function CentralChamados({ session }: { session: Session }) {
           onClose={() => setChamadoFinalizar(null)}
           onSuccess={() => {
             setChamadoFinalizar(null)
-            queryClient.invalidateQueries({ queryKey: ['agenda'] })
-            queryClient.invalidateQueries({ queryKey: ['chamados-ativos'] })
-            queryClient.invalidateQueries({ queryKey: ['chamados-historico'] })
-            queryClient.invalidateQueries({ queryKey: ['teams'] })
-            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            refrescarListas()
           }}
         />
       )}
     </div>
   )
+}
+
+// 1 … 4 5 [6] 7 8 … 20
+function janelaPaginas(atual: number, total: number): (number | null)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const paginas = new Set([1, total, atual - 1, atual, atual + 1])
+  const ordenadas = [...paginas].filter(p => p >= 1 && p <= total).sort((a, b) => a - b)
+  const saida: (number | null)[] = []
+  ordenadas.forEach((p, i) => {
+    if (i > 0 && p - ordenadas[i - 1] > 1) saida.push(null)
+    saida.push(p)
+  })
+  return saida
 }

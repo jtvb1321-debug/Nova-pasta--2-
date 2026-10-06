@@ -10,9 +10,11 @@ import { useQuery } from '@tanstack/react-query'
 interface AppShellProps {
   children: React.ReactNode
   title?: string
-  // 'dashboard': visual reformulado (menu 250px, barra unica compacta). So a
-  // rota /dashboard usa; as demais paginas seguem o shell de sempre.
-  variante?: 'dashboard'
+  // 'orbia': visual reformulado (menu 250px, barra unica compacta). So as
+  // paginas ja migradas (Dashboard, Chamados) usam; as demais seguem o shell de sempre.
+  variante?: 'orbia'
+  // Nome da pagina mostrado na barra compacta (variante 'orbia').
+  paginaAtual?: string
 }
 
 async function fetchAlertas() {
@@ -21,8 +23,8 @@ async function fetchAlertas() {
   return res.json()
 }
 
-export function AppShell({ children, title, variante }: AppShellProps) {
-  const dashboard = variante === 'dashboard'
+export function AppShell({ children, title, variante, paginaAtual }: AppShellProps) {
+  const dashboard = variante === 'orbia'
   const [alertasAberto, setAlertasAberto] = useState(false)
 
   const { data: alertas = [] } = useQuery({
@@ -38,6 +40,7 @@ export function AppShell({ children, title, variante }: AppShellProps) {
         <div className="relative z-10">
           {dashboard ? (
             <TopBarCompacta
+              pagina={paginaAtual}
               onAlertasClick={() => setAlertasAberto(!alertasAberto)}
               totalAlertas={alertas.length}
             />

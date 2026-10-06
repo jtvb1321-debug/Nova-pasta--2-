@@ -399,7 +399,7 @@ const SELO_RECHAMADA = {
   DESCARTADA: { rotulo: 'Rechamada descartada', cls: 'bg-tema-contraste/[0.05] text-tema-suave' },
 } as const
 
-function SeloRechamada({ chamado, className }: { chamado: any; className: string }) {
+export function SeloRechamada({ chamado, className }: { chamado: any; className: string }) {
   const status = statusRechamadaDoChamado(chamado)
   if (!status) return null
   const cfg = SELO_RECHAMADA[status as keyof typeof SELO_RECHAMADA]

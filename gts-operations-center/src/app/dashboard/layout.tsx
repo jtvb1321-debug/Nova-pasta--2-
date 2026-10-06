@@ -6,7 +6,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth()
   if (!session) redirect('/login')
   return (
-    <AppShell variante="dashboard">
+    <AppShell variante="orbia" paginaAtual="Dashboard">
       {children}
     </AppShell>
   )

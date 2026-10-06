@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { ativarChamadosAgendados } from '@/lib/ativarAgendados'
 import { notificarACaminho } from '@/lib/telegram'
 import { enviarWhatsApp } from '@/lib/whatsapp'
+import { aplicarFiltrosListagem } from '@/lib/filtroChamados'
 
 const createSchema = z.object({
   cliente:    z.string().min(1),
@@ -58,6 +59,8 @@ export async function GET(request: NextRequest) {
   }
   if (feedbackEnviado === 'true') where.feedbackEnviado = true
   if (eace === 'true') where.eace = true
+  // eace=false, tipo, cidade e search (Central de Chamados)
+  aplicarFiltrosListagem(where, searchParams)
   if (dataInicio || dataFim) {
     where.dataAbertura = {}
     if (dataInicio) where.dataAbertura.gte = new Date(`${dataInicio}T00:00:00`)

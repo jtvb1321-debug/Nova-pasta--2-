@@ -4,16 +4,17 @@ import { Bell } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 
 interface TopBarCompactaProps {
+  pagina?: string
   onAlertasClick?: () => void
   totalAlertas?: number
 }
 
 // Barra unica do Dashboard: so a identificacao da pagina e os controles
 // (tema e notificacoes). A pesquisa fica no menu lateral.
-export function TopBarCompacta({ onAlertasClick, totalAlertas = 0 }: TopBarCompactaProps) {
+export function TopBarCompacta({ pagina = 'Dashboard', onAlertasClick, totalAlertas = 0 }: TopBarCompactaProps) {
   return (
     <header className="flex-shrink-0 flex items-center gap-3 h-12 px-4 sm:px-6 border-b border-tema-linha bg-tema-superficie">
-      <span className="text-sm font-semibold text-orange-600">Dashboard</span>
+      <span className="text-sm font-semibold text-orange-600">{pagina}</span>
 
       <div className="flex items-center gap-1.5 ml-auto">
         <ThemeToggle />

@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, CalendarDays, Network, Wifi, Radio, Search, Activity, HardHat,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search, Activity,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -42,11 +42,9 @@ const TODOS_GRUPOS: MenuGroup[] = [
     items: [
       { href: '/agenda',       label: 'Chamados',      icon: ClipboardList, permissao: 'verChamados' },
       { href: '/teams',        label: 'Equipes',       icon: Users,         permissao: 'verEquipes' },
-      { href: '/tecnicos',     label: 'Tecnicos',      icon: HardHat,       permissao: 'verEquipes' },
       { href: '/desempenho',   label: 'Desempenho das Equipes', icon: TrendingUp, permissao: 'verDesempenho' },
       { href: '/solicitacoes', label: 'Solicitacoes de Equipe', icon: ClipboardCheck, permissao: 'verSolicitacoes' },
       { href: '/horas-extras', label: 'Horas Extras', icon: Clock, permissao: 'verHorasExtras' },
-      { href: '/escala', label: 'Escala de Trabalho', icon: CalendarDays, permissao: 'verEscala' },
     ],
   },
   {
@@ -97,8 +95,8 @@ const TODOS_GRUPOS: MenuGroup[] = [
   },
 ]
 
-export function Sidebar({ variante }: { variante?: 'dashboard' } = {}) {
-  const dashboard = variante === 'dashboard'
+export function Sidebar({ variante }: { variante?: 'orbia' } = {}) {
+  const dashboard = variante === 'orbia'
   const pathname = usePathname()
   const { data: session } = useSession()
   const [collapsed, setCollapsed] = useState(false)

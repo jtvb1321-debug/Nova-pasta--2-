@@ -4,11 +4,10 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   X, Truck, Package, Fuel, UtensilsCrossed, BedDouble, Car, Receipt,
-  CheckCircle, XCircle, Clock, Loader2, ChevronRight, DollarSign, Eye, Download, CalendarDays
+  CheckCircle, XCircle, Clock, Loader2, ChevronRight, DollarSign, Eye, Download
 } from 'lucide-react'
 import { cn, formatCurrency, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import Link from 'next/link'
 
 const TIPO_DESPESA_CFG: Record<string, { label: string; icon: any; cor: string }> = {
   ALIMENTACAO:     { label: 'Alimentacao',       icon: UtensilsCrossed, cor: 'text-orange-700 bg-orange-500/10' },
@@ -111,10 +110,6 @@ export function PainelAdminEquipesModal({ onClose }: Props) {
                 <p className="text-tema-apagado text-sm">Selecione uma equipe ao lado</p>
               )}
             </div>
-            <Link href="/escala" className="flex items-center gap-1.5 px-3 py-1.5 bg-tema-contraste/[0.02] hover:bg-purple-500/10 rounded-lg text-xs text-tema-suave hover:text-purple-700 transition-colors">
-              <CalendarDays className="w-3.5 h-3.5" />
-              Escala de Trabalho
-            </Link>
             <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta">
               <X className="w-5 h-5" />
             </button>

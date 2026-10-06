@@ -6,9 +6,8 @@ import {
   ClipboardList, RefreshCw, Phone, MapPin,
   MessageCircle, Navigation, FileText, Timer,
   Play, StopCircle, CheckCircle, AlertTriangle,
-  ChevronDown, ChevronUp, Loader2, DollarSign, CalendarDays, Download,
+  ChevronDown, ChevronUp, Loader2, DollarSign, Download,
 } from 'lucide-react'
-import Link from 'next/link'
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { useState, useEffect } from 'react'
@@ -132,12 +131,6 @@ export function TeamsView({ session }: { session?: Session }) {
         subtitle={`${equipes.filter((e: any) => e.status === 'ATIVIDADE').length} em atividade · ${equipes.filter((e: any) => e.status === 'DESLOCAMENTO').length} em deslocamento · ${equipes.filter((e: any) => e.status === 'AGUARDANDO').length} disponiveis`}
         actions={
           <>
-            {isAdmin && (
-              <Link href="/escala" className="gts-btn-secondary">
-                <CalendarDays className="w-4 h-4" />
-                Escala de Trabalho
-              </Link>
-            )}
             {isAdmin && (
               <button onClick={() => setShowPainelAdmin(true)} className="gts-btn-primary">
                 <DollarSign className="w-4 h-4" />
