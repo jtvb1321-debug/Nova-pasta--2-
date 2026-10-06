@@ -14,7 +14,7 @@ export default async function SmartOLTPage() {
   const podeAprovar = ['ADMIN', 'OPERADOR'].includes(role)
 
   return (
-    <AppShell title="SmartOLT - Monitoramento de Rede">
+    <AppShell variante="orbia" paginaAtual="SmartOLT">
       <SmartOLTView podeAprovar={podeAprovar} />
     </AppShell>
   )

@@ -6,12 +6,11 @@ import dynamic from 'next/dynamic'
 import {
   Map, Truck, Wifi, WifiOff, Zap, ZapOff,
   AlertTriangle, RefreshCw, Clock, Navigation,
-  Activity, Filter, Maximize2
+  Activity, Maximize2
 } from 'lucide-react'
 import { cn, formatSpeed, formatDateTime, getSpeedColor, timeAgo } from '@/lib/utils'
 import type { VeiculoRastreado } from '@/types'
 import Link from 'next/link'
-import { PageHeader } from '@/components/ui/PageHeader'
 
 type Aba = 'mapa' | 'lista' | 'alertas'
 
@@ -35,13 +34,15 @@ const EQUIPES_CONFIG = [
   { nome: 'Apoio 02',  subNome: 'Veiculo de Apoio', modelo: 'Mitsubishi L200',placa: 'APOIO02', cor: '#6B7280' },
 ]
 
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
 function normalizarPlaca(placa: string) {
   return placa.replace(/[-.\s]/g, '').toUpperCase()
 }
 
 async function fetchVehicles(): Promise<VeiculoRastreado[]> {
   const res = await fetch('/api/vehicles')
-  if (!res.ok) return []
+  if (!res.ok) throw new Error('Erro ao buscar veiculos')
   return res.json()
 }
 
@@ -49,7 +50,7 @@ export function CentralMonitoramento() {
   const [aba, setAba] = useState<Aba>('mapa')
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'online' | 'offline' | 'alerta'>('todos')
 
-  const { data: veiculos = [], isLoading, refetch, dataUpdatedAt } = useQuery({
+  const { data: veiculos = [], isLoading, isError, isFetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['vehicles'],
     queryFn: fetchVehicles,
     refetchInterval: 30000,
@@ -85,45 +86,67 @@ export function CentralMonitoramento() {
     { id: 'alertas' as Aba, label: 'Alertas',  icon: AlertTriangle, badge: emAlerta },
   ]
 
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Central de monitoramento</h1>
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar os veículos</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+        </div>
+      </div>
+    )
+  }
+
+  const cartoes = [
+    { rotulo: 'Veículos online', valor: online, icone: Wifi, cor: 'bg-emerald-500/10 text-emerald-600' },
+    { rotulo: 'Veículos offline', valor: offline, icone: WifiOff, cor: 'bg-tema-contraste/[0.06] text-tema-suave' },
+    { rotulo: `Acima de ${VELOCIDADE_ALERTA} km/h`, valor: emAlerta, icone: AlertTriangle, cor: 'bg-red-500/10 text-red-600' },
+  ]
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title="Central de Monitoramento"
-        subtitle={
-          <>
-            <span className="text-emerald-700 font-medium">{online} online</span>
-            {' · '}
-            <span className="text-tema-suave">{offline} offline</span>
-            {emAlerta > 0 && (
-              <span className="ml-2 text-red-700 font-medium animate-pulse">
-                · {emAlerta} em alerta de velocidade
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Central de monitoramento</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          {dataUpdatedAt > 0 && (
+            <span className="text-xs text-tema-suave">
+              Atualizado às {new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <Link href="/tv" className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <Maximize2 className="w-4 h-4" aria-hidden />
+            Modo TV
+          </Link>
+          <button type="button" onClick={() => refetch()} disabled={isFetching} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {cartoes.map(c => {
+          const Icone = c.icone
+          return (
+            <div key={c.rotulo} className="card-orbia flex items-center gap-3 px-4 py-3">
+              <span className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', c.cor)}>
+                <Icone className="w-5 h-5" aria-hidden />
               </span>
-            )}
-            {dataUpdatedAt && (
-              <span className="ml-2 text-tema-apagado text-xs">
-                · Atualizado {timeAgo(new Date(dataUpdatedAt))}
-              </span>
-            )}
-          </>
-        }
-        actions={
-          <>
-            <Link href="/tv" className="gts-btn-secondary">
-              <Maximize2 className="w-4 h-4" />
-              Modo TV
-            </Link>
-            <button onClick={() => refetch()} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
-              Atualizar
-            </button>
-          </>
-        }
-      />
+              <div>
+                <p className="text-sm text-tema-suave">{c.rotulo}</p>
+                <p className="text-2xl font-bold leading-none tabular-nums text-tema-tinta mt-0.5">{isLoading ? '···' : c.valor}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       {/* Alerta de velocidade */}
       {emAlerta > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <AlertTriangle className="w-5 h-5 text-red-700 flex-shrink-0 animate-pulse" />
+        <div className="flex items-center gap-3 p-4 bg-red-500/[0.06] border border-red-500/25 rounded-xl">
+          <AlertTriangle className="w-5 h-5 text-red-700 flex-shrink-0" />
           <div>
             <p className="text-red-700 font-medium text-sm">
               {veiculosEnriquecidos.filter(v => v.alerta).map(v => v.equipe?.nome || v.nome).join(', ')} — velocidade acima de {VELOCIDADE_ALERTA} km/h!
@@ -134,17 +157,20 @@ export function CentralMonitoramento() {
       )}
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-tema-linha">
+      <div role="tablist" aria-label="Visões da central" className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto">
         {abas.map(a => {
           const Icon = a.icon
           return (
             <button
               key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
               onClick={() => setAba(a.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
                 aba === a.id
-                  ? 'border-orange-600 text-orange-600'
+                  ? 'border-orange-500 text-orange-700 font-semibold'
                   : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
@@ -162,7 +188,7 @@ export function CentralMonitoramento() {
 
       {/* ABA MAPA */}
       {aba === 'mapa' && (
-        <div className="gts-card p-0 overflow-hidden" style={{ height: 'calc(100vh - 280px)' }}>
+        <div className="card-orbia overflow-hidden" style={{ height: 'calc(100vh - 250px)', minHeight: 420 }}>
           <MapView height="100%" dashboard={false} />
         </div>
       )}
@@ -171,8 +197,7 @@ export function CentralMonitoramento() {
       {aba === 'lista' && (
         <div className="space-y-4">
           {/* Filtros */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-tema-apagado" />
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { value: 'todos',   label: `Todos (${veiculos.length})` },
               { value: 'online',  label: `Online (${online})` },
@@ -181,12 +206,14 @@ export function CentralMonitoramento() {
             ].map(f => (
               <button
                 key={f.value}
+                type="button"
                 onClick={() => setFiltroStatus(f.value as any)}
+                aria-pressed={filtroStatus === f.value}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
+                  'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                   filtroStatus === f.value
-                    ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                    : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
+                    ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
+                    : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
                 )}
               >
                 {f.label}
@@ -207,23 +234,16 @@ export function CentralMonitoramento() {
                   return (
                     <div
                       key={v.id}
-                      className={cn(
-                        'bg-tema-superficie border rounded-xl overflow-hidden transition-all',
-                        v.alerta ? 'border-red-500/50' :
-                        v.online ? 'border-emerald-500/20' : 'border-tema-linha'
-                      )}
+                      className={cn('card-orbia overflow-hidden', v.alerta && '!border-red-500/50')}
                     >
                       {/* Header colorido */}
-                      <div
-                        className="px-4 py-3 flex items-center justify-between"
-                        style={{ backgroundColor: (equipe?.cor || '#6B7280') + '20' }}
-                      >
+                      <div className="px-4 py-3 flex items-center justify-between border-b border-tema-linha">
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: equipe?.cor || '#6B7280' }} />
                           <span className="text-tema-tinta font-bold text-sm">{equipe?.nome || v.nome}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {v.alerta && <AlertTriangle className="w-4 h-4 text-red-700 animate-pulse" />}
+                          {v.alerta && <AlertTriangle className="w-4 h-4 text-red-700" aria-hidden />}
                           <span className={cn(
                             'text-xs px-2 py-0.5 rounded-full font-medium',
                             v.online ? 'bg-emerald-500/15 text-emerald-700' : 'bg-tema-contraste/[0.05] text-tema-suave'
@@ -249,7 +269,7 @@ export function CentralMonitoramento() {
                           </p>
                           <p className="text-xs text-tema-apagado">km/h</p>
                           {v.alerta && (
-                            <p className="text-xs text-red-700 font-bold mt-1 animate-pulse flex items-center justify-center gap-1">
+                            <p className="text-xs text-red-700 font-bold mt-1 flex items-center justify-center gap-1">
                               <AlertTriangle className="w-3 h-3" /> ACIMA DO LIMITE
                             </p>
                           )}
@@ -297,9 +317,9 @@ export function CentralMonitoramento() {
       {aba === 'alertas' && (
         <div className="space-y-4">
           {emAlerta === 0 ? (
-            <div className="gts-card text-center py-16">
-              <Activity className="w-10 h-10 text-emerald-600/50 mx-auto mb-3" />
-              <p className="text-tema-suave font-medium">Nenhum alerta de velocidade ativo</p>
+            <div className="card-orbia text-center py-14 px-4">
+              <Activity className="w-9 h-9 text-tema-apagado mx-auto mb-3" aria-hidden />
+              <p className="font-medium text-tema-tinta">Nenhum alerta de velocidade</p>
               <p className="text-tema-apagado text-sm mt-1">Todos os veiculos estao dentro do limite de {VELOCIDADE_ALERTA} km/h</p>
             </div>
           ) : (
@@ -307,7 +327,7 @@ export function CentralMonitoramento() {
               {veiculosEnriquecidos.filter(v => v.alerta).map(v => {
                 const cor = getSpeedColor(v.velocidade, VELOCIDADE_ALERTA)
                 return (
-                  <div key={v.id} className="bg-tema-superficie border border-red-500/40 rounded-xl p-4">
+                  <div key={v.id} className="card-orbia p-4 !border-red-500/40">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
                         <Truck className="w-6 h-6 text-red-700" />
@@ -315,7 +335,7 @@ export function CentralMonitoramento() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-tema-tinta font-bold">{v.equipe?.nome || v.nome}</p>
-                          <AlertTriangle className="w-4 h-4 text-red-700 animate-pulse" />
+                          <AlertTriangle className="w-4 h-4 text-red-700" aria-hidden />
                         </div>
                         <p className="text-xs text-tema-suave">{v.equipe?.subNome} · {v.equipe?.placa}</p>
                         {v.endereco && <p className="text-xs text-tema-apagado mt-0.5">{v.endereco}</p>}
@@ -337,7 +357,7 @@ export function CentralMonitoramento() {
           )}
 
           {/* Historico de todos os veiculos */}
-          <div className="gts-card">
+          <div className="card-orbia p-4">
             <h3 className="text-sm font-semibold text-tema-tinta mb-3 flex items-center gap-2">
               <Activity className="w-4 h-4 text-orange-600" />
               Status Atual de Todos os Veiculos

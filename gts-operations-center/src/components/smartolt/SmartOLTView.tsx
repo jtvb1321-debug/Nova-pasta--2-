@@ -8,7 +8,7 @@ import {
 } from 'chart.js'
 import {
   Wifi, WifiOff, Zap, AlertTriangle, Signal, Loader2,
-  CheckCircle, ShieldAlert, Radio, XCircle, Activity,
+  CheckCircle, ShieldAlert, Radio, XCircle, Activity, RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -32,7 +32,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
   const [rejeitandoId, setRejeitandoId] = useState<string | null>(null)
   const [alertaParaChamado, setAlertaParaChamado] = useState<any>(null)
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['smartolt-status'],
     queryFn: fetchStatus,
     refetchInterval: 60000,
@@ -83,16 +83,23 @@ export function SmartOLTView({ podeAprovar }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-tema-apagado" />
+      <div className="space-y-4" aria-busy="true">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">SmartOLT</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="h-64 skeleton rounded-xl" />)}</div>
       </div>
     )
   }
 
   if (error || !data) {
     return (
-      <div className="p-6 text-center text-red-700 text-sm">
-        Erro ao carregar dados do SmartOLT. Verifique a configuracao da API.
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">SmartOLT</h1>
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar os dados do SmartOLT</p>
+          <p className="text-sm text-tema-suave mt-1">Verifique a configuração da API.</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+        </div>
       </div>
     )
   }
@@ -119,9 +126,23 @@ export function SmartOLTView({ podeAprovar }: Props) {
   }
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">SmartOLT</h1>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+          style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
+        >
+          <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+          Atualizar
+        </button>
+      </div>
+
       {comunicacao.semComunicacao && (
-        <div className="gts-card border-amber-500/40 bg-amber-500/10 flex items-start gap-3">
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 flex items-start gap-3">
           <WifiOff className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-semibold text-tema-tinta">SmartOLT sem comunicacao com as OLTs</p>
@@ -134,30 +155,30 @@ export function SmartOLTView({ podeAprovar }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Network At-a-Glance */}
-        <div className="gts-card">
+        <div className="card-orbia p-4">
           <div className="flex items-center gap-2 mb-4">
             <Radio className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-semibold text-tema-tinta">Network At-a-Glance</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Visão da rede</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+            <div className="border border-tema-linha rounded-xl p-3">
               <p className="text-xs text-tema-suave">Online</p>
               <p className="text-xl font-bold text-emerald-700">{status.online} <span className="text-xs text-tema-apagado">/ {totalClientes}</span></p>
               <p className="text-xs text-emerald-700">{percOnline}% online</p>
             </div>
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <div className="border border-tema-linha rounded-xl p-3">
               <p className="text-xs text-tema-suave">Offline</p>
               <p className="text-xl font-bold text-red-700">{status.offline}</p>
               <p className="text-xs text-red-700">{percOffline}%</p>
             </div>
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-xs text-tema-suave">LOS Alarms</p>
+            <div className="border border-tema-linha rounded-xl p-3">
+              <p className="text-xs text-tema-suave">LOS</p>
               <p className="text-xl font-bold text-red-700">{status.los}</p>
             </div>
-            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-              <p className="text-xs text-tema-suave">Dying Gasp</p>
+            <div className="border border-tema-linha rounded-xl p-3">
+              <p className="text-xs text-tema-suave">Queda de energia</p>
               <p className="text-xl font-bold text-orange-700">{status.quedaEnergia}</p>
             </div>
           </div>
@@ -167,10 +188,10 @@ export function SmartOLTView({ podeAprovar }: Props) {
         </div>
 
         {/* Optical Signal Distribution */}
-        <div className="gts-card">
+        <div className="card-orbia p-4">
           <div className="flex items-center gap-2 mb-4">
             <Signal className="w-4 h-4 text-purple-600" />
-            <h2 className="text-sm font-semibold text-tema-tinta">Optical Signal Distribution</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Distribuição do sinal óptico</h2>
           </div>
           <div className="h-32 mb-3">
             <Doughnut
@@ -208,16 +229,16 @@ export function SmartOLTView({ podeAprovar }: Props) {
         </div>
 
         {/* Critical Alarms & Events */}
-        <div className="gts-card flex flex-col">
+        <div className="card-orbia p-4 flex flex-col">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-red-600" />
-            <h2 className="text-sm font-semibold text-tema-tinta">Critical Alarms & Events</h2>
+            <h2 className="text-sm font-semibold text-tema-tinta">Alarmes e eventos críticos</h2>
           </div>
           <div className="space-y-2 overflow-y-auto max-h-64">
             {alarmesFeed.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 gap-2">
                 <CheckCircle className="w-8 h-8 text-emerald-500/50" />
-                <p className="text-tema-apagado text-xs">Rede estavel, sem alertas</p>
+                <p className="text-tema-apagado text-xs">Nenhum alarme</p>
               </div>
             ) : alarmesFeed.map((a: any, i: number) => (
               <div key={i} className={cn(
@@ -234,7 +255,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
 
       {/* Tabela de Alertas de Sinal com acao rapida */}
       {(data?.alertasSinal ?? []).length > 0 && (
-        <div className="gts-card">
+        <div className="card-orbia p-4">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
             <h2 className="text-sm font-semibold text-tema-tinta">Clientes com Alerta de Sinal</h2>
@@ -331,8 +352,8 @@ export function SmartOLTView({ podeAprovar }: Props) {
         </div>
       )}
       {rompimentosPendentes.map((r: any) => (
-        <div key={r.id} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="gts-card border-red-500/30 bg-red-500/5">
+        <div key={r.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/[0.04] p-4">
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="w-4 h-4 text-red-600" />
               <h2 className="text-sm font-semibold text-tema-tinta">Rompimento Massivo</h2>
@@ -345,7 +366,7 @@ export function SmartOLTView({ podeAprovar }: Props) {
             <p className="text-sm text-tema-suave mt-3">{r.observacao}</p>
           </div>
 
-          <div className="gts-card">
+          <div className="card-orbia p-4">
             <div className="flex items-center gap-2 mb-3">
               <Activity className="w-4 h-4 text-blue-600" />
               <h2 className="text-sm font-semibold text-tema-tinta">Chamado Automatico - Aprovacao do ADM</h2>

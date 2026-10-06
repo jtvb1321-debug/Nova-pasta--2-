@@ -20,8 +20,11 @@ export default async function MapaInmapPage() {
   }
 
   return (
-    <AppShell title="Mapa Inmap / Rede">
-      <MapaInmapView />
+    <AppShell variante="orbia" paginaAtual="Mapa Inmap / Rede">
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Mapa Inmap / Rede</h1>
+        <MapaInmapView />
+      </div>
     </AppShell>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Fuel, TrendingUp, Gauge, DollarSign, Truck, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+import { Fuel, TrendingUp, Gauge, DollarSign, Truck, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { cn, formatCurrency, formatDateTime } from '@/lib/utils'
 
 async function fetchDashboard(dataInicio: string, dataFim: string) {
@@ -74,7 +74,7 @@ export function DashboardCombustivelView() {
   const [filtroEquipe, setFiltroEquipe] = useState('')
   const [veiculoExpandido, setVeiculoExpandido] = useState<string | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard-combustivel', dataInicio, dataFim],
     queryFn: () => fetchDashboard(dataInicio, dataFim),
   })
@@ -94,71 +94,70 @@ export function DashboardCombustivelView() {
   }
   const consumoMedioGeral = totalFiltrado.totalLitros > 0 ? totalFiltrado.totalKm / totalFiltrado.totalLitros : 0
 
+  const cartoes = [
+    { rotulo: 'Litros abastecidos', valor: `${totalFiltrado.totalLitros.toFixed(0)} L`, icone: Fuel, cor: 'bg-blue-500/10 text-blue-600' },
+    { rotulo: 'Total gasto', valor: formatCurrency(totalFiltrado.totalValor), icone: DollarSign, cor: 'bg-emerald-500/10 text-emerald-600' },
+    { rotulo: 'Km rodados', valor: `${totalFiltrado.totalKm.toFixed(0)} km`, icone: Gauge, cor: 'bg-purple-500/10 text-purple-600' },
+    { rotulo: filtroEquipe ? 'Média da equipe' : 'Média geral', valor: `${consumoMedioGeral.toFixed(1)} km/L`, icone: TrendingUp, cor: 'bg-orange-500/10 text-orange-600' },
+  ]
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-tema-tinta">Dashboard de Combustivel</h1>
-        <p className="text-tema-apagado text-sm mt-1">
-          {filtroEquipe ? `Consumo e gastos - ${filtroEquipe}` : 'Consumo e gastos gerais da frota'}
-        </p>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Combustível</h1>
 
       {/* Filtros */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-tema-apagado" />
-          <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="gts-input text-sm" />
-          <span className="text-tema-apagado text-sm">ate</span>
-          <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="gts-input text-sm" />
+      <div className="card-orbia p-4 flex flex-wrap items-end gap-x-4 gap-y-3">
+        <div className="flex items-end gap-2">
+          <label className="space-y-1">
+            <span className="block text-xs font-medium text-tema-suave">De</span>
+            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="gts-input py-2 text-sm" />
+          </label>
+          <label className="space-y-1">
+            <span className="block text-xs font-medium text-tema-suave">Até</span>
+            <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="gts-input py-2 text-sm" />
+          </label>
         </div>
-        <select
-          value={filtroEquipe}
-          onChange={e => setFiltroEquipe(e.target.value)}
-          className="gts-input text-sm w-auto"
-        >
-          <option value="">Todas as equipes (geral)</option>
-          {equipesDisponiveis.map((nome: string) => (
-            <option key={nome} value={nome}>{nome}</option>
-          ))}
-        </select>
+        <label className="space-y-1">
+          <span className="block text-xs font-medium text-tema-suave">Equipe</span>
+          <select value={filtroEquipe} onChange={e => setFiltroEquipe(e.target.value)} className="gts-input py-2 text-sm min-w-[200px]">
+            <option value="">Todas as equipes</option>
+            {equipesDisponiveis.map((nome: string) => (
+              <option key={nome} value={nome}>{nome}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      {/* Cards de totais */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="gts-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Fuel className="w-4 h-4 text-blue-700" />
-            <p className="text-xs text-tema-apagado uppercase">Litros Abastecidos</p>
-          </div>
-          <p className="text-2xl font-black text-tema-tinta">{totalFiltrado.totalLitros.toFixed(0)}L</p>
+      {isError ? (
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar os dados de combustível</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
         </div>
-        <div className="gts-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-emerald-700" />
-            <p className="text-xs text-tema-apagado uppercase">Total Gasto</p>
-          </div>
-          <p className="text-2xl font-black text-tema-tinta">{formatCurrency(totalFiltrado.totalValor)}</p>
-        </div>
-        <div className="gts-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Gauge className="w-4 h-4 text-purple-700" />
-            <p className="text-xs text-tema-apagado uppercase">KM Rodados</p>
-          </div>
-          <p className="text-2xl font-black text-tema-tinta">{totalFiltrado.totalKm.toFixed(0)}km</p>
-        </div>
-        <div className="gts-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-orange-600" />
-            <p className="text-xs text-tema-apagado uppercase">{filtroEquipe ? 'Media da Equipe' : 'Media Geral'}</p>
-          </div>
-          <p className="text-2xl font-black text-tema-tinta">{consumoMedioGeral.toFixed(1)} km/L</p>
-        </div>
+      ) : (
+      <>
+      {/* Totais */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {cartoes.map(c => {
+          const Icone = c.icone
+          return (
+            <div key={c.rotulo} className="card-orbia flex items-center gap-3 px-4 py-3">
+              <span className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', c.cor)}>
+                <Icone className="w-5 h-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm text-tema-suave">{c.rotulo}</p>
+                <p className="text-xl font-bold leading-tight tabular-nums text-tema-tinta">{isLoading ? '···' : c.valor}</p>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Tabela por veiculo */}
-      <div className="gts-card overflow-hidden p-0">
+      <div className="card-orbia overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="gts-table">
+          <table className="gts-table min-w-[760px]">
             <thead>
               <tr>
                 <th className="px-4 pt-4">Veiculo</th>
@@ -181,7 +180,7 @@ export function DashboardCombustivelView() {
                 <tr>
                   <td colSpan={7} className="text-center py-16 text-tema-apagado">
                     <Truck className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
-                    Nenhum dado de abastecimento no periodo
+                    Nenhum dado de abastecimento no período
                   </td>
                 </tr>
               ) : veiculos.map((v: any) => (
@@ -221,6 +220,8 @@ export function DashboardCombustivelView() {
           </table>
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Radio, Loader2, RefreshCw, Wifi, WifiOff, Pencil, Check, X } from 'lucide-react'
+import { Loader2, RefreshCw, Wifi, WifiOff, Pencil, Check, X, Search, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 
@@ -86,10 +86,14 @@ function CampoEditavel({
   }
 }
 
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
 export function LinkDedicadoView() {
   const queryClient = useQueryClient()
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState<'' | 'online' | 'offline'>('')
 
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['link-dedicado'],
     queryFn: fetchClientes,
   })
@@ -113,116 +117,148 @@ export function LinkDedicadoView() {
     onError: () => toast({ title: 'Erro ao salvar', variant: 'destructive' }),
   })
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-tema-apagado" />
-      </div>
-    )
-  }
+  const termo = busca.trim().toLowerCase()
+  const filtrados = clientes.filter(c => {
+    if (filtroStatus === 'online' && !c.online) return false
+    if (filtroStatus === 'offline' && c.online) return false
+    if (!termo) return true
+    return [c.nome, c.idContrato, c.plano, c.ip].some(v => (v ?? '').toLowerCase().includes(termo))
+  })
+  const algumFiltro = !!termo || !!filtroStatus
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-tema-tinta flex items-center gap-2">
-            <Radio className="w-5 h-5 text-purple-600" />
-            Clientes de Link Dedicado
-          </h1>
-          <p className="text-tema-apagado text-sm mt-1">
-            {clientes.length} cliente(s) corporativo(s) em planos dedicados/IP fixo
-          </p>
-        </div>
-        <button onClick={() => refetch()} className="gts-btn-secondary">
-          <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Clientes dedicados</h1>
+        <button type="button" onClick={() => refetch()} disabled={isFetching} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+          <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
           Atualizar
         </button>
       </div>
 
-      <div className="gts-card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-tema-suave border-b border-tema-linha bg-tema-contraste/[0.02]">
-                <th className="py-3 px-4 font-medium">Cliente / Razao Social</th>
-                <th className="py-3 px-4 font-medium">Contrato</th>
-                <th className="py-3 px-4 font-medium">Plano</th>
-                <th className="py-3 px-4 font-medium">Status</th>
-                <th className="py-3 px-4 font-medium">IP do Cliente</th>
-                <th className="py-3 px-4 font-medium">Potencia RX</th>
-                <th className="py-3 px-4 font-medium">Potencia TX</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientes.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-tema-apagado text-sm">
-                    Nenhum cliente de link dedicado encontrado
-                  </td>
-                </tr>
-              ) : clientes.map(c => (
-                <tr key={c.codigoIxc} className="border-b border-tema-linha hover:bg-tema-contraste/[0.02]">
-                  <td className="py-3 px-4 text-tema-tinta font-medium">{c.nome}</td>
-                  <td className="py-3 px-4 text-tema-suave font-mono text-xs">{c.idContrato || '-'}</td>
-                  <td className="py-3 px-4 text-tema-suave text-xs">{c.plano}</td>
-                  <td className="py-3 px-4">
-                    {c.online ? (
-                      <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
-                        <Wifi className="w-3.5 h-3.5" /> Online
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 text-xs text-tema-apagado font-medium">
-                        <WifiOff className="w-3.5 h-3.5" /> Offline
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {c.fonteIp === 'ixc' ? (
-                      <span className="font-mono text-tema-tinta text-xs">{c.ip}</span>
-                    ) : (
-                      <CampoEditavel
-                        valor={c.ip || ''}
-                        placeholder="IP"
-                        onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'ip', valor })}
-                      />
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {c.fontePotencia === 'smartolt' ? (
-                      <CorPotencia valor={c.potenciaRx} />
-                    ) : (
-                      <CampoEditavel
-                        valor={c.potenciaRx != null ? String(c.potenciaRx) : ''}
-                        placeholder="dBm"
-                        sufixo=" dBm"
-                        onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'potenciaRx', valor })}
-                      />
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {c.fontePotencia === 'smartolt' ? (
-                      <CorPotencia valor={c.potenciaTx} />
-                    ) : (
-                      <CampoEditavel
-                        valor={c.potenciaTx != null ? String(c.potenciaTx) : ''}
-                        placeholder="dBm"
-                        sufixo=" dBm"
-                        onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'potenciaTx', valor })}
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {isLoading ? (
+        <div className="h-64 skeleton rounded-xl" aria-busy="true" />
+      ) : isError ? (
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar os clientes</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-3">
+            <div className="relative sm:col-span-2 lg:flex-1 lg:min-w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
+              <input
+                type="search"
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                placeholder="Buscar cliente, contrato, plano ou IP..."
+                aria-label="Buscar clientes"
+                className="w-full gts-input pl-9 text-sm"
+              />
+            </div>
+            <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value as any)} aria-label="Status" className="gts-input py-2 text-sm w-full sm:w-auto">
+              <option value="">Status</option>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+            </select>
+            {algumFiltro && (
+              <button type="button" onClick={() => { setBusca(''); setFiltroStatus('') }} className="text-sm text-orange-600 hover:text-orange-700 font-medium text-left">
+                Limpar filtros
+              </button>
+            )}
+          </div>
 
-      <p className="text-xs text-tema-apagado">
-        IP e potencia optica sao buscados automaticamente do IXC/SmartOLT quando disponiveis.
-        Quando nao encontrados, ficam liberados para preenchimento manual (clique no campo) -
-        esses dados servem de base para a criacao futura de alertas individuais por cliente.
-      </p>
+          <div className="card-orbia overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[820px]">
+                <thead>
+                  <tr className="text-left text-xs text-tema-suave bg-tema-contraste/[0.03]">
+                    <th scope="col" className="py-3 px-4 font-medium">Cliente / Razão social</th>
+                    <th scope="col" className="py-3 px-4 font-medium">Contrato</th>
+                    <th scope="col" className="py-3 px-4 font-medium">Plano</th>
+                    <th scope="col" className="py-3 px-4 font-medium">Status</th>
+                    <th scope="col" className="py-3 px-4 font-medium">IP do cliente</th>
+                    <th scope="col" className="py-3 px-4 font-medium">Potência RX</th>
+                    <th scope="col" className="py-3 px-4 font-medium">Potência TX</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-tema-suave text-sm border-t border-tema-linha">
+                        {algumFiltro ? 'Nenhum resultado para os filtros' : 'Nenhum cliente de link dedicado encontrado'}
+                      </td>
+                    </tr>
+                  ) : filtrados.map(c => (
+                    <tr key={c.codigoIxc} className="border-t border-tema-linha hover:bg-tema-contraste/[0.03] transition-colors">
+                      <td className="py-3 px-4 text-tema-tinta font-medium">{c.nome}</td>
+                      <td className="py-3 px-4 text-tema-suave font-mono text-xs">{c.idContrato || '-'}</td>
+                      <td className="py-3 px-4 text-tema-suave text-xs">{c.plano}</td>
+                      <td className="py-3 px-4">
+                        {c.online ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 font-medium">
+                            <Wifi className="w-3.5 h-3.5" aria-hidden /> Online
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-tema-contraste/[0.06] text-tema-suave font-medium">
+                            <WifiOff className="w-3.5 h-3.5" aria-hidden /> Offline
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {c.fonteIp === 'ixc' ? (
+                          <span className="font-mono text-tema-tinta text-xs">{c.ip}</span>
+                        ) : (
+                          <CampoEditavel
+                            valor={c.ip || ''}
+                            placeholder="IP"
+                            onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'ip', valor })}
+                          />
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {c.fontePotencia === 'smartolt' ? (
+                          <CorPotencia valor={c.potenciaRx} />
+                        ) : (
+                          <CampoEditavel
+                            valor={c.potenciaRx != null ? String(c.potenciaRx) : ''}
+                            placeholder="dBm"
+                            sufixo=" dBm"
+                            onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'potenciaRx', valor })}
+                          />
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {c.fontePotencia === 'smartolt' ? (
+                          <CorPotencia valor={c.potenciaTx} />
+                        ) : (
+                          <CampoEditavel
+                            valor={c.potenciaTx != null ? String(c.potenciaTx) : ''}
+                            placeholder="dBm"
+                            sufixo=" dBm"
+                            onSalvar={valor => salvarMutation.mutateAsync({ codigoIxc: c.codigoIxc, campo: 'potenciaTx', valor })}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="px-4 py-3 border-t border-tema-linha text-xs text-tema-suave">
+              {algumFiltro ? `${filtrados.length} de ${clientes.length}` : clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'}
+            </p>
+          </div>
+
+          <p className="text-xs text-tema-apagado">
+            IP e potência óptica são buscados automaticamente do IXC/SmartOLT quando disponíveis.
+            Quando não encontrados, ficam liberados para preenchimento manual (clique no campo) -
+            esses dados servem de base para a criação futura de alertas individuais por cliente.
+          </p>
+        </>
+      )}
     </div>
   )
 }

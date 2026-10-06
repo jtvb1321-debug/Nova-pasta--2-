@@ -841,7 +841,7 @@ export function MapaInmapView({ telaCheia = false }: Props) {
   ]
 
   return (
-    <div className={cn('relative w-full flex bg-tema-fundo', telaCheia ? 'h-screen' : 'h-[calc(100vh-64px)]')}>
+    <div className={cn('relative w-full flex bg-tema-fundo', telaCheia ? 'h-screen' : 'h-[calc(100vh-150px)] min-h-[420px] rounded-xl border border-tema-linha overflow-hidden')}>
       {/* Coluna do mapa */}
       <div className="relative flex-1 min-w-0">
         <div ref={mapRef} className="absolute inset-0 z-0" />
