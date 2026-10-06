@@ -4,6 +4,7 @@ import { Brain, CalendarClock, ChevronRight, Loader2, MapPin, MessageCircle, Nav
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
+import { ResumoIxc } from './InfoIxc'
 import { acaoPrincipal, etapaDoChamado, prioridadeDe, rotuloDaEtapa, situacaoDeTempo, type Etapa } from '@/lib/tecnicoChamado'
 
 const ETAPA_BADGE: Record<Etapa, string> = {
@@ -119,6 +120,8 @@ export function CardChamadoTecnico({ chamado, agora, destaque = false, enviando,
           </p>
         )}
       </div>
+
+      <ResumoIxc chamadoId={chamado.id} ehEace={!!chamado.eace} />
 
       {(chamado.subCategoria || chamado.materiaisReservados?.length > 0) && (
         <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">

@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
 
 const ROTAS_TECNICO = [
   '/meus-chamados',
+  '/historico-os',
   '/meu-carro',
   '/ponto',
   '/mapa-inmap',

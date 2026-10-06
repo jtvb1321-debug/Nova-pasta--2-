@@ -11,6 +11,7 @@ import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 import { DiagnosticoRunner } from './DiagnosticoRunner'
 import { QrAvaliacao } from './QrAvaliacao'
+import { PainelIxc } from './InfoIxc'
 import { FotosAtendimento, useFotosAtendimento } from './FotosAtendimento'
 import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
 import { useAgora } from '@/hooks/useAgora'
@@ -291,6 +292,8 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
               )}
             </div>
           </div>
+
+          <PainelIxc chamadoId={chamado.id} ehEace={!!chamado.eace} />
 
           {/* ETAPA: Aguardando */}
           {etapa === 'AGUARDANDO' && acao && (

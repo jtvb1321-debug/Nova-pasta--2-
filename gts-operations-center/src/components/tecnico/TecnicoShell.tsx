@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { signOut } from 'next-auth/react'
-import { ClipboardList, Truck, Map, Clock, LogOut } from 'lucide-react'
+import { ClipboardList, Truck, Map, Clock, LogOut, History } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, getInitials } from '@/lib/utils'
 import { situacaoLabel } from '@/lib/jornada'
@@ -12,10 +12,11 @@ import { situacaoLabel } from '@/lib/jornada'
 // Moldura da area do tecnico (menu lateral no computador, barra no celular).
 // Compartilhada por /meus-chamados e /meu-carro para a navegacao ser a mesma.
 
-export type PaginaTecnico = 'chamados' | 'carro' | 'mapa' | 'ponto'
+export type PaginaTecnico = 'chamados' | 'historico' | 'carro' | 'mapa' | 'ponto'
 
 const NAV: { id: PaginaTecnico; href: string; label: string; icon: React.ElementType }[] = [
   { id: 'chamados', href: '/meus-chamados', label: 'Meus chamados', icon: ClipboardList },
+  { id: 'historico', href: '/historico-os', label: 'Histórico de O.S.', icon: History },
   { id: 'carro',    href: '/meu-carro',     label: 'Meu carro / estoque', icon: Truck },
   { id: 'mapa',     href: '/mapa-inmap',    label: 'InMap / rotas', icon: Map },
   { id: 'ponto',    href: '/ponto',         label: 'Ponto', icon: Clock },

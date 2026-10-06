@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle, Calendar, CheckCircle, ClipboardList, Clock, Map, MapPin, RefreshCw, Truck, Zap,
+  AlertTriangle, Calendar, CheckCircle, ClipboardList, Clock, History, Map, MapPin, RefreshCw, Truck, Zap,
 } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
@@ -186,6 +186,7 @@ export function PainelTecnico({ session }: { session: Session }) {
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/historico-os" className={atalhoMobileEscondido} title="Histórico de O.S." aria-label="Histórico de O.S."><History className="w-5 h-5" aria-hidden /></Link>
             <Link href="/ponto" className={atalhoMobileEscondido} title="Bater ponto" aria-label="Bater ponto"><Clock className="w-5 h-5" aria-hidden /></Link>
             <Link href="/meu-carro" className={atalhoMobileEscondido} title="Meu carro" aria-label="Meu carro"><Truck className="w-5 h-5" aria-hidden /></Link>
             <Link href="/mapa-inmap" className={atalhoMobileEscondido} title="Mapa e rotas" aria-label="Mapa e rotas"><Map className="w-5 h-5" aria-hidden /></Link>
