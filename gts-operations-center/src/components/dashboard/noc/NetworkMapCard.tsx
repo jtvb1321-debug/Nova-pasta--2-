@@ -14,14 +14,16 @@ const NetworkMapInner = dynamic(() => import('./NetworkMapInner').then(m => m.Ne
   ),
 })
 
+// Aqui so muda o contêiner (card, titulo, espacamento). O mapa em si
+// (NetworkMapInner), a legenda e os dados continuam exatamente como eram.
 export function NetworkMapCard() {
   return (
-    <GlassCard className="h-full flex flex-col" delay={0.1}>
+    <GlassCard className="h-full flex flex-col">
       <CardHeader
-        title="Mapa da Rede"
+        title="Mapa da rede"
         icon={<Network className="w-4 h-4" style={{ color: NOC.azulPrimario }} />}
       />
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] mb-2" style={{ color: NOC.textoSecundario }}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] mb-3" style={{ color: NOC.textoSecundario }}>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.sucesso }} /> Caixa OK</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.alerta }} /> Atencao</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: NOC.critico }} /> Critico</span>
@@ -30,7 +32,7 @@ export function NetworkMapCard() {
         <span className="flex items-center gap-1"><span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: NOC.sucesso }} /> Distribuicao</span>
         <span className="flex items-center gap-1"><span className="w-3 h-0.5 rounded-full" style={{ backgroundColor: NOC.critico }} /> Falha</span>
       </div>
-      <div className="flex-1 rounded-xl overflow-hidden" style={{ minHeight: 340 }}>
+      <div className="flex-1 rounded-xl overflow-hidden" style={{ minHeight: 380 }}>
         <NetworkMapInner />
       </div>
     </GlassCard>

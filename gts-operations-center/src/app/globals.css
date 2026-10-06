@@ -346,3 +346,13 @@ html.dark body {
 .gts-pulso-critico path {
   animation: pulsoCritico 1.4s ease-in-out infinite;
 }
+/* Dashboard (Orbia): cinzas frios so dentro do shell da rota /dashboard. */
+html:not(.dark) .dash-orbia {
+  --c-fundo: 245 247 250;      /* #F5F7FA */
+  --c-fundo-2: 248 249 251;
+  --c-linha: 229 231 235;      /* #E5E7EB */
+  --c-linha-forte: 209 213 219;
+  --c-tinta: 17 24 39;
+  --c-suave: 75 85 99;
+  --c-apagado: 107 114 128;
+}

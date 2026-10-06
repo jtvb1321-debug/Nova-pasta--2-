@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Wifi, WifiOff, AlertTriangle } from 'lucide-react'
+import { Server } from 'lucide-react'
 import { GlassCard, CardHeader } from './GlassCard'
 import { NOC } from './theme'
 import { toast } from '@/hooks/use-toast'
 
-interface StatusOlt {
+export interface StatusOlt {
   oltId: string
   nome: string
   ip: string
@@ -18,21 +18,23 @@ interface StatusOlt {
   status: 'ONLINE' | 'DEGRADADO' | 'OFFLINE'
 }
 
-async function fetchOlts(): Promise<StatusOlt[]> {
+// Falha de consulta lanca erro: a tela mostra "Indisponivel" em vez de uma
+// lista vazia (que pareceria "nenhuma OLT").
+export async function fetchOlts(): Promise<StatusOlt[]> {
   const res = await fetch('/api/smartolt/status')
-  if (!res.ok) return []
+  if (!res.ok) throw new Error('Erro ao buscar OLTs')
   const data = await res.json()
   return data.oltsDetalhado || []
 }
 
-const STATUS_CFG: Record<StatusOlt['status'], { label: string; cor: string; Icon: React.ElementType }> = {
-  ONLINE:    { label: 'Online',   cor: NOC.sucesso, Icon: Wifi },
-  DEGRADADO: { label: 'Instavel', cor: NOC.alerta,  Icon: AlertTriangle },
-  OFFLINE:   { label: 'Fora do Ar', cor: NOC.critico, Icon: WifiOff },
+const STATUS_CFG: Record<StatusOlt['status'], { label: string; cor: string }> = {
+  ONLINE:    { label: 'Conectada',    cor: NOC.sucesso },
+  DEGRADADO: { label: 'Instável',     cor: NOC.alerta },
+  OFFLINE:   { label: 'Desconectada', cor: NOC.critico },
 }
 
 export function OltLinksCard() {
-  const { data: olts = [] } = useQuery({
+  const { data: olts = [], isLoading, isError } = useQuery({
     queryKey: ['dashboard-olts'],
     queryFn: fetchOlts,
     refetchInterval: 30000,
@@ -63,31 +65,36 @@ export function OltLinksCard() {
   }, [olts])
 
   return (
-    <GlassCard delay={0.1}>
-      <CardHeader
-        title="Status das OLTs"
-        icon={<Wifi className="w-4 h-4" style={{ color: NOC.azulClaro }} />}
-      />
-      {olts.length === 0 ? (
-        <p className="text-sm py-6 text-center" style={{ color: NOC.textoSecundario }}>
-          Nenhuma OLT encontrada
-        </p>
+    <GlassCard>
+      <CardHeader title="OLTs" />
+      {isLoading ? (
+        <p className="text-sm py-3" style={{ color: NOC.textoSecundario }}>···</p>
+      ) : isError ? (
+        <p className="text-sm py-3" style={{ color: NOC.textoSecundario }}>Indisponível</p>
+      ) : olts.length === 0 ? (
+        <p className="text-sm py-3" style={{ color: NOC.textoSecundario }}>Nenhuma OLT cadastrada</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {olts.map(olt => {
             const cfg = STATUS_CFG[olt.status]
             return (
               <div
                 key={olt.oltId}
-                className="flex items-center gap-3 p-3 rounded-xl border"
-                style={{ backgroundColor: `${cfg.cor}14`, borderColor: `${cfg.cor}33` }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+                style={{ borderColor: NOC.cinzaEscuro }}
+                title={olt.onusIndisponiveis > 0 ? `${olt.onusIndisponiveis.toLocaleString('pt-BR')} sem conexão` : undefined}
               >
-                <cfg.Icon className="w-4 h-4 flex-shrink-0" style={{ color: cfg.cor }} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${NOC.azulPrimario}14` }}>
+                  <Server className="w-5 h-5" style={{ color: NOC.azulPrimario }} />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: NOC.texto }}>{olt.nome}</p>
-                  <p className="text-xs" style={{ color: NOC.textoSecundario }}>{olt.ip} - {olt.onusOnline}/{olt.totalOnus} clientes online</p>
+                  <p className="text-xs" style={{ color: NOC.textoSecundario }}>
+                    {olt.onusOnline.toLocaleString('pt-BR')} / {olt.totalOnus.toLocaleString('pt-BR')} clientes conectados
+                  </p>
                 </div>
-                <span className="text-xs font-bold px-2 py-1 rounded-full flex-shrink-0" style={{ backgroundColor: `${cfg.cor}22`, color: cfg.cor }}>
+                <span className="flex items-center gap-1.5 text-xs font-medium flex-shrink-0" style={{ color: cfg.cor }}>
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.cor }} />
                   {cfg.label}
                 </span>
               </div>

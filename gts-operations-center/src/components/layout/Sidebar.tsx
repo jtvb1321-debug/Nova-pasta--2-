@@ -97,7 +97,8 @@ const TODOS_GRUPOS: MenuGroup[] = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({ variante }: { variante?: 'dashboard' } = {}) {
+  const dashboard = variante === 'dashboard'
   const pathname = usePathname()
   const { data: session } = useSession()
   const [collapsed, setCollapsed] = useState(false)
@@ -144,7 +145,7 @@ export function Sidebar() {
   return (
     <aside className={cn(
       'relative flex flex-col h-screen bg-tema-superficie border-r border-tema-linha transition-all duration-300 z-50',
-      collapsed ? 'w-16' : 'w-60'
+      collapsed ? 'w-16' : dashboard ? 'w-[250px]' : 'w-60'
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-3 border-b border-tema-linha flex-shrink-0">
@@ -157,7 +158,7 @@ export function Sidebar() {
               <span className="text-tema-tinta">Orbi</span>
               <span className="text-orange-600">a</span>
             </p>
-            <p className="text-tema-apagado text-xs">Operations Center</p>
+            {!dashboard && <p className="text-tema-apagado text-xs">Operations Center</p>}
           </div>
         )}
       </div>
@@ -228,7 +229,9 @@ export function Sidebar() {
                         className={cn(
                           'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group relative',
                           isActive
-                            ? 'bg-gradient-to-r from-orange-500/15 to-orange-500/[0.02] text-orange-700 font-semibold border border-orange-500/25'
+                            ? dashboard
+                              ? 'bg-orange-500/10 text-orange-700 font-semibold border border-transparent'
+                              : 'bg-gradient-to-r from-orange-500/15 to-orange-500/[0.02] text-orange-700 font-semibold border border-orange-500/25'
                             : 'text-tema-suave font-medium hover:text-tema-tinta hover:bg-tema-contraste/[0.03] border border-transparent'
                         )}
                       >
@@ -236,7 +239,7 @@ export function Sidebar() {
                           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-500 rounded-r-full" />
                         )}
                         <Icon className={cn('flex-shrink-0 w-4 h-4', isActive ? 'text-orange-600' : '')} />
-                        {!collapsed && <span className="truncate">{item.label}</span>}
+                        {!collapsed && <span className={dashboard ? 'leading-tight' : 'truncate'}>{item.label}</span>}
                         {collapsed && (
                           <div className="absolute left-full ml-3 px-2 py-1 bg-tema-tinta text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {item.label}
@@ -253,7 +256,7 @@ export function Sidebar() {
       </nav>
 
       {/* Alerta estoque */}
-      {!collapsed && permissions.verEstoque && (
+      {!collapsed && !dashboard && permissions.verEstoque && (
         <div className="mx-2 mb-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg flex-shrink-0">
           <div className="flex items-center gap-2">
             <Bell className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />

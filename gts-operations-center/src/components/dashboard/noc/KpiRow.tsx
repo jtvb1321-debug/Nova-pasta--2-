@@ -2,79 +2,75 @@
 
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Wifi, WifiOff, Server, Radio, ClipboardList, Users, ShieldCheck, TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { NOC, CARD_TRANSLUCIDO } from './theme'
-import { Sparkline } from './Sparkline'
+import { Wifi, WifiOff, ClipboardList, ShieldCheck } from 'lucide-react'
+import { NOC } from './theme'
+import { SOMBRA_CARD } from './GlassCard'
 
-async function fetchKpis() {
+export async function fetchKpis() {
   const res = await fetch('/api/dashboard/kpis')
   if (!res.ok) throw new Error('Erro ao buscar KPIs')
   return res.json()
 }
 
 interface KpiDef {
-  key: string
+  key: 'clientesOnline' | 'clientesOffline' | 'chamados' | 'sla'
   label: string
   icon: React.ElementType
   cor: string
   href: string
+  dica: string
   formatar?: (v: number) => string
 }
 
+// Os rotulos seguem o que cada consulta mede (api/dashboard/kpis):
+// - clientes conectados: ONUs com status "Online" no SmartOLT;
+// - clientes desconectados: demais ONUs (offline, LOS, queda de energia);
+// - chamados em aberto: status ABERTO + EM_ANDAMENTO;
+// - SLA: % de chamados do mes corrente resolvidos dentro do prazo.
 const KPIS: KpiDef[] = [
-  { key: 'clientesOnline', label: 'Clientes Online', icon: Wifi, cor: NOC.sucesso, href: '/smartolt' },
-  { key: 'clientesOffline', label: 'Clientes Offline', icon: WifiOff, cor: NOC.critico, href: '/smartolt' },
-  { key: 'olts', label: 'OLTs', icon: Server, cor: NOC.azulPrimario, href: '/smartolt' },
-  { key: 'onus', label: 'ONUs', icon: Radio, cor: NOC.azulClaro, href: '/smartolt' },
-  { key: 'chamados', label: 'Chamados', icon: ClipboardList, cor: NOC.laranja, href: '/agenda' },
-  { key: 'tecnicosOnline', label: 'Tecnicos Online', icon: Users, cor: NOC.azulClaro, href: '/teams' },
-  { key: 'sla', label: 'SLA', icon: ShieldCheck, cor: NOC.sucesso, href: '/reports', formatar: v => `${v}%` },
+  { key: 'clientesOnline', label: 'Clientes conectados', icon: Wifi, cor: NOC.sucesso, href: '/smartolt', dica: 'ONUs online no SmartOLT' },
+  { key: 'clientesOffline', label: 'Clientes desconectados', icon: WifiOff, cor: NOC.critico, href: '/smartolt', dica: 'ONUs que não estão online (offline, sem sinal ou sem energia)' },
+  { key: 'chamados', label: 'Chamados em aberto', icon: ClipboardList, cor: NOC.laranja, href: '/agenda', dica: 'Chamados abertos e em andamento' },
+  { key: 'sla', label: 'SLA de atendimento', icon: ShieldCheck, cor: NOC.sucesso, href: '/reports', dica: 'Chamados do mês atual resolvidos dentro do prazo', formatar: v => `${v}%` },
 ]
 
 export function KpiRow() {
-  const { data, isLoading } = useQuery({ queryKey: ['dashboard-kpis'], queryFn: fetchKpis, refetchInterval: 15000 })
+  const { data, isLoading, isError } = useQuery({ queryKey: ['dashboard-kpis'], queryFn: fetchKpis, refetchInterval: 15000 })
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-      {KPIS.map((kpi, i) => {
-        const info = data?.[kpi.key]
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {KPIS.map(kpi => {
         const Icon = kpi.icon
-        const valor = info?.valor
-        const vsOntem: number | null = info?.vsOntem ?? null
-        const sparkline: number[] = info?.sparkline ?? []
-        const valorFormatado = valor == null ? '—' : kpi.formatar ? kpi.formatar(valor) : String(valor)
+        const valor: number | null | undefined = data?.[kpi.key]?.valor
+
+        let texto = ''
+        let secundario = false
+        if (isLoading) { texto = '···'; secundario = true }
+        else if (isError || !data?.[kpi.key]) { texto = 'Indisponível'; secundario = true }
+        else if (valor == null) { texto = 'Sem dados'; secundario = true }
+        else texto = kpi.formatar ? kpi.formatar(valor) : valor.toLocaleString('pt-BR')
 
         return (
-          <motion.div key={kpi.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.04 }}>
-            <Link
-              href={kpi.href}
-              className={cn(
-                'relative block rounded-xl border p-4 backdrop-blur-md overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-tema-linha-forte',
-                kpi.key === 'clientesOffline' && 'gts-hud-corner'
-              )}
-              style={{ backgroundColor: CARD_TRANSLUCIDO, borderColor: 'rgb(var(--c-contraste) / 0.05)' }}
-            >
-              <span className="absolute top-0 left-0 right-0 h-0.5" style={{ backgroundColor: kpi.cor }} />
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.cor}1A` }}>
-                  <Icon className="w-4 h-4" style={{ color: kpi.cor }} />
-                </div>
-                {vsOntem != null && (
-                  <div className="flex items-center gap-0.5 text-[11px] font-medium" style={{ color: vsOntem > 0 ? NOC.sucesso : vsOntem < 0 ? NOC.critico : NOC.cinza }}>
-                    {vsOntem > 0 ? <TrendingUp className="w-3 h-3" /> : vsOntem < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                    {Math.abs(vsOntem)}%
-                  </div>
-                )}
-              </div>
-              <p className="text-xs mb-1" style={{ color: NOC.textoSecundario }}>{kpi.label}</p>
-              <p className="font-mono text-[26px] leading-none font-bold mb-2 tracking-tight" style={{ color: NOC.texto }}>
-                {isLoading ? '···' : valorFormatado}
+          <Link
+            key={kpi.key}
+            href={kpi.href}
+            title={kpi.dica}
+            className="flex items-center gap-4 rounded-xl border bg-tema-superficie px-5 py-4 transition-colors hover:border-tema-linha-forte"
+            style={{ borderColor: NOC.cinzaEscuro, boxShadow: SOMBRA_CARD }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${kpi.cor}1A` }}>
+              <Icon className="w-6 h-6" style={{ color: kpi.cor }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium" style={{ color: NOC.texto }}>{kpi.label}</p>
+              <p
+                className={secundario ? 'text-base font-semibold leading-tight mt-1' : 'font-mono text-[32px] leading-none font-bold mt-1 tracking-tight'}
+                style={{ color: secundario ? NOC.textoSecundario : NOC.texto }}
+              >
+                {texto}
               </p>
-              <Sparkline data={sparkline} color={kpi.cor} />
-            </Link>
-          </motion.div>
+            </div>
+          </Link>
         )
       })}
     </div>

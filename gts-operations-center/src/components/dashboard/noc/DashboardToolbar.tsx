@@ -1,11 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Maximize, Minimize, Radar } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Maximize, Minimize } from 'lucide-react'
 import { NOC } from './theme'
+import { fetchKpis } from './KpiRow'
 
 export function DashboardToolbar() {
   const [tela, setTela] = useState(false)
+
+  // Horario da ultima atualizacao REAL dos dados (mesma consulta dos cards
+  // principais), nao o relogio do navegador.
+  const { dataUpdatedAt } = useQuery({ queryKey: ['dashboard-kpis'], queryFn: fetchKpis, refetchInterval: 15000 })
+  const atualizadoEm = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : null
 
   useEffect(() => {
     const onChange = () => setTela(Boolean(document.fullscreenElement))
@@ -22,24 +31,21 @@ export function DashboardToolbar() {
   }
 
   return (
-    <div className="flex items-center justify-between animate-fade-in-up">
+    <div className="flex items-center justify-between gap-3">
+      <h1 className="text-2xl font-bold tracking-tight" style={{ color: NOC.texto }}>Visão geral</h1>
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${NOC.laranja}1A` }}>
-          <Radar className="w-5 h-5" style={{ color: NOC.laranja }} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: NOC.texto }}>Visao Geral</h1>
-          <p className="text-xs" style={{ color: NOC.textoSecundario }}>Centro de Operacoes de Rede (NOC) em tempo real</p>
-        </div>
+        {atualizadoEm && (
+          <span className="hidden sm:block text-xs" style={{ color: NOC.textoSecundario }}>Atualizado às {atualizadoEm}</span>
+        )}
+        <button
+          onClick={alternarTelaCheia}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border bg-tema-superficie transition-colors hover:bg-tema-contraste/[0.04]"
+          style={{ borderColor: NOC.cinzaEscuro, color: NOC.texto }}
+        >
+          {tela ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
+          {tela ? 'Sair da tela cheia' : 'Tela cheia'}
+        </button>
       </div>
-      <button
-        onClick={alternarTelaCheia}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors hover:bg-tema-contraste/[0.04]"
-        style={{ borderColor: 'rgba(32,29,23,0.1)', color: NOC.textoSecundario }}
-      >
-        {tela ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
-        {tela ? 'Sair da Tela Cheia' : 'Tela Cheia'}
-      </button>
     </div>
   )
 }

@@ -6,10 +6,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth()
   if (!session) redirect('/login')
   return (
-    <AppShell>
-      <div className="-m-6">
-        {children}
-      </div>
+    <AppShell variante="dashboard">
+      {children}
     </AppShell>
   )
 }

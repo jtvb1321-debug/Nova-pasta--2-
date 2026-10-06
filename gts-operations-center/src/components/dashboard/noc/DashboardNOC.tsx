@@ -1,6 +1,5 @@
 'use client'
 
-import { NOC, CARD_TRANSLUCIDO } from './theme'
 import { DashboardToolbar } from './DashboardToolbar'
 import { KpiRow } from './KpiRow'
 import { NetworkMapCard } from './NetworkMapCard'
@@ -12,46 +11,41 @@ import { TicketsWeeklyChartCard } from './TicketsWeeklyChartCard'
 import { FieldTechniciansCard } from './FieldTechniciansCard'
 import { UnifiedTimelineCard } from './UnifiedTimelineCard'
 import { OltLinksCard } from './OltLinksCard'
+import { IndicadoresComplementares } from './IndicadoresComplementares'
 import { DashboardFooterBar } from './DashboardFooterBar'
 
 export function DashboardNOC() {
   return (
-    <div className="-m-6 min-h-full" style={{ backgroundColor: NOC.bg }}>
-      <div className="p-4 sm:p-6 space-y-5">
-        <DashboardToolbar />
+    <div className="space-y-4 min-h-full">
+      <DashboardToolbar />
 
-        <KpiRow />
+      <KpiRow />
 
-        <OltLinksCard />
+      <OltLinksCard />
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <div className="xl:col-span-2" style={{ minHeight: 420 }}>
-            <NetworkMapCard />
-          </div>
-          <div style={{ minHeight: 420 }}>
-            <CriticalAlertsCard />
-          </div>
+      {/* Mapa (2/3) e alertas (1/3): a altura da linha vem do mapa. */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2" style={{ minHeight: 460 }}>
+          <NetworkMapCard />
         </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          <BandwidthChartCard />
-          <TicketsInProgressCard />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          <MikrotikStatusCard />
-          <TicketsWeeklyChartCard />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          <FieldTechniciansCard />
-          <UnifiedTimelineCard />
-        </div>
-
-        <div className="rounded-xl border" style={{ backgroundColor: CARD_TRANSLUCIDO, borderColor: NOC.cinzaEscuro }}>
-          <DashboardFooterBar />
+        <div style={{ minHeight: 320 }}>
+          <CriticalAlertsCard />
         </div>
       </div>
+
+      <IndicadoresComplementares />
+
+      {/* Demais paineis operacionais (area secundaria) */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <BandwidthChartCard />
+        <TicketsInProgressCard />
+        <MikrotikStatusCard />
+        <TicketsWeeklyChartCard />
+        <FieldTechniciansCard />
+        <UnifiedTimelineCard />
+      </div>
+
+      <DashboardFooterBar />
     </div>
   )
 }
