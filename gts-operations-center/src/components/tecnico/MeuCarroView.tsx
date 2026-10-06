@@ -4,9 +4,10 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import {
-  ArrowLeft, Truck, Fuel, Gauge, Wrench, Package,
-  Camera, Loader2, CheckCircle, AlertTriangle, Plus, Undo2, Receipt, PackagePlus
+  Truck, Fuel, Gauge, Wrench, Package,
+  Camera, Loader2, CheckCircle, AlertTriangle, Plus, Undo2, Receipt, PackagePlus, Search, ScanLine
 } from 'lucide-react'
+import { TecnicoShell } from './TecnicoShell'
 import { cn, formatDateTime } from '@/lib/utils'
 import { UsarMaterialModal } from './UsarMaterialModal'
 import type { Session } from 'next-auth'
@@ -100,20 +101,24 @@ export function MeuCarroView({ session }: Props) {
 
   if (loadingVeiculo) {
     return (
-      <div className="min-h-screen bg-tema-fundo flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
-      </div>
+      <TecnicoShell session={session} ativo="carro">
+        <div className="flex items-center justify-center py-24" aria-busy="true">
+          <Loader2 className="w-8 h-8 text-orange-600 animate-spin" aria-label="Carregando" />
+        </div>
+      </TecnicoShell>
     )
   }
 
   if (erroVeiculo || !veiculo) {
     return (
-      <div className="min-h-screen bg-tema-fundo flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <AlertTriangle className="w-10 h-10 text-amber-600" />
-        <p className="text-tema-tinta font-medium">Nenhum veiculo vinculado a sua equipe ainda</p>
-        <p className="text-tema-apagado text-sm">Fale com o administrador para vincular um veiculo.</p>
-        <Link href="/meus-chamados" className="text-blue-700 text-sm mt-2">Voltar</Link>
-      </div>
+      <TecnicoShell session={session} ativo="carro">
+        <div className="rounded-2xl border border-tema-linha bg-tema-superficie flex flex-col items-center justify-center gap-3 py-14 px-6 text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-600" aria-hidden />
+          <p className="text-tema-tinta font-semibold">Nenhum veículo vinculado à sua equipe ainda</p>
+          <p className="text-tema-suave text-sm">Fale com o administrador para vincular um veículo.</p>
+          <Link href="/meus-chamados" className="min-h-[44px] inline-flex items-center px-5 rounded-xl border border-tema-linha text-sm font-semibold text-tema-tinta hover:bg-tema-contraste/[0.04]">Voltar aos chamados</Link>
+        </div>
+      </TecnicoShell>
     )
   }
 
@@ -127,64 +132,71 @@ export function MeuCarroView({ session }: Props) {
   ]
 
   return (
-    <div className="min-h-screen bg-tema-fundo text-tema-tinta pb-8">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-tema-superficie border-b border-tema-linha px-4 py-4">
-        <div className="flex items-center gap-3">
-          <Link href="/meus-chamados" className="p-3 -m-1 hover:bg-tema-contraste/[0.03] rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-tema-suave" />
-          </Link>
-          <div className="w-9 h-9 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-            <Truck className="w-4.5 h-4.5 text-orange-600" />
-          </div>
-          <div>
-            <p className="text-tema-tinta font-bold text-sm">{veiculo.modelo} - {veiculo.placa}</p>
-            <p className="text-tema-apagado text-xs">{veiculoData.equipeNome}</p>
-          </div>
+    <TecnicoShell session={session} ativo="carro">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Meu carro</h1>
+          <p className="text-sm text-tema-suave flex items-center gap-1.5 mt-0.5">
+            <Truck className="w-4 h-4" aria-hidden />
+            {veiculo.modelo} · <span className="font-mono">{veiculo.placa}</span> · {veiculoData.equipeNome}
+          </p>
         </div>
-      </header>
 
-      {/* Abas */}
-      <div className="flex overflow-x-auto border-b border-tema-linha bg-tema-superficie px-2">
-        {abas.map(a => {
-          const Icon = a.icon
-          return (
-            <button
-              key={a.id}
-              onClick={() => setAba(a.id)}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors',
-                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-tema-suave'
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {a.label}
-            </button>
-          )
-        })}
-      </div>
+        <div role="tablist" aria-label="Seções do veículo" className="flex overflow-x-auto gap-1 border-b border-tema-linha">
+          {abas.map(a => {
+            const Icon = a.icon
+            return (
+              <button
+                key={a.id}
+                type="button"
+                role="tab"
+                aria-selected={aba === a.id}
+                onClick={() => setAba(a.id)}
+                className={cn(
+                  '-mb-px flex items-center gap-1.5 px-4 min-h-[48px] text-sm font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
+                  aba === a.id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta'
+                )}
+              >
+                <Icon className="w-4 h-4" aria-hidden />
+                {a.label}
+              </button>
+            )
+          })}
+        </div>
 
-      <div className="p-4">
-        {aba === 'estoque'       && <AbaEstoque equipeId={equipeId} />}
-        {aba === 'abastecimento' && <AbaAbastecimento veiculoId={veiculo.id} queryClient={queryClient} />}
-        {aba === 'despesas'      && <AbaDespesas veiculoId={veiculo.id} queryClient={queryClient} />}
-        {aba === 'solicitar-material' && <AbaSolicitarMaterial equipeId={equipeId} />}
-        {aba === 'km'            && <AbaKm veiculoId={veiculo.id} queryClient={queryClient} />}
-        {aba === 'manutencao'    && <AbaManutencao veiculoId={veiculo.id} queryClient={queryClient} />}
+        <div>
+          {aba === 'estoque'       && <AbaEstoque equipeId={equipeId} />}
+          {aba === 'abastecimento' && <AbaAbastecimento veiculoId={veiculo.id} queryClient={queryClient} />}
+          {aba === 'despesas'      && <AbaDespesas veiculoId={veiculo.id} queryClient={queryClient} />}
+          {aba === 'solicitar-material' && <AbaSolicitarMaterial equipeId={equipeId} />}
+          {aba === 'km'            && <AbaKm veiculoId={veiculo.id} queryClient={queryClient} />}
+          {aba === 'manutencao'    && <AbaManutencao veiculoId={veiculo.id} queryClient={queryClient} />}
+        </div>
       </div>
-    </div>
+    </TecnicoShell>
   )
 }
 
 // ===================== ABA ESTOQUE =====================
+const REGEX_MAC = /^([0-9A-F]{2}[:-]?){5}[0-9A-F]{2}$/i
+
+// O cadastro guarda MAC e serial no mesmo campo (macAddress). O item diz se controla serial;
+// senao, o formato diz se e' um MAC.
+function tipoIdentificador(u: any): 'Serial' | 'MAC' | 'Identificador' {
+  if (u.item?.controlaSerial) return 'Serial'
+  if (REGEX_MAC.test(String(u.macAddress ?? '').trim())) return 'MAC'
+  return 'Identificador'
+}
+
 function AbaEstoque({ equipeId }: { equipeId: string }) {
   const queryClient = useQueryClient()
   const [devolvendoId, setDevolvendoId] = useState<string | null>(null)
   const [qtdDevolucao, setQtdDevolucao] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [registroUso, setRegistroUso] = useState<any>(null)
+  const [busca, setBusca] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['estoque-equipe', equipeId],
     queryFn: () => fetchEstoqueEquipe(equipeId),
     refetchInterval: 30000,
@@ -199,6 +211,14 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
   const itens = data?.data ?? []
   const unidades = unidadesData?.data ?? []
   const criticos = itens.filter((r: any) => r.quantidadeMinima > 0 && r.quantidade <= r.quantidadeMinima)
+
+  const termo = busca.trim().toLowerCase()
+  const itensFiltrados = termo
+    ? itens.filter((r: any) => [r.item?.descricao, r.item?.codigo].some(v => String(v ?? '').toLowerCase().includes(termo)))
+    : itens
+  const unidadesFiltradas = termo
+    ? unidades.filter((u: any) => [u.item?.descricao, u.item?.codigo, u.macAddress].some(v => String(v ?? '').toLowerCase().includes(termo)))
+    : unidades
 
   function abrirDevolucao(itemId: string, maxQtd: number) {
     setDevolvendoId(itemId)
@@ -231,121 +251,159 @@ function AbaEstoque({ equipeId }: { equipeId: string }) {
     }
   }
 
-  if (isLoading) return <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 skeleton rounded-xl" />)}</div>
+  if (isLoading) return <div className="space-y-2" aria-busy="true">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-2xl" />)}</div>
 
-  if (itens.length === 0) {
+  if (isError) {
     return (
-      <div className="text-center py-16 text-tema-apagado">
-        <Package className="w-10 h-10 mx-auto mb-3 text-tema-linha-forte" />
-        Nenhum material carregado no veiculo ainda
+      <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
+        <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+        <p className="font-semibold text-tema-tinta">Não foi possível carregar o estoque do veículo</p>
+        <button type="button" onClick={() => refetch()} className="mt-4 min-h-[44px] px-5 rounded-xl border border-tema-linha text-sm font-semibold text-tema-tinta hover:bg-tema-contraste/[0.04]">Tentar novamente</button>
       </div>
     )
   }
 
+  if (itens.length === 0 && unidades.length === 0) {
+    return (
+      <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-14 text-tema-suave">
+        <Package className="w-10 h-10 mx-auto mb-3 text-tema-apagado" aria-hidden />
+        Nenhum material carregado no veículo ainda
+      </div>
+    )
+  }
+
+  const cartao = 'rounded-2xl border bg-tema-superficie p-3.5'
+  const botaoAcao = 'min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 rounded-xl border text-sm font-semibold transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
+        <input
+          type="search"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar por modelo ou identificador (MAC, serial, código)"
+          aria-label="Buscar no estoque do veículo"
+          className="w-full min-h-[48px] bg-tema-superficie border border-tema-linha-forte rounded-xl pl-10 pr-3 text-base sm:text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-2 focus:ring-orange-500/40"
+        />
+      </div>
+
       {criticos.length > 0 && (
-        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/25 rounded-xl">
-          <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-3 bg-red-500/[0.08] border border-red-500/25 rounded-xl">
+          <AlertTriangle className="w-4 h-4 text-red-700 flex-shrink-0" aria-hidden />
           <p className="text-sm text-red-700 font-medium">
-            {criticos.length} item(ns) abaixo do minimo - considere reabastecer o carro
+            {criticos.length} item(ns) abaixo do mínimo - considere reabastecer o carro
           </p>
         </div>
       )}
 
-      {unidades.length > 0 && (
-        <div>
-          <p className="text-sm font-medium text-tema-texto mb-2">Equipamentos com MAC</p>
-          <div className="space-y-1.5">
-            {unidades.map((u: any) => (
-              <div key={u.id} className="flex items-center justify-between text-xs bg-tema-contraste/[0.02] rounded-lg px-3 py-2">
-                <span className="text-tema-texto">{u.item.descricao}</span>
-                <span className="font-mono text-blue-700">{u.macAddress}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {termo && itensFiltrados.length === 0 && unidadesFiltradas.length === 0 && (
+        <p className="text-center text-sm text-tema-suave py-8">Nenhum resultado para a busca.</p>
       )}
 
-      <div className="space-y-2">
-        {itens.map((registro: any) => {
-          const baixo = registro.quantidadeMinima > 0 && registro.quantidade <= registro.quantidadeMinima
-          const estaDevolvendo = devolvendoId === registro.itemId
-
-          return (
-            <div
-              key={registro.id}
-              className={cn(
-                'rounded-xl p-3',
-                baixo ? 'bg-red-500/5 border border-red-500/25' : 'bg-tema-contraste/[0.02]'
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-tema-tinta text-sm font-medium">{registro.item.descricao}</p>
-                  <p className="text-xs text-tema-apagado font-mono">{registro.item.codigo}</p>
-                  {baixo && (
-                    <p className="text-xs text-red-700 mt-0.5">Minimo: {registro.quantidadeMinima} {registro.item.unidade}</p>
-                  )}
+      {unidadesFiltradas.length > 0 && (
+        <section aria-label="Equipamentos com identificador" className="space-y-2">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave flex items-center gap-1.5">
+            <ScanLine className="w-3.5 h-3.5" aria-hidden /> Equipamentos com identificador ({unidadesFiltradas.length})
+          </h2>
+          {unidadesFiltradas.map((u: any) => {
+            const tipo = tipoIdentificador(u)
+            return (
+              <div key={u.id} className={cn(cartao, 'border-tema-linha flex items-center justify-between gap-3')}>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-tema-tinta break-words">{u.item?.descricao}</p>
+                  <p className="mt-1 flex items-center gap-1.5 flex-wrap text-xs">
+                    <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-700 font-semibold">{tipo}</span>
+                    <span className="font-mono text-tema-tinta break-all">{u.macAddress}</span>
+                  </p>
+                  {u.item?.codigo && <p className="text-xs text-tema-apagado mt-1">Código interno <span className="font-mono">{u.item.codigo}</span></p>}
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={cn('font-bold font-mono', baixo ? 'text-red-700' : 'text-tema-tinta')}>
-                    {registro.quantidade} <span className="text-xs text-tema-apagado font-normal">{registro.item.unidade}</span>
-                  </span>
-                  {!estaDevolvendo && (
-                    <>
-                      <button
-                        onClick={() => setRegistroUso(registro)}
-                        className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg px-3 py-2.5 transition-colors flex-shrink-0"
-                        title="Usar material em campo"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                        Usar
-                      </button>
-                      <button
-                        onClick={() => abrirDevolucao(registro.itemId, registro.quantidade)}
-                        className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 rounded-lg px-3 py-2.5 transition-colors flex-shrink-0"
-                        title="Devolver ao estoque central"
-                      >
-                        <Undo2 className="w-3.5 h-3.5" />
-                        Devolver
-                      </button>
-                    </>
-                  )}
-                </div>
+                <span className="text-right flex-shrink-0">
+                  <span className="block text-lg font-bold tabular-nums text-tema-tinta">1</span>
+                  <span className="block text-[11px] text-tema-apagado">unidade</span>
+                </span>
               </div>
+            )
+          })}
+        </section>
+      )}
 
-              {estaDevolvendo && (
-                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
-                  <input
-                    type="number"
-                    value={qtdDevolucao}
-                    onChange={e => setQtdDevolucao(e.target.value)}
-                    min={0.01}
-                    max={registro.quantidade}
-                    step={0.01}
-                    className="w-24 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-2.5 text-sm text-tema-tinta text-center"
-                  />
-                  <span className="text-xs text-tema-apagado">{registro.item.unidade}</span>
-                  <button
-                    onClick={() => confirmarDevolucao(registro.itemId)}
-                    disabled={enviando}
-                    className="gts-btn-primary py-2.5 px-3 text-xs disabled:opacity-50 ml-auto"
-                  >
-                    {enviando ? 'Enviando...' : 'Confirmar devolucao'}
-                  </button>
-                  <button
-                    onClick={() => setDevolvendoId(null)}
-                    className="text-xs text-tema-suave hover:text-tema-tinta px-2 py-2.5"
-                  >
-                    Cancelar
-                  </button>
+      {itensFiltrados.length > 0 && (
+        <section aria-label="Materiais" className="space-y-2">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5" aria-hidden /> Materiais ({itensFiltrados.length})
+          </h2>
+          {itensFiltrados.map((registro: any) => {
+            const baixo = registro.quantidadeMinima > 0 && registro.quantidade <= registro.quantidadeMinima
+            const estaDevolvendo = devolvendoId === registro.itemId
+
+            return (
+              <div key={registro.id} className={cn(cartao, baixo ? 'border-red-500/30' : 'border-tema-linha')}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-tema-tinta break-words">{registro.item.descricao}</p>
+                    <p className="text-xs text-tema-apagado mt-1">Código interno <span className="font-mono">{registro.item.codigo}</span></p>
+                    {baixo && <p className="text-xs text-red-700 mt-0.5">Mínimo: {registro.quantidadeMinima} {registro.item.unidade}</p>}
+                  </div>
+                  <span className="text-right flex-shrink-0">
+                    <span className={cn('block text-lg font-bold tabular-nums', baixo ? 'text-red-700' : 'text-tema-tinta')}>{registro.quantidade}</span>
+                    <span className="block text-[11px] text-tema-apagado">{registro.item.unidade}</span>
+                  </span>
                 </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+
+                {!estaDevolvendo && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setRegistroUso(registro)}
+                      className={cn(botaoAcao, 'flex-1 text-emerald-700 border-emerald-500/30 bg-emerald-500/[0.06] hover:bg-emerald-500/10')}
+                      title="Usar material em campo"
+                    >
+                      <Camera className="w-4 h-4" aria-hidden /> Usar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => abrirDevolucao(registro.itemId, registro.quantidade)}
+                      className={cn(botaoAcao, 'flex-1 text-blue-700 border-blue-500/30 bg-blue-500/[0.06] hover:bg-blue-500/10')}
+                      title="Devolver ao estoque central"
+                    >
+                      <Undo2 className="w-4 h-4" aria-hidden /> Devolver
+                    </button>
+                  </div>
+                )}
+
+                {estaDevolvendo && (
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
+                    <input
+                      type="number"
+                      value={qtdDevolucao}
+                      onChange={e => setQtdDevolucao(e.target.value)}
+                      min={0.01}
+                      max={registro.quantidade}
+                      step={0.01}
+                      aria-label="Quantidade a devolver"
+                      className="w-24 min-h-[44px] bg-tema-superficie border border-tema-linha-forte rounded-xl px-2 text-base sm:text-sm text-tema-tinta text-center"
+                    />
+                    <span className="text-xs text-tema-apagado">{registro.item.unidade}</span>
+                    <button
+                      type="button"
+                      onClick={() => confirmarDevolucao(registro.itemId)}
+                      disabled={enviando}
+                      className="min-h-[44px] px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold disabled:opacity-50 ml-auto"
+                    >
+                      {enviando ? 'Enviando...' : 'Confirmar devolução'}
+                    </button>
+                    <button type="button" onClick={() => setDevolvendoId(null)} className="min-h-[44px] text-sm text-tema-suave hover:text-tema-tinta px-2">
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
 
       {registroUso && (
         <UsarMaterialModal

@@ -1,36 +1,41 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
-  X, MapPin, Phone, Clock, Truck, Zap,
-  CheckCircle, Package, FileText, ChevronRight,
-  Loader2, Camera, Trash2, AlertTriangle, ImageIcon, Activity, ScanLine, Ban, Brain,
+  X, MapPin, Phone, Truck, Zap, CheckCircle, Package, FileText, Loader2,
+  AlertTriangle, Activity, ScanLine, Ban, Brain, Navigation, MessageCircle, Clock, CalendarClock,
 } from 'lucide-react'
-import { cn, timeAgo, formatarEnderecoCompleto } from '@/lib/utils'
+import { cn, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 import { DiagnosticoRunner } from './DiagnosticoRunner'
 import { QrAvaliacao } from './QrAvaliacao'
+import { FotosAtendimento, useFotosAtendimento } from './FotosAtendimento'
 import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
+import { useAgora } from '@/hooks/useAgora'
+import {
+  ETAPAS_ROTULOS, MSG_MIN_FOTOS, acaoPrincipal, etapaDoChamado, fotosSalvas, prioridadeDe, rotuloDaEtapa, situacaoDeTempo,
+} from '@/lib/tecnicoChamado'
 
-const MIN_FOTOS = 3
+export type AvancarChamado = (
+  status: 'ABERTO' | 'EM_ANDAMENTO' | 'FINALIZADO',
+  extra?: Record<string, any>,
+  opcoes?: { sucesso?: string },
+) => Promise<any | null>
 
 interface Props {
+  // Chamado "vivo": vem do cache da listagem, entao muda sozinho quando o
+  // servidor confirma uma etapa (ou quando a gestao/outro membro altera).
   chamado: any
   onClose: () => void
+  onAvancar: AvancarChamado
+  enviando: boolean
 }
 
 const PRIORIDADE_CFG: Record<string, { label: string; cor: string }> = {
-  CRITICO: { label: 'Critico', cor: 'text-red-700 bg-red-500/10 border-red-500/30' },
-  URGENTE: { label: 'Urgente', cor: 'text-amber-700 bg-amber-500/10 border-amber-500/30' },
-  NORMAL:  { label: 'Normal',  cor: 'text-blue-700 bg-blue-500/10 border-blue-500/30' },
-}
-
-function detectarPrioridade(obs: string) {
-  if (obs?.includes('[CRITICO]')) return 'CRITICO'
-  if (obs?.includes('[URGENTE]')) return 'URGENTE'
-  return 'NORMAL'
+  CRITICO: { label: 'Crítico', cor: 'text-red-700 bg-red-500/10 border-red-500/30' },
+  URGENTE: { label: 'Urgente', cor: 'text-amber-800 bg-amber-500/10 border-amber-500/30' },
 }
 
 function limparObservacao(obs: string) {
@@ -43,99 +48,79 @@ async function fetchUnidadesEquipe(equipeId: string) {
   return res.json()
 }
 
-export function ModalAtendimento({ chamado, onClose }: Props) {
-  const queryClient = useQueryClient()
-  const [loading, setLoading] = useState(false)
-  const [uploadando, setUploadando] = useState(false)
-  const [relato, setRelato] = useState(chamado.relato || '')
-  const [fotos, setFotos] = useState<string[]>([])
+const hora = (d: any) => d ? new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : null
+
+// Rascunho do que o tecnico ja preencheu: sobrevive a erro de envio e a fechar o modal por engano.
+const chaveRascunho = (id: string) => `atendimento-rascunho:${id}`
+function lerRascunho(id: string): { relato: string; fotos: string[] } {
+  try {
+    const bruto = sessionStorage.getItem(chaveRascunho(id))
+    if (!bruto) return { relato: '', fotos: [] }
+    const v = JSON.parse(bruto)
+    return { relato: typeof v.relato === 'string' ? v.relato : '', fotos: Array.isArray(v.fotos) ? v.fotos.filter((u: any) => typeof u === 'string') : [] }
+  } catch {
+    return { relato: '', fotos: [] }
+  }
+}
+function salvarRascunho(id: string, relato: string, fotos: string[]) {
+  try {
+    if (!relato.trim() && fotos.length === 0) sessionStorage.removeItem(chaveRascunho(id))
+    else sessionStorage.setItem(chaveRascunho(id), JSON.stringify({ relato, fotos }))
+  } catch { /* armazenamento indisponivel: segue sem rascunho */ }
+}
+function limparRascunho(id: string) {
+  try { sessionStorage.removeItem(chaveRascunho(id)) } catch { /* ignore */ }
+}
+
+export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Props) {
+  const agora = useAgora(30000)
+  const [rascunho] = useState(() => lerRascunho(chamado.id))
+  const [relato, setRelato] = useState(chamado.relato || rascunho.relato)
+  const fotos = useFotosAtendimento(fotosSalvas(chamado), rascunho.fotos)
+  const [tentouFinalizar, setTentouFinalizar] = useState(false)
   const [materiaisUtilizados, setMateriaisUtilizados] = useState<Record<string, { quantidade: number; observacao: string }>>({})
   const [equipamentosUtilizadosIds, setEquipamentosUtilizadosIds] = useState<string[]>([])
   const [nenhumEquipamentoUsado, setNenhumEquipamentoUsado] = useState(false)
   const [showDiagnostico, setShowDiagnostico] = useState(false)
   const [mostrarDiagnosticoCompleto, setMostrarDiagnosticoCompleto] = useState(false)
   const [tokenAvaliacao, setTokenAvaliacao] = useState<string | null>(null)
-  const inputFotoRef = useRef<HTMLInputElement>(null)
 
-  const prioridade = detectarPrioridade(chamado.observacao)
+  const etapa = etapaDoChamado(chamado)
+  const acao = acaoPrincipal(etapa)
+  const prioridade = prioridadeDe(chamado.observacao)
   const pCfg = PRIORIDADE_CFG[prioridade]
   const obs = limparObservacao(chamado.observacao)
   const materiaisDisponiveis = chamado.materiaisReservados ?? []
-  const status = chamado.status
   const diagnosticoRemoto = chamado.diagnosticos?.[0]
+  const tempo = situacaoDeTempo(chamado, agora)
+  const endereco = formatarEnderecoCompleto(chamado)
+  const digitos = (chamado.telefone ?? '').replace(/\D/g, '')
 
   const { data: unidadesData } = useQuery({
     queryKey: ['unidades-equipamento', chamado.equipeId],
     queryFn: () => fetchUnidadesEquipe(chamado.equipeId),
-    enabled: !!chamado.equipeId && status === 'EM_ANDAMENTO',
+    enabled: !!chamado.equipeId && etapa === 'ATENDIMENTO',
   })
   const unidadesDisponiveis = unidadesData?.data ?? []
+  const equipamentoPendente = unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado
 
-  const podeFinalizarFotos = fotos.length >= MIN_FOTOS
-  const fotasFaltando = Math.max(0, MIN_FOTOS - fotos.length)
+  // Guarda o preenchimento (texto e fotos ja enviadas) enquanto o chamado esta em atendimento.
+  const urlsNovas = fotos.novasValidas.join('|')
+  useEffect(() => {
+    if (etapa !== 'ATENDIMENTO' || tokenAvaliacao) return
+    salvarRascunho(chamado.id, relato, fotos.novasValidas)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relato, urlsNovas, etapa, tokenAvaliacao, chamado.id])
 
-  async function handleFotos(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || [])
-    if (files.length === 0) return
-
-    setUploadando(true)
-    try {
-      const formData = new FormData()
-      files.forEach(f => formData.append('fotos', f))
-
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      if (!res.ok) throw new Error('Erro ao fazer upload')
-
-      const data = await res.json()
-      setFotos(prev => [...prev, ...data.urls])
-      toast({ title: `${data.urls.length} foto(s) adicionada(s)!`, variant: 'success' })
-    } catch {
-      toast({ title: 'Erro ao enviar fotos', variant: 'destructive' })
-    } finally {
-      setUploadando(false)
-      if (inputFotoRef.current) inputFotoRef.current.value = ''
+  // Chamado deixou de ser atendivel (ex.: gestao encerrou/cancelou) e nao estamos mostrando o QR: avisa e fecha.
+  const etapaAnterior = useRef(etapa)
+  useEffect(() => {
+    if (etapaAnterior.current !== etapa && etapa === 'OUTRO' && !tokenAvaliacao) {
+      toast({ title: 'Este chamado foi alterado pela gestão.', variant: 'default' })
+      onClose()
     }
-  }
-
-  function removerFoto(index: number) {
-    setFotos(prev => prev.filter((_, i) => i !== index))
-  }
-
-  async function atualizarStatus(novoStatus: string, dadosExtra: any = {}) {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/tickets/${chamado.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus, ...dadosExtra }),
-      })
-      if (!res.ok) throw new Error()
-      const corpo = await res.json().catch(() => ({}))
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['meus-chamados'] }),
-        queryClient.invalidateQueries({ queryKey: ['teams'] }),
-        queryClient.invalidateQueries({ queryKey: ['agenda'] }),
-      ])
-
-      return corpo ?? {}
-    } catch {
-      toast({ title: 'Erro ao atualizar chamado', variant: 'destructive' })
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function iniciarCaminho() {
-    const ok = await atualizarStatus('ABERTO')
-    if (ok) toast({ title: 'A caminho registrado!', variant: 'success' })
-  }
-
-  async function iniciarAtendimento() {
-    const ok = await atualizarStatus('EM_ANDAMENTO')
-    if (ok) toast({ title: 'Atendimento iniciado!', variant: 'success' })
-  }
+    etapaAnterior.current = etapa
+  }, [etapa, tokenAvaliacao, onClose])
 
   function toggleMaterialUtilizado(itemId: string, maxQtd: number) {
     setMateriaisUtilizados(prev => {
@@ -148,111 +133,99 @@ export function ModalAtendimento({ chamado, onClose }: Props) {
   }
 
   function atualizarQtdUtilizada(itemId: string, quantidade: number) {
-    setMateriaisUtilizados(prev => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], quantidade },
-    }))
+    setMateriaisUtilizados(prev => ({ ...prev, [itemId]: { ...prev[itemId], quantidade } }))
   }
 
   function toggleEquipamentoUtilizado(unidadeId: string) {
     setNenhumEquipamentoUsado(false)
-    setEquipamentosUtilizadosIds(prev =>
-      prev.includes(unidadeId) ? prev.filter(id => id !== unidadeId) : [...prev, unidadeId]
-    )
+    setEquipamentosUtilizadosIds(prev => prev.includes(unidadeId) ? prev.filter(id => id !== unidadeId) : [...prev, unidadeId])
   }
 
   function toggleNenhumEquipamentoUsado() {
     setNenhumEquipamentoUsado(v => !v)
     setEquipamentosUtilizadosIds([])
   }
-async function marcarClienteAusente() {
-    const confirmar = window.confirm('Confirma que o cliente nao estava presente? O chamado sera reagendado para amanha.')
-    if (!confirmar) return
 
+  async function marcarClienteAusente() {
+    if (!window.confirm('Confirma que o cliente nao estava presente? O chamado sera reagendado para amanha.')) return
     const amanha = new Date()
     amanha.setDate(amanha.getDate() + 1)
-
-    const ok = await atualizarStatus('ABERTO', {
+    const ok = await onAvancar('ABERTO', {
       clienteAusente: true,
       dataAgendada: amanha.toISOString(),
       relato: relato.trim() || 'Cliente ausente no momento do atendimento',
-    })
-
-    if (ok) {
-      toast({ title: 'Chamado marcado como cliente ausente e devolvido a agenda.', variant: 'default' })
-      onClose()
-    }
+    }, { sucesso: 'Chamado devolvido à agenda (cliente ausente).' })
+    if (ok) onClose()
   }
-  async function finalizarAtendimento() {
+
+  async function finalizarChamado() {
+    setTentouFinalizar(true)
     if (!relato.trim()) {
       toast({ title: 'Preencha o relato do atendimento', variant: 'destructive' })
       return
     }
-
-    if (fotos.length < MIN_FOTOS) {
-      toast({ title: `Anexe pelo menos ${MIN_FOTOS} fotos como evidencia`, variant: 'destructive' })
+    if (!fotos.atendeMinimo) {
+      toast({ title: MSG_MIN_FOTOS, variant: 'destructive' })
       return
     }
-
-    if (unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado) {
+    if (fotos.enviando) {
+      toast({ title: 'Aguarde o envio das fotos terminar.', variant: 'default' })
+      return
+    }
+    if (equipamentoPendente) {
       toast({ title: 'Informe qual equipamento foi usado ou marque "Nenhum equipamento foi utilizado"', variant: 'destructive' })
       return
     }
 
     const utilizadosPayload = Object.entries(materiaisUtilizados).map(([itemId, dados]) => ({
-      itemId,
-      quantidade: dados.quantidade,
-      observacao: dados.observacao,
+      itemId, quantidade: dados.quantidade, observacao: dados.observacao,
     }))
-
     const devolucoesPayload = materiaisDisponiveis
-      .filter((m: any) => {
-        const utilizado = materiaisUtilizados[m.itemId]?.quantidade ?? 0
-        return m.quantidade > utilizado
-      })
+      .filter((m: any) => m.quantidade > (materiaisUtilizados[m.itemId]?.quantidade ?? 0))
       .map((m: any) => ({
         itemId: m.itemId,
         quantidade: m.quantidade - (materiaisUtilizados[m.itemId]?.quantidade ?? 0),
         observacao: 'Sobra automatica do atendimento',
       }))
 
-    const ok = await atualizarStatus('FINALIZADO', {
+    // Manda as evidencias ja salvas + as novas enviadas com sucesso (nada antigo e' perdido).
+    const ok = await onAvancar('FINALIZADO', {
       relato,
-      fotos: JSON.stringify(fotos),
+      fotos: JSON.stringify(fotos.urlsValidas),
       materiaisUtilizados: utilizadosPayload,
       materiaisDevolvidos: devolucoesPayload,
       equipamentosUtilizadosIds,
-    })
+    }, { sucesso: 'Chamado finalizado.' })
 
+    // Em erro, onAvancar devolve null: nada e' limpo, o tecnico tenta de novo com tudo preenchido.
     if (ok) {
-      toast({ title: 'Atendimento finalizado! Evidencias enviadas ao Telegram.', variant: 'success' })
-      // Mostra o QR code da avaliacao antes de fechar; sem token (falha ao
-      // criar a avaliacao) fecha direto - o cliente ainda recebe o link pelo WhatsApp.
+      limparRascunho(chamado.id)
       if (ok.avaliacaoToken) setTokenAvaliacao(ok.avaliacaoToken)
       else onClose()
     }
   }
 
+  const botaoPrincipal = 'w-full min-h-[52px] flex items-center justify-center gap-2 px-4 rounded-xl text-base font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2'
+  const botaoSecundario = 'min-h-[44px] inline-flex items-center justify-center gap-2 px-4 rounded-xl border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-suave hover:bg-tema-contraste/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
+  const alturaEtapa = ETAPAS_ROTULOS.findIndex(e => e.etapa === etapa)
+  const instantes = [chamado.dataAbertura ?? chamado.createdAt, chamado.dataACaminho, chamado.dataInicio, chamado.dataFim]
+
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={`Chamado de ${chamado.cliente}`}>
       <div className="bg-tema-superficie border border-tema-linha w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-tema-linha bg-tema-superficie flex-shrink-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-tema-tinta font-bold">{chamado.cliente}</h2>
-            {prioridade !== 'NORMAL' && (
-              <span className={cn('text-xs px-2 py-0.5 rounded-full border font-bold', pCfg.cor)}>
-                {pCfg.label}
-              </span>
-            )}
+        {/* Cabecalho */}
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-tema-linha flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <h2 className="text-tema-tinta font-bold text-base break-words">{chamado.cliente}</h2>
+            {pCfg && <span className={cn('text-xs px-2 py-0.5 rounded-full border font-semibold', pCfg.cor)}>{pCfg.label}</span>}
           </div>
-          <button onClick={onClose} className="text-tema-suave hover:text-tema-tinta p-2.5 -m-1 rounded-lg hover:bg-tema-contraste/[0.03] transition-colors flex-shrink-0">
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onClose} aria-label="Fechar" className="text-tema-suave hover:text-tema-tinta w-11 h-11 -mr-2 flex items-center justify-center rounded-xl hover:bg-tema-contraste/[0.04] flex-shrink-0">
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
 
-        {/* Conteudo */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {tokenAvaliacao ? (
             <QrAvaliacao
@@ -263,145 +236,125 @@ async function marcarClienteAusente() {
             />
           ) : (<>
 
-          {/* Info */}
-          <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-tema-suave mb-1">
-              <span className="px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full">
-                {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
-              </span>
-              <span>{timeAgo(chamado.createdAt)}</span>
+          {/* Etapas */}
+          <ol className="grid grid-cols-4 gap-1" aria-label="Etapas do chamado">
+            {ETAPAS_ROTULOS.map((e, i) => {
+              const feita = alturaEtapa > i || etapa === 'CONCLUIDO'
+              const atual = alturaEtapa === i && etapa !== 'CONCLUIDO'
+              return (
+                <li key={e.etapa} className="text-center" aria-current={atual ? 'step' : undefined}>
+                  <div className={cn('h-1.5 rounded-full mb-1.5', feita || atual ? 'bg-orange-500' : 'bg-tema-contraste/[0.08]')} />
+                  <p className={cn('text-[11px] leading-tight font-semibold', atual ? 'text-orange-700' : feita ? 'text-tema-tinta' : 'text-tema-apagado')}>{e.rotulo}</p>
+                  <p className="text-[10px] text-tema-apagado tabular-nums">{(feita || atual) && instantes[i] ? hora(instantes[i]) : '—'}</p>
+                </li>
+              )
+            })}
+          </ol>
+
+          {/* Dados do chamado */}
+          <div className="rounded-xl border border-tema-linha p-4 space-y-2.5">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="px-2 py-0.5 rounded-full bg-tema-contraste/[0.05] text-tema-suave font-medium">{TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-700 font-semibold">{rotuloDaEtapa(etapa)}</span>
+              {chamado.dataAgendada && (
+                <span className="inline-flex items-center gap-1 text-tema-suave"><CalendarClock className="w-3.5 h-3.5" aria-hidden />Agendado: {hora(chamado.dataAgendada)}</span>
+              )}
             </div>
-            <p className="text-sm text-tema-texto flex items-start gap-2">
-              <MapPin className="w-4 h-4 text-tema-apagado flex-shrink-0 mt-0.5" />
-              {formatarEnderecoCompleto(chamado)}
-            </p>
+            <div className="text-xs space-y-0.5">
+              {tempo.abertoHa && <p className="text-tema-suave flex items-center gap-1"><Clock className="w-3.5 h-3.5" aria-hidden />Aberto há {tempo.abertoHa}</p>}
+              {tempo.comecaEm && <p className="text-tema-suave">Começa às {hora(tempo.comecaEm)}</p>}
+              {tempo.emAtendimentoHa && <p className="text-tema-suave">Em atendimento há {tempo.emAtendimentoHa}</p>}
+              {tempo.atraso
+                ? <p className="font-semibold text-red-700">{tempo.atraso.texto}</p>
+                : tempo.restante && <p className="text-tema-apagado">{etapa === 'ATENDIMENTO' ? 'Prazo de resolução' : 'Prazo de resposta'}: restam {tempo.restante}</p>}
+            </div>
+            {endereco && (
+              <p className="text-sm text-tema-texto flex items-start gap-2 break-words">
+                <MapPin className="w-4 h-4 text-tema-apagado flex-shrink-0 mt-0.5" aria-hidden />{endereco}
+              </p>
+            )}
             {chamado.telefone && (
-              <a href={`tel:${chamado.telefone}`} className="text-sm text-blue-700 flex items-center gap-2">
-                <Phone className="w-4 h-4 flex-shrink-0" />
-                {chamado.telefone}
+              <a href={`tel:${chamado.telefone}`} className="text-sm text-blue-700 flex items-center gap-2 min-h-[32px]">
+                <Phone className="w-4 h-4 flex-shrink-0" aria-hidden />{chamado.telefone}
               </a>
             )}
-            {obs && (
-              <p className="text-xs text-tema-apagado italic border-t border-tema-linha pt-2 mt-2">{obs}</p>
-            )}
+            {obs && <p className="text-xs text-tema-apagado italic border-t border-tema-linha pt-2 break-words">{obs}</p>}
+
+            <div className="flex gap-2 pt-1">
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1')}>
+                <Navigation className="w-4 h-4" aria-hidden /> Ver rota
+              </a>
+              {digitos.length >= 10 && (
+                <a href={`https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1')}>
+                  <MessageCircle className="w-4 h-4" aria-hidden /> Contatar cliente
+                </a>
+              )}
+            </div>
           </div>
 
-          {/* Timeline */}
-          <div className="flex items-center gap-1">
-            {[
-              { label: 'A Caminho',  ativo: !!chamado.dataACaminho },
-              { label: 'Atendendo',  ativo: status === 'EM_ANDAMENTO' || status === 'FINALIZADO' },
-              { label: 'Finalizado', ativo: status === 'FINALIZADO' },
-            ].map((step, i) => (
-              <div key={i} className="flex-1 flex items-center">
-                <div className={cn('flex-1 h-1.5 rounded-full', step.ativo ? 'bg-orange-500' : 'bg-tema-contraste/[0.06]')} />
-                {i < 2 && <ChevronRight className="w-3 h-3 text-tema-apagado flex-shrink-0" />}
-              </div>
-            ))}
-          </div>
-
-          {/* ETAPA 1 - A Caminho */}
-          {status === 'ABERTO' && !chamado.dataACaminho && (
-            <button
-              onClick={iniciarCaminho}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Truck className="w-5 h-5" />}
-              Estou a Caminho
+          {/* ETAPA: Aguardando */}
+          {etapa === 'AGUARDANDO' && acao && (
+            <button type="button" onClick={() => onAvancar('ABERTO')} disabled={enviando} className={botaoPrincipal}>
+              {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Truck className="w-5 h-5" aria-hidden />}
+              {acao.rotulo}
             </button>
           )}
-          {/* ETAPA 2 - Iniciar */}
-          {status === 'ABERTO' && chamado.dataACaminho && (
+
+          {/* ETAPA: Em deslocamento */}
+          {etapa === 'DESLOCAMENTO' && acao && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/25 rounded-xl">
-                <Truck className="w-4 h-4 text-blue-700 animate-pulse" />
-                <p className="text-sm text-blue-700 font-medium">A caminho do local</p>
-              </div>
-              <button
-                onClick={iniciarAtendimento}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                Iniciar Atendimento
+              <button type="button" onClick={() => onAvancar('EM_ANDAMENTO')} disabled={enviando} className={botaoPrincipal}>
+                {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Zap className="w-5 h-5" aria-hidden />}
+                {acao.rotulo}
               </button>
-              <button
-                onClick={marcarClienteAusente}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-tema-contraste/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                Cliente Ausente - Devolver a Agenda
+              <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
+                <AlertTriangle className="w-4 h-4" aria-hidden />
+                Cliente ausente — devolver à agenda
               </button>
             </div>
           )}
 
-          {/* ETAPA 3 - Em atendimento */}
-          {status === 'EM_ANDAMENTO' && (
+          {/* ETAPA: Em atendimento */}
+          {etapa === 'ATENDIMENTO' && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl">
-                <Zap className="w-4 h-4 text-amber-700 animate-pulse" />
-                <p className="text-sm text-amber-700 font-medium">Atendimento em andamento</p>
-              </div>
-
-              {/* Diagnostico do NOC - o tecnico ve o que foi concluido
-                  remotamente antes de rodar seu proprio teste em campo. */}
               {diagnosticoRemoto && (
                 <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-1">
                   <p className="text-xs text-cyan-700 font-bold flex items-center gap-1.5">
-                    <Brain className="w-3.5 h-3.5" /> Diagnostico do NOC
+                    <Brain className="w-3.5 h-3.5" aria-hidden /> Diagnostico do NOC
                   </p>
                   <p className="text-sm text-tema-texto">
                     {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
                     {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
                     {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
                   </p>
-                  {diagnosticoRemoto.hipotese && (
-                    <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>
-                  )}
+                  {diagnosticoRemoto.hipotese && <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>}
                   <div className="flex items-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setMostrarDiagnosticoCompleto(v => !v)}
-                      className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted"
-                    >
+                    <button type="button" onClick={() => setMostrarDiagnosticoCompleto(v => !v)} className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]">
                       {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
                     </button>
                     <button
                       type="button"
                       onClick={() => import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))}
-                      className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted"
+                      className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]"
                     >
                       Ver relatorio
                     </button>
                   </div>
-
                   {mostrarDiagnosticoCompleto && (
                     <div className="pt-2 border-t border-cyan-600/15 space-y-2">
                       {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
                         <div>
                           <p className="text-[11px] text-tema-apagado mb-1">Evidencias</p>
-                          <ul className="space-y-0.5">
-                            {diagnosticoRemoto.evidencias.map((ev: string, i: number) => (
-                              <li key={i} className="text-xs text-tema-texto">• {ev}</li>
-                            ))}
-                          </ul>
+                          <ul className="space-y-0.5">{diagnosticoRemoto.evidencias.map((ev: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {ev}</li>)}</ul>
                         </div>
                       )}
                       {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
                         <div>
                           <p className="text-[11px] text-tema-apagado mb-1">Recomendacoes</p>
-                          <ul className="space-y-0.5">
-                            {diagnosticoRemoto.recomendacoes.map((r: string, i: number) => (
-                              <li key={i} className="text-xs text-tema-texto">• {r}</li>
-                            ))}
-                          </ul>
+                          <ul className="space-y-0.5">{diagnosticoRemoto.recomendacoes.map((r: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {r}</li>)}</ul>
                         </div>
                       )}
-                      {diagnosticoRemoto.resumo?.downloadMbps != null && (
-                        <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>
-                      )}
+                      {diagnosticoRemoto.resumo?.downloadMbps != null && <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>}
                       {diagnosticoRemoto.resumo?.onuStatus && (
                         <p className="text-xs text-tema-apagado">
                           ONU: <span className="text-tema-texto">{diagnosticoRemoto.resumo.onuStatus}</span>
@@ -413,143 +366,40 @@ async function marcarClienteAusente() {
                 </div>
               )}
 
-              {/* Diagnostico tecnico */}
-              <button
-                onClick={() => setShowDiagnostico(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-cyan-600/10 hover:bg-cyan-600/15 border border-cyan-600/30 text-cyan-700 font-medium rounded-xl transition-colors"
-              >
-                <Activity className="w-4 h-4" />
-                Diagnostico Tecnico
+              <button type="button" onClick={() => setShowDiagnostico(true)} className={cn(botaoSecundario, 'w-full text-cyan-700 border-cyan-600/30')}>
+                <Activity className="w-4 h-4" aria-hidden /> Diagnóstico técnico
               </button>
 
-{/* Cliente ausente */}
-              <button
-                onClick={marcarClienteAusente}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-tema-contraste/[0.02] hover:bg-orange-500/10 border border-orange-500/25 text-orange-700 font-medium rounded-xl transition-colors disabled:opacity-50"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                Cliente Ausente - Devolver a Agenda
-              </button>
-
-
-              {/* Relato */}
               <div>
-                <label className="block text-sm font-medium text-tema-texto mb-1.5 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" />
-                  Relato do Atendimento *
+                <label htmlFor="relato-atendimento" className="text-sm font-semibold text-tema-tinta mb-1.5 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4" aria-hidden /> Relato do atendimento *
                 </label>
                 <textarea
+                  id="relato-atendimento"
                   value={relato}
                   onChange={e => setRelato(e.target.value)}
                   rows={3}
                   placeholder="Descreva o servico realizado, problema encontrado e solucao aplicada..."
-                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2.5 text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-1 focus:ring-orange-600 focus:border-orange-600 resize-none"
+                  className="w-full bg-tema-superficie border border-tema-linha-forte rounded-xl px-3 py-2.5 text-base sm:text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-600 resize-none"
                 />
+                {tentouFinalizar && !relato.trim() && <p className="text-xs text-red-700 mt-1">Preencha o relato do atendimento.</p>}
               </div>
 
-              {/* Fotos OBRIGATORIO */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-tema-texto flex items-center gap-1.5">
-                    <Camera className="w-4 h-4" />
-                    Evidencias Fotograficas *
-                  </label>
-                  <span className={cn(
-                    'text-xs font-bold px-2 py-0.5 rounded-full',
-                    podeFinalizarFotos
-                      ? 'bg-emerald-500/15 text-emerald-700'
-                      : 'bg-red-500/15 text-red-700'
-                  )}>
-                    {fotos.length}/{MIN_FOTOS} minimo
-                  </span>
-                </div>
+              <FotosAtendimento fotos={fotos} tentouFinalizar={tentouFinalizar} />
 
-                {/* Aviso */}
-                {!podeFinalizarFotos && (
-                  <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/25 rounded-lg mb-3">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-700 flex-shrink-0" />
-                    <p className="text-xs text-red-700">
-                      Faltam <strong>{fotasFaltando}</strong> foto(s) para finalizar o atendimento
-                    </p>
-                  </div>
-                )}
-
-                {/* Grid de fotos */}
-                {fotos.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {fotos.map((url, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-tema-contraste/[0.04] border border-tema-linha">
-                        <img
-                          src={url}
-                          alt={`Evidencia ${i + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          onClick={() => removerFoto(i)}
-                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center"
-                        >
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-center py-0.5">
-                          <span className="text-xs text-white font-bold">{i + 1}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Botao adicionar */}
-                <input
-                  ref={inputFotoRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-
-                  onChange={handleFotos}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => inputFotoRef.current?.click()}
-                  disabled={uploadando}
-                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-tema-linha-forte hover:border-orange-500/50 rounded-xl text-tema-suave hover:text-orange-700 transition-colors disabled:opacity-50"
-                >
-                  {uploadando
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando fotos...</>
-                    : <><Camera className="w-4 h-4" /> {fotos.length === 0 ? 'Adicionar Fotos (minimo 3)' : 'Adicionar mais fotos'}</>
-                  }
-                </button>
-              </div>
-
-              {/* Materiais */}
               {materiaisDisponiveis.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-tema-texto mb-2 flex items-center gap-1.5">
-                    <Package className="w-4 h-4" />
-                    Materiais Utilizados
-                  </label>
+                  <p className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5"><Package className="w-4 h-4" aria-hidden /> Materiais utilizados</p>
                   <div className="space-y-2">
                     {materiaisDisponiveis.map((m: any) => {
                       const usado = materiaisUtilizados[m.itemId]
                       const selecionado = !!usado
                       return (
-                        <div
-                          key={m.itemId}
-                          className={cn(
-                            'p-3 rounded-xl border transition-all',
-                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha bg-tema-contraste/[0.02]'
-                          )}
-                        >
-                          <button
-                            onClick={() => toggleMaterialUtilizado(m.itemId, m.quantidade)}
-                            className="w-full flex items-center justify-between"
-                          >
+                        <div key={m.itemId} className={cn('p-3 rounded-xl border transition-all', selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha')}>
+                          <button type="button" onClick={() => toggleMaterialUtilizado(m.itemId, m.quantidade)} className="w-full flex items-center justify-between min-h-[40px]" aria-pressed={selecionado}>
                             <div className="flex items-center gap-2">
-                              <div className={cn(
-                                'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                                selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte'
-                              )}>
-                                {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                              <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte')}>
+                                {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" aria-hidden />}
                               </div>
                               <div className="text-left">
                                 <p className="text-sm text-tema-tinta font-medium">{m.item?.descricao}</p>
@@ -567,7 +417,7 @@ async function marcarClienteAusente() {
                                 min={0}
                                 max={m.quantidade}
                                 step={0.01}
-                                className="w-20 bg-tema-superficie border border-tema-linha-forte rounded px-2 py-1 text-sm text-tema-tinta text-center"
+                                className="w-24 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-2 text-base sm:text-sm text-tema-tinta text-center"
                               />
                               <span className="text-xs text-tema-apagado">{m.item?.unidade}</span>
                             </div>
@@ -579,31 +429,23 @@ async function marcarClienteAusente() {
                 </div>
               )}
 
-              {/* Equipamento com MAC utilizado */}
               {unidadesDisponiveis.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-tema-texto mb-2 flex items-center gap-1.5">
-                    <ScanLine className="w-4 h-4" />
-                    Equipamento Utilizado *
-                  </label>
+                  <p className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5"><ScanLine className="w-4 h-4" aria-hidden /> Equipamento utilizado *</p>
                   <div className="space-y-2">
                     {unidadesDisponiveis.map((u: any) => {
                       const selecionado = equipamentosUtilizadosIds.includes(u.id)
                       return (
                         <button
                           key={u.id}
+                          type="button"
                           onClick={() => toggleEquipamentoUtilizado(u.id)}
-                          className={cn(
-                            'w-full flex items-center justify-between p-3 rounded-xl border transition-all',
-                            selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha bg-tema-contraste/[0.02]'
-                          )}
+                          aria-pressed={selecionado}
+                          className={cn('w-full flex items-center p-3 rounded-xl border transition-all min-h-[52px]', selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha')}
                         >
                           <div className="flex items-center gap-2">
-                            <div className={cn(
-                              'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                              selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte'
-                            )}>
-                              {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                            <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte')}>
+                              {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" aria-hidden />}
                             </div>
                             <div className="text-left">
                               <p className="text-sm text-tema-tinta font-medium">{u.item?.descricao}</p>
@@ -614,17 +456,13 @@ async function marcarClienteAusente() {
                       )
                     })}
                     <button
+                      type="button"
                       onClick={toggleNenhumEquipamentoUsado}
-                      className={cn(
-                        'w-full flex items-center gap-2 p-3 rounded-xl border transition-all',
-                        nenhumEquipamentoUsado ? 'border-tema-apagado/40 bg-tema-contraste/[0.03]' : 'border-tema-linha bg-tema-contraste/[0.02]'
-                      )}
+                      aria-pressed={nenhumEquipamentoUsado}
+                      className={cn('w-full flex items-center gap-2 p-3 rounded-xl border transition-all min-h-[52px]', nenhumEquipamentoUsado ? 'border-tema-apagado/40 bg-tema-contraste/[0.04]' : 'border-tema-linha')}
                     >
-                      <div className={cn(
-                        'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                        nenhumEquipamentoUsado ? 'bg-tema-apagado border-tema-apagado' : 'border-tema-linha-forte'
-                      )}>
-                        {nenhumEquipamentoUsado && <Ban className="w-3.5 h-3.5 text-white" />}
+                      <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', nenhumEquipamentoUsado ? 'bg-tema-apagado border-tema-apagado' : 'border-tema-linha-forte')}>
+                        {nenhumEquipamentoUsado && <Ban className="w-3.5 h-3.5 text-white" aria-hidden />}
                       </div>
                       <p className="text-sm text-tema-texto">Nenhum equipamento foi utilizado</p>
                     </button>
@@ -632,37 +470,31 @@ async function marcarClienteAusente() {
                 </div>
               )}
 
-              {/* Botao finalizar */}
-              <div className="space-y-2">
-                {!podeFinalizarFotos && (
+              <div className="space-y-2 pt-1">
+                {equipamentoPendente && tentouFinalizar && (
                   <p className="text-center text-xs text-red-700 flex items-center justify-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    Anexe pelo menos {MIN_FOTOS} fotos para finalizar
-                  </p>
-                )}
-                {unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado && (
-                  <p className="text-center text-xs text-red-700 flex items-center justify-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
                     Informe o equipamento usado ou marque &quot;Nenhum equipamento foi utilizado&quot;
                   </p>
                 )}
-                <button
-                  onClick={finalizarAtendimento}
-                  disabled={loading || !relato.trim() || !podeFinalizarFotos || (unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && !nenhumEquipamentoUsado)}
-                  className={cn(
-                    'w-full flex items-center justify-center gap-2 py-4 font-bold rounded-xl transition-colors',
-                    podeFinalizarFotos && relato.trim() && (unidadesDisponiveis.length === 0 || equipamentosUtilizadosIds.length > 0 || nenhumEquipamentoUsado)
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                      : 'bg-tema-contraste/[0.06] text-tema-apagado cursor-not-allowed'
-                  )}
-                >
-                  {loading
-                    ? <><Loader2 className="w-5 h-5 animate-spin" /> Finalizando...</>
-                    : <><CheckCircle className="w-5 h-5" /> Finalizar Atendimento</>
-                  }
+                {fotos.enviando && <p className="text-center text-xs text-tema-suave">Aguarde o envio das fotos para finalizar.</p>}
+                <button type="button" onClick={finalizarChamado} disabled={enviando || fotos.enviando} className={botaoPrincipal}>
+                  {enviando
+                    ? <><Loader2 className="w-5 h-5 animate-spin" aria-hidden /> Finalizando...</>
+                    : <><CheckCircle className="w-5 h-5" aria-hidden /> {acao?.rotulo ?? 'Finalizar chamado'}</>}
+                </button>
+                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
+                  <AlertTriangle className="w-4 h-4" aria-hidden />
+                  Cliente ausente — devolver à agenda
                 </button>
               </div>
             </div>
+          )}
+
+          {etapa === 'CONCLUIDO' && (
+            <p className="flex items-center gap-2 text-sm text-emerald-700 font-medium rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-3">
+              <CheckCircle className="w-4 h-4" aria-hidden /> Chamado concluído{chamado.dataFim ? ` em ${hora(chamado.dataFim)}` : ''}.
+            </p>
           )}
           </>)}
         </div>

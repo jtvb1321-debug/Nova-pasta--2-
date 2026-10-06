@@ -37,14 +37,20 @@ export async function GET(request: NextRequest) {
   const dataInicio     = searchParams.get('dataInicio')     || undefined
   const dataFim        = searchParams.get('dataFim')        || undefined
   const page     = parseInt(searchParams.get('page')  || '1')
-  const limit    = parseInt(searchParams.get('limit') || '20')
+  const limit    = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 200)
   const skip     = (page - 1) * limit
 
   const role      = (session.user as any)?.role
   const usuarioId = (session.user as any)?.id
 
   const where: any = {}
-  if (status)      where.status      = status
+  if (status) {
+    const STATUS_VALIDOS = ['AGENDADO', 'ABERTO', 'EM_ANDAMENTO', 'FINALIZADO', 'CANCELADO']
+    const lista = status.split(',').map(s => s.trim()).filter(s => STATUS_VALIDOS.includes(s))
+    if (lista.length === 1) where.status = lista[0]
+    else if (lista.length > 1) where.status = { in: lista }
+    else where.status = status
+  }
   if (equipeId)     where.equipeId     = equipeId
   if (reincidente === 'true') where.reincidente = true
   if (statusRechamada && ['POSSIVEL', 'CONFIRMADA', 'DESCARTADA'].includes(statusRechamada)) {

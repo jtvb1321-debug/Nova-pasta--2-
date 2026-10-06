@@ -13,6 +13,17 @@ import { calcularSlaResposta, calcularSlaResolucao, calcularInicioSla, inicioSla
 import { garantirAvaliacao } from '@/lib/avaliacao'
 import { getClientIp } from '@/lib/getClientIp'
 
+// Aceita o JSON (string) ou o array de URLs das evidencias.
+function listaDeFotos(valor: unknown): string[] {
+  if (!valor) return []
+  try {
+    const v = typeof valor === 'string' ? JSON.parse(valor) : valor
+    return Array.isArray(v) ? v.filter((u): u is string => typeof u === 'string' && u.length > 0) : []
+  } catch {
+    return []
+  }
+}
+
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -69,6 +80,20 @@ export async function PATCH(
     }
   }
 
+  // Evidencia minima: o tecnico so finaliza com pelo menos 1 foto (enviada agora ou
+  // ja salva no chamado). Admin/Operador encerrando pelo painel nao passam por aqui.
+  if (status === 'FINALIZADO' && role === 'TECNICO' && fechadoAdmin !== true) {
+    const doPayload = listaDeFotos(fotos)
+    let total = doPayload.length
+    if (total < 1) {
+      const salvo = await prisma.chamado.findUnique({ where: { id }, select: { fotos: true } })
+      total = listaDeFotos(salvo?.fotos).length
+    }
+    if (total < 1) {
+      return NextResponse.json({ error: 'Adicione pelo menos 1 foto para finalizar o chamado.' }, { status: 400 })
+    }
+  }
+
   const chamado = await prisma.$transaction(async (tx) => {
     const chamadoAtual = await tx.chamado.findUnique({
       where: { id },
@@ -80,7 +105,11 @@ export async function PATCH(
     if (equipeId) dataUpdate.equipeId = equipeId
     if (tipo)     dataUpdate.tipo     = tipo
     if (relato)   dataUpdate.relato   = relato
-    if (fotos)    dataUpdate.fotos    = typeof fotos === 'string' ? fotos : JSON.stringify(fotos)
+    // Une com as evidencias ja salvas: foto antiga nunca e' apagada por um envio novo.
+    if (fotos) {
+      const unidas = Array.from(new Set([...listaDeFotos(chamadoAtual?.fotos), ...listaDeFotos(fotos)]))
+      dataUpdate.fotos = JSON.stringify(unidas)
+    }
     if (clienteAusente !== undefined) dataUpdate.clienteAusente = clienteAusente
     if (fechadoAdmin === true) dataUpdate.fechadoAdmin = true
 

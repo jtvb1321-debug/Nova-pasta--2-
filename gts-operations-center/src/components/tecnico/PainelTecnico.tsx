@@ -1,56 +1,35 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { signOut } from 'next-auth/react'
-import {
-  ClipboardList, MapPin, Phone, Clock, LogOut, Map,
-  CheckCircle, Zap, Truck,
-  RefreshCw, Calendar, ChevronRight, Navigation, MessageCircle, Loader2, Brain,
-} from 'lucide-react'
-import { cn, timeAgo, formatarEnderecoCompleto, getInitials } from '@/lib/utils'
-import type { Session } from 'next-auth'
-import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
-import { situacaoLabel } from '@/lib/jornada'
-import { toast } from '@/hooks/use-toast'
-import { ModalAtendimento } from './ModalAtendimento'
-import { CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  AlertTriangle, Calendar, CheckCircle, ClipboardList, Clock, Map, MapPin, RefreshCw, Truck, Zap,
+} from 'lucide-react'
+import type { Session } from 'next-auth'
+import { cn, formatarEnderecoCompleto } from '@/lib/utils'
+import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
+import { toast } from '@/hooks/use-toast'
+import { useAgora } from '@/hooks/useAgora'
+import { etapaDoChamado, mesclarChamadoNaLista, ordenarChamados, type Etapa } from '@/lib/tecnicoChamado'
+import { TecnicoShell } from './TecnicoShell'
+import { CardChamadoTecnico } from './CardChamadoTecnico'
+import { ModalAtendimento, type AvancarChamado } from './ModalAtendimento'
 
-const SITUACAO_HOJE_CFG: Record<string, { cor: string; bg: string; dot: string }> = {
-  Trabalhado:               { cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25', dot: 'bg-emerald-600' },
-  'Ponto Incompleto':       { cor: 'text-blue-700',    bg: 'bg-blue-500/10 border-blue-500/25',       dot: 'bg-blue-600 animate-pulse' },
-  Falta:                    { cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25',         dot: 'bg-red-600' },
-  Atestado:                 { cor: 'text-purple-700',  bg: 'bg-purple-500/10 border-purple-500/25',   dot: 'bg-purple-600' },
-  Folga:                    { cor: 'text-sky-700',     bg: 'bg-sky-500/10 border-sky-500/25',         dot: 'bg-sky-600' },
-  Feriado:                  { cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25', dot: 'bg-emerald-500' },
-}
-
-async function fetchMeuPonto() {
-  const res = await fetch('/api/ponto/meu')
-  if (!res.ok) return { hoje: null }
+// Somente os chamados que o tecnico trabalha (a API ja restringe a equipe dele).
+// Antes buscava "os 50 mais recentes de todos os status" e filtrava no navegador -
+// chamados antigos ainda abertos podiam ficar de fora.
+async function fetchMeusChamados() {
+  const res = await fetch('/api/tickets?status=ABERTO,EM_ANDAMENTO,AGENDADO&limit=100')
+  if (!res.ok) throw new Error('Erro ao carregar chamados')
   return res.json()
 }
 
-const PRIORIDADE_CFG: Record<string, { label: string; cor: string; bg: string }> = {
-  CRITICO: { label: 'Critico', cor: 'text-red-700',    bg: 'bg-red-500/10 border-red-500/30' },
-  URGENTE: { label: 'Urgente', cor: 'text-amber-700', bg: 'bg-amber-500/10 border-amber-500/30' },
-  NORMAL:  { label: 'Normal',  cor: 'text-blue-700',   bg: 'bg-blue-500/10 border-blue-500/30' },
-}
-
-const STATUS_CFG: Record<string, { label: string; icon: React.ElementType; cor: string }> = {
-  ABERTO:       { label: 'Aguardando inicio', icon: Clock, cor: 'text-blue-700' },
-  EM_ANDAMENTO: { label: 'Em atendimento',    icon: Zap,   cor: 'text-amber-700' },
-}
-
-function detectarPrioridade(obs: string) {
-  if (obs?.includes('[CRITICO]')) return 'CRITICO'
-  if (obs?.includes('[URGENTE]')) return 'URGENTE'
-  return 'NORMAL'
-}
-
-function limparObservacao(obs: string) {
-  return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
+// Concluidos de hoje (data de conclusao, fuso configurado) - mesma regra do resumo da Central.
+async function fetchResumo() {
+  const res = await fetch('/api/tickets/resumo')
+  if (!res.ok) throw new Error('Erro ao carregar resumo')
+  return res.json()
 }
 
 function formatarDataAgendada(data: string | Date) {
@@ -58,499 +37,269 @@ function formatarDataAgendada(data: string | Date) {
   const hoje = new Date()
   const amanha = new Date(hoje)
   amanha.setDate(amanha.getDate() + 1)
-  const mesmoDia = (a: Date, b: Date) => a.toDateString() === b.toDateString()
   const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  if (mesmoDia(d, hoje))   return `Hoje as ${hora}`
-  if (mesmoDia(d, amanha)) return `Amanha as ${hora}`
-  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} as ${hora}`
+  if (d.toDateString() === hoje.toDateString()) return `Hoje às ${hora}`
+  if (d.toDateString() === amanha.toDateString()) return `Amanhã às ${hora}`
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${hora}`
 }
 
-// Cor funcional do tempo de espera do chamado - so um indicador visual
-// leve (nao e o calculo formal de SLA usado no relatorio/TV), pra dar
-// prioridade visual ao tecnico sem depender de outro endpoint.
-function corTempoEspera(createdAt: string) {
-  const horas = (Date.now() - new Date(createdAt).getTime()) / 3600000
-  if (horas >= 4) return 'text-red-700'
-  if (horas >= 1) return 'text-amber-700'
-  return 'text-emerald-700'
+type FiltroEtapa = '' | 'AGUARDANDO' | 'DESLOCAMENTO' | 'ATENDIMENTO'
+
+const MENSAGENS: Record<string, string> = {
+  ABERTO: 'Deslocamento iniciado.',
+  EM_ANDAMENTO: 'Atendimento iniciado.',
+  FINALIZADO: 'Chamado finalizado.',
 }
 
-function linkGoogleMaps(chamado: any) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatarEnderecoCompleto(chamado))}`
-}
+export function PainelTecnico({ session }: { session: Session }) {
+  const queryClient = useQueryClient()
+  const agora = useAgora(30000)
+  const [selecao, setSelecao] = useState<{ id: string; reserva: any } | null>(null)
+  const [filtro, setFiltro] = useState<FiltroEtapa>('')
+  const [emEnvioId, setEmEnvioId] = useState<string | null>(null)
+  const emEnvioRef = useRef(false)
 
-function linkWhatsApp(telefone: string) {
-  const digitos = telefone.replace(/\D/g, '')
-  const comDDI = digitos.length <= 11 ? `55${digitos}` : digitos
-  return `https://wa.me/${comDDI}`
-}
-
-async function fetchMeusChamados() {
-  const res = await fetch('/api/tickets?limit=50')
-  if (!res.ok) return { data: [] }
-  return res.json()
-}
-
-interface Props {
-  session: Session
-}
-
-export function PainelTecnico({ session }: Props) {
-  const [agora, setAgora] = useState('')
-  const [chamadoAberto, setChamadoAberto] = useState<any>(null)
-  const [filtroStatus, setFiltroStatus] = useState<'' | 'ABERTO' | 'EM_ANDAMENTO'>('')
-  const [acaoRapidaId, setAcaoRapidaId] = useState<string | null>(null)
-
-  useEffect(() => {
-    setAgora(new Date().toLocaleTimeString('pt-BR'))
-    const i = setInterval(() => setAgora(new Date().toLocaleTimeString('pt-BR')), 1000)
-    return () => clearInterval(i)
-  }, [])
-
-  useEffect(() => {
-    function handler(e: any) { setChamadoAberto(e.detail) }
-    window.addEventListener('abrir-chamado', handler)
-    return () => window.removeEventListener('abrir-chamado', handler)
-  }, [])
-
-  const { data, isLoading, refetch } = useQuery({
+  // Sincronizacao: consulta leve a cada 15 s (o React Query pausa em aba oculta e limpa o
+  // intervalo ao sair), mais atualizacao ao voltar para a aba e ao recuperar a conexao.
+  // Mudancas feitas pela gestao ou por outro integrante da equipe chegam por aqui.
+  const { data, isLoading, isError, isFetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['meus-chamados'],
     queryFn: fetchMeusChamados,
     refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 10000,
   })
-  const { data: meuPonto } = useQuery({
-    queryKey: ['meu-ponto-painel'],
-    queryFn: fetchMeuPonto,
+  const { data: resumo, isError: erroResumo } = useQuery({
+    queryKey: ['meus-chamados-resumo'],
+    queryFn: fetchResumo,
     refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+    staleTime: 20000,
   })
-  const situacaoHoje = meuPonto?.hoje
-    ? situacaoLabel(meuPonto.hoje.tipoRegistro, meuPonto.hoje.horasTrabalhadas)
-    : null
-  const situacaoHojeCfg = situacaoHoje ? (SITUACAO_HOJE_CFG[situacaoHoje] || SITUACAO_HOJE_CFG['Ponto Incompleto']) : null
 
-  const chamados = (data?.data ?? []).filter((c: any) =>
-    c.status === 'ABERTO' || c.status === 'EM_ANDAMENTO'
+  const todos: any[] = data?.data ?? []
+  const ativos = ordenarChamados(todos.filter(c => c.status === 'ABERTO' || c.status === 'EM_ANDAMENTO'))
+  const agendados = todos
+    .filter(c => c.status === 'AGENDADO' && c.dataAgendada)
+    .sort((a, b) => new Date(a.dataAgendada).getTime() - new Date(b.dataAgendada).getTime())
+
+  const contagem: Record<Exclude<Etapa, 'CONCLUIDO' | 'OUTRO'>, number> = { AGUARDANDO: 0, DESLOCAMENTO: 0, ATENDIMENTO: 0 }
+  for (const c of ativos) {
+    const e = etapaDoChamado(c)
+    if (e in contagem) contagem[e as keyof typeof contagem]++
+  }
+  const exibidos = filtro ? ativos.filter(c => etapaDoChamado(c) === filtro) : ativos
+  const primeiraEtapa = exibidos[0] ? etapaDoChamado(exibidos[0]) : null
+  const destaque = primeiraEtapa === 'ATENDIMENTO' || primeiraEtapa === 'DESLOCAMENTO' ? exibidos[0] : null
+  const demais = destaque ? exibidos.slice(1) : exibidos
+
+  // Detalhes e cards leem do MESMO cache: nao ha como divergirem.
+  const selecionado = selecao ? (todos.find(c => c.id === selecao.id) ?? selecao.reserva) : null
+
+  useEffect(() => {
+    function aoPedirAbrir(e: any) { if (e.detail?.id) setSelecao({ id: e.detail.id, reserva: e.detail }) }
+    window.addEventListener('abrir-chamado', aoPedirAbrir)
+    return () => window.removeEventListener('abrir-chamado', aoPedirAbrir)
+  }, [])
+
+  // Chamado aberto nos detalhes saiu da lista (gestao reatribuiu/cancelou): avisa e fecha.
+  useEffect(() => {
+    if (!selecao || !data || isFetching || emEnvioRef.current) return
+    const existe = todos.some(c => c.id === selecao.id)
+    if (!existe && selecao.reserva?.status !== 'FINALIZADO') {
+      toast({ title: 'Este chamado não está mais na sua lista.', variant: 'default' })
+      setSelecao(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, isFetching])
+
+  // Unica porta de saida para alterar um chamado (card e detalhes usam a mesma): trava cliques
+  // repetidos, so confirma depois da resposta do servidor e mantem tudo como estava se falhar.
+  const avancar = useCallback<(chamado: any, ...r: Parameters<AvancarChamado>) => Promise<any | null>>(
+    async (chamado, status, extra = {}, opcoes = {}) => {
+      if (emEnvioRef.current) return null
+      emEnvioRef.current = true
+      setEmEnvioId(chamado.id)
+      try {
+        const res = await fetch(`/api/tickets/${chamado.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, ...extra }),
+        })
+        const corpo = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(corpo?.error || 'Não foi possível atualizar o chamado. Tente novamente.')
+
+        // O servidor confirmou: reflete NA HORA no cache (card, detalhes, contadores e posicao).
+        queryClient.setQueryData(['meus-chamados'], (antigo: any) =>
+          antigo ? { ...antigo, data: mesclarChamadoNaLista(antigo.data ?? [], chamado.id, corpo) } : antigo)
+        setSelecao(s => (s && s.id === chamado.id ? { ...s, reserva: { ...s.reserva, ...corpo } } : s))
+        toast({ title: opcoes.sucesso ?? MENSAGENS[status], variant: 'success' })
+
+        // E confirma com o servidor (relacionamentos, concluidos de hoje, telas da gestao).
+        for (const k of ['meus-chamados', 'meus-chamados-resumo', 'teams', 'agenda', 'chamados-lista', 'chamados-resumo', 'dashboard-stats']) {
+          queryClient.invalidateQueries({ queryKey: [k] })
+        }
+        return corpo
+      } catch (e: any) {
+        // Falha (inclusive de rede): nada muda na tela e o tecnico pode tentar de novo.
+        toast({ title: e?.message === 'Failed to fetch' ? 'Sem conexão. Tente novamente.' : (e?.message || 'Erro ao atualizar chamado'), variant: 'destructive' })
+        return null
+      } finally {
+        emEnvioRef.current = false
+        setEmEnvioId(null)
+      }
+    },
+    [queryClient],
   )
 
-  const aguardando = chamados.filter((c: any) => c.status === 'ABERTO')
-  const emAndamento = chamados.filter((c: any) => c.status === 'EM_ANDAMENTO')
-  const chamadosExibidos = filtroStatus ? chamados.filter((c: any) => c.status === filtroStatus) : chamados
-
-  const agendados = (data?.data ?? [])
-    .filter((c: any) => c.status === 'AGENDADO' && c.dataAgendada)
-    .sort((a: any, b: any) => new Date(a.dataAgendada).getTime() - new Date(b.dataAgendada).getTime())
-
-  // Acao rapida do card: avanca o chamado uma etapa (a caminho -> iniciar
-  // atendimento) sem precisar abrir o modal completo. Mesmo endpoint/mesma
-  // regra de negocio usada dentro do ModalAtendimento.
-  async function avancarStatusRapido(chamado: any, e: React.MouseEvent) {
-    e.stopPropagation()
-    const proximoStatus = !chamado.dataACaminho ? 'ABERTO' : 'EM_ANDAMENTO'
-    setAcaoRapidaId(chamado.id)
-    try {
-      const res = await fetch(`/api/tickets/${chamado.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: proximoStatus }),
-      })
-      if (!res.ok) throw new Error()
-      toast({ title: proximoStatus === 'ABERTO' ? 'A caminho registrado!' : 'Atendimento iniciado!', variant: 'success' })
-      refetch()
-    } catch {
-      toast({ title: 'Erro ao atualizar chamado', variant: 'destructive' })
-    } finally {
-      setAcaoRapidaId(null)
-    }
-  }
-
-  const navLinks = [
-    { href: '/meus-chamados', label: 'Meus Chamados', icon: ClipboardList, active: true },
-    { href: '/meu-carro',     label: 'Meu Carro / Estoque', icon: Truck },
-    { href: '/mapa-inmap',    label: 'InMap / Rotas', icon: Map },
-    { href: '/ponto',         label: 'Ponto', icon: Clock },
+  const tiles: { chave: Exclude<FiltroEtapa, ''>; rotulo: string; icone: React.ElementType; cor: string }[] = [
+    { chave: 'AGUARDANDO', rotulo: 'Aguardando', icone: Clock, cor: 'bg-tema-contraste/[0.07] text-tema-suave' },
+    { chave: 'DESLOCAMENTO', rotulo: 'Em deslocamento', icone: Truck, cor: 'bg-blue-500/10 text-blue-600' },
+    { chave: 'ATENDIMENTO', rotulo: 'Em atendimento', icone: Zap, cor: 'bg-orange-500/10 text-orange-600' },
   ]
+  const atalhoMobileEscondido = 'hidden sm:inline-flex w-11 h-11 items-center justify-center rounded-xl border border-tema-linha bg-tema-superficie text-tema-suave hover:text-orange-700 hover:bg-orange-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40' // no celular a barra de cima ja tem esses links
+  const atalho = 'w-11 h-11 inline-flex items-center justify-center rounded-xl border border-tema-linha bg-tema-superficie text-tema-suave hover:text-orange-700 hover:bg-orange-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
+  const renderCard = (c: any, destacar = false) => (
+    <CardChamadoTecnico
+      key={c.id}
+      chamado={c}
+      agora={agora}
+      destaque={destacar}
+      enviando={emEnvioId === c.id}
+      bloqueado={emEnvioId !== null}
+      onAbrir={() => setSelecao({ id: c.id, reserva: c })}
+      onAvancar={status => avancar(c, status)}
+    />
+  )
 
   return (
-    <div className="min-h-screen bg-tema-fundo lg:flex lg:items-start">
-
-      {/* Sidebar - desktop/tablet largo */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-[230px] lg:flex-shrink-0 lg:sticky lg:top-0 lg:min-h-screen bg-tema-superficie border-r border-tema-linha p-3.5 gap-4">
-        <div className="flex items-center gap-2.5 px-1">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 text-white font-extrabold text-sm flex items-center justify-center flex-shrink-0">
-            {getInitials(session.user?.name || 'T')}
-          </div>
+    <TecnicoShell session={session} ativo="chamados">
+      <div className="space-y-4">
+        {/* Titulo + atalhos compactos */}
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-tema-tinta font-extrabold text-sm truncate">
-              Ola, {session.user?.name?.split(' ')[0]}!
-            </p>
-            <p className="text-tema-apagado text-[11px] font-mono">{agora}</p>
-          </div>
-        </div>
-
-        {situacaoHojeCfg && (
-          <span className={cn('flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-full border w-fit', situacaoHojeCfg.cor, situacaoHojeCfg.bg)}>
-            <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', situacaoHojeCfg.dot)} />
-            {situacaoHoje}
-          </span>
-        )}
-
-        <nav className="flex flex-col gap-0.5">
-          {navLinks.map(nav => (
-            <Link
-              key={nav.href}
-              href={nav.href}
-              className={cn(
-                'flex items-center gap-2.5 px-3 py-2.5 rounded-[11px] text-sm font-semibold transition-colors',
-                nav.active ? 'bg-orange-50 text-orange-700' : 'text-tema-suave hover:bg-tema-contraste/[0.03] hover:text-tema-tinta'
-              )}
-            >
-              <nav.icon className={cn('w-4 h-4 flex-shrink-0', nav.active ? 'text-orange-700' : 'text-tema-apagado')} />
-              {nav.label}
-            </Link>
-          ))}
-        </nav>
-
-        <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="mt-auto flex items-center gap-2.5 px-3 py-2.5 rounded-[11px] text-sm font-bold text-red-700 hover:bg-red-500/5 transition-colors"
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          Sair do Sistema
-        </button>
-      </aside>
-
-      <div className="flex-1 min-w-0 flex flex-col">
-
-        {/* Barra superior - celular / tablet estreito */}
-        <header className="lg:hidden sticky top-0 z-20 bg-tema-superficie border-b border-tema-linha">
-          <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2.5">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
-                {getInitials(session.user?.name || 'T')}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-tema-tinta font-bold text-base truncate">
-                  Ola, {session.user?.name?.split(' ')[0]}!
-                </p>
-                <p className="text-tema-apagado text-xs font-mono">{agora}</p>
-              </div>
-            </div>
-            {situacaoHojeCfg && (
-              <span className={cn('flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-full border flex-shrink-0', situacaoHojeCfg.cor, situacaoHojeCfg.bg)}>
-                <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', situacaoHojeCfg.dot)} />
-                {situacaoHoje}
-              </span>
+            <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Meus chamados</h1>
+            {dataUpdatedAt > 0 && (
+              <p className="text-xs text-tema-apagado">Atualizado às {new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
             )}
           </div>
-
-          <div className="flex items-center gap-1.5 px-2 pb-2.5 overflow-x-auto">
-            {navLinks.map(nav => (
-              <Link
-                key={nav.href}
-                href={nav.href}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 border transition-colors',
-                  nav.active ? 'bg-orange-50 text-orange-700 border-orange-500/30' : 'bg-tema-contraste/[0.02] text-tema-suave border-tema-linha hover:text-tema-tinta'
-                )}
-              >
-                <nav.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                {nav.label}
-              </Link>
-            ))}
-            <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 border border-tema-linha bg-tema-contraste/[0.02] text-red-700"
-            >
-              <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
-              Sair
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/ponto" className={atalhoMobileEscondido} title="Bater ponto" aria-label="Bater ponto"><Clock className="w-5 h-5" aria-hidden /></Link>
+            <Link href="/meu-carro" className={atalhoMobileEscondido} title="Meu carro" aria-label="Meu carro"><Truck className="w-5 h-5" aria-hidden /></Link>
+            <Link href="/mapa-inmap" className={atalhoMobileEscondido} title="Mapa e rotas" aria-label="Mapa e rotas"><Map className="w-5 h-5" aria-hidden /></Link>
+            <button type="button" onClick={() => refetch()} disabled={isFetching} className={atalho} title="Atualizar" aria-label="Atualizar chamados">
+              <RefreshCw className={cn('w-5 h-5', isFetching && 'animate-spin')} aria-hidden />
             </button>
           </div>
-        </header>
-
-        {/* Conteudo */}
-        <main className="p-4 lg:p-6 w-full animate-fade-in">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-5 items-start">
-
-          {/* Coluna principal */}
-          <div className="space-y-5 min-w-0">
-
-            {/* Resumo - clicavel, filtra a lista abaixo */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <button
-                onClick={() => setFiltroStatus(f => f === 'ABERTO' ? '' : 'ABERTO')}
-                className={cn(
-                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97]',
-                  filtroStatus === 'ABERTO' ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-tema-linha hover:border-blue-500/30'
-                )}
-              >
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center mb-2">
-                  <Clock className="w-3.5 h-3.5 text-blue-700" />
-                </div>
-                <p className="text-xl font-bold text-blue-700">{aguardando.length}</p>
-                <span className="text-[11px] text-tema-apagado">Aguardando</span>
-              </button>
-              <button
-                onClick={() => setFiltroStatus(f => f === 'EM_ANDAMENTO' ? '' : 'EM_ANDAMENTO')}
-                className={cn(
-                  'text-left bg-tema-superficie border rounded-xl p-3 transition-all active:scale-[0.97]',
-                  filtroStatus === 'EM_ANDAMENTO' ? 'border-emerald-500/50 ring-1 ring-emerald-500/30' : 'border-tema-linha hover:border-emerald-500/30'
-                )}
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-2">
-                  <Zap className="w-3.5 h-3.5 text-emerald-700" />
-                </div>
-                <p className="text-xl font-bold text-emerald-700">{emAndamento.length}</p>
-                <span className="text-[11px] text-tema-apagado">Em Atendimento</span>
-              </button>
-              <div className="bg-tema-superficie border border-tema-linha rounded-xl p-3">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center mb-2">
-                  <Calendar className="w-3.5 h-3.5 text-purple-700" />
-                </div>
-                <p className="text-xl font-bold text-purple-700">{agendados.length}</p>
-                <span className="text-[11px] text-tema-apagado">Agendados</span>
-              </div>
-            </div>
-
-            {/* Titulo */}
-            <div className="flex items-center justify-between">
-              <h1 className="text-lg font-bold text-tema-tinta flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-orange-600" />
-                Meus Chamados
-                {filtroStatus && (
-                  <button
-                    onClick={() => setFiltroStatus('')}
-                    className="text-[11px] font-normal text-tema-suave hover:text-tema-tinta bg-tema-contraste/[0.03] px-2 py-0.5 rounded-full"
-                  >
-                    {STATUS_CFG[filtroStatus].label} · limpar
-                  </button>
-                )}
-              </h1>
-              <button onClick={() => refetch()} className="text-tema-apagado hover:text-tema-tinta">
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Lista de chamados */}
-            <div className="space-y-3">
-              {isLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-32 skeleton rounded-xl" />
-                  ))
-                : chamadosExibidos.length === 0
-                ? (
-                  <div className="bg-tema-superficie border border-tema-linha rounded-xl p-8 text-center">
-                    <CheckCircle className="w-12 h-12 text-emerald-600/50 mx-auto mb-3" />
-                    <p className="text-tema-tinta font-medium">{filtroStatus ? 'Nenhum chamado nesse status' : 'Nenhum chamado pendente'}</p>
-                    <p className="text-tema-apagado text-sm mt-1">{filtroStatus ? 'Tente limpar o filtro acima.' : 'Voce esta com a agenda livre!'}</p>
-                  </div>
-                )
-                : chamadosExibidos.map((chamado: any) => {
-                    const prioridade = detectarPrioridade(chamado.observacao)
-                    const pCfg = PRIORIDADE_CFG[prioridade]
-                    const sCfg = STATUS_CFG[chamado.status] || STATUS_CFG.ABERTO
-                    const StatusIcon = sCfg.icon
-                    const obs = limparObservacao(chamado.observacao)
-                    const enderecoLimpo = formatarEnderecoCompleto(chamado)
-                    const acaoRapidaLabel = !chamado.dataACaminho ? 'A Caminho' : 'Iniciar'
-                    const AcaoRapidaIcon = !chamado.dataACaminho ? Truck : Zap
-
-                    return (
-                      <div
-                        key={chamado.id}
-                        onClick={() => setChamadoAberto(chamado)}
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChamadoAberto(chamado) } }}
-                        role="button"
-                        tabIndex={0}
-                        className={cn(
-                          'relative overflow-hidden w-full text-left bg-tema-superficie border rounded-xl p-4 pl-5 transition-all active:scale-[0.99] hover:border-tema-linha-forte cursor-pointer',
-                          prioridade === 'CRITICO' ? 'border-red-500/40' :
-                          prioridade === 'URGENTE' ? 'border-amber-500/30' :
-                          'border-tema-linha'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'absolute left-0 top-0 bottom-0 w-1',
-                            prioridade === 'CRITICO' ? 'bg-red-500' :
-                            prioridade === 'URGENTE' ? 'bg-amber-500' :
-                            sCfg.cor.replace('text-', 'bg-')
-                          )}
-                        />
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-tema-tinta font-bold">{chamado.cliente}</h3>
-                            <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
-                              {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
-                            </span>
-                            {prioridade !== 'NORMAL' && (
-                              <span className={cn('text-xs px-2 py-0.5 rounded-full border font-bold', pCfg.cor, pCfg.bg)}>
-                                {pCfg.label}
-                              </span>
-                            )}
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-tema-apagado flex-shrink-0" />
-                        </div>
-
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <StatusIcon className={cn('w-3.5 h-3.5', sCfg.cor)} />
-                          <span className={cn('text-xs font-medium', sCfg.cor)}>{sCfg.label}</span>
-                          <span className={cn('text-xs ml-2 font-medium', corTempoEspera(chamado.createdAt))}>
-                            {timeAgo(chamado.createdAt)}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1">
-                          {enderecoLimpo && (
-                            <p className="text-sm text-tema-texto flex items-center gap-1.5">
-                              <MapPin className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
-                              {enderecoLimpo}
-                            </p>
-                          )}
-                          {chamado.telefone && (
-                            <p className="text-sm text-tema-suave flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
-                              {chamado.telefone}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 mt-3 flex-wrap">
-                          {chamado.subCategoria && (
-                            <span className="text-xs px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-700 font-medium">
-                              {chamado.subCategoria}
-                            </span>
-                          )}
-                          {chamado.materiaisReservados?.length > 0 && (
-                            <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-700 rounded-full">
-                              {chamado.materiaisReservados.length} material(is)
-                            </span>
-                          )}
-                        </div>
-
-                        {obs && (
-                          <p className="text-xs text-tema-apagado italic mt-2 line-clamp-2">{obs}</p>
-                        )}
-
-                        {/* Resumo do diagnostico remoto do NOC - so uma tarja
-                            informativa, o detalhe completo fica no modal de
-                            atendimento (nao ha expand/collapse neste card). */}
-                        {chamado.diagnosticos?.[0] && (
-                          <div className="flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded-lg text-xs bg-cyan-600/5 border border-cyan-600/15">
-                            <Brain className="w-3.5 h-3.5 text-cyan-700 flex-shrink-0" />
-                            <span className="text-tema-texto font-medium">
-                              Diagnostico NOC: {CLASSIFICACAO_LABEL[chamado.diagnosticos[0].classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? chamado.diagnosticos[0].classificacao}
-                            </span>
-                            {chamado.diagnosticos[0].confianca != null && (
-                              <span className="text-tema-apagado">({chamado.diagnosticos[0].confianca}%)</span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Acoes rapidas do card - nao abrem o modal (stopPropagation) */}
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-tema-linha">
-                          <a
-                            href={linkGoogleMaps(chamado)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-tema-contraste/[0.02] hover:bg-blue-500/10 border border-tema-linha hover:border-blue-500/30 rounded-lg text-xs font-medium text-tema-suave hover:text-blue-700 transition-colors"
-                          >
-                            <Navigation className="w-3.5 h-3.5" /> Navegar
-                          </a>
-                          {chamado.telefone && (
-                            <a
-                              href={linkWhatsApp(chamado.telefone)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-tema-contraste/[0.02] hover:bg-emerald-500/10 border border-tema-linha hover:border-emerald-500/30 rounded-lg text-xs font-medium text-tema-suave hover:text-emerald-700 transition-colors"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" /> Contatar
-                            </a>
-                          )}
-                          {chamado.status === 'ABERTO' && (
-                            <button
-                              onClick={e => avancarStatusRapido(chamado, e)}
-                              disabled={acaoRapidaId === chamado.id}
-                              className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 rounded-lg text-xs font-bold text-orange-700 transition-colors disabled:opacity-50"
-                            >
-                              {acaoRapidaId === chamado.id
-                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                : <AcaoRapidaIcon className="w-3.5 h-3.5" />}
-                              {acaoRapidaLabel}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-            </div>
-
-            {/* Meus Agendamentos - chamados com horario definido, ainda nao liberados para atendimento */}
-            {agendados.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-lg font-bold text-tema-tinta flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-600" />
-                  Meus Agendamentos
-                </h2>
-                <div className="space-y-2">
-                  {agendados.map((chamado: any) => (
-                    <div key={chamado.id} className="bg-tema-superficie border border-purple-500/20 rounded-xl p-4">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-sm font-bold text-purple-700">{formatarDataAgendada(chamado.dataAgendada)}</span>
-                        <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.03] rounded-full text-tema-suave">
-                          {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
-                        </span>
-                      </div>
-                      <p className="text-tema-tinta font-medium">{chamado.cliente}</p>
-                      {formatarEnderecoCompleto(chamado) && (
-                        <p className="text-sm text-tema-suave flex items-center gap-1.5 mt-1">
-                          <MapPin className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0" />
-                          {formatarEnderecoCompleto(chamado)}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Coluna lateral - Painel Operacional */}
-          <aside className="space-y-4 lg:sticky lg:top-20">
-            <div className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
-              <h2 className="text-xs font-bold text-tema-suave uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-orange-600" /> Acoes Rapidas
-              </h2>
-              <div className="grid grid-cols-2 gap-2.5">
-                <Link
-                  href="/ponto"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-emerald-500/10 border border-tema-linha hover:border-emerald-500/30 rounded-xl text-tema-suave hover:text-emerald-700 transition-colors text-center"
-                >
-                  <Clock className="w-5 h-5" />
-                  <span className="text-xs font-medium">Bater Ponto</span>
-                </Link>
-                <Link
-                  href="/meu-carro"
-                  className="flex flex-col items-center gap-1.5 py-4 bg-tema-contraste/[0.02] hover:bg-blue-500/10 border border-tema-linha hover:border-blue-500/30 rounded-xl text-tema-suave hover:text-blue-700 transition-colors text-center"
-                >
-                  <Truck className="w-5 h-5" />
-                  <span className="text-xs font-medium">Meu Carro</span>
-                </Link>
-              </div>
-            </div>
-          </aside>
         </div>
-        </main>
+
+        {/* Resumo por status (os tres primeiros filtram a lista) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {tiles.map(t => {
+            const Icone = t.icone
+            const ativo = filtro === t.chave
+            return (
+              <button
+                key={t.chave}
+                type="button"
+                onClick={() => setFiltro(f => (f === t.chave ? '' : t.chave))}
+                aria-pressed={ativo}
+                className={cn(
+                  'text-left rounded-2xl border bg-tema-superficie p-3 min-h-[76px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+                  ativo ? 'border-orange-500' : 'border-tema-linha hover:border-tema-linha-forte'
+                )}
+                style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', t.cor)}><Icone className="w-4 h-4" aria-hidden /></span>
+                  <span className="text-2xl font-bold tabular-nums text-tema-tinta">{isLoading ? '·' : isError && !data ? '—' : contagem[t.chave]}</span>
+                </span>
+                <span className="block text-xs text-tema-suave mt-1.5">{t.rotulo}</span>
+              </button>
+            )
+          })}
+          <div className="rounded-2xl border border-tema-linha bg-tema-superficie p-3 min-h-[76px]" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }} title="Chamados que você concluiu hoje">
+            <span className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-500/10 text-emerald-600"><CheckCircle className="w-4 h-4" aria-hidden /></span>
+              <span className="text-2xl font-bold tabular-nums text-tema-tinta">{resumo ? resumo.concluidosHoje : erroResumo ? '—' : '·'}</span>
+            </span>
+            <span className="block text-xs text-tema-suave mt-1.5">Concluídos hoje</span>
+          </div>
+        </div>
+
+        {isError && data && (
+          <p role="status" className="flex items-center gap-2 text-xs rounded-xl border border-amber-500/25 bg-amber-500/[0.08] text-amber-800 px-3 py-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" aria-hidden />
+            Sem conexão com o servidor. Mostrando os dados de {new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.
+          </p>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-3" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-48 skeleton rounded-2xl" />)}</div>
+        ) : isError && !data ? (
+          <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
+            <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+            <p className="font-semibold text-tema-tinta">Não foi possível carregar os chamados</p>
+            <button type="button" onClick={() => refetch()} className="mt-4 min-h-[44px] px-5 rounded-xl border border-tema-linha text-sm font-semibold text-tema-tinta hover:bg-tema-contraste/[0.04]">Tentar novamente</button>
+          </div>
+        ) : exibidos.length === 0 ? (
+          <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
+            <CheckCircle className="w-10 h-10 text-emerald-600/50 mx-auto mb-3" aria-hidden />
+            <p className="font-semibold text-tema-tinta">{filtro ? 'Nenhum chamado nessa etapa' : 'Nenhum chamado em aberto'}</p>
+            <p className="text-sm text-tema-suave mt-1">{filtro ? 'Toque no filtro de novo para ver todos.' : 'Sua agenda está livre.'}</p>
+          </div>
+        ) : (
+          <>
+            {destaque && (
+              <section aria-label="Chamado em andamento" className="space-y-2">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-orange-700">Em andamento</h2>
+                {renderCard(destaque, true)}
+              </section>
+            )}
+            {demais.length > 0 && (
+              <section aria-label="Demais chamados" className="space-y-2">
+                {destaque && <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave">Próximos</h2>}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">{demais.map(c => renderCard(c))}</div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Agendados: com horario marcado, ainda nao liberados para atendimento */}
+        {agendados.length > 0 && (
+          <section aria-label="Meus agendamentos" className="space-y-2 pt-2">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" aria-hidden /> Agendamentos ({agendados.length})
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              {agendados.map(c => (
+                <div key={c.id} className="rounded-xl border border-tema-linha bg-tema-superficie p-3" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-sm font-bold text-orange-700">{formatarDataAgendada(c.dataAgendada)}</span>
+                    <span className="text-xs px-2 py-0.5 bg-tema-contraste/[0.06] rounded-full text-tema-suave">{TIPO_CHAMADO_LABELS[c.tipo as TipoChamado]}</span>
+                  </div>
+                  <p className="text-sm font-semibold text-tema-tinta">{c.cliente}</p>
+                  {formatarEnderecoCompleto(c) && (
+                    <p className="text-xs text-tema-suave flex items-start gap-1.5 mt-0.5 break-words"><MapPin className="w-3.5 h-3.5 text-tema-apagado flex-shrink-0 mt-0.5" aria-hidden />{formatarEnderecoCompleto(c)}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
-      {/* Modal de atendimento */}
-      {chamadoAberto && (
+      {selecionado && (
         <ModalAtendimento
-          chamado={chamadoAberto}
-          onClose={() => setChamadoAberto(null)}
+          key={selecionado.id}
+          chamado={selecionado}
+          onClose={() => setSelecao(null)}
+          onAvancar={(status, extra, opcoes) => avancar(selecionado, status, extra, opcoes)}
+          enviando={emEnvioId === selecionado.id}
         />
       )}
-    </div>
+    </TecnicoShell>
   )
 }
