@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Settings, Save, Shield, Bell,
   Map, Clock, Package, Users, Palette,
-  ChevronRight, CheckCircle, Loader2, Lock
+  ChevronRight, Loader2, Lock, AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -17,7 +17,7 @@ interface Props { session: Session }
 
 async function fetchSettings() {
   const res = await fetch('/api/settings')
-  if (!res.ok) return {}
+  if (!res.ok) throw new Error('Erro ao carregar configuracoes')
   return res.json()
 }
 
@@ -39,9 +39,19 @@ export function SettingsView({ session }: Props) {
   const role = (session.user as any)?.role
   const isAdmin = role === 'ADMIN'
 
-  const { data: configs = {} } = useQuery({
+  const { data: configs = {}, isLoading, isError, refetch } = useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
+  })
+  // Versao real do sistema (mesma consulta do rodape do Dashboard).
+  const { data: servidor } = useQuery({
+    queryKey: ['dashboard-servidor'],
+    queryFn: async () => {
+      const res = await fetch('/api/dashboard/servidor')
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    staleTime: 60000,
   })
 
   useEffect(() => {
@@ -76,47 +86,55 @@ export function SettingsView({ session }: Props) {
   ]
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-tema-tinta">Configuracoes</h1>
-          <p className="text-tema-apagado text-sm mt-1">Gerencie as configuracoes do sistema</p>
-        </div>
-        {isAdmin && (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Configurações</h1>
+        {isAdmin && !isError && (
           <button
+            type="button"
             onClick={() => mutation.mutate(form)}
-            disabled={mutation.isPending}
-            className="gts-btn-primary"
+            disabled={mutation.isPending || isLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
           >
             {mutation.isPending
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
-              : <><Save className="w-4 h-4" /> Salvar Alteracoes</>
+              ? <><Loader2 className="w-4 h-4 animate-spin" aria-hidden /> Salvando...</>
+              : <><Save className="w-4 h-4" aria-hidden /> Salvar alterações</>
             }
           </button>
         )}
       </div>
 
       {!isAdmin && (
-        <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/25 rounded-xl">
-          <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+        <div className="flex items-center gap-3 p-4 bg-amber-500/[0.08] border border-amber-500/25 rounded-xl">
+          <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" aria-hidden />
           <p className="text-amber-700 text-sm">
-            Voce esta no modo leitura. Apenas o Administrador pode alterar as configuracoes.
+            Você está no modo leitura. Apenas o Administrador pode alterar as configurações.
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {isError ? (
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar as configurações</p>
+          <p className="text-sm text-tema-suave mt-1">Por segurança, o botão de salvar fica desativado até a leitura funcionar.</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Menu lateral */}
-        <div className="gts-card p-2 space-y-1 h-fit">
+        <div className="card-orbia p-2 space-y-1 h-fit" role="tablist" aria-label="Seções de configurações" aria-orientation="vertical">
           {abas.map(a => {
             const Icon = a.icon
             return (
               <button
                 key={a.id}
+                type="button"
+                role="tab"
+                aria-selected={aba === a.id}
                 onClick={() => setAba(a.id)}
                 className={cn(
-                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                   aba === a.id
                     ? 'bg-orange-500/10 text-orange-700'
                     : 'text-tema-suave hover:text-tema-tinta hover:bg-tema-contraste/[0.04]'
@@ -138,12 +156,12 @@ export function SettingsView({ session }: Props) {
           {/* ABA GERAL */}
           {aba === 'geral' && (
             <div className="space-y-4">
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Settings className="w-4 h-4 text-orange-400" />
                   Informacoes da Empresa
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Nome da Empresa</label>
                     <input value={get('empresa_nome', 'GTSNet')} onChange={e => set('empresa_nome', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50" />
@@ -160,19 +178,19 @@ export function SettingsView({ session }: Props) {
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Email</label>
                     <input value={get('empresa_email', '')} onChange={e => set('empresa_email', e.target.value)} disabled={!isAdmin} placeholder="contato@empresa.com.br" className="w-full gts-input disabled:opacity-50" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Endereco</label>
                     <input value={get('empresa_endereco', '')} onChange={e => set('empresa_endereco', e.target.value)} disabled={!isAdmin} placeholder="Rua, numero, cidade - UF" className="w-full gts-input disabled:opacity-50" />
                   </div>
                 </div>
               </div>
 
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Clock className="w-4 h-4 text-orange-400" />
                   Sistema
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Fuso Horario</label>
                     <select value={get('sistema_timezone', 'America/Sao_Paulo')} onChange={e => set('sistema_timezone', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50">
@@ -198,12 +216,12 @@ export function SettingsView({ session }: Props) {
           {/* ABA OPERACIONAL */}
           {aba === 'operacional' && (
             <div className="space-y-4">
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Users className="w-4 h-4 text-orange-400" />
                   Chamados e Equipes
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">SLA Padrao (horas)</label>
                     <input type="number" value={get('sla_horas', '24')} onChange={e => set('sla_horas', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50" />
@@ -223,12 +241,12 @@ export function SettingsView({ session }: Props) {
                 </div>
               </div>
 
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Package className="w-4 h-4 text-orange-400" />
                   Estoque
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Estoque Minimo Padrao</label>
                     <input type="number" value={get('estoque_minimo_padrao', '5')} onChange={e => set('estoque_minimo_padrao', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50" />
@@ -248,12 +266,12 @@ export function SettingsView({ session }: Props) {
           {/* ABA ALERTAS */}
           {aba === 'alertas' && (
             <div className="space-y-4">
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Map className="w-4 h-4 text-orange-400" />
                   Rastreamento e Velocidade
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Limite de Velocidade (km/h)</label>
                     <input type="number" value={get('velocidade_alerta', '80')} onChange={e => set('velocidade_alerta', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50" />
@@ -265,7 +283,7 @@ export function SettingsView({ session }: Props) {
                 </div>
               </div>
 
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Bell className="w-4 h-4 text-orange-400" />
                   Notificacoes
@@ -284,6 +302,10 @@ export function SettingsView({ session }: Props) {
                         <p className="text-xs text-tema-apagado">{item.desc}</p>
                       </div>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={get(item.key, '1') === '1'}
+                        aria-label={item.label}
                         onClick={() => isAdmin && set(item.key, get(item.key, '1') === '1' ? '0' : '1')}
                         className={cn(
                           'relative w-11 h-6 rounded-full transition-colors',
@@ -306,12 +328,12 @@ export function SettingsView({ session }: Props) {
           {/* ABA APARENCIA */}
           {aba === 'aparencia' && (
             <div className="space-y-4">
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Palette className="w-4 h-4 text-orange-400" />
                   Identidade Visual
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Cor Principal</label>
                     <div className="flex gap-2">
@@ -345,7 +367,7 @@ export function SettingsView({ session }: Props) {
                 </div>
               </div>
 
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Settings className="w-4 h-4 text-orange-400" />
                   Interface
@@ -360,6 +382,10 @@ export function SettingsView({ session }: Props) {
                     <div key={item.key} className="flex items-center justify-between p-3 bg-tema-contraste/[0.02] rounded-lg border border-tema-linha">
                       <p className="text-sm text-tema-tinta">{item.label}</p>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={get(item.key, '1') === '1'}
+                        aria-label={item.label}
                         onClick={() => isAdmin && set(item.key, get(item.key, '1') === '1' ? '0' : '1')}
                         className={cn(
                           'relative w-11 h-6 rounded-full transition-colors',
@@ -382,7 +408,7 @@ export function SettingsView({ session }: Props) {
           {/* ABA SEGURANCA */}
           {aba === 'seguranca' && (
             <div className="space-y-4">
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Shield className="w-4 h-4 text-orange-400" />
                   Informacoes da Sessao
@@ -401,12 +427,12 @@ export function SettingsView({ session }: Props) {
                 </div>
               </div>
 
-              <div className="gts-card space-y-4">
+              <div className="card-orbia p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
                   <Lock className="w-4 h-4 text-orange-400" />
                   Acesso ao Sistema
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-tema-suave mb-1.5">Tempo de Sessao (horas)</label>
                     <input type="number" value={get('sessao_horas', '8')} onChange={e => set('sessao_horas', e.target.value)} disabled={!isAdmin} className="w-full gts-input disabled:opacity-50" />
@@ -424,6 +450,10 @@ export function SettingsView({ session }: Props) {
                     <div key={item.key} className="flex items-center justify-between p-3 bg-tema-contraste/[0.02] rounded-lg border border-tema-linha">
                       <p className="text-sm text-tema-tinta">{item.label}</p>
                       <button
+                        type="button"
+                        role="switch"
+                        aria-checked={get(item.key, '1') === '1'}
+                        aria-label={item.label}
                         onClick={() => isAdmin && set(item.key, get(item.key, '1') === '1' ? '0' : '1')}
                         className={cn(
                           'relative w-11 h-6 rounded-full transition-colors',
@@ -441,23 +471,18 @@ export function SettingsView({ session }: Props) {
                 </div>
               </div>
 
-              <div className="gts-card">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-tema-tinta">GTS Operations Center</p>
-                    <p className="text-xs text-tema-apagado mt-1">Versao 1.0.0 — GTSNet © {new Date().getFullYear()}</p>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-xs text-emerald-700 font-medium">Sistema OK</span>
-                  </div>
-                </div>
+              <div className="card-orbia p-5">
+                <p className="text-sm font-semibold text-tema-tinta">Orbia</p>
+                <p className="text-xs text-tema-suave mt-1">
+                  Versão {servidor?.versao ?? '—'} · GTSNet © {new Date().getFullYear()}
+                </p>
               </div>
             </div>
           )}
 
         </div>
       </div>
+      )}
     </div>
   )
 }

@@ -296,17 +296,14 @@ export function ReportsView() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-tema-tinta">Relatorios</h1>
-        <p className="text-tema-apagado text-sm mt-1">Gere relatorios PDF profissionais com logo e cabecalho - confira e corrija os dados antes de gerar</p>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Relatórios</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Painel de configuracao */}
         <div className="space-y-4">
           {/* Tipo */}
-          <div className="gts-card space-y-3">
+          <div className="card-orbia p-4 space-y-3">
             <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
               <FileText className="w-4 h-4 text-orange-600" />
               Tipo de Relatorio
@@ -338,7 +335,7 @@ export function ReportsView() {
           </div>
 
           {/* Filtros */}
-          <div className="gts-card space-y-4">
+          <div className="card-orbia p-4 space-y-4">
             <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2">
               <Calendar className="w-4 h-4 text-orange-600" />
               Parametros
@@ -445,7 +442,7 @@ export function ReportsView() {
 
         {/* Preview / revisao editavel */}
         <div className="lg:col-span-2">
-          <div className="gts-card h-full">
+          <div className="card-orbia p-5 h-full">
             <div className="flex items-center gap-3 mb-6">
               <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', relatorioAtual.cor.split(' ')[1])}>
                 <relatorioAtual.icon className={cn('w-5 h-5', relatorioAtual.cor.split(' ')[0])} />

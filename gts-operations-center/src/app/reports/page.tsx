@@ -11,7 +11,7 @@ export default async function ReportsPage() {
   const session = await auth()
   if (!session) redirect('/login')
   return (
-    <AppShell title="Relatórios">
+    <AppShell variante="orbia" paginaAtual="Relatórios">
       <ReportsView />
     </AppShell>
   )

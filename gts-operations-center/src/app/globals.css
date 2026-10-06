@@ -364,3 +364,11 @@ html:not(.dark) .dash-orbia {
   background: rgb(var(--c-superficie));
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
+
+/* Dentro do shell Orbia, os cards antigos (.gts-card) das abas ainda nao migradas
+   ganham o mesmo acabamento: fundo solido e sombra discreta. */
+.dash-orbia .gts-card {
+  backdrop-filter: none;
+  background: rgb(var(--c-superficie));
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}

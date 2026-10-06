@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Package, ArrowLeftRight, RotateCcw, Plus,
@@ -7,7 +7,7 @@ import {
   RefreshCw, ChevronLeft, ChevronRight,
   ArrowUpCircle, ArrowDownCircle, Edit2, Trash2, PackageMinus, History,
   CheckCircle, XCircle, Clock,
-  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode, ClipboardCheck
+  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode, ClipboardCheck, MoreHorizontal
 } from 'lucide-react'
 import { cn, formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { CATEGORIA_LABELS, type CategoriaEstoque } from '@/types'
@@ -29,7 +29,6 @@ import { EntradaBipadaModal } from './EntradaBipadaModal'
 import { PAPEIS_ENTRADA_BIPADA } from '@/lib/estoqueBipado'
 import { podeUsarEstoqueIU } from '@/lib/estoqueIU'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico' | 'termos' | 'estoque-iu'
 const CATEGORIA_CORES: Record<CategoriaEstoque, string> = {
@@ -49,6 +48,8 @@ const TIPO_MOV: Record<string, { label: string; icon: React.ElementType; cls: st
 function isEstoqueBaixo(atual: number, minimo: number) {
   return minimo > 0 && atual <= minimo
 }
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
 async function fetchInventory(params: any) {
   const q = new URLSearchParams(params)
   const res = await fetch(`/api/inventory?${q}`)
@@ -154,6 +155,17 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
 export function CentralEstoque({ session }: Props) {
   const queryClient = useQueryClient()
   const [aba, setAba] = useState<Aba>('estoque')
+  // Menu "Mais acoes" do cabecalho (as acoes menos usadas ficam recolhidas).
+  const [menuAcoes, setMenuAcoes] = useState(false)
+  const menuAcoesRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menuAcoes) return
+    const fora = (e: MouseEvent) => { if (menuAcoesRef.current && !menuAcoesRef.current.contains(e.target as Node)) setMenuAcoes(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuAcoes(false) }
+    document.addEventListener('mousedown', fora)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', fora); document.removeEventListener('keydown', esc) }
+  }, [menuAcoes])
   const [search, setSearch] = useState('')
   const [categoria, setCategoria] = useState('')
   const [tipoMov, setTipoMov] = useState('')
@@ -172,7 +184,7 @@ export function CentralEstoque({ session }: Props) {
   const [itemDistribuicao, setItemDistribuicao] = useState<any>(null)
   const role = (session.user as any)?.role
   const isAdmin = role === 'ADMIN'
-  const { data: estoqueData, isLoading: loadingEstoque, refetch: refetchEstoque } = useQuery({
+  const { data: estoqueData, isLoading: loadingEstoque, isError: erroEstoque, refetch: refetchEstoque } = useQuery({
     queryKey: ['inventory', search, categoria, page],
     queryFn: () => fetchInventory({
       ...(search ? { search } : {}),
@@ -355,73 +367,90 @@ export function CentralEstoque({ session }: Props) {
   ]
 
   return (
-    <div className="space-y-5 animate-fade-in">
-
-      <PageHeader
-        title="Central de Estoque"
-        subtitle={
-          <>
-            Estoque, movimentacoes e devolucoes
-            {criticos > 0 && <span className="ml-2 text-red-700 font-medium">- {criticos} critico(s)</span>}
-            {devPendentes > 0 && <span className="ml-2 text-amber-700 font-medium">- {devPendentes} devolucao(oes) pendente(s)</span>}
-          </>
-        }
-        actions={aba === 'estoque-iu' ? undefined : (
-          <>
-            <button onClick={handleExport} className="gts-btn-secondary">
-              <Download className="w-4 h-4" />
-              Exportar
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Estoque e movimentações</h1>
+        {aba !== 'estoque-iu' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowNovoItem(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
+            >
+              <Plus className="w-4 h-4" aria-hidden />
+              Novo item
             </button>
-            <button onClick={() => setShowImportarNF(true)} className="gts-btn-secondary">
-              <Upload className="w-4 h-4" />
-              Importar Nota Fiscal
+            <button type="button" onClick={() => setShowRetirarMaterial(true)} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              <PackageMinus className="w-4 h-4" aria-hidden />
+              Retirar material
             </button>
-            <button onClick={() => setShowHistoricoRetiradas(true)} className="gts-btn-secondary">
-              <History className="w-4 h-4" />
-              Historico de Retiradas
-            </button>
-            <button onClick={() => setShowRetirarMaterial(true)} className="gts-btn-secondary">
-              <PackageMinus className="w-4 h-4" />
-              Retirar Material
-            </button>
-            <button onClick={() => setShowTransferencia(true)} className="gts-btn-secondary">
-              <ArrowLeftRight className="w-4 h-4" />
-              Transferencia
-            </button>
-            <button onClick={() => setShowRelatorioCompleto(true)} className="gts-btn-secondary">
-              <FileSpreadsheet className="w-4 h-4" />
-              Baixar Relatorio
-            </button>
-            <button onClick={() => setShowTransferenciaLocal(true)} className="gts-btn-secondary">
-              <ArrowRightLeft className="w-4 h-4" />
-              Transferir Estoque
+            <button type="button" onClick={() => setShowTransferencia(true)} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              <ArrowLeftRight className="w-4 h-4" aria-hidden />
+              Transferência
             </button>
             {PAPEIS_ENTRADA_BIPADA.includes(role) && (
-              <button onClick={() => setShowEntradaBipada(true)} className="gts-btn-secondary">
-                <ScanBarcode className="w-4 h-4" />
+              <button type="button" onClick={() => setShowEntradaBipada(true)} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+                <ScanBarcode className="w-4 h-4" aria-hidden />
                 Entrada bipada
               </button>
             )}
-            <button onClick={() => setShowNovoItem(true)} className="gts-btn-primary">
-              <Plus className="w-4 h-4" />
-              Novo Item
-            </button>
-          </>
+            <div className="relative" ref={menuAcoesRef}>
+              <button
+                type="button"
+                onClick={() => setMenuAcoes(a => !a)}
+                aria-expanded={menuAcoes}
+                aria-haspopup="menu"
+                className={BOTAO_SECUNDARIO}
+                style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
+              >
+                <MoreHorizontal className="w-4 h-4" aria-hidden />
+                Mais ações
+              </button>
+              {menuAcoes && (
+                <div role="menu" className="absolute right-0 top-full mt-2 z-30 w-64 rounded-xl border border-tema-linha bg-tema-superficie p-1.5" style={{ boxShadow: '0 8px 24px rgba(16, 24, 40, 0.12)' }}>
+                  {[
+                    { rotulo: 'Exportar', icone: Download, acao: handleExport },
+                    { rotulo: 'Importar nota fiscal', icone: Upload, acao: () => setShowImportarNF(true) },
+                    { rotulo: 'Histórico de retiradas', icone: History, acao: () => setShowHistoricoRetiradas(true) },
+                    { rotulo: 'Baixar relatório', icone: FileSpreadsheet, acao: () => setShowRelatorioCompleto(true) },
+                    { rotulo: 'Transferir estoque', icone: ArrowRightLeft, acao: () => setShowTransferenciaLocal(true) },
+                  ].map(i => {
+                    const Icone = i.icone
+                    return (
+                      <button
+                        key={i.rotulo}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { setMenuAcoes(false); i.acao() }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-tema-tinta hover:bg-tema-contraste/[0.05] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+                      >
+                        <Icone className="w-4 h-4 text-tema-suave" aria-hidden />
+                        {i.rotulo}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         )}
-      />
+      </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1">
+      <div role="tablist" aria-label="Seções do estoque" className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto">
         {abas.map(a => {
           const Icon = a.icon
           return (
             <button
               key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
               onClick={() => { setAba(a.id); setPage(1) }}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
+                '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
                 aba === a.id
-                  ? 'border-orange-600 text-orange-700'
+                  ? 'border-orange-500 text-orange-700 font-semibold'
                   : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
@@ -440,37 +469,48 @@ export function CentralEstoque({ session }: Props) {
       {/* ABA ESTOQUE */}
       {aba === 'estoque' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
               <input
                 type="search"
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Buscar por codigo ou descricao..."
+                placeholder="Buscar por código ou descrição..."
+                aria-label="Buscar itens"
                 className="w-full gts-input pl-9 text-sm"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Categoria">
               {['', 'GTSNET', 'EACE', 'FERRAMENTAS', 'LIMPEZA', 'MANINFO'].map(cat => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => { setCategoria(cat); setPage(1) }}
+                  aria-pressed={categoria === cat}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
+                    'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                     categoria === cat
-                      ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
+                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
+                      : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
                   )}
                 >
                   {cat || 'Todos'}
                 </button>
               ))}
             </div>
-            <button onClick={() => refetchEstoque()} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
+            <button type="button" onClick={() => refetchEstoque()} aria-label="Atualizar estoque" className="gts-btn-secondary">
+              <RefreshCw className="w-4 h-4" aria-hidden />
             </button>
           </div>
+
+          {erroEstoque && (
+            <div className="card-orbia text-center py-14 px-4">
+              <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+              <p className="font-medium text-tema-tinta">Não foi possível carregar o estoque</p>
+              <button type="button" onClick={() => refetchEstoque()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+            </div>
+          )}
 
           {/* Relatorio PDF - Estoque */}
           <div className="flex flex-wrap items-center gap-2 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl px-4 py-3">
@@ -488,7 +528,7 @@ export function CentralEstoque({ session }: Props) {
             </button>
           </div>
 
-          <div className="gts-card overflow-hidden p-0">
+          <div className={cn('gts-card overflow-hidden p-0', erroEstoque && 'hidden')}>
             {/* Tabela - desktop/tablet */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="gts-table">

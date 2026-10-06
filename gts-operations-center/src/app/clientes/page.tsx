@@ -12,7 +12,7 @@ export default async function ClientesPage() {
   if (!session) redirect('/login')
 
   return (
-    <AppShell title="Clientes">
+    <AppShell variante="orbia" paginaAtual="Clientes">
       <ClientesView />
     </AppShell>
   )

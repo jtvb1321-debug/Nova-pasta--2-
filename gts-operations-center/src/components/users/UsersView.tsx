@@ -6,11 +6,10 @@ import {
   Users, Plus, Edit2, Trash2, Shield,
   RefreshCw, CheckCircle, XCircle, Eye,
   EyeOff, Loader2, Lock, Mail, User,
-  ShieldCheck, AlertTriangle
+  ShieldCheck, AlertTriangle, Search
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const ROLES = [
@@ -20,6 +19,8 @@ const ROLES = [
   { value: 'TECNICO',  label: 'Tecnico',       cor: 'text-amber-700 bg-amber-500/10',     desc: 'Executa chamados em campo' },
   { value: 'VENDEDOR', label: 'Vendedor',      cor: 'text-emerald-700 bg-emerald-500/10', desc: 'Cadastra e acompanha vendas' },
 ]
+
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
 
 function getRoleCfg(role: string) {
   return ROLES.find(r => r.value === role) || ROLES[2]
@@ -220,8 +221,10 @@ export function UsersView() {
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState<any>(null)
   const [confirmDelete, setConfirmDelete] = useState<any>(null)
+  const [busca, setBusca] = useState('')
+  const [filtroRole, setFiltroRole] = useState('')
 
-  const { data: usuarios = [], isLoading, refetch } = useQuery({
+  const { data: usuarios = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: fetchUsers,
   })
@@ -242,127 +245,166 @@ export function UsersView() {
   const ativos   = usuarios.filter((u: any) => u.ativo).length
   const inativos = usuarios.filter((u: any) => !u.ativo).length
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title="Gestao de Usuarios"
-        subtitle={`${usuarios.length} usuario(s) cadastrado(s) · ${ativos} ativo(s) · ${inativos} inativo(s)`}
-        actions={
-          <>
-            <button onClick={() => refetch()} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => { setEditando(null); setShowModal(true) }}
-              className="gts-btn-primary"
-            >
-              <Plus className="w-4 h-4" />
-              Novo Usuario
-            </button>
-          </>
-        }
-      />
+  const termo = busca.trim().toLowerCase()
+  const filtrados = usuarios.filter((u: any) =>
+    (!filtroRole || u.role === filtroRole) &&
+    (!termo || (u.nome ?? '').toLowerCase().includes(termo) || (u.email ?? '').toLowerCase().includes(termo))
+  )
+  const algumFiltro = !!termo || !!filtroRole
 
-      {/* Info permissoes */}
-      <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/25 rounded-xl">
-        <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-blue-700 font-medium text-sm">Area Restrita — Apenas Administrador</p>
-          <p className="text-tema-apagado text-xs mt-0.5">
-            Gerencie os usuarios do sistema, seus perfis de acesso e permissoes. Usuarios inativos nao conseguem fazer login.
-          </p>
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Usuários</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setEditando(null); setShowModal(true) }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
+          >
+            <Plus className="w-4 h-4" aria-hidden />
+            Novo usuário
+          </button>
+          <button type="button" onClick={() => refetch()} disabled={isFetching} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+            Atualizar
+          </button>
         </div>
       </div>
 
-      {/* Cards de perfis */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {isError ? (
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar os usuários</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+        </div>
+      ) : (
+      <>
+      {/* Perfis: contagem real e filtro por clique */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {ROLES.map(r => {
           const count = usuarios.filter((u: any) => u.role === r.value).length
+          const ativo = filtroRole === r.value
           return (
-            <div key={r.value} className="gts-card text-center">
-              <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold inline-block mb-2', r.cor)}>
-                {r.label}
-              </span>
-              <p className={cn('text-2xl font-bold', r.cor.split(' ')[0])}>{count}</p>
-              <p className="text-xs text-tema-apagado mt-1">{r.desc}</p>
-            </div>
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => setFiltroRole(ativo ? '' : r.value)}
+              aria-pressed={ativo}
+              title={ativo ? 'Remover filtro de perfil' : `Filtrar por ${r.label}`}
+              className={cn(
+                'card-orbia p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+                ativo && '!border-orange-500'
+              )}
+            >
+              <span className={cn('text-xs px-2 py-0.5 rounded-full font-semibold inline-block mb-2', r.cor)}>{r.label}</span>
+              <p className="text-2xl font-bold leading-none tabular-nums text-tema-tinta">{isLoading ? '···' : count}</p>
+              <p className="text-xs text-tema-suave mt-1.5">{r.desc}</p>
+            </button>
           )
         })}
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-3">
+        <div className="relative sm:col-span-2 lg:flex-1 lg:min-w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
+          <input
+            type="search"
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por nome ou e-mail..."
+            aria-label="Buscar usuários"
+            className="w-full gts-input pl-9 text-sm"
+          />
+        </div>
+        {algumFiltro && (
+          <button type="button" onClick={() => { setBusca(''); setFiltroRole('') }} className="text-sm text-orange-600 hover:text-orange-700 font-medium text-left">
+            Limpar filtros
+          </button>
+        )}
+      </div>
+
       {/* Tabela */}
-      <div className="gts-card overflow-hidden p-0">
+      <div className="card-orbia overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="gts-table">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr>
-                <th className="px-4 pt-4">Usuario</th>
-                <th className="px-4 pt-4">E-mail</th>
-                <th className="px-4 pt-4">Perfil</th>
-                <th className="px-4 pt-4">Status</th>
-                <th className="px-4 pt-4">Criado em</th>
-                <th className="px-4 pt-4">Acoes</th>
+              <tr className="text-left text-xs text-tema-suave bg-tema-contraste/[0.03]">
+                <th scope="col" className="px-4 py-3 font-medium">Usuário</th>
+                <th scope="col" className="px-4 py-3 font-medium">E-mail</th>
+                <th scope="col" className="px-4 py-3 font-medium">Perfil</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium">Criado em</th>
+                <th scope="col" className="px-4 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {isLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i}>{Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-4"><div className="h-4 skeleton rounded" /></td>
+                    <tr key={i} className="border-t border-tema-linha">{Array.from({ length: 6 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-4 skeleton rounded" /></td>
                     ))}</tr>
                   ))
-                : usuarios.map((u: any) => {
+                : filtrados.length === 0
+                ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-tema-suave border-t border-tema-linha">
+                        {algumFiltro ? 'Nenhum resultado para os filtros' : 'Nenhum usuário cadastrado'}
+                      </td>
+                    </tr>
+                  )
+                : filtrados.map((u: any) => {
                     const roleCfg = getRoleCfg(u.role)
                     return (
-                      <tr key={u.id}>
-                        <td className="px-4">
+                      <tr key={u.id} className="border-t border-tema-linha hover:bg-tema-contraste/[0.03] transition-colors">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-700 text-xs font-bold flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-orange-500/15 flex items-center justify-center text-orange-700 text-xs font-bold flex-shrink-0" aria-hidden>
                               {u.nome?.[0]?.toUpperCase() || '?'}
                             </div>
                             <p className="text-sm text-tema-tinta font-medium">{u.nome}</p>
                           </div>
                         </td>
-                        <td className="px-4">
-                          <div className="flex items-center gap-1.5 text-sm text-tema-suave">
-                            <Mail className="w-3.5 h-3.5" />
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 text-sm text-tema-suave break-all">
+                            <Mail className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
                             {u.email}
                           </div>
                         </td>
-                        <td className="px-4">
-                          <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', roleCfg.cor)}>
-                            {roleCfg.label}
-                          </span>
+                        <td className="px-4 py-3">
+                          <span className={cn('text-xs px-2.5 py-1 rounded-full font-semibold', roleCfg.cor)}>{roleCfg.label}</span>
                         </td>
-                        <td className="px-4">
-                          <span className={cn(
-                            'flex items-center gap-1 text-xs font-medium w-fit',
-                            u.ativo ? 'text-emerald-700' : 'text-tema-apagado'
-                          )}>
-                            {u.ativo
-                              ? <><CheckCircle className="w-3.5 h-3.5" /> Ativo</>
-                              : <><XCircle className="w-3.5 h-3.5" /> Inativo</>
-                            }
-                          </span>
+                        <td className="px-4 py-3">
+                          {u.ativo ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 font-medium">
+                              <CheckCircle className="w-3.5 h-3.5" aria-hidden /> Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-tema-contraste/[0.06] text-tema-suave font-medium">
+                              <XCircle className="w-3.5 h-3.5" aria-hidden /> Inativo
+                            </span>
+                          )}
                         </td>
-                        <td className="px-4 text-xs text-tema-apagado">
-                          {formatDateTime(u.createdAt)}
-                        </td>
-                        <td className="px-4">
-                          <div className="flex items-center gap-1">
+                        <td className="px-4 py-3 text-xs text-tema-suave whitespace-nowrap">{formatDateTime(u.createdAt)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
                             <button
+                              type="button"
                               onClick={() => { setEditando(u); setShowModal(true) }}
-                              className="p-1.5 text-tema-apagado hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-tema-suave hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
                               title="Editar"
+                              aria-label={`Editar ${u.nome}`}
                             >
-                              <Edit2 className="w-3.5 h-3.5" />
+                              <Edit2 className="w-3.5 h-3.5" aria-hidden />
                             </button>
                             <button
+                              type="button"
                               onClick={() => setConfirmDelete(u)}
-                              className="p-1.5 text-tema-apagado hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-tema-suave hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
                               title="Excluir"
+                              aria-label={`Excluir ${u.nome}`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5" aria-hidden />
                             </button>
                           </div>
                         </td>
@@ -372,7 +414,14 @@ export function UsersView() {
             </tbody>
           </table>
         </div>
+        {!isLoading && (
+          <p className="px-4 py-3 border-t border-tema-linha text-xs text-tema-suave">
+            {algumFiltro ? `${filtrados.length} de ${usuarios.length}` : usuarios.length} {usuarios.length === 1 ? 'usuário' : 'usuários'} · {ativos} {ativos === 1 ? 'ativo' : 'ativos'} · {inativos} {inativos === 1 ? 'inativo' : 'inativos'}
+          </p>
+        )}
       </div>
+      </>
+      )}
 
       {/* Modal criar/editar */}
       {showModal && (

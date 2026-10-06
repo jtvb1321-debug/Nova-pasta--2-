@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { UsersView } from '@/components/users/UsersView'
 
-export const metadata: Metadata = { title: 'Gestao de Usuarios' }
+export const metadata: Metadata = { title: 'Usuários' }
 
 export default async function UsersPage() {
   const session = await auth()
@@ -12,7 +12,7 @@ export default async function UsersPage() {
   const role = (session.user as any)?.role
   if (role !== 'ADMIN') redirect('/dashboard')
   return (
-    <AppShell title="Gestao de Usuarios">
+    <AppShell variante="orbia" paginaAtual="Usuários">
       <UsersView />
     </AppShell>
   )

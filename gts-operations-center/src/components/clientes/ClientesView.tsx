@@ -4,21 +4,22 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Users, Search, Filter, DollarSign, RotateCcw, Ban, Package, FileText, RefreshCw, GitCompare,
-  Headphones, CheckCircle, XCircle, Clock
+  Headphones, CheckCircle, XCircle, Clock, AlertTriangle
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { DarBaixaModal } from './DarBaixaModal'
 import { RelatorioBaixasModal } from './RelatorioBaixasModal'
 import { ConferenciaIxcModal } from './ConferenciaIxcModal'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+const BOTAO_PRIMARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2'
 
 async function fetchClientes(params: Record<string, string>) {
   const q = new URLSearchParams(params)
   const res = await fetch(`/api/clientes?${q}`)
-  if (!res.ok) return { data: [] }
+  if (!res.ok) throw new Error('Erro ao carregar clientes')
   return res.json()
 }
 
@@ -56,7 +57,7 @@ export function ClientesView() {
     onError: (err: any) => toast({ title: 'Erro ao sincronizar', description: err.message, variant: 'destructive' }),
   })
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['clientes', search, status, setorCobranca, materialRecolhido],
     queryFn: () => fetchClientes({
       ...(search ? { search } : {}),
@@ -102,44 +103,43 @@ export function ClientesView() {
   })
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <PageHeader
-        title="Clientes"
-        subtitle="Gestao de clientes ativos e cobranca"
-        actions={
-          <>
-            <button onClick={() => setShowRelatorio(true)} className="gts-btn-secondary">
-              <FileText className="w-4 h-4" />
-              Relatorio de Baixas
-            </button>
-            <button
-              onClick={() => sincronizarMutation.mutate()}
-              disabled={sincronizarMutation.isPending}
-              className="gts-btn-primary disabled:opacity-50"
-            >
-              <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} />
-              Sincronizar com IXC
-            </button>
-            <button onClick={() => setShowConferencia(true)} className="gts-btn-secondary">
-              <GitCompare className="w-4 h-4" />
-              Conferencia IXC x GTS
-            </button>
-          </>
-        }
-      />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Clientes</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => sincronizarMutation.mutate()}
+            disabled={sincronizarMutation.isPending}
+            className={BOTAO_PRIMARIO}
+          >
+            <RefreshCw className={cn('w-4 h-4', sincronizarMutation.isPending && 'animate-spin')} aria-hidden />
+            Sincronizar com IXC
+          </button>
+          <button type="button" onClick={() => setShowRelatorio(true)} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <FileText className="w-4 h-4" aria-hidden />
+            Relatório de baixas
+          </button>
+          <button type="button" onClick={() => setShowConferencia(true)} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <GitCompare className="w-4 h-4" aria-hidden />
+            Conferência IXC x GTS
+          </button>
+        </div>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
           <input
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nome, CPF/CNPJ ou telefone..."
+            aria-label="Buscar clientes"
             className="w-full gts-input pl-9 text-sm py-2.5"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5" role="group" aria-label="Situação do cliente">
           {[
             { valor: 'ATIVO', label: 'Ativos' },
             { valor: 'INATIVO', label: 'Inativos' },
@@ -147,12 +147,14 @@ export function ClientesView() {
           ].map(s => (
             <button
               key={s.valor}
+              type="button"
               onClick={() => setStatus(s.valor)}
+              aria-pressed={status === s.valor}
               className={cn(
-                'px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
+                'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                 status === s.valor
-                  ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                  : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
+                  ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
+                  : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
               )}
             >
               {s.label}
@@ -160,37 +162,50 @@ export function ClientesView() {
           ))}
         </div>
         <button
+          type="button"
           onClick={() => setSetorCobranca(!setorCobranca)}
+          aria-pressed={setorCobranca}
           className={cn(
-            'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
-            setorCobranca ? 'bg-red-500/15 text-red-700 border-red-500/25' : 'bg-tema-contraste/[0.02] text-tema-suave border-transparent'
+            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+            setorCobranca ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold' : 'bg-tema-superficie text-tema-suave border-tema-linha hover:bg-tema-contraste/[0.03]'
           )}
         >
-          <Headphones className="w-3.5 h-3.5" />
-          Setor Cobranca
+          <Headphones className="w-3.5 h-3.5" aria-hidden />
+          Setor cobrança
         </button>
         <button
+          type="button"
           onClick={() => setMaterialRecolhido(!materialRecolhido)}
+          aria-pressed={materialRecolhido}
           className={cn(
-            'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors',
-            materialRecolhido ? 'bg-blue-500/15 text-blue-700 border-blue-500/25' : 'bg-tema-contraste/[0.02] text-tema-suave border-transparent'
+            'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+            materialRecolhido ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold' : 'bg-tema-superficie text-tema-suave border-tema-linha hover:bg-tema-contraste/[0.03]'
           )}
         >
-          <Package className="w-3.5 h-3.5" />
-          Material Recolhido
+          <Package className="w-3.5 h-3.5" aria-hidden />
+          Material recolhido
         </button>
       </div>
 
       <div className="space-y-3">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)
+        ) : isError ? (
+          <div className="card-orbia text-center py-14 px-4">
+            <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+            <p className="font-medium text-tema-tinta">Não foi possível carregar os clientes</p>
+            <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+          </div>
         ) : clientes.length === 0 ? (
-          <EmptyState icon={<Users className="w-full h-full" />} title="Nenhum cliente encontrado" />
+          <div className="card-orbia text-center py-14 px-4">
+            <Users className="w-9 h-9 text-tema-apagado mx-auto mb-3" aria-hidden />
+            <p className="font-medium text-tema-tinta">Nenhum cliente encontrado</p>
+          </div>
         ) : clientes.map((c: any) => {
           const cfg = STATUS_CFG[c.status] || STATUS_CFG.ATIVO
           const ultimaConta = c.contasReceber?.[0]
           return (
-            <div key={c.id} className={cn('bg-tema-superficie border rounded-xl p-4 sm:p-5', cfg.bg)}>
+            <div key={c.id} className="card-orbia p-4 sm:p-5">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-[220px]">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">

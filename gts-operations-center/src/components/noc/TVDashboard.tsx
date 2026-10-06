@@ -251,15 +251,10 @@ export function TVDashboard() {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-10 py-5 border-b border-white/10 bg-[#111827]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-orange-500/25 to-orange-500/10 ring-1 ring-orange-500/30 p-2">
-            <img src="/images/icon.png" alt="GTSNet" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-white">
-              {saudacaoPorHorario(horaAtual)}, GTSNet!
-            </h1>
-            <p className="text-gray-400 text-base">Centro de Operacoes - Monitoramento em Tempo Real</p>
-          </div>
+          <img src="/images/orbia-simbolo.svg" alt="Orbia" className="w-14 h-14 object-contain" />
+          <h1 className="text-4xl font-black text-white" style={{ letterSpacing: '-0.02em' }}>
+            Orbi<span className="text-orange-500">a</span>
+          </h1>
         </div>
 
         {/* Status geral ao vivo */}
@@ -792,15 +787,12 @@ export function TVDashboard() {
 
       {/* Footer */}
       <div className="relative z-10 px-10 py-3 bg-[#111827]/80 backdrop-blur-sm border-t border-white/5 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Wifi className="w-5 h-5 text-emerald-400" />
-          <span className="text-sm text-emerald-400">Conectado - Atualizacao automatica ativa</span>
-        </div>
+        <div />
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">
             Painel {painelAtivo + 1}/{PAINEIS.length}
           </span>
-          <span className="text-sm text-gray-600">GTSNet (c) {new Date().getFullYear()} - GTS Operations Center</span>
+          <span className="text-sm text-gray-600">Orbia © {new Date().getFullYear()}</span>
         </div>
       </div>
     </div>

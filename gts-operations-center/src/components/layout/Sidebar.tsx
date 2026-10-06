@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search, Activity,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -59,13 +59,6 @@ const TODOS_GRUPOS: MenuGroup[] = [
     ],
   },
   {
-    label:     'Diagnostico',
-    permissao: 'verDiagnostico',
-    items: [
-      { href: '/diagnostico', label: 'Diagnostico Tecnico', icon: Activity, permissao: 'verDiagnostico' },
-    ],
-  },
-  {
     label:     'Estoque',
     permissao: 'verEstoque',
     items: [
@@ -105,7 +98,6 @@ export function Sidebar({ variante }: { variante?: 'orbia' } = {}) {
     Geral:          true,
     Operacional:    true,
     Monitoramento:  true,
-    Diagnostico:    true,
     Estoque:        true,
     Comercial:      true,
     Sistema:        false,

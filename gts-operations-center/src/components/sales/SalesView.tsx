@@ -9,22 +9,12 @@ import {
   Search, Filter, Star, Medal, Trophy, Award,
   ChevronLeft, ChevronRight, Eye, ThumbsUp,
   ThumbsDown, Calendar, MapPin, Phone, Wifi,
-  FileText
+  FileText, AlertTriangle
 } from 'lucide-react'
 import { cn, formatCurrency, formatDate, timeAgo } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { NewSaleModal } from './NewSaleModal'
-import { MetricCard } from '@/components/ui/MetricCard'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { LoadingState } from '@/components/ui/LoadingState'
-import { Bar, Line } from 'react-chartjs-2'
-import {
-  Chart as ChartJS, CategoryScale, LinearScale,
-  BarElement, LineElement, PointElement,
-  Title, Tooltip, Legend, Filler,
-} from 'chart.js'
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler)
 
 type Aba = 'dashboard' | 'vendas' | 'ranking'
 
@@ -43,35 +33,24 @@ const MEDALHAS = [
   { icon: Award,  cor: 'text-orange-600', bg: 'bg-orange-500/10' },
 ]
 
-const CHART_OPT = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: { backgroundColor: '#FFFFFF', borderColor: 'rgba(230,225,214,1)', borderWidth: 1, titleColor: '#201D17', bodyColor: '#7A7266' },
-  },
-  scales: {
-    x: { ticks: { color: '#A69E8F', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
-    y: { ticks: { color: '#A69E8F', font: { size: 9 } }, grid: { color: 'rgba(0,0,0,0.06)' }, beginAtZero: true },
-  },
-}
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
 
 async function fetchVendas(params: any) {
   const q = new URLSearchParams(params)
   const res = await fetch(`/api/sales?${q}`)
-  if (!res.ok) return { data: [], total: 0, totalPages: 1 }
+  if (!res.ok) throw new Error('Erro ao carregar vendas')
   return res.json()
 }
 
 async function fetchRanking() {
   const res = await fetch('/api/sales/ranking')
-  if (!res.ok) return []
+  if (!res.ok) throw new Error('Erro ao carregar ranking')
   return res.json()
 }
 
 async function fetchDashboard() {
   const res = await fetch('/api/sales/dashboard')
-  if (!res.ok) return null
+  if (!res.ok) throw new Error('Erro ao carregar indicadores')
   return res.json()
 }
 
@@ -100,13 +79,13 @@ export function SalesView() {
   const [filtroStatus, setFiltroStatus] = useState('')
   const [page, setPage] = useState(1)
 
-  const { data: dashboard } = useQuery({
+  const { data: dashboard, isLoading: carregandoDashboard, isError: erroDashboard, refetch: recarregarDashboard } = useQuery({
     queryKey: ['sales-dashboard'],
     queryFn: fetchDashboard,
     refetchInterval: 60000,
   })
 
-  const { data: vendasData, isLoading: loadingVendas } = useQuery({
+  const { data: vendasData, isLoading: loadingVendas, isError: erroVendas, isFetching: atualizando, refetch: recarregarVendas } = useQuery({
     queryKey: ['vendas', busca, filtroStatus, page],
     queryFn: () => fetchVendas({
       ...(busca ? { search: busca } : {}),
@@ -117,7 +96,7 @@ export function SalesView() {
     refetchInterval: 30000,
   })
 
-  const { data: ranking = [] } = useQuery({
+  const { data: ranking = [], isError: erroRanking, refetch: recarregarRanking } = useQuery({
     queryKey: ['sales-ranking'],
     queryFn: fetchRanking,
     refetchInterval: 60000,
@@ -150,29 +129,6 @@ export function SalesView() {
   const totalPages = vendasData?.totalPages ?? 1
   const pendentes = vendas.filter((v: any) => v.status === 'PENDENTE').length
 
-  const chartMensal = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-    datasets: [{
-      label: 'Vendas',
-      data: dashboard?.mensal ?? Array.from({ length: 12 }, () => Math.floor(Math.random() * 20) + 2),
-      backgroundColor: 'rgba(255,122,0,0.7)',
-      borderRadius: 4,
-    }],
-  }
-
-  const chartFaturamento = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-    datasets: [{
-      label: 'Faturamento',
-      data: dashboard?.faturamentoMensal ?? Array.from({ length: 6 }, () => Math.floor(Math.random() * 5000) + 1000),
-      borderColor: '#FF7A00',
-      backgroundColor: 'rgba(255,122,0,0.1)',
-      fill: true,
-      tension: 0.4,
-      pointRadius: 3,
-    }],
-  }
-
   const abas = [
     { id: 'dashboard' as Aba, label: 'Dashboard',  icon: TrendingUp },
     { id: 'vendas'    as Aba, label: 'Vendas',      icon: ShoppingCart, badge: pendentes },
@@ -180,54 +136,48 @@ export function SalesView() {
   ]
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-tema-tinta">Comercial</h1>
-          <p className="text-tema-apagado text-sm mt-1">
-            Gestao de vendas, comissoes e ranking
-            {pendentes > 0 && (
-              <span className="ml-2 text-amber-700 font-medium animate-pulse">
-                - {pendentes} venda(s) aguardando aprovacao
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Vendas</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => queryClient.invalidateQueries()}
-            className="gts-btn-secondary"
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
           >
-            <RefreshCw className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden />
+            Nova venda
           </button>
-          <Link href="/sales/relatorio" className="gts-btn-secondary">
-            <FileText className="w-4 h-4" />
-            Relatorio por Vendedor
+          <Link href="/sales/relatorio" className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <FileText className="w-4 h-4" aria-hidden />
+            Relatório por vendedor
           </Link>
-          <button onClick={() => setShowModal(true)} className="gts-btn-primary">
-            <Plus className="w-4 h-4" />
-            Nova Venda
+          <button type="button" onClick={() => queryClient.invalidateQueries()} disabled={atualizando} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <RefreshCw className={cn('w-4 h-4', atualizando && 'animate-spin')} aria-hidden />
+            Atualizar
           </button>
         </div>
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-tema-linha">
+      <div role="tablist" aria-label="Seções de vendas" className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto">
         {abas.map(a => {
           const Icon = a.icon
           return (
             <button
               key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
               onClick={() => setAba(a.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
                 aba === a.id
-                  ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-tema-apagado hover:text-tema-tinta'
+                  ? 'border-orange-500 text-orange-700 font-semibold'
+                  : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" aria-hidden />
               {a.label}
               {(a as any).badge > 0 && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold bg-amber-500">
@@ -239,90 +189,103 @@ export function SalesView() {
         })}
       </div>
 
-      {/* ABA DASHBOARD */}
+      {/* ABA DASHBOARD: so o que a API de indicadores entrega (mes corrente) */}
       {aba === 'dashboard' && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Vendas do Mes',   value: dashboard?.vendasMes ?? 0,                     icon: ShoppingCart, color: '#60a5fa' },
-              { label: 'Faturamento Mes', value: formatCurrency(dashboard?.faturamentoMes ?? 0), icon: DollarSign,   color: '#34d399' },
-              { label: 'Total Comissoes', value: formatCurrency(dashboard?.totalComissoes ?? 0), icon: Star,         color: '#fbbf24' },
-              { label: 'Ticket Medio',    value: formatCurrency(dashboard?.ticketMedio ?? 0),    icon: TrendingUp,   color: '#c084fc' },
-            ].map((kpi, i) => (
-              <MetricCard key={i} label={kpi.label} value={kpi.value} icon={kpi.icon} color={kpi.color} className={i === 0 ? 'gts-hud-corner' : undefined} />
-            ))}
+        erroDashboard ? (
+          <div className="card-orbia text-center py-14 px-4">
+            <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+            <p className="font-medium text-tema-tinta">Não foi possível carregar os indicadores</p>
+            <button type="button" onClick={() => recarregarDashboard()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="gts-card">
-              <div className="flex items-center gap-2 mb-4">
-                <ShoppingCart className="w-4 h-4 text-orange-600" />
-                <h2 className="text-sm font-semibold text-tema-tinta">Vendas por Mes</h2>
-              </div>
-              <div className="h-44">
-                <Bar data={chartMensal} options={CHART_OPT as any} />
-              </div>
-            </div>
-            <div className="gts-card">
-              <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="w-4 h-4 text-emerald-700" />
-                <h2 className="text-sm font-semibold text-tema-tinta">Faturamento Mensal</h2>
-              </div>
-              <div className="h-44">
-                <Line data={chartFaturamento} options={CHART_OPT as any} />
-              </div>
-            </div>
-          </div>
-
-          <div className="gts-card">
-            <h2 className="text-sm font-semibold text-tema-tinta mb-4 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-orange-600" />
-              Distribuicao por Status
-            </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-              {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                const Icon = cfg.icon
-                const count = vendas.filter((v: any) => v.status === status).length
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+              {[
+                { label: 'Vendas do mês',         value: dashboard?.totalVendas,                                   icon: ShoppingCart, cor: 'bg-blue-500/10 text-blue-600' },
+                { label: 'Faturamento aprovado',  value: dashboard ? formatCurrency(dashboard.faturamento ?? 0) : undefined, icon: DollarSign,   cor: 'bg-emerald-500/10 text-emerald-600' },
+                { label: 'Instaladas',            value: dashboard?.instaladas,                                    icon: CheckCircle,  cor: 'bg-orange-500/10 text-orange-600' },
+                { label: 'Aguardando instalação', value: dashboard?.aguardando,                                    icon: Clock,        cor: 'bg-amber-500/10 text-amber-600' },
+              ].map(kpi => {
+                const Icone = kpi.icon
                 return (
-                  <div key={status} className={cn('p-3 rounded-xl border text-center', cfg.cls)}>
-                    <Icon className="w-4 h-4 mx-auto mb-1" />
-                    <p className="text-lg font-bold">{count}</p>
-                    <p className="text-xs opacity-80">{cfg.label}</p>
+                  <div key={kpi.label} className="card-orbia flex items-center gap-3 px-4 py-3">
+                    <span className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', kpi.cor)}>
+                      <Icone className="w-5 h-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-tema-suave">{kpi.label}</p>
+                      <p className="text-xl font-bold leading-tight tabular-nums text-tema-tinta">
+                        {carregandoDashboard || kpi.value == null ? '···' : typeof kpi.value === 'number' ? kpi.value.toLocaleString('pt-BR') : kpi.value}
+                      </p>
+                    </div>
                   </div>
                 )
               })}
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="card-orbia p-4">
+                <h2 className="text-sm font-semibold text-tema-tinta mb-3">Instalação (mês)</h2>
+                <dl className="space-y-2 text-sm">
+                  {[['Instaladas', dashboard?.instaladas], ['Agendadas', dashboard?.agendadas], ['Aguardando', dashboard?.aguardando]].map(([r, v]) => (
+                    <div key={r as string} className="flex items-center justify-between">
+                      <dt className="text-tema-suave">{r}</dt>
+                      <dd className="font-semibold tabular-nums text-tema-tinta">{carregandoDashboard || v == null ? '···' : v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="card-orbia p-4">
+                <h2 className="text-sm font-semibold text-tema-tinta mb-3">Pós-venda (mês)</h2>
+                <dl className="space-y-2 text-sm">
+                  {[['Concluído', dashboard?.posVendaConcluido], ['Pendente', dashboard?.posVendaPendente]].map(([r, v]) => (
+                    <div key={r as string} className="flex items-center justify-between">
+                      <dt className="text-tema-suave">{r}</dt>
+                      <dd className="font-semibold tabular-nums text-tema-tinta">{carregandoDashboard || v == null ? '···' : v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="card-orbia p-4">
+                <h2 className="text-sm font-semibold text-tema-tinta mb-3">Melhor vendedor (mês)</h2>
+                <p className="text-lg font-bold text-tema-tinta">{carregandoDashboard ? '···' : dashboard?.melhorVendedor ?? '—'}</p>
+                <p className="text-xs text-tema-apagado mt-1">Mais vendas aprovadas no mês</p>
+              </div>
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* ABA VENDAS */}
       {aba === 'vendas' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
               <input
                 type="search"
                 value={busca}
                 onChange={e => { setBusca(e.target.value); setPage(1) }}
                 placeholder="Buscar cliente, cidade, plano..."
+                aria-label="Buscar vendas"
                 className="w-full gts-input pl-9 text-sm"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Status da venda">
               {['', 'PENDENTE', 'APROVADO', 'REPROVADO', 'INSTALADO'].map(s => (
                 <button
                   key={s}
+                  type="button"
                   onClick={() => { setFiltroStatus(s); setPage(1) }}
+                  aria-pressed={filtroStatus === s}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
+                    'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                     filtroStatus === s
-                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/30'
-                      : 'bg-tema-contraste/[0.02] text-tema-suave hover:text-tema-tinta border-transparent'
+                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
+                      : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
                   )}
                 >
-                  {s || 'Todas'}
+                  {s ? STATUS_CONFIG[s].label : 'Todas'}
                 </button>
               ))}
             </div>
@@ -331,17 +294,20 @@ export function SalesView() {
           <div className="space-y-3">
             {loadingVendas
               ? <LoadingState linhas={5} altura="h-28" />
+              : erroVendas
+              ? (
+                <div className="card-orbia text-center py-14 px-4">
+            <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+            <p className="font-medium text-tema-tinta">Não foi possível carregar as vendas</p>
+            <button type="button" onClick={() => recarregarVendas()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+          </div>
+              )
               : vendas.length === 0
               ? (
-                <EmptyState
-                  icon={<ShoppingCart className="w-full h-full" />}
-                  title="Nenhuma venda encontrada"
-                  action={
-                    <button onClick={() => setShowModal(true)} className="gts-btn-primary mx-auto">
-                      <Plus className="w-4 h-4" /> Nova Venda
-                    </button>
-                  }
-                />
+                <div className="card-orbia text-center py-14 px-4">
+                  <ShoppingCart className="w-9 h-9 text-tema-apagado mx-auto mb-3" aria-hidden />
+                  <p className="font-medium text-tema-tinta">{busca || filtroStatus ? 'Nenhum resultado para os filtros' : 'Nenhuma venda encontrada'}</p>
+                </div>
               )
               : vendas.map((venda: any) => {
                   const cfg = STATUS_CONFIG[venda.status] || STATUS_CONFIG.PENDENTE
@@ -349,7 +315,7 @@ export function SalesView() {
                   const isPendente = venda.status === 'PENDENTE'
                   const podeMarcarInstalado = venda.status === 'APROVADO' && venda.statusInstalacao !== 'INSTALADA'
                   return (
-                    <div key={venda.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4 hover:border-tema-linha-forte transition-all">
+                    <div key={venda.id} className="card-orbia p-4">
                       <div className="flex items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -456,6 +422,13 @@ export function SalesView() {
 
       {/* ABA RANKING */}
       {aba === 'ranking' && (
+        erroRanking ? (
+          <div className="card-orbia text-center py-14 px-4">
+            <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+            <p className="font-medium text-tema-tinta">Não foi possível carregar o ranking</p>
+            <button type="button" onClick={() => recarregarRanking()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+          </div>
+        ) : (
         <div className="space-y-4">
           {ranking.length >= 3 && (
             <div className="grid grid-cols-3 gap-4 mb-2">
@@ -465,7 +438,7 @@ export function SalesView() {
                 const MedIcon = med.icon
                 const altura = pos === 0 ? 'pt-0' : 'pt-6'
                 return (
-                  <div key={v?.id || idx} className={cn('gts-card text-center', altura)}>
+                  <div key={v?.id || idx} className={cn('card-orbia p-4 text-center', altura)}>
                     <div className={cn('w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2', med.bg)}>
                       <MedIcon className={cn('w-6 h-6', med.cor)} />
                     </div>
@@ -480,8 +453,9 @@ export function SalesView() {
             </div>
           )}
 
-          <div className="gts-card overflow-hidden p-0">
-            <table className="gts-table">
+          <div className="card-orbia overflow-hidden">
+            <div className="overflow-x-auto">
+            <table className="gts-table min-w-[640px]">
               <thead>
                 <tr>
                   <th className="px-4 pt-4 w-12">#</th>
@@ -529,8 +503,10 @@ export function SalesView() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
+        )
       )}
 
       {showModal && (

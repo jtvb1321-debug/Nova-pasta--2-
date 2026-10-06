@@ -8,14 +8,12 @@ import {
   FileText, ChevronLeft, ChevronRight,
   History, User, Calendar,
   ThumbsUp, ThumbsDown, BarChart2, Tag,
-  Globe, Zap, Building2
+  Globe, Zap, Building2, AlertTriangle
 } from 'lucide-react'
 import { cn, formatCurrency, timeAgo } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
 import { NovaSolicitacaoModal } from './NovaSolicitacaoModal'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { MetricCard } from '@/components/ui/MetricCard'
 
 type Aba = 'resumo' | 'solicitacoes' | 'aprovacoes' | 'historico'
 
@@ -33,10 +31,13 @@ const CENTRO_CFG: Record<string, { label: string; cor: string; icon: React.Eleme
   ADMINISTRATIVO: { label: 'GTS Administrativo', cor: 'text-purple-700', icon: Building2 },
 }
 
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+const BOTAO_PRIMARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2'
+
 async function fetchFinanceiro(params: any) {
   const q = new URLSearchParams(params)
   const res = await fetch(`/api/financeiro?${q}`)
-  if (!res.ok) return { data: [], total: 0, totalPages: 1, kpis: {}, subcategorias: {} }
+  if (!res.ok) throw new Error('Erro ao carregar o financeiro')
   return res.json()
 }
 
@@ -54,7 +55,7 @@ export function FinanceiroView({ session }: Props) {
   const role    = (session.user as any)?.role
   const isAdmin = role === 'ADMIN'
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['financeiro', busca, filtroStatus, filtroCentro, page],
     queryFn: () => fetchFinanceiro({
       ...(busca        ? { busca }                     : {}),
@@ -101,60 +102,60 @@ export function FinanceiroView({ session }: Props) {
   ]
 
   return (
-    <div className="space-y-5 animate-fade-in">
-
-      <PageHeader
-        title="Dashboard Financeiro"
-        subtitle={
-          pendentesAprov.length > 0 && isAdmin
-            ? `Solicitacoes de pagamento, aprovacoes e historico · ${pendentesAprov.length} aguardando aprovacao`
-            : 'Solicitacoes de pagamento, aprovacoes e historico'
-        }
-        actions={
-          <>
-            <button onClick={() => refetch()} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button onClick={() => setShowModal(true)} className="gts-btn-primary">
-              <Plus className="w-4 h-4" />
-              Nova Solicitacao
-            </button>
-          </>
-        }
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Aguardando',  value: formatCurrency(kpis.totalPendente ?? 0), count: kpis.countPendente ?? 0, icon: Clock,       color: '#fbbf24' },
-          { label: 'Aprovado',    value: formatCurrency(kpis.totalAprovado ?? 0), count: kpis.countAprovado ?? 0, icon: CheckCircle, color: '#60a5fa' },
-          { label: 'Pago',        value: formatCurrency(kpis.totalPago     ?? 0), count: kpis.countPago    ?? 0, icon: CreditCard,  color: '#34d399' },
-          { label: 'Total Geral', value: formatCurrency((kpis.totalPendente ?? 0) + (kpis.totalAprovado ?? 0) + (kpis.totalPago ?? 0)), count: (kpis.countPendente ?? 0) + (kpis.countAprovado ?? 0) + (kpis.countPago ?? 0), icon: DollarSign, color: '#fb923c' },
-        ].map((kpi, i) => (
-          <MetricCard
-            key={i}
-            label={kpi.label}
-            value={kpi.value}
-            icon={kpi.icon}
-            color={kpi.color}
-            sublabel={`${kpi.count} solicitacao(oes)`}
-            className={i === 0 ? 'gts-hud-corner' : undefined}
-          />
-        ))}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Financeiro</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setShowModal(true)} className={BOTAO_PRIMARIO}>
+            <Plus className="w-4 h-4" aria-hidden />
+            Nova solicitação
+          </button>
+          <button type="button" onClick={() => refetch()} disabled={isFetching} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+            Atualizar
+          </button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto -mx-1 px-1">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {[
+          { label: 'Aguardando',  value: formatCurrency(kpis.totalPendente ?? 0), count: kpis.countPendente ?? 0, icon: Clock,       cor: 'bg-amber-500/10 text-amber-600' },
+          { label: 'Aprovado',    value: formatCurrency(kpis.totalAprovado ?? 0), count: kpis.countAprovado ?? 0, icon: CheckCircle, cor: 'bg-blue-500/10 text-blue-600' },
+          { label: 'Pago',        value: formatCurrency(kpis.totalPago     ?? 0), count: kpis.countPago    ?? 0, icon: CreditCard,  cor: 'bg-emerald-500/10 text-emerald-600' },
+          { label: 'Total geral', value: formatCurrency((kpis.totalPendente ?? 0) + (kpis.totalAprovado ?? 0) + (kpis.totalPago ?? 0)), count: (kpis.countPendente ?? 0) + (kpis.countAprovado ?? 0) + (kpis.countPago ?? 0), icon: DollarSign, cor: 'bg-orange-500/10 text-orange-600' },
+        ].map(kpi => {
+          const Icone = kpi.icon
+          return (
+            <div key={kpi.label} className="card-orbia flex items-center gap-3 px-4 py-3">
+              <span className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', kpi.cor)}>
+                <Icone className="w-5 h-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm text-tema-suave">{kpi.label}</p>
+                <p className="text-xl font-bold leading-tight tabular-nums text-tema-tinta">{isLoading ? '···' : isError ? 'Indisponível' : kpi.value}</p>
+                {!isLoading && !isError && <p className="text-xs text-tema-apagado">{kpi.count} solicitação(ões)</p>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div role="tablist" aria-label="Seções do financeiro" className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto">
         {abas.filter(a => !a.adminOnly || isAdmin).map(a => {
           const Icon = a.icon
           return (
             <button
               key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
               onClick={() => setAba(a.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap',
-                aba === a.id ? 'border-orange-600 text-orange-600' : 'border-transparent text-tema-apagado hover:text-tema-tinta'
+                '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
+                aba === a.id ? 'border-orange-500 text-orange-700 font-semibold' : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" aria-hidden />
               {a.label}
               {(a.badge ?? 0) > 0 && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold bg-amber-500">
@@ -166,24 +167,25 @@ export function FinanceiroView({ session }: Props) {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tema-apagado" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
           <input
             type="search"
             value={busca}
             onChange={e => { setBusca(e.target.value); setPage(1) }}
-            placeholder="Buscar titulo, fornecedor..."
+            placeholder="Buscar título, fornecedor..."
+            aria-label="Buscar solicitações"
             className="w-full gts-input pl-9 text-sm"
           />
         </div>
-        <select value={filtroCentro} onChange={e => { setFiltroCentro(e.target.value); setPage(1) }} className="gts-input py-2 text-sm w-auto">
+        <select value={filtroCentro} onChange={e => { setFiltroCentro(e.target.value); setPage(1) }} aria-label="Centro de custo" className="gts-input py-2 text-sm w-auto">
           <option value="">Todos os centros</option>
           <option value="PROVEDOR">GTS Provedor</option>
           <option value="EACE">GTS EACE</option>
           <option value="ADMINISTRATIVO">GTS Administrativo</option>
         </select>
-        <select value={filtroStatus} onChange={e => { setFiltroStatus(e.target.value); setPage(1) }} className="gts-input py-2 text-sm w-auto">
+        <select value={filtroStatus} onChange={e => { setFiltroStatus(e.target.value); setPage(1) }} aria-label="Status" className="gts-input py-2 text-sm w-auto">
           <option value="">Todos os status</option>
           <option value="PENDENTE">Pendente</option>
           <option value="APROVADO">Aprovado</option>
@@ -192,14 +194,22 @@ export function FinanceiroView({ session }: Props) {
         </select>
       </div>
 
-      {aba === 'resumo' && (
+      {isError && (
+        <div className="card-orbia text-center py-14 px-4">
+          <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+          <p className="font-medium text-tema-tinta">Não foi possível carregar o financeiro</p>
+          <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+        </div>
+      )}
+
+      {!isError && aba === 'resumo' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {Object.entries(CENTRO_CFG).map(([key, cfg]) => {
             const itens = solicitacoes.filter((s: any) => s.centroCusto === key)
             const total = itens.reduce((sum: number, s: any) => sum + s.valor, 0)
             const CentroIcon = cfg.icon
             return (
-              <div key={key} className="gts-card">
+              <div key={key} className="card-orbia p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <CentroIcon className={cn('w-4 h-4', cfg.cor)} />
                   <h3 className={cn('font-bold', cfg.cor)}>{cfg.label}</h3>
@@ -226,13 +236,13 @@ export function FinanceiroView({ session }: Props) {
         </div>
       )}
 
-      {aba === 'solicitacoes' && (
+      {!isError && aba === 'solicitacoes' && (
         <div className="space-y-3">
           {isLoading ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />) :
            solicitacoes.length === 0 ? (
-            <div className="gts-card text-center py-16">
+            <div className="card-orbia text-center py-14 px-4">
               <DollarSign className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-              <p className="text-tema-suave font-medium">Nenhuma solicitacao encontrada</p>
+              <p className="font-medium text-tema-tinta">Nenhuma solicitação encontrada</p>
               <button onClick={() => setShowModal(true)} className="gts-btn-primary mx-auto mt-4">
                 <Plus className="w-4 h-4" /> Nova Solicitacao
               </button>
@@ -243,7 +253,7 @@ export function FinanceiroView({ session }: Props) {
             const StatusIcon = scfg.icon
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-tema-superficie border border-tema-linha hover:border-tema-linha-forte rounded-xl p-4 transition-all">
+              <div key={s.id} className="card-orbia p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -286,10 +296,10 @@ export function FinanceiroView({ session }: Props) {
         </div>
       )}
 
-      {aba === 'aprovacoes' && isAdmin && (
+      {!isError && aba === 'aprovacoes' && isAdmin && (
         <div className="space-y-3">
           {pendentesAprov.length === 0 ? (
-            <div className="gts-card text-center py-16">
+            <div className="card-orbia text-center py-14 px-4">
               <CheckCircle className="w-10 h-10 text-emerald-600/40 mx-auto mb-3" />
               <p className="text-tema-suave font-medium">Nenhuma solicitacao pendente</p>
             </div>
@@ -297,7 +307,7 @@ export function FinanceiroView({ session }: Props) {
             const ccfg = CENTRO_CFG[s.centroCusto] || CENTRO_CFG.PROVEDOR
             const CentroIcon = ccfg.icon
             return (
-              <div key={s.id} className="bg-tema-superficie border border-amber-500/25 rounded-xl p-4">
+              <div key={s.id} className="card-orbia p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-tema-tinta font-bold mb-1">{s.titulo}</h3>
@@ -337,10 +347,10 @@ export function FinanceiroView({ session }: Props) {
         </div>
       )}
 
-      {aba === 'historico' && (
+      {!isError && aba === 'historico' && (
         <div className="space-y-3">
           {solicitacoes.length === 0 ? (
-            <div className="gts-card text-center py-16">
+            <div className="card-orbia text-center py-14 px-4">
               <History className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
               <p className="text-tema-suave font-medium">Nenhum historico disponivel</p>
             </div>
@@ -348,7 +358,7 @@ export function FinanceiroView({ session }: Props) {
             const scfg = STATUS_CFG[s.status] || STATUS_CFG.PENDENTE
             const StatusIcon = scfg.icon
             return (
-              <div key={s.id} className="flex items-center gap-4 p-3 bg-tema-superficie border border-tema-linha rounded-xl">
+              <div key={s.id} className="card-orbia flex items-center gap-4 p-3">
                 <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0', scfg.cls)}>
                   <StatusIcon className="w-4 h-4" />
                 </div>

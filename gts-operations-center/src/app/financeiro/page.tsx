@@ -10,7 +10,7 @@ export default async function FinanceiroPage() {
   const session = await auth()
   if (!session) redirect('/login')
   return (
-    <AppShell title="Dashboard Financeiro">
+    <AppShell variante="orbia" paginaAtual="Financeiro">
       <FinanceiroView session={session} />
     </AppShell>
   )

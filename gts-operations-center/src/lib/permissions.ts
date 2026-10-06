@@ -27,7 +27,6 @@ export interface Permission {
   editarUsuarios:    boolean
   excluirRegistros:  boolean
   apenasMinhaEquipe: boolean
-  verDiagnostico:    boolean
   verDesempenho:     boolean
   analisarAvaliacoes: boolean
 }
@@ -60,7 +59,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    true,
     excluirRegistros:  true,
     apenasMinhaEquipe: false,
-    verDiagnostico:    true,
     verDesempenho:     true,
     analisarAvaliacoes: true,
   },
@@ -91,7 +89,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
-    verDiagnostico:    true,
     verDesempenho:     true,
     analisarAvaliacoes: false,
   },
@@ -122,7 +119,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
-    verDiagnostico:    true,
     verDesempenho:     false,
     analisarAvaliacoes: false,
   },
@@ -153,7 +149,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
-    verDiagnostico:    false,
     verDesempenho:     false,
     analisarAvaliacoes: false,
   },
@@ -184,7 +179,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: true,
-    verDiagnostico:    true,
     verDesempenho:     false,
     analisarAvaliacoes: false,
   },
@@ -215,7 +209,6 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     editarUsuarios:    false,
     excluirRegistros:  false,
     apenasMinhaEquipe: false,
-    verDiagnostico:    false,
     verDesempenho:     false,
     analisarAvaliacoes: false,
   },

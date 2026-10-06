@@ -25,7 +25,6 @@ const ROTAS_TECNICO = [
   '/api/tecnico',
   '/api/ponto',
   '/api/gts',
-  '/diagnostico',
   '/api/diagnostico',
   '/api/mapa/basemap',
 ]
