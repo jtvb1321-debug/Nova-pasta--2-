@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Clock, CheckCircle, XCircle, Filter, RefreshCw, FileText, Loader2, CalendarPlus, Pencil,
-  Calendar, ClipboardList, Download, Users
+  Clock, CheckCircle, XCircle, RefreshCw, FileText, Loader2, CalendarPlus, Pencil,
+  Calendar, ClipboardList, Download, Users, AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -40,13 +40,15 @@ async function fetchPonto(params: FiltroPonto) {
   if (params.dataInicio) q.set('dataInicio', params.dataInicio)
   if (params.dataFim) q.set('dataFim', params.dataFim)
   const res = await fetch(`/api/ponto?${q}`)
-  if (!res.ok) return { data: [], porTecnico: [] }
+  if (!res.ok) throw new Error('Erro ao carregar o ponto')
   const resultado = await res.json()
   if (params.tipoRegistro === 'PONTO_INCOMPLETO') {
     resultado.data = (resultado.data ?? []).filter((r: any) => r.horasTrabalhadas == null)
   }
   return resultado
 }
+
+const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
 
 function limitesDoMesAtual(): { dataInicio: string; dataFim: string } {
   const hoje = new Date()
@@ -146,7 +148,7 @@ export function HorasExtrasView({ session }: Props) {
 
   const periodoFiltro = isAdmin && (dataInicioFiltro || dataFimFiltro) ? { dataInicio: dataInicioFiltro, dataFim: dataFimFiltro } : undefined
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['ponto', equipeId, funcionarioId, situacao, status, periodoFiltro?.dataInicio, periodoFiltro?.dataFim],
     queryFn: () => fetchPonto({ equipeId, funcionarioId, tipoRegistro: situacao, status, ...periodoFiltro }),
     refetchInterval: 20000,
@@ -221,31 +223,33 @@ export function HorasExtrasView({ session }: Props) {
   }
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-tema-tinta">Horas Extras</h1>
-          <p className="text-tema-apagado text-sm mt-1">Ponto e horas excedentes por equipe</p>
-        </div>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Horas extras</h1>
         {aba === 'registros' && (
-          <div className="flex items-center gap-2">
-            <button onClick={() => refetch()} className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowNovoRegistro(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
+            >
+              <CalendarPlus className="w-4 h-4" aria-hidden />
+              Inserir registro
             </button>
-            <button onClick={baixarPdf} disabled={gerandoPdf} className="gts-btn-primary disabled:opacity-50">
-              {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-              Gerar Relatorio PDF
+            <button type="button" onClick={baixarPdf} disabled={gerandoPdf || isError} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              {gerandoPdf ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <FileText className="w-4 h-4" aria-hidden />}
+              Gerar relatório PDF
             </button>
-            <button onClick={() => setShowNovoRegistro(true)} className="gts-btn-secondary">
-              <CalendarPlus className="w-4 h-4" />
-              Inserir Registro
+            <button type="button" onClick={() => refetch()} disabled={isFetching} className={BOTAO_SECUNDARIO} style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+              Atualizar
             </button>
           </div>
         )}
       </div>
 
       {/* Abas - Relatorio Geral e exclusivo do admin, Registros e Calendario ficam disponiveis pra quem acessa a tela */}
-      <div className="flex items-center gap-1 border-b border-tema-linha">
+      <div role="tablist" aria-label="Seções de horas extras" className="flex items-center gap-1 border-b border-tema-linha overflow-x-auto">
         {[
           { id: 'registros' as Aba, label: 'Registros', icon: ClipboardList },
           { id: 'calendario' as Aba, label: 'Calendario', icon: Calendar },
@@ -255,10 +259,13 @@ export function HorasExtrasView({ session }: Props) {
           return (
             <button
               key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
               onClick={() => setAba(a.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-                aba === a.id ? 'border-orange-600 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta'
+                '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
+                aba === a.id ? 'border-orange-500 text-orange-700 font-semibold' : 'border-transparent text-tema-suave hover:text-tema-tinta'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -274,19 +281,19 @@ export function HorasExtrasView({ session }: Props) {
         <>
           {porTecnico.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado flex items-center gap-1"><Users className="w-3 h-3" /> Tecnicos</p>
                 <p className="text-xl font-black text-tema-tinta">{totais.tecnicos}</p>
               </div>
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado">Horas Trabalhadas</p>
                 <p className="text-xl font-black text-tema-tinta">{formatarHorasHM(totais.horasTrabalhadas)}</p>
               </div>
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado">Horas Extras</p>
                 <p className="text-xl font-black text-tema-tinta">{formatarHorasHM(totais.horasExtras)}</p>
               </div>
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado">Aprovadas / Rejeitadas / Pendentes</p>
                 <p className="text-sm font-black text-tema-tinta">
                   <span className="text-emerald-700">{formatarHorasHM(totais.aprovadas)}</span>
@@ -296,7 +303,7 @@ export function HorasExtrasView({ session }: Props) {
                   <span className="text-amber-700">{formatarHorasHM(totais.pendentes)}</span>
                 </p>
               </div>
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado">Faltas / Atestados / Folgas</p>
                 <p className="text-sm font-black text-tema-tinta">
                   <span className="text-red-700">{totais.faltas}</span>
@@ -306,7 +313,7 @@ export function HorasExtrasView({ session }: Props) {
                   <span className="text-sky-700">{totais.folgas}</span>
                 </p>
               </div>
-              <div className="gts-card">
+              <div className="card-orbia p-4">
                 <p className="text-xs text-tema-apagado">Sabados Trabalhados</p>
                 <p className="text-xl font-black text-tema-tinta">{totais.sabadosTrabalhados}</p>
               </div>
@@ -348,21 +355,20 @@ export function HorasExtrasView({ session }: Props) {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Filter className="w-4 h-4 text-tema-apagado" />
-            <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input py-1.5 text-sm w-auto">
+          <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
+            <select value={equipeId} onChange={e => setEquipeId(e.target.value)} className="gts-input py-2 text-sm w-auto">
               <option value="">Todas as equipes</option>
               {equipes.map((eq: any) => (
                 <option key={eq.id} value={eq.id}>{eq.nome}</option>
               ))}
             </select>
-            <select value={funcionarioId} onChange={e => setFuncionarioId(e.target.value)} className="gts-input py-1.5 text-sm w-auto">
+            <select value={funcionarioId} onChange={e => setFuncionarioId(e.target.value)} className="gts-input py-2 text-sm w-auto">
               <option value="">Todos os tecnicos</option>
               {funcionarios.map((f: any) => (
                 <option key={f.id} value={f.id}>{f.nome}</option>
               ))}
             </select>
-            <select value={situacao} onChange={e => setSituacao(e.target.value)} className="gts-input py-1.5 text-sm w-auto">
+            <select value={situacao} onChange={e => setSituacao(e.target.value)} className="gts-input py-2 text-sm w-auto">
               {SITUACAO_OPTIONS.map(s => (
                 <option key={s.valor} value={s.valor}>{s.label}</option>
               ))}
@@ -376,12 +382,14 @@ export function HorasExtrasView({ session }: Props) {
               ].map(s => (
                 <button
                   key={s.valor}
+                  type="button"
                   onClick={() => setStatus(s.valor)}
+                  aria-pressed={status === s.valor}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors',
+                    'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
                     status === s.valor
-                      ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
+                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
+                      : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
                   )}
                 >
                   {s.label}
@@ -397,7 +405,7 @@ export function HorasExtrasView({ session }: Props) {
                   type="date"
                   value={dataInicioFiltro}
                   onChange={e => setDataInicioFiltro(e.target.value)}
-                  className="gts-input py-1.5 text-sm w-auto"
+                  className="gts-input py-2 text-sm w-auto"
                   title="Data inicial (somente admin)"
                 />
                 <span className="text-xs text-tema-apagado">ate</span>
@@ -405,7 +413,7 @@ export function HorasExtrasView({ session }: Props) {
                   type="date"
                   value={dataFimFiltro}
                   onChange={e => setDataFimFiltro(e.target.value)}
-                  className="gts-input py-1.5 text-sm w-auto"
+                  className="gts-input py-2 text-sm w-auto"
                   title="Data final (somente admin)"
                 />
                 {(dataInicioFiltro || dataFimFiltro) && (
@@ -420,10 +428,16 @@ export function HorasExtrasView({ session }: Props) {
           <div className="space-y-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
+            ) : isError ? (
+              <div className="card-orbia text-center py-14 px-4">
+                <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
+                <p className="font-medium text-tema-tinta">Não foi possível carregar os registros</p>
+                <button type="button" onClick={() => refetch()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
+              </div>
             ) : registros.length === 0 ? (
-              <div className="gts-card text-center py-16">
+              <div className="card-orbia text-center py-14 px-4">
                 <Clock className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhum registro encontrado</p>
+                <p className="font-medium text-tema-tinta">Nenhum registro para os filtros</p>
               </div>
             ) : registros.map((r: any) => {
               const cfg = STATUS_CFG[r.statusHorasExtras] || STATUS_CFG.SEM_EXTRA
@@ -431,13 +445,13 @@ export function HorasExtrasView({ session }: Props) {
               const situacaoCfg = SITUACAO_CFG[r.tipoRegistro] || (situacaoTxt === 'Ponto Incompleto' ? SITUACAO_CFG.PONTO_INCOMPLETO : null)
               const semJornada = r.tipoRegistro !== 'TRABALHADO'
               return (
-                <div key={r.id} className={cn('bg-tema-superficie border rounded-xl p-4', cfg.bg)}>
+                <div key={r.id} className="card-orbia p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <p className="text-tema-tinta font-semibold">{r.funcionario?.nome}</p>
                         <span className="text-xs text-orange-700">{r.funcionario?.equipe?.nome}</span>
-                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', cfg.cor, cfg.bg)}>
+                        <span className={cn('text-xs px-2.5 py-0.5 rounded-full font-semibold border', cfg.cor, cfg.bg)}>
                           {cfg.label}
                         </span>
                         {situacaoCfg && (
@@ -491,7 +505,7 @@ export function HorasExtrasView({ session }: Props) {
 
       {/* ABA RELATORIO GERAL - somente admin */}
       {aba === 'relatorio-geral' && isAdmin && (
-        <div className="gts-card space-y-5 max-w-2xl">
+        <div className="card-orbia p-5 space-y-5 max-w-2xl">
           <div>
             <h2 className="text-sm font-semibold text-tema-tinta flex items-center gap-2 mb-1">
               <FileText className="w-4 h-4 text-orange-600" />
