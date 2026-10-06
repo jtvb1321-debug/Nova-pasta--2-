@@ -104,10 +104,11 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
       where: { ...filtroBase, status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
       select: {
         id: true, cliente: true, tipo: true, status: true, dataAbertura: true, inicioSla: true,
-        equipe: { select: { nome: true } },
+        equipe: { select: { nome: true, funcionarios: { where: { ativo: true }, select: { nome: true } } } },
       },
       orderBy: { dataAbertura: 'asc' },
-      take: 50,
+      // Limite so de seguranca (antes cortava em 50 sem avisar); o total real vai em emAndamentoTotal.
+      take: 500,
     }),
   ])
 
@@ -155,6 +156,7 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
     totalChamados: chamados.length,
     ...resumoSla(chamados),
     porEquipe,
+    emAndamentoTotal: emAndamento.length,
     emAndamento: emAndamento.map(c => {
       const progresso = calcularProgressoSlaEmAndamento(inicioSlaEfetivo(c), c.tipo)
       return {
@@ -163,6 +165,7 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
         tipo: c.tipo,
         status: c.status,
         equipe: c.equipe?.nome ?? null,
+        tecnicos: c.equipe?.funcionarios.map(fn => fn.nome) ?? [],
         minutosDecorridos: progresso.minutosDecorridos,
         metaMinutos: progresso.metaMinutos,
         percentualSla: progresso.percentualSla,

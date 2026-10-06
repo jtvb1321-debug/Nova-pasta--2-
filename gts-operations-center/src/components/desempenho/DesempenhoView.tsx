@@ -36,6 +36,8 @@ async function fetchEquipes(): Promise<{ id: string; nome: string }[]> {
   return res.json()
 }
 
+const CAMPO = 'gts-input py-2 text-sm'
+
 export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisarAvaliacoes?: boolean }) {
   const [filtros, setFiltros] = useState<FiltrosTela>({ equipeId: '', tipo: '', periodo: 'mes', inicio: '', fim: '' })
   const [subaba, setSubaba] = useState<Subaba>('sla')
@@ -49,23 +51,15 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
   const personalizadoIncompleto = filtros.periodo === 'personalizado' && (!filtros.inicio || !filtros.fim || filtros.inicio > filtros.fim)
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-tema-tinta">Desempenho das Equipes</h1>
-          <p className="text-sm text-tema-suave">Acompanhe cada equipe no período escolhido</p>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Desempenho das equipes</h1>
 
-      <div className="gts-card p-4 space-y-3">
-        <div className="flex flex-wrap items-end gap-4">
+      {/* Filtros (valem para as duas abas) */}
+      <div className="card-orbia p-4">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
           <label className="space-y-1">
             <span className="block text-xs font-medium text-tema-suave">Equipe</span>
-            <select
-              value={filtros.equipeId}
-              onChange={e => atualizar({ equipeId: e.target.value })}
-              className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-sm text-tema-tinta min-w-[220px]"
-            >
+            <select value={filtros.equipeId} onChange={e => atualizar({ equipeId: e.target.value })} className={cn(CAMPO, 'min-w-[200px]')}>
               <option value="">Todas as equipes</option>
               {equipes.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
             </select>
@@ -73,11 +67,7 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
 
           <label className="space-y-1">
             <span className="block text-xs font-medium text-tema-suave">Tipo de atendimento</span>
-            <select
-              value={filtros.tipo}
-              onChange={e => atualizar({ tipo: e.target.value })}
-              className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-sm text-tema-tinta"
-            >
+            <select value={filtros.tipo} onChange={e => atualizar({ tipo: e.target.value })} className={cn(CAMPO, 'min-w-[180px]')}>
               <option value="">Todos os tipos</option>
               {(Object.keys(TIPO_CHAMADO_LABELS) as TipoChamado[]).map(t => (
                 <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
@@ -85,23 +75,30 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
             </select>
           </label>
 
+          <div className="hidden lg:block self-stretch w-px bg-tema-linha" aria-hidden />
+
           <div className="space-y-1">
-            <span className="block text-xs font-medium text-tema-suave">Período</span>
-            <div className="flex flex-wrap gap-1.5">
-              {PERIODOS.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => atualizar({ periodo: p.id })}
-                  className={cn(
-                    'px-3 py-2 rounded-lg text-sm border transition-colors',
-                    filtros.periodo === p.id
-                      ? 'bg-orange-500/10 border-orange-500/40 text-orange-700 font-medium'
-                      : 'bg-tema-superficie border-tema-linha-forte text-tema-suave hover:bg-tema-contraste/[0.02]'
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
+            <span id="rotulo-periodo" className="block text-xs font-medium text-tema-suave">Período</span>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-labelledby="rotulo-periodo">
+              {PERIODOS.map(p => {
+                const ativo = filtros.periodo === p.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => atualizar({ periodo: p.id })}
+                    aria-pressed={ativo}
+                    className={cn(
+                      'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
+                      ativo
+                        ? 'bg-orange-500/10 border-orange-500/40 text-orange-700 font-semibold'
+                        : 'bg-tema-superficie border-tema-linha text-tema-suave hover:bg-tema-contraste/[0.03]'
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -109,32 +106,39 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
             <div className="flex items-end gap-2">
               <label className="space-y-1">
                 <span className="block text-xs font-medium text-tema-suave">De</span>
-                <input type="date" value={filtros.inicio} onChange={e => atualizar({ inicio: e.target.value })}
-                  className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-sm text-tema-tinta" />
+                <input type="date" value={filtros.inicio} onChange={e => atualizar({ inicio: e.target.value })} className={CAMPO} />
               </label>
               <label className="space-y-1">
                 <span className="block text-xs font-medium text-tema-suave">Até</span>
-                <input type="date" value={filtros.fim} onChange={e => atualizar({ fim: e.target.value })}
-                  className="bg-tema-superficie border border-tema-linha-forte rounded-lg px-3 py-2 text-sm text-tema-tinta" />
+                <input type="date" value={filtros.fim} onChange={e => atualizar({ fim: e.target.value })} className={CAMPO} />
               </label>
             </div>
           )}
         </div>
         {personalizadoIncompleto && (
-          <p className="text-xs text-red-700">Escolha a data inicial e a final (a final não pode ser antes da inicial).</p>
+          <p role="alert" className="mt-3 text-xs text-red-700">Escolha a data inicial e a final (a final não pode ser antes da inicial).</p>
         )}
       </div>
 
-      <div className="flex gap-6 border-b border-tema-linha">
-        {subabas.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setSubaba(s.id)}
-            className={cn('pb-2 text-sm', subaba === s.id ? 'border-b-2 border-orange-500 text-tema-tinta font-bold' : 'text-tema-suave hover:text-tema-tinta')}
-          >
-            {s.label}
-          </button>
-        ))}
+      <div role="tablist" aria-label="Seções do desempenho" className="flex gap-6 border-b border-tema-linha">
+        {subabas.map(s => {
+          const ativa = subaba === s.id
+          return (
+            <button
+              key={s.id}
+              type="button"
+              role="tab"
+              aria-selected={ativa}
+              onClick={() => setSubaba(s.id)}
+              className={cn(
+                '-mb-px px-1 pb-2.5 pt-1 text-sm border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40 rounded-t',
+                ativa ? 'border-orange-500 text-orange-700 font-semibold' : 'border-transparent text-tema-suave hover:text-tema-tinta font-medium'
+              )}
+            >
+              {s.label}
+            </button>
+          )
+        })}
       </div>
 
       {subaba === 'sla' && !personalizadoIncompleto && <SlaDesempenho filtros={filtros} />}

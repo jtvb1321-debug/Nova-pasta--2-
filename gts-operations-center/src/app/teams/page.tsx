@@ -11,7 +11,7 @@ export default async function TeamsPage() {
   const session = await auth()
   if (!session) redirect('/login')
   return (
-    <AppShell title="Equipes">
+    <AppShell variante="orbia" paginaAtual="Equipes">
       <TeamsView session={session} />
     </AppShell>
   )

@@ -82,7 +82,7 @@ async function fetchAvaliacoes(f: FiltrosTela, statusAnalise: string, nota: stri
 
 function Metrica({ titulo, valor, detalhe, cor }: { titulo: string; valor: React.ReactNode; detalhe?: string; cor?: string }) {
   return (
-    <div className="gts-card p-3">
+    <div className="card-orbia p-3">
       <p className="text-xs text-tema-apagado">{titulo}</p>
       <p className={cn('text-xl font-bold', cor ?? 'text-tema-tinta')}>{valor}</p>
       {detalhe && <p className="text-[11px] text-tema-apagado">{detalhe}</p>}
@@ -164,7 +164,7 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="gts-card p-4 space-y-1.5">
+        <div className="card-orbia p-4 space-y-1.5">
           <p className="text-sm font-bold text-tema-tinta mb-1">Distribuição das notas aprovadas</p>
           {[5, 4, 3, 2, 1].map(n => {
             const qtd = data.distribuicao[String(n)] ?? 0
@@ -180,7 +180,7 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
             )
           })}
         </div>
-        <div className="gts-card p-4">
+        <div className="card-orbia p-4">
           <p className="text-sm font-bold text-tema-tinta mb-2">O problema foi resolvido? (aprovadas)</p>
           <div className="grid grid-cols-3 gap-2">
             {(['SIM', 'PARCIAL', 'NAO'] as const).map(r => (
@@ -193,7 +193,7 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
         </div>
       </div>
 
-      <div className="gts-card p-4">
+      <div className="card-orbia p-4">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <div className="flex gap-1.5 flex-wrap">
             {FILTROS_STATUS.map(f => (

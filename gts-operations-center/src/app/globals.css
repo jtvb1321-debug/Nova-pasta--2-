@@ -356,3 +356,11 @@ html:not(.dark) .dash-orbia {
   --c-suave: 75 85 99;
   --c-apagado: 107 114 128;
 }
+
+/* Card branco do padrao Orbia (Desempenho das equipes). */
+.card-orbia {
+  border-radius: 12px;
+  border: 1px solid rgb(var(--c-linha));
+  background: rgb(var(--c-superficie));
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
