@@ -27,6 +27,7 @@ interface DadosSla {
   emAndamento: {
     id: string; cliente: string; tipo: string; status: string; equipe: string | null; tecnicos: string[]
     minutosDecorridos: number; metaMinutos: number; percentualSla: number; slaEstourado: boolean
+    slaAguardandoInicio?: boolean
   }[]
   chamados: {
     id: string; cliente: string; tipo: string; status: string; equipe: string | null; tecnicos: string[]
@@ -283,10 +284,12 @@ export function SlaDesempenho({ filtros }: { filtros: FiltrosTela }) {
                         <p className="font-semibold text-tema-tinta">{c.equipe ?? 'Sem equipe'}</p>
                         {c.tecnicos?.length > 0 && <p className="text-xs text-tema-suave">{c.tecnicos.join(', ')}</p>}
                       </td>
-                      <td className="px-3 py-3 tabular-nums text-tema-tinta">{duracao(c.minutosDecorridos)}</td>
+                      <td className="px-3 py-3 tabular-nums text-tema-tinta">{c.slaAguardandoInicio ? '—' : duracao(c.minutosDecorridos)}</td>
                       <td className="px-3 py-3 tabular-nums text-tema-suave">{temPrazo ? prazo(c.metaMinutos) : 'Sem prazo definido'}</td>
                       <td className="px-3 py-3">
-                        {temPrazo ? (
+                        {c.slaAguardandoInicio ? (
+                          <span className="text-xs text-tema-suave">EACE: o prazo começa no início do atendimento</span>
+                        ) : temPrazo ? (
                           <div>
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-2 rounded-full bg-tema-contraste/[0.06] overflow-hidden"

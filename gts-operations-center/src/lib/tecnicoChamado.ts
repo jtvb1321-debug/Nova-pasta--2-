@@ -47,7 +47,9 @@ const para = (v: any) => (v ? new Date(v) : null)
 
 // Quando o relogio do SLA comeca: agendamento (se futuro na abertura) ou abertura.
 // E' o campo inicioSla gravado pelo servidor; chamados antigos usam a abertura.
-export function inicioEfetivo(c: { inicioSla?: any; dataAbertura?: any; createdAt?: any }): Date | null {
+// EACE (outras cidades): so no inicio do atendimento - antes disso nao ha SLA (null).
+export function inicioEfetivo(c: { inicioSla?: any; dataAbertura?: any; createdAt?: any; eace?: boolean | null; dataInicio?: any }): Date | null {
+  if (c.eace) return para(c.dataInicio)
   return para(c.inicioSla) ?? para(c.dataAbertura) ?? para(c.createdAt)
 }
 
@@ -75,7 +77,7 @@ export interface SituacaoTempo {
 }
 
 export function situacaoDeTempo(
-  c: { status?: string; tipo?: string; inicioSla?: any; dataAbertura?: any; createdAt?: any; dataInicio?: any; dataAgendada?: any },
+  c: { status?: string; tipo?: string; inicioSla?: any; dataAbertura?: any; createdAt?: any; dataInicio?: any; dataAgendada?: any; eace?: boolean | null },
   agoraMs: number,
 ): SituacaoTempo {
   const aberturaMs = (para(c.dataAbertura) ?? para(c.createdAt))?.getTime()
@@ -122,13 +124,15 @@ export function prioridadeDe(obs?: string | null) {
 
 // Posicao na lista: etapa mais adiantada primeiro, depois prioridade, depois quem
 // precisa comecar antes. Reordena sozinho quando a etapa muda.
-export function ordenarChamados<T extends { status?: string; dataACaminho?: any; observacao?: string | null; inicioSla?: any; dataAbertura?: any; createdAt?: any }>(lista: T[]): T[] {
+export function ordenarChamados<T extends { status?: string; dataACaminho?: any; observacao?: string | null; inicioSla?: any; dataAbertura?: any; createdAt?: any; eace?: boolean | null; dataInicio?: any }>(lista: T[]): T[] {
+  // EACE ainda sem SLA entra na fila pela abertura.
+  const chave = (c: T) => (inicioEfetivo(c) ?? para(c.dataAbertura) ?? para(c.createdAt))?.getTime() ?? 0
   return [...lista].sort((a, b) => {
     const e = PESO_ETAPA[etapaDoChamado(a)] - PESO_ETAPA[etapaDoChamado(b)]
     if (e) return e
     const p = PESO_PRIORIDADE[prioridadeDe(a.observacao)] - PESO_PRIORIDADE[prioridadeDe(b.observacao)]
     if (p) return p
-    return (inicioEfetivo(a)?.getTime() ?? 0) - (inicioEfetivo(b)?.getTime() ?? 0)
+    return chave(a) - chave(b)
   })
 }
 

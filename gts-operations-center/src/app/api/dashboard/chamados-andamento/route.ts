@@ -16,7 +16,7 @@ export async function GET() {
     })
 
     const dados = chamados.map(c => {
-      const { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos } = calcularProgressoSlaEmAndamento(inicioSlaEfetivo(c), c.tipo)
+      const { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos, slaAguardandoInicio } = calcularProgressoSlaEmAndamento(inicioSlaEfetivo(c), c.tipo)
 
       return {
         id: c.id,
@@ -30,6 +30,8 @@ export async function GET() {
         percentualSla,
         slaEstourado,
         metaMinutos,
+        slaAguardandoInicio,
+        eace: c.eace,
         reincidente: c.reincidente,
       }
     })

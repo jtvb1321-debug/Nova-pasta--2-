@@ -563,7 +563,9 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               </Campo>
               <Campo rotulo="SLA">
                 <Leitura>
-                  Inicio {horas(META_SLA_RESPOSTA_MINUTOS)} <span className="text-tema-apagado">/</span> resolucao {horas(slaResolucao)}
+                  {eace
+                    ? <>Resolucao {horas(slaResolucao)} <span className="text-tema-apagado">a partir do inicio do atendimento</span></>
+                    : <>Inicio {horas(META_SLA_RESPOSTA_MINUTOS)} <span className="text-tema-apagado">/</span> resolucao {horas(slaResolucao)}</>}
                 </Leitura>
               </Campo>
 

@@ -6,6 +6,7 @@ import { Star, ShieldAlert, CheckCircle, XCircle, Loader2, MessageSquare } from 
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ChamadoCompletoModal } from './SlaDesempenho'
+import { DetalheAvaliacaoModal } from './DetalheAvaliacao'
 import type { FiltrosTela } from './DesempenhoView'
 
 type StatusAnalise = 'PENDENTE' | 'APROVADA' | 'INVALIDADA'
@@ -28,6 +29,7 @@ interface Linha {
   analisadaPor: string | null
   analisadaEm: string | null
   motivoAnalise: string | null
+  avaliacoesMesmoIp: number
   alertas: string[]
 }
 
@@ -99,6 +101,7 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
   const [invalidando, setInvalidando] = useState<string | null>(null)
   const [motivo, setMotivo] = useState('')
   const [chamadoAberto, setChamadoAberto] = useState<string | null>(null)
+  const [detalheAberto, setDetalheAberto] = useState<string | null>(null)
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['desempenho-avaliacoes', filtros, statusAnalise, nota],
@@ -126,6 +129,7 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
       setInvalidando(null)
       setMotivo('')
       queryClient.invalidateQueries({ queryKey: ['desempenho-avaliacoes'] })
+      queryClient.invalidateQueries({ queryKey: ['avaliacao-detalhe'] })
     },
     onError: (e: any) => toast({ title: e.message, variant: 'destructive' }),
   })
@@ -257,11 +261,15 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
                   <tr key={l.avaliacaoId} className="border-b border-tema-linha last:border-0 align-top">
                     <td className="py-2 text-tema-suave whitespace-nowrap">{l.respondidoEm ? formatDateTime(l.respondidoEm) : '—'}</td>
                     <td className="py-2">
-                      <button onClick={() => setChamadoAberto(l.chamadoId)} className="font-mono text-blue-700 hover:underline">
+                      <button onClick={() => setDetalheAberto(l.chamadoId)} className="font-mono text-blue-700 hover:underline" title="Ver detalhes da avaliação">
                         #{l.chamadoId.slice(-6).toUpperCase()}
                       </button>
                     </td>
-                    <td className="py-2 text-tema-texto max-w-[130px] truncate">{l.cliente}</td>
+                    <td className="py-2 max-w-[130px]">
+                      <button onClick={() => setDetalheAberto(l.chamadoId)} className="block w-full truncate text-left text-tema-texto hover:text-blue-700 hover:underline" title={`Ver detalhes: ${l.cliente}`}>
+                        {l.cliente}
+                      </button>
+                    </td>
                     <td className="py-2 text-tema-texto max-w-[170px] truncate" title={l.tecnicos.join(', ')}>
                       {l.equipe ?? 'Sem equipe'}{l.tecnicos.length > 0 ? ` · ${l.tecnicos.join(', ')}` : ''}
                     </td>
@@ -278,7 +286,18 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
                     <td className={cn('py-2', l.dentroSla ? 'text-emerald-700' : 'text-red-700')}>{l.dentroSla ? 'Dentro' : 'Fora'}</td>
                     <td className="py-2">
                       {l.alertas.length === 0 ? (
-                        <span className="text-tema-apagado">—</span>
+                        l.avaliacoesMesmoIp >= 2 ? (
+                          <button
+                            onClick={() => setDetalheAberto(l.chamadoId)}
+                            className="flex items-start gap-1 text-left text-amber-700 hover:underline"
+                            title="Ver as outras avaliações feitas deste IP"
+                          >
+                            <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                            <span className="max-w-[150px]">IP repetido ({l.avaliacoesMesmoIp} em 30 dias)</span>
+                          </button>
+                        ) : (
+                          <span className="text-tema-apagado">—</span>
+                        )
                       ) : (
                         <span className="flex items-start gap-1 text-red-700" title={l.alertas.join(' · ')}>
                           <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
@@ -348,6 +367,17 @@ export function AvaliacoesDesempenho({ filtros }: { filtros: FiltrosTela }) {
         )}
       </div>
 
+      {detalheAberto && !chamadoAberto && (
+        <DetalheAvaliacaoModal
+          chamadoId={detalheAberto}
+          onFechar={() => setDetalheAberto(null)}
+          onAprovar={id => analisar.mutate({ ids: [id], decisao: 'APROVADA' })}
+          onInvalidar={(id, m) => analisar.mutate({ ids: [id], decisao: 'INVALIDADA', motivo: m })}
+          processando={analisar.isPending}
+          onVerChamado={id => setChamadoAberto(id)}
+          onAbrirOutra={id => setDetalheAberto(id)}
+        />
+      )}
       {chamadoAberto && <ChamadoCompletoModal id={chamadoAberto} onFechar={() => setChamadoAberto(null)} />}
     </div>
   )

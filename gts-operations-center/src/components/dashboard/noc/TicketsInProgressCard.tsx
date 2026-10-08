@@ -17,6 +17,7 @@ interface ChamadoAndamento {
   minutosDecorridos: number
   percentualSla: number
   slaEstourado: boolean
+  slaAguardandoInicio?: boolean
   reincidente: boolean
 }
 
@@ -84,7 +85,7 @@ export function TicketsInProgressCard() {
                   </td>
                   <td className="py-2 pr-2" style={{ color: NOC.textoSecundario }}>{c.tecnico ?? '—'}</td>
                   <td className="py-2 pr-2 font-mono" style={{ color: c.slaEstourado ? NOC.critico : NOC.textoSecundario }}>
-                    {formatarTempoDecorrido(c.minutosDecorridos)}
+                    {c.slaAguardandoInicio ? 'SLA no início' : formatarTempoDecorrido(c.minutosDecorridos)}
                   </td>
                   <td className="py-2">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(32,29,23,0.08)', color: NOC.textoSecundario }}>

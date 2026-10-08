@@ -129,8 +129,10 @@ export async function PATCH(
 
     if (status === 'EM_ANDAMENTO' && chamadoAtual && !chamadoAtual.dataInicio) {
       dataUpdate.dataInicio = new Date()
+      // EACE: o SLA comeca agora, no inicio do atendimento (deslocamento entre cidades nao conta).
+      if (chamadoAtual.eace) dataUpdate.inicioSla = dataUpdate.dataInicio
       const { slaRespostaMinutos, dentroSlaResposta } = calcularSlaResposta(
-        dataUpdate.inicioSla ?? inicioSlaEfetivo(chamadoAtual), dataUpdate.dataInicio
+        dataUpdate.inicioSla ?? inicioSlaEfetivo(chamadoAtual) ?? dataUpdate.dataInicio, dataUpdate.dataInicio
       )
       dataUpdate.slaRespostaMinutos = slaRespostaMinutos
       dataUpdate.dentroSlaResposta  = dentroSlaResposta
@@ -138,8 +140,10 @@ export async function PATCH(
 
     if (status === 'FINALIZADO' && chamadoAtual) {
       dataUpdate.dataFim = new Date()
+      // EACE finalizado sem passar por "em atendimento" (ex.: encerrado pelo painel): sem tempo de SLA.
+      const inicioResolucao = inicioSlaEfetivo({ ...chamadoAtual, dataInicio: chamadoAtual.dataInicio ?? dataUpdate.dataInicio }) ?? dataUpdate.dataFim
       const { slaResolucaoMinutos, dentroSlaResolucao } = calcularSlaResolucao(
-        inicioSlaEfetivo(chamadoAtual), dataUpdate.dataFim, dataUpdate.tipo || chamadoAtual.tipo
+        inicioResolucao, dataUpdate.dataFim, dataUpdate.tipo || chamadoAtual.tipo
       )
       dataUpdate.slaResolucaoMinutos = slaResolucaoMinutos
       dataUpdate.dentroSlaResolucao  = dentroSlaResolucao

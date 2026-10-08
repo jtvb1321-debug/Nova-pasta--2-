@@ -57,6 +57,9 @@ export function FechamentoChamado({ chamado }: { chamado: any }) {
   const resolucao = avaliacao?.problemaResolvido ? LABEL_RESOLUCAO[avaliacao.problemaResolvido] : null
   const inicioSla = chamado.inicioSla ?? chamado.dataAbertura
   const slaAgendado = chamado.inicioSla && new Date(chamado.inicioSla).getTime() !== new Date(chamado.dataAbertura).getTime()
+  // EACE: o SLA comeca no inicio do atendimento (gravado igual a dataInicio).
+  const slaNoAtendimento = chamado.eace && chamado.inicioSla && chamado.dataInicio
+    && new Date(chamado.inicioSla).getTime() === new Date(chamado.dataInicio).getTime()
 
   const { data: auditoria, isLoading: carregandoAuditoria } = useQuery({
     queryKey: ['avaliacao-auditoria', chamado.id],
@@ -89,7 +92,7 @@ export function FechamentoChamado({ chamado }: { chamado: any }) {
         <SlaBox
           titulo="Início do SLA"
           valor={new Date(inicioSla).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-          detalhe={slaAgendado ? 'pelo agendamento' : 'pela abertura'}
+          detalhe={slaNoAtendimento ? 'no início do atendimento (EACE)' : slaAgendado ? 'pelo agendamento' : 'pela abertura'}
         />
         <SlaBox titulo="Resposta" valor={formatarDuracao(chamado.slaRespostaMinutos)} detalhe="meta 2h" dentro={chamado.dentroSlaResposta} />
         <SlaBox titulo="Resolução" valor={formatarDuracao(chamado.slaResolucaoMinutos)} dentro={chamado.dentroSlaResolucao} />
@@ -185,7 +188,7 @@ function LinhaAuditoria({ rotulo, valor, alerta }: { rotulo: string; valor: stri
   )
 }
 
-function resumirNavegador(ua: string) {
+export function resumirNavegador(ua: string) {
   const so = /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iOS/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : 'Outro'
   const nav = /Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Outro'
   return `${so}, ${nav}`

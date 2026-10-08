@@ -26,7 +26,7 @@ export async function GET() {
             where: { status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
             orderBy: { dataInicio: 'desc' },
             take: 1,
-            select: { id: true, cliente: true, cidade: true, tipo: true, dataAbertura: true, inicioSla: true },
+            select: { id: true, cliente: true, cidade: true, tipo: true, dataAbertura: true, inicioSla: true, eace: true, dataInicio: true },
           },
         },
       }),

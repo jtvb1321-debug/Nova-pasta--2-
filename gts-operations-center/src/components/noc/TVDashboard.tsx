@@ -477,9 +477,11 @@ export function TVDashboard() {
                       />
                     </div>
                     <p className={cn('text-xs mt-1 font-medium', c.slaEstourado ? 'text-red-400' : 'text-gray-500')}>
-                      SLA {Math.min(100, c.percentualSla)}% · {c.slaEstourado
-                        ? `estourado ha ${formatarTempo(Math.abs(restanteMinutos))}`
-                        : `${formatarTempo(restanteMinutos)} restantes`}
+                      {c.slaAguardandoInicio
+                        ? 'EACE · SLA começa no início do atendimento'
+                        : <>SLA {Math.min(100, c.percentualSla)}% · {c.slaEstourado
+                          ? `estourado ha ${formatarTempo(Math.abs(restanteMinutos))}`
+                          : `${formatarTempo(restanteMinutos)} restantes`}</>}
                     </p>
                   </div>
                 )})}

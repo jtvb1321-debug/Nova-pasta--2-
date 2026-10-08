@@ -175,7 +175,9 @@ export function gerarPDFOrdemServico(chamado: any, extras: ExtrasOS = {}) {
     ['Técnicos', tecnicos],
     ['Veículo', veiculo ? juntar(veiculo.placa, veiculo.modelo) : ''],
     ['Agendado para', dataHora(chamado.dataAgendada) || 'Atendimento imediato'],
-    ['SLA', `Início em até ${horas(META_SLA_RESPOSTA_MINUTOS)} / resolução em até ${horas(slaResolucao)}`],
+    ['SLA', eace
+      ? `Resolução em até ${horas(slaResolucao)} a partir do início do atendimento`
+      : `Início em até ${horas(META_SLA_RESPOSTA_MINUTOS)} / resolução em até ${horas(slaResolucao)}`],
   ], [[eace ? 'Observações' : 'Solicitação', obs.observacao]])
 
   // ---------------------------------------------------------------- 04 materiais

@@ -94,7 +94,7 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
     prisma.chamado.findMany({
       where: { ...filtroBase, dataAbertura: { gte: inicio, lt: fim }, status: { not: 'CANCELADO' }, fechadoAdmin: { not: true } },
       select: {
-        id: true, cliente: true, tipo: true, status: true, dataAbertura: true, inicioSla: true, dataInicio: true, dataFim: true,
+        id: true, cliente: true, tipo: true, status: true, dataAbertura: true, inicioSla: true, dataInicio: true, dataFim: true, eace: true,
         slaRespostaMinutos: true, slaResolucaoMinutos: true, dentroSlaResposta: true, dentroSlaResolucao: true,
         equipe: { select: { id: true, nome: true, funcionarios: { where: { ativo: true }, select: { nome: true } } } },
       },
@@ -103,7 +103,7 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
     prisma.chamado.findMany({
       where: { ...filtroBase, status: { in: ['ABERTO', 'EM_ANDAMENTO'] } },
       select: {
-        id: true, cliente: true, tipo: true, status: true, dataAbertura: true, inicioSla: true,
+        id: true, cliente: true, tipo: true, status: true, dataAbertura: true, inicioSla: true, eace: true, dataInicio: true,
         equipe: { select: { nome: true, funcionarios: { where: { ativo: true }, select: { nome: true } } } },
       },
       orderBy: { dataAbertura: 'asc' },
@@ -170,6 +170,7 @@ export async function calcularSlaDesempenho(f: FiltrosDesempenho) {
         metaMinutos: progresso.metaMinutos,
         percentualSla: progresso.percentualSla,
         slaEstourado: progresso.slaEstourado,
+        slaAguardandoInicio: progresso.slaAguardandoInicio,
       }
     }),
     chamados: lista,
@@ -256,6 +257,8 @@ export async function calcularAvaliacoesDesempenho(f: FiltrosAvaliacoes) {
         analisadaPor: av.analisadaPor,
         analisadaEm: av.analisadaEm,
         motivoAnalise: av.motivoAnalise,
+        // Quantas avaliacoes (incluindo esta) vieram do mesmo IP em 30 dias: 2+ = IP repetido.
+        avaliacoesMesmoIp: mesmoIp,
         alertas,
       }
     })

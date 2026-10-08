@@ -22,7 +22,10 @@ export function calcularInicioSla(dataAbertura: Date, dataAgendada?: Date | null
 }
 
 // Chamados anteriores a regra nao tem inicioSla - para eles vale a abertura.
-export function inicioSlaEfetivo(chamado: { inicioSla?: Date | null; dataAbertura: Date }) {
+// EACE (escolas em outras cidades, com deslocamento longo): o SLA so comeca quando o
+// tecnico inicia o atendimento. Antes disso nao ha relogio correndo (retorna null).
+export function inicioSlaEfetivo(chamado: { inicioSla?: Date | null; dataAbertura: Date; eace?: boolean | null; dataInicio?: Date | null }): Date | null {
+  if (chamado.eace) return chamado.dataInicio ?? null
   return chamado.inicioSla ?? chamado.dataAbertura
 }
 
@@ -42,8 +45,13 @@ export type PrioridadeChamado = 'CRITICA' | 'ALTA' | 'MEDIA' | 'NORMAL'
 // Progresso do SLA de um chamado ainda ABERTO/EM_ANDAMENTO (sem dataFim) -
 // usado no painel de chamados em andamento e no estado calculado de equipe
 // da TV, para nao duplicar a mesma formula em dois lugares.
-export function calcularProgressoSlaEmAndamento(inicioSla: Date, tipo: string) {
+// inicioSla null = SLA ainda nao comecou (EACE aguardando o inicio do atendimento).
+export function calcularProgressoSlaEmAndamento(inicioSla: Date | null, tipo: string) {
   const metaMinutos = META_SLA_RESOLUCAO_MINUTOS[tipo] ?? META_SLA_RESOLUCAO_MINUTOS.SUPORTE
+  if (!inicioSla) {
+    const prioridade: PrioridadeChamado = tipo === 'ROMPIMENTO_MASSIVO' ? 'CRITICA' : 'NORMAL'
+    return { minutosDecorridos: 0, percentualSla: 0, slaEstourado: false, prioridade, metaMinutos, slaAguardandoInicio: true }
+  }
   const minutosDecorridos = diferencaMinutos(inicioSla, new Date())
   const percentualSla = Math.min(100, Math.round((minutosDecorridos / metaMinutos) * 100))
   const slaEstourado = percentualSla >= 100
@@ -55,7 +63,7 @@ export function calcularProgressoSlaEmAndamento(inicioSla: Date, tipo: string) {
         ? 'MEDIA'
         : 'NORMAL'
 
-  return { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos }
+  return { minutosDecorridos, percentualSla, slaEstourado, prioridade, metaMinutos, slaAguardandoInicio: false }
 }
 
 // Considera reincidente quando o mesmo cliente (por telefone, com nome como
