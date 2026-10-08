@@ -61,7 +61,7 @@ export async function PATCH(
 
   const { id } = await params
   const body = await request.json()
-  const { status, equipeId, materiaisUtilizados, materiaisDevolvidos, equipamentosUtilizadosIds, relato, fotos, clienteAusente, dataAgendada, fechadoAdmin, tipo } = body
+  const { status, equipeId, materiaisUtilizados, materiaisDevolvidos, equipamentosUtilizadosIds, relato, fotos, legendasFotos, clienteAusente, dataAgendada, fechadoAdmin, tipo } = body
 
   const role = (session.user as any)?.role
   if (tipo && role !== 'OPERADOR' && role !== 'ADMIN') {
@@ -109,6 +109,20 @@ export async function PATCH(
     if (fotos) {
       const unidas = Array.from(new Set([...listaDeFotos(chamadoAtual?.fotos), ...listaDeFotos(fotos)]))
       dataUpdate.fotos = JSON.stringify(unidas)
+    }
+    // Observacoes opcionais por foto: so de fotos que existem no chamado, texto curto.
+    if (legendasFotos && typeof legendasFotos === 'object' && !Array.isArray(legendasFotos)) {
+      const fotosDoChamado = new Set(dataUpdate.fotos ? listaDeFotos(dataUpdate.fotos) : listaDeFotos(chamadoAtual?.fotos))
+      const atuais = chamadoAtual?.legendasFotos && typeof chamadoAtual.legendasFotos === 'object' && !Array.isArray(chamadoAtual.legendasFotos)
+        ? (chamadoAtual.legendasFotos as Record<string, string>) : {}
+      const novas: Record<string, string> = { ...atuais }
+      for (const [url, texto] of Object.entries(legendasFotos as Record<string, unknown>)) {
+        if (!fotosDoChamado.has(url) || typeof texto !== 'string') continue
+        const t = texto.trim().slice(0, 200)
+        if (t) novas[url] = t
+        else delete novas[url]
+      }
+      dataUpdate.legendasFotos = novas
     }
     if (clienteAusente !== undefined) dataUpdate.clienteAusente = clienteAusente
     if (fechadoAdmin === true) dataUpdate.fechadoAdmin = true

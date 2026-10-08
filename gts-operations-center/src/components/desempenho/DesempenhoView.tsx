@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { SlaDesempenho } from './SlaDesempenho'
 import { AvaliacoesDesempenho } from './AvaliacoesDesempenho'
+import { BonificacaoDesempenho } from './BonificacaoDesempenho'
 
 export type Periodo = 'hoje' | 'semana' | 'mes' | 'mes_anterior' | 'personalizado'
 
@@ -28,7 +29,7 @@ const PERIODOS: { id: Periodo; label: string }[] = [
 // As demais sub-abas (visao geral, chamados, materiais, bonificacao,
 // relatorios, configuracoes) entram aqui conforme forem aprovadas - todas
 // reaproveitando os mesmos filtros do topo. Avaliacoes e' so do ADMIN.
-type Subaba = 'sla' | 'avaliacoes'
+type Subaba = 'sla' | 'avaliacoes' | 'bonificacao'
 
 async function fetchEquipes(): Promise<{ id: string; nome: string }[]> {
   const res = await fetch('/api/teams')
@@ -43,7 +44,10 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
   const [subaba, setSubaba] = useState<Subaba>('sla')
   const subabas: { id: Subaba; label: string }[] = [
     { id: 'sla', label: 'SLA' },
-    ...(podeAnalisarAvaliacoes ? [{ id: 'avaliacoes' as Subaba, label: 'Avaliações' }] : []),
+    ...(podeAnalisarAvaliacoes ? [
+      { id: 'avaliacoes' as Subaba, label: 'Avaliações' },
+      { id: 'bonificacao' as Subaba, label: 'Ranking e bonificação' },
+    ] : []),
   ]
   const { data: equipes = [] } = useQuery({ queryKey: ['equipes-desempenho'], queryFn: fetchEquipes })
 
@@ -143,6 +147,7 @@ export function DesempenhoView({ podeAnalisarAvaliacoes = false }: { podeAnalisa
 
       {subaba === 'sla' && !personalizadoIncompleto && <SlaDesempenho filtros={filtros} />}
       {subaba === 'avaliacoes' && podeAnalisarAvaliacoes && !personalizadoIncompleto && <AvaliacoesDesempenho filtros={filtros} />}
+      {subaba === 'bonificacao' && podeAnalisarAvaliacoes && !personalizadoIncompleto && <BonificacaoDesempenho filtros={filtros} onMudarPeriodo={periodo => atualizar({ periodo })} />}
     </div>
   )
 }

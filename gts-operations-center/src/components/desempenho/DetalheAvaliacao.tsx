@@ -36,7 +36,7 @@ interface Detalhe {
     endereco: string; numero: string | null; complemento: string | null; bairro: string | null
     condominio: string | null; bloco: string | null; apartamento: string | null; cidade: string; uf: string | null
     tipo: string; eace: boolean; escolaResponsavel: string | null; escolaCodigoInep: string | null
-    observacao: string | null; relato: string | null; fotos: string[]
+    observacao: string | null; relato: string | null; fotos: string[]; legendasFotos: Record<string, string> | null
     dataAbertura: string; dataInicio: string | null; dataFim: string | null
     slaRespostaMinutos: number | null; slaResolucaoMinutos: number | null
     dentroSlaResposta: boolean | null; dentroSlaResolucao: boolean | null
@@ -305,13 +305,19 @@ export function DetalheAvaliacaoModal({
               {c.fotos.length > 0 && (
                 <div className="mt-2">
                   <p className="text-sm text-tema-apagado mb-1.5">Fotos ({c.fotos.length})</p>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {c.fotos.map(f => (
-                      <a key={f} href={f} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border border-tema-linha bg-tema-contraste/[0.03]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={f} alt="Foto do atendimento" loading="lazy" className="w-full h-full object-cover" />
-                      </a>
-                    ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {c.fotos.map(f => {
+                      const legenda = c.legendasFotos?.[f]
+                      return (
+                        <figure key={f} className="space-y-1">
+                          <a href={f} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border border-tema-linha bg-tema-contraste/[0.03]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={f} alt={legenda || 'Foto do atendimento'} loading="lazy" className="w-full h-full object-cover" />
+                          </a>
+                          {legenda && <figcaption className="text-xs text-tema-texto break-words">{legenda}</figcaption>}
+                        </figure>
+                      )
+                    })}
                   </div>
                 </div>
               )}

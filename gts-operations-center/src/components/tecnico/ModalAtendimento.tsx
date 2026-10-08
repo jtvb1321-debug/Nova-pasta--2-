@@ -53,20 +53,29 @@ const hora = (d: any) => d ? new Date(d).toLocaleString('pt-BR', { day: '2-digit
 
 // Rascunho do que o tecnico ja preencheu: sobrevive a erro de envio e a fechar o modal por engano.
 const chaveRascunho = (id: string) => `atendimento-rascunho:${id}`
-function lerRascunho(id: string): { relato: string; fotos: string[] } {
+type Legendas = Record<string, string>
+function soLegendas(v: any): Legendas {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {}
+  return Object.fromEntries(Object.entries(v).filter(([k, t]) => typeof k === 'string' && typeof t === 'string')) as Legendas
+}
+function lerRascunho(id: string): { relato: string; fotos: string[]; legendas: Legendas } {
   try {
     const bruto = sessionStorage.getItem(chaveRascunho(id))
-    if (!bruto) return { relato: '', fotos: [] }
+    if (!bruto) return { relato: '', fotos: [], legendas: {} }
     const v = JSON.parse(bruto)
-    return { relato: typeof v.relato === 'string' ? v.relato : '', fotos: Array.isArray(v.fotos) ? v.fotos.filter((u: any) => typeof u === 'string') : [] }
+    return {
+      relato: typeof v.relato === 'string' ? v.relato : '',
+      fotos: Array.isArray(v.fotos) ? v.fotos.filter((u: any) => typeof u === 'string') : [],
+      legendas: soLegendas(v.legendas),
+    }
   } catch {
-    return { relato: '', fotos: [] }
+    return { relato: '', fotos: [], legendas: {} }
   }
 }
-function salvarRascunho(id: string, relato: string, fotos: string[]) {
+function salvarRascunho(id: string, relato: string, fotos: string[], legendas: Legendas) {
   try {
-    if (!relato.trim() && fotos.length === 0) sessionStorage.removeItem(chaveRascunho(id))
-    else sessionStorage.setItem(chaveRascunho(id), JSON.stringify({ relato, fotos }))
+    if (!relato.trim() && fotos.length === 0 && Object.keys(legendas).length === 0) sessionStorage.removeItem(chaveRascunho(id))
+    else sessionStorage.setItem(chaveRascunho(id), JSON.stringify({ relato, fotos, legendas }))
   } catch { /* armazenamento indisponivel: segue sem rascunho */ }
 }
 function limparRascunho(id: string) {
@@ -77,7 +86,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
   const agora = useAgora(30000)
   const [rascunho] = useState(() => lerRascunho(chamado.id))
   const [relato, setRelato] = useState(chamado.relato || rascunho.relato)
-  const fotos = useFotosAtendimento(fotosSalvas(chamado), rascunho.fotos)
+  const fotos = useFotosAtendimento(fotosSalvas(chamado), rascunho.fotos, { ...soLegendas(chamado.legendasFotos), ...rascunho.legendas })
   const [tentouFinalizar, setTentouFinalizar] = useState(false)
   const [materiaisUtilizados, setMateriaisUtilizados] = useState<Record<string, { quantidade: number; observacao: string }>>({})
   const [equipamentosUtilizadosIds, setEquipamentosUtilizadosIds] = useState<string[]>([])
@@ -107,11 +116,12 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
 
   // Guarda o preenchimento (texto e fotos ja enviadas) enquanto o chamado esta em atendimento.
   const urlsNovas = fotos.novasValidas.join('|')
+  const legendasTexto = JSON.stringify(fotos.legendasPorUrl)
   useEffect(() => {
     if (etapa !== 'ATENDIMENTO' || tokenAvaliacao) return
-    salvarRascunho(chamado.id, relato, fotos.novasValidas)
+    salvarRascunho(chamado.id, relato, fotos.novasValidas, fotos.legendasPorUrl)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relato, urlsNovas, etapa, tokenAvaliacao, chamado.id])
+  }, [relato, urlsNovas, legendasTexto, etapa, tokenAvaliacao, chamado.id])
 
   // Chamado deixou de ser atendivel (ex.: gestao encerrou/cancelou) e nao estamos mostrando o QR: avisa e fecha.
   const etapaAnterior = useRef(etapa)
@@ -193,6 +203,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
     const ok = await onAvancar('FINALIZADO', {
       relato,
       fotos: JSON.stringify(fotos.urlsValidas),
+      legendasFotos: fotos.legendasPorUrl,
       materiaisUtilizados: utilizadosPayload,
       materiaisDevolvidos: devolucoesPayload,
       equipamentosUtilizadosIds,

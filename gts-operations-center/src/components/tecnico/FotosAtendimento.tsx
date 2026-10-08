@@ -24,6 +24,8 @@ export interface ItemFoto {
 }
 
 const MAX_SIMULTANEOS = 3
+// Observacao opcional que o tecnico escreve em cada foto (ex.: "poste antes do reparo").
+export const MAX_LEGENDA = 200
 
 function enviarArquivo(
   file: File,
@@ -51,7 +53,7 @@ function enviarArquivo(
   })
 }
 
-export function useFotosAtendimento(salvas: string[], rascunho: string[] = []) {
+export function useFotosAtendimento(salvas: string[], rascunho: string[] = [], legendasIniciais: Record<string, string> = {}) {
   const [itens, setItens] = useState<ItemFoto[]>(() => [
     ...salvas.map((url, i) => ({ id: `salva-${i}`, origem: 'salva' as const, nome: `Foto ${i + 1}`, status: 'ok' as const, progresso: 100, url })),
     ...rascunho.filter(u => !salvas.includes(u)).map((url, i) => ({ id: `rasc-${i}`, origem: 'nova' as const, nome: `Foto ${salvas.length + i + 1}`, status: 'ok' as const, progresso: 100, url })),
@@ -62,6 +64,16 @@ export function useFotosAtendimento(salvas: string[], rascunho: string[] = []) {
   const ativos = useRef(0)
   const contador = useRef(0)
   const montado = useRef(true)
+  // Legenda por foto, indexada pelo id do item (a URL so existe depois do envio).
+  const [legendas, setLegendas] = useState<Record<string, string>>(() => {
+    const inicial: Record<string, string> = {}
+    salvas.forEach((url, i) => { if (legendasIniciais[url]) inicial[`salva-${i}`] = legendasIniciais[url] })
+    rascunho.filter(u => !salvas.includes(u)).forEach((url, i) => { if (legendasIniciais[url]) inicial[`rasc-${i}`] = legendasIniciais[url] })
+    return inicial
+  })
+  const definirLegenda = useCallback((id: string, texto: string) => {
+    setLegendas(prev => ({ ...prev, [id]: texto.slice(0, MAX_LEGENDA) }))
+  }, [])
 
   const atualizar = useCallback((id: string, parcial: Partial<ItemFoto>) => {
     if (!montado.current) return
@@ -123,9 +135,18 @@ export function useFotosAtendimento(salvas: string[], rascunho: string[] = []) {
 
   const urlsValidas = itens.filter(i => i.status === 'ok' && i.url).map(i => i.url as string)
   const novasValidas = itens.filter(i => i.origem === 'nova' && i.status === 'ok' && i.url).map(i => i.url as string)
+  // Legendas preenchidas das fotos validas, por URL (o que vai para o servidor e para o rascunho).
+  const legendasPorUrl: Record<string, string> = {}
+  for (const i of itens) {
+    const t = (legendas[i.id] ?? '').trim()
+    if (i.status === 'ok' && i.url && t) legendasPorUrl[i.url] = t
+  }
 
   return {
     itens,
+    legendas,
+    definirLegenda,
+    legendasPorUrl,
     adicionar,
     tentarNovamente,
     remover,
@@ -193,11 +214,12 @@ export function FotosAtendimento({ fotos, tentouFinalizar }: { fotos: EstadoFoto
       </div>
 
       {fotos.itens.length > 0 && (
-        <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3 mb-3">
           {fotos.itens.map((f, i) => {
             const src = f.preview || f.url
             return (
-              <li key={f.id} className="relative aspect-square rounded-xl overflow-hidden bg-tema-contraste/[0.05] border border-tema-linha">
+              <li key={f.id} className="space-y-1.5">
+              <div className="relative aspect-square rounded-xl overflow-hidden bg-tema-contraste/[0.05] border border-tema-linha">
                 {src ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -251,6 +273,21 @@ export function FotosAtendimento({ fotos, tentouFinalizar }: { fotos: EstadoFoto
                     <X className="w-4 h-4" aria-hidden />
                   </button>
                 )}
+              </div>
+              {f.status !== 'erro' && (
+                <>
+                  <label htmlFor={`legenda-${f.id}`} className="sr-only">Observação da foto {i + 1} (opcional)</label>
+                  <input
+                    id={`legenda-${f.id}`}
+                    type="text"
+                    value={fotos.legendas[f.id] ?? ''}
+                    onChange={e => fotos.definirLegenda(f.id, e.target.value)}
+                    maxLength={MAX_LEGENDA}
+                    placeholder="Observação (opcional)"
+                    className="w-full min-h-[40px] rounded-lg border border-tema-linha bg-tema-superficie px-2.5 text-xs text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-2 focus:ring-orange-500/40"
+                  />
+                </>
+              )}
               </li>
             )
           })}
@@ -269,7 +306,7 @@ export function FotosAtendimento({ fotos, tentouFinalizar }: { fotos: EstadoFoto
           <ImageIcon className="w-4 h-4" aria-hidden /> {temCamera ? 'Escolher da galeria' : 'Selecionar imagens'}
         </button>
       </div>
-      <p className="text-[11px] text-tema-apagado mt-2">Fotos adicionais são opcionais.</p>
+      <p className="text-[11px] text-tema-apagado mt-2">Fotos adicionais e observações nas fotos são opcionais.</p>
     </section>
   )
 }

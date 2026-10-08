@@ -22,7 +22,7 @@ const PERIODOS: { id: Periodo; rotulo: string }[] = [
 interface Linha {
   id: string; cliente: string; tipo: string; eace: boolean; endereco: string
   dataAbertura: string; dataInicio: string | null; dataFim: string | null
-  relato: string | null; fotos: string | null; dentroSlaResolucao: boolean | null
+  relato: string | null; fotos: string | null; legendasFotos?: Record<string, string> | null; dentroSlaResolucao: boolean | null
   equipe: string | null; tecnicos: string[]
   avaliacao: { situacao: 'APROVADA' | 'EM_ANALISE' | 'SEM_AVALIACAO'; nota: number | null; respondidoEm: string | null }
 }
@@ -98,13 +98,14 @@ function CardOS({ o }: { o: Linha }) {
             <div className="space-y-2">
               {o.relato && <p className="text-sm text-tema-texto whitespace-pre-line break-words">{o.relato}</p>}
               {fotos.length > 0 && (
-                <ul className="grid grid-cols-4 gap-2">
+                <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {fotos.map((u, i) => (
-                    <li key={u}>
+                    <li key={u} className="space-y-1">
                       <a href={u} target="_blank" rel="noopener noreferrer" aria-label={`Abrir foto ${i + 1}`}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={u} alt={`Foto ${i + 1} do atendimento`} className="aspect-square w-full object-cover rounded-lg border border-tema-linha" />
+                        <img src={u} alt={o.legendasFotos?.[u] || `Foto ${i + 1} do atendimento`} className="aspect-square w-full object-cover rounded-lg border border-tema-linha" />
                       </a>
+                      {o.legendasFotos?.[u] && <p className="text-[11px] text-tema-suave break-words">{o.legendasFotos[u]}</p>}
                     </li>
                   ))}
                 </ul>

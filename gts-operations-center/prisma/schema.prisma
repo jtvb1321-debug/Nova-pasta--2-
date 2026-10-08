@@ -275,6 +275,8 @@ model Chamado {
   observacao                  String?
   relato                      String?
   fotos                       String?
+  // Observacao opcional do tecnico em cada foto de evidencia: { "<url da foto>": "texto" }.
+  legendasFotos               Json?
   equipeId                    String?
   status                      StatusChamado    @default(ABERTO)
   dataAbertura                DateTime         @default(now())
@@ -1294,4 +1296,24 @@ model TermoEstoqueEvento {
 
   @@index([termoId])
   @@map("estoque_termo_eventos")
+}
+
+// Fechamento da bonificacao aprovado pelo admin: foto do calculo (por equipe e periodo)
+// no momento da aprovacao. Nao muda depois, mesmo que chegue avaliacao atrasada.
+model FechamentoBonificacao {
+  id               String   @id @default(cuid())
+  equipeId         String
+  equipeNome       String
+  periodoInicio    DateTime
+  periodoFim       DateTime
+  creditosCentavos Int
+  debitosCentavos  Int
+  saldoCentavos    Int
+  detalhe          Json
+  aprovadoPor      String
+  aprovadoEm       DateTime @default(now())
+
+  @@unique([equipeId, periodoInicio, periodoFim])
+  @@index([periodoInicio, periodoFim])
+  @@map("fechamentos_bonificacao")
 }

@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       take: POR_PAGINA,
       select: {
         id: true, cliente: true, tipo: true, eace: true, endereco: true, numero: true, bairro: true, cidade: true,
-        dataAbertura: true, dataInicio: true, dataFim: true, relato: true, fotos: true, dentroSlaResolucao: true,
+        dataAbertura: true, dataInicio: true, dataFim: true, relato: true, fotos: true, legendasFotos: true, dentroSlaResolucao: true,
         equipe: { select: { nome: true, funcionarios: { where: { ativo: true }, select: { nome: true } } } },
         avaliacao: { select: { nota: true, respondidoEm: true, statusAnalise: true } },
       },
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       id: c.id, cliente: c.cliente, tipo: c.tipo, eace: c.eace,
       endereco: [c.endereco, c.numero, c.bairro, c.cidade].filter(Boolean).join(', '),
       dataAbertura: c.dataAbertura, dataInicio: c.dataInicio, dataFim: c.dataFim,
-      relato: c.relato, fotos: c.fotos, dentroSlaResolucao: c.dentroSlaResolucao,
+      relato: c.relato, fotos: c.fotos, legendasFotos: c.legendasFotos, dentroSlaResolucao: c.dentroSlaResolucao,
       equipe: c.equipe?.nome ?? null,
       tecnicos: c.equipe?.funcionarios.map(f => f.nome) ?? [],
       avaliacao,

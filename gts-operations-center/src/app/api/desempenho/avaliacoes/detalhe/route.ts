@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
           id: true, cliente: true, telefone: true, endereco: true, numero: true, complemento: true, bairro: true,
           condominio: true, bloco: true, apartamento: true, cidade: true, uf: true,
           tipo: true, status: true, eace: true, escolaResponsavel: true, escolaCodigoInep: true,
-          observacao: true, relato: true, fotos: true,
+          observacao: true, relato: true, fotos: true, legendasFotos: true,
           dataAbertura: true, dataInicio: true, dataFim: true,
           slaRespostaMinutos: true, slaResolucaoMinutos: true, dentroSlaResposta: true, dentroSlaResolucao: true,
           equipe: { select: { nome: true, funcionarios: { where: { ativo: true }, select: { nome: true } } } },
