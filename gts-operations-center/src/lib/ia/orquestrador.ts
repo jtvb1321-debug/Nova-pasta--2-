@@ -6,7 +6,8 @@ import { executarFerramenta, resultadoParaModelo, type Execucao } from './execut
 import { consumirLimite } from './limites'
 import { criarConversa, conversaDoUsuario, historicoParaModelo, salvarMensagem } from './persistencia'
 import { provedorDaConfig, ErroProvedor, mensagemErroProvedor, type MensagemProvedor, type Provedor } from './provedores'
-import { RESPOSTA_INJECAO, detectarInjecao, ErroEntrada, limparEntrada, limparRespostaModelo } from './seguranca'
+import { responderConhecimento } from './conhecimento/nlu'
+import { RESPOSTA_INJECAO, detectarManipulacao, detectarPedidoEscrita, ErroEntrada, limparEntrada, limparRespostaModelo } from './seguranca'
 import type { AreaFerramenta, ContextoIA, FonteConsulta, Indicador, Referencia } from './tipos'
 
 // Fluxo de uma pergunta: valida -> limita -> checa injecao -> (modelo <-> ferramentas, no maximo N) -> resposta.
@@ -93,12 +94,24 @@ export async function responderPergunta(e: EntradaPergunta): Promise<RespostaAss
   const ctxConversa: ContextoIA = { ...ctx, conversaId }
   await salvarMensagem({ conversaId, papel: 'USUARIO', conteudo: pergunta })
 
-  // Tentativa de mudar as regras, extrair o prompt, pedir escrita ou SQL: resposta fixa, sem chamar o modelo.
-  const inj = detectarInjecao(pergunta)
+  // Tentativa de mudar as regras, extrair o prompt, SQL ou credenciais: resposta fixa, sem chamar o modelo.
+  const inj = detectarManipulacao(pergunta)
   if (inj.suspeita) {
     await registrarLog({ usuarioId: ctx.usuarioId, acao: 'IA_INJECAO_SUSPEITA', entidade: 'IA', entidadeId: conversaId, detalhes: `Pergunta bloqueada (${inj.motivos.join(', ')})` })
     const m = await salvarMensagem({ conversaId, papel: 'ASSISTENTE', conteudo: RESPOSTA_INJECAO, provedor: 'regra', simulada: false })
     return { conversaId, mensagemId: m.id, texto: RESPOSTA_INJECAO, simulada: false, bloqueada: true, provedor: 'regra', modelo: 'bloqueio-de-seguranca', indicadores: [], referencias: [], recomendacoes: [], avisos: [], fontes: [], ferramentas: [] }
+  }
+
+  // Pedido para ALTERAR algo ("adicione itens ao estoque"), definicao ("o que e EACE?") ou "como faco ...?":
+  // o assistente nao altera nada, mas explica o caminho na tela. Resposta fixa, sem modelo e sem consulta ao banco.
+  const escrita = detectarPedidoEscrita(pergunta)
+  const conhecimento = responderConhecimento(pergunta, { escrita, area: e.aba })
+  if (escrita) {
+    await registrarLog({ usuarioId: ctx.usuarioId, acao: 'IA_PEDIDO_ESCRITA', entidade: 'IA', entidadeId: conversaId, detalhes: 'Pedido de alteração não executado; respondido com orientação' })
+  }
+  if (conhecimento) {
+    const m = await salvarMensagem({ conversaId, papel: 'ASSISTENTE', conteudo: conhecimento.texto, recomendacoes: conhecimento.recomendacoes, provedor: 'regra', modelo: 'guia-do-sistema', simulada: false })
+    return { conversaId, mensagemId: m.id, texto: conhecimento.texto, simulada: false, bloqueada: false, provedor: 'regra', modelo: 'guia-do-sistema', indicadores: [], referencias: [], recomendacoes: conhecimento.recomendacoes, avisos: [], fontes: [], ferramentas: [] }
   }
 
   const provedor = e.provedor ?? provedorDaConfig(config)

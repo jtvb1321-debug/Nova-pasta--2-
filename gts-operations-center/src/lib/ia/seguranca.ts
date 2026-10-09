@@ -45,7 +45,7 @@ const PADROES_INJECAO: { motivo: string; re: RegExp }[] = [
   },
   {
     motivo: 'pedido de escrita',
-    re: /\b(apague|exclua|delete|remova|de baixa|dar baixa|transfira|transferir|compre|comprar|efetue (a )?compra|altere o estoque|ajuste o estoque|zere o estoque|adicione|adicionar|acrescente|acrescentar|cadastre|cadastrar|crie|criar|insira|inserir|lance|lancar|registre|registrar|atualize|atualizar|altere|alterar|mova|mover|devolva|materialize|efetive)\b.{0,60}\b(estoque|item|itens|produto|material|materiais|chamado|equipamento|saldo|banco|tabela|conectores?|onus?|pedido|deposito|depositos)\b/,
+    re: /\b(apague|exclua|delete|remova|de baixa|dar baixa|transfira|transferir|compre|comprar|efetue (a )?compra|altere o estoque|ajuste o estoque|zere o estoque|adicione|adicionar|acrescente|acrescentar|cadastre|cadastrar|crie|criar|insira|inserir|lance|lancar|registre|registrar|atualize|atualizar|altere|alterar|mova|mover|devolva|materialize|efetive|retire|retirar|tire|tirar|importe|importar|aprove|aprovar|rejeite|rejeitar|renomeie|renomear|troque|trocar)\b.{0,60}\b(estoque|equipes?|devolucao|devolucoes|usuarios?|nota fiscal|item|itens|produto|material|materiais|chamado|equipamento|saldo|banco|tabela|conectores?|onus?|pedido|deposito|depositos)\b/,
   },
   {
     motivo: 'credenciais',
@@ -59,6 +59,19 @@ export interface AvaliacaoInjecao {
 }
 
 const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+/** Manipulacao de verdade (trocar regras, revelar prompt, SQL, credenciais): bloqueia. Pedido de alteracao do sistema NAO entra aqui. */
+export function detectarManipulacao(texto: string): AvaliacaoInjecao {
+  const t = semAcento(texto)
+  const motivos = PADROES_INJECAO.filter(p => p.motivo !== 'pedido de escrita' && p.re.test(t)).map(p => p.motivo)
+  return { suspeita: motivos.length > 0, motivos }
+}
+
+/** Pedido para ALTERAR o sistema (adicionar, apagar, transferir...). O assistente nao faz, mas ensina o caminho na tela. */
+export function detectarPedidoEscrita(texto: string): boolean {
+  const t = semAcento(texto)
+  return PADROES_INJECAO.some(p => p.motivo === 'pedido de escrita' && p.re.test(t))
+}
 
 export function detectarInjecao(texto: string): AvaliacaoInjecao {
   const t = semAcento(texto)

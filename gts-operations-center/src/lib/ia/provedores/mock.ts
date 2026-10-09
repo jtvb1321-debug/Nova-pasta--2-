@@ -1,3 +1,4 @@
+import { listaDeAssuntos, sugerirGuias } from '../conhecimento/nlu'
 import { ErroProvedor, type ChamadaFerramentaModelo, type EntradaProvedor, type MensagemProvedor, type Provedor, type RespostaProvedor } from './tipos'
 
 // Provedor "mock": NAO e' um modelo de IA. Escolhe ferramentas por palavras-chave e monta a resposta
@@ -45,7 +46,8 @@ function periodoDe(t: string): { periodo?: string } {
   if (/(7 dias|semana)/.test(t)) return { periodo: '7d' }
   if (/mes anterior|mes passado/.test(t)) return { periodo: 'mes_anterior' }
   if (/(este mes|no mes|mensal)/.test(t)) return { periodo: 'mes' }
-  if (/90 dias/.test(t)) return { periodo: '90d' }
+  if (/90 dias|trimestre/.test(t)) return { periodo: '90d' }
+  if (/(30 dias|ultimo mes)/.test(t)) return { periodo: '30d' }
   return {}
 }
 
@@ -120,16 +122,20 @@ export function criarProvedorMock(): Provedor {
         if (chamadas.length > 0) return { ...base, texto: null, chamadas }
         const nomes = new Set(entrada.ferramentas.map(f => f.function.name))
         const exemplos = EXEMPLOS.filter(e => nomes.has(e.ferramenta)).map(e => `• ${e.pergunta}`)
-        const lista = exemplos.length ? `\n\nPerguntas que eu sei responder neste modo:\n${exemplos.join('\n')}` : ''
+        const lista = exemplos.length ? `\n\nPerguntas de DADOS que eu sei responder neste modo:\n${exemplos.join('\n')}` : ''
+        const aba = nomes.has('consultar_estoque') ? 'estoque' : 'operacoes'
+        const assuntos = `\n\nE posso ensinar a fazer isto nas telas (pergunte "como faço para..."):\n${listaDeAssuntos(aba)}`
+        const proximos = sugerirGuias(pergunta, 3)
+        const dica = proximos.length ? `\n\nTalvez você queira: ${proximos.map(g => g.titulo).join(' / ')}.` : ''
         if (PEDIDO_DE_AJUDA.test(sem(pergunta))) {
           return {
             ...base, chamadas: [],
-            texto: `${ROTULO_MOCK}\n\nEu só CONSULTO dados (não altero estoque, chamados nem nada no sistema) e mostro números, referências e recomendações.${lista}`,
+            texto: `${ROTULO_MOCK}\n\nEu só CONSULTO dados (não altero estoque, chamados nem nada no sistema) e mostro números e recomendações. Também explico como fazer as coisas nas telas.${lista}${assuntos}`,
           }
         }
         return {
           ...base, chamadas: [],
-          texto: `${ROTULO_MOCK}\n\nNão entendi qual consulta fazer. O modo de teste só reconhece palavras-chave (como SLA, repor, crítico, movimentações, devoluções, serial); para escrever com suas próprias palavras é preciso ativar um modelo de IA (OpenRouter).${lista}`,
+          texto: `${ROTULO_MOCK}\n\nNão entendi qual consulta fazer. O modo de teste só reconhece palavras-chave (como SLA, repor, crítico, movimentações, devoluções, serial); para entender frases livres de qualquer jeito é preciso ativar um modelo de IA (OpenRouter).${dica}${lista}`,
         }
       }
 

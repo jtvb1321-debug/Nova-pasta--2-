@@ -45,6 +45,22 @@ chamado não é movimentação física (e **não baixa o saldo** no sistema, ent
 atribuído a um técnico ou pendente **nunca** é classificado como perdido/extraviado; a previsão de reposição é
 aproximada e só sugere quantidade com dados suficientes.
 
+## Dúvidas sobre o sistema (guias "como fazer")
+
+Antes de chamar qualquer modelo, o servidor interpreta a pergunta **por palavras-chave** (`src/lib/ia/conhecimento/`):
+
+| Tipo de pergunta | Exemplo | O que acontece |
+|---|---|---|
+| Pedido de alteração | "adicione 3 itens ao estoque" | Nada é alterado. Responde com o passo a passo na tela (menu, botão e janela reais), audita `IA_PEDIDO_ESCRITA` |
+| Como fazer / onde fica | "como retiro material?", "onde fica o mapa?" | Guia com passos numerados (ou o caminho do menu) |
+| Definição | "o que é EACE?", "o que é saldo livre?" | Texto do glossário do sistema |
+| Dados | "como está o SLA neste mês?" | Segue para as ferramentas (mock ou OpenRouter) |
+
+Essas respostas são fixas (não são IA e não consomem cota do OpenRouter) e valem em qualquer provedor. Para ensinar um assunto novo,
+adicione um item em `guias.ts` (nomes de telas/botões conferidos no código) ou em `glossario.ts` e um teste em `tests/ia/conhecimento.test.ts`.
+Manipulação (ignorar regras, revelar prompt, SQL, credenciais) continua **bloqueada**, com `IA_INJECAO_SUSPEITA`.
+Limite: é correspondência por palavras; frases muito diferentes das previstas caem na lista "assuntos que eu sei ensinar".
+
 ## Provedor de IA
 
 | `ORBIA_AI_PROVIDER` | O que é |
@@ -70,8 +86,8 @@ resposta inválida. A tela mostra uma mensagem amigável e "Tentar novamente"; n
 
 - Entrada máxima 1000 caracteres; 5 chamadas de ferramenta por pergunta; timeout de 30 s; 8 perguntas/min e 200/dia por usuário
   (variáveis `ORBIA_AI_*`). Consultas têm período máximo de 366 dias, paginação (até 50) e timeout de 15 s por ferramenta.
-- Pedidos de escrita, SQL, troca de regras, revelar prompt/credenciais são **bloqueados antes de chamar o modelo**
-  (resposta fixa, auditoria `IA_INJECAO_SUSPEITA`). Texto livre vindo do banco (ex.: motivo de movimentação) é neutralizado
+- SQL, troca de regras, revelar prompt/credenciais são **bloqueados antes de chamar o modelo**
+  (resposta fixa, auditoria `IA_INJECAO_SUSPEITA`). Pedidos de alteração do sistema não são executados: recebem o guia da tela. Texto livre vindo do banco (ex.: motivo de movimentação) é neutralizado
   antes de ir ao modelo, para que ninguém consiga "instruir" a IA por dentro dos dados.
 - O servidor só executa as ferramentas da aba aberta; qualquer outra é negada (`IA_FERRAMENTA_NEGADA`).
 - Auditoria: toda execução vira um registro em `ia_execucoes_ferramenta` (usuário, origem chat/mcp, ferramenta, parâmetros
