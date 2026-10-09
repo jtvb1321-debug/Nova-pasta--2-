@@ -13,6 +13,28 @@ export const ROTULO_MOCK = 'Resposta simulada (modo de teste, sem IA real)'
 
 const sem = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
+const PEDIDO_DE_AJUDA = /(o que (voce|vc|tu) (pode|consegue|faz|sabe)|oque (voce|vc) (pode|consegue|faz)|\bajuda\b|como funciona|\bajude\b|\bajudar\b|\bola\b|\boi\b|bom dia|boa tarde|boa noite|\bmenu\b|\bcomandos?\b)/
+
+// Uma pergunta de exemplo por ferramenta (so as da aba aberta aparecem).
+const EXEMPLOS: { ferramenta: string; pergunta: string }[] = [
+  { ferramenta: 'resumo_diario_chamados', pergunta: 'Como está a operação hoje?' },
+  { ferramenta: 'chamados_criticos', pergunta: 'Quais chamados estão críticos agora?' },
+  { ferramenta: 'analisar_sla', pergunta: 'Como está o SLA neste mês?' },
+  { ferramenta: 'comparar_equipes', pergunta: 'Compare as equipes no mês anterior' },
+  { ferramenta: 'produtividade', pergunta: 'Qual a produtividade dos últimos 30 dias?' },
+  { ferramenta: 'consultar_metas', pergunta: 'Quais são as metas de SLA?' },
+  { ferramenta: 'atendimentos_pendentes', pergunta: 'Quais atendimentos estão pendentes?' },
+  { ferramenta: 'tendencias_desempenho', pergunta: 'Qual a tendência de desempenho?' },
+  { ferramenta: 'materiais_abaixo_minimo', pergunta: 'Quais materiais precisamos repor?' },
+  { ferramenta: 'prever_reposicao', pergunta: 'Faça uma previsão de reposição para 30 dias' },
+  { ferramenta: 'consultar_movimentacoes', pergunta: 'Mostre as movimentações da semana' },
+  { ferramenta: 'materiais_por_equipe', pergunta: 'Quais equipes têm material pendente de prestação de contas?' },
+  { ferramenta: 'consultar_devolucoes', pergunta: 'Há devoluções aguardando aprovação?' },
+  { ferramenta: 'analisar_consumo', pergunta: 'Qual foi o consumo de materiais nos últimos 90 dias?' },
+  { ferramenta: 'consultar_equipamento', pergunta: 'Onde está o equipamento AA:BB:CC:00:00:01?' },
+  { ferramenta: 'consultar_estoque', pergunta: 'Quanto temos de "ONU" em estoque?' },
+]
+
 function ultimaPergunta(m: MensagemProvedor[]): string {
   for (let i = m.length - 1; i >= 0; i--) if (m[i].role === 'user') return m[i].content ?? ''
   return ''
@@ -96,9 +118,18 @@ export function criarProvedorMock(): Provedor {
           escolherFerramentas(pergunta, disponiveis).forEach((f, i) => chamadas.push({ id: `mock_${i + 1}`, nome: f.nome, argumentos: JSON.stringify(f.args) }))
         }
         if (chamadas.length > 0) return { ...base, texto: null, chamadas }
+        const nomes = new Set(entrada.ferramentas.map(f => f.function.name))
+        const exemplos = EXEMPLOS.filter(e => nomes.has(e.ferramenta)).map(e => `• ${e.pergunta}`)
+        const lista = exemplos.length ? `\n\nPerguntas que eu sei responder neste modo:\n${exemplos.join('\n')}` : ''
+        if (PEDIDO_DE_AJUDA.test(sem(pergunta))) {
+          return {
+            ...base, chamadas: [],
+            texto: `${ROTULO_MOCK}\n\nEu só CONSULTO dados (não altero estoque, chamados nem nada no sistema) e mostro números, referências e recomendações.${lista}`,
+          }
+        }
         return {
           ...base, chamadas: [],
-          texto: `${ROTULO_MOCK}\n\nNão entendi qual consulta fazer. Tente perguntar, por exemplo, sobre materiais abaixo do mínimo, SLA do mês, chamados críticos, movimentações da semana ou o serial de um equipamento.`,
+          texto: `${ROTULO_MOCK}\n\nNão entendi qual consulta fazer. O modo de teste só reconhece palavras-chave (como SLA, repor, crítico, movimentações, devoluções, serial); para escrever com suas próprias palavras é preciso ativar um modelo de IA (OpenRouter).${lista}`,
         }
       }
 

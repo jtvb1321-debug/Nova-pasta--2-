@@ -45,7 +45,7 @@ const PADROES_INJECAO: { motivo: string; re: RegExp }[] = [
   },
   {
     motivo: 'pedido de escrita',
-    re: /\b(apague|exclua|delete|remova|de baixa|dar baixa|transfira|transferir|compre|comprar|efetue (a )?compra|altere o estoque|ajuste o estoque|zere o estoque)\b.{0,60}\b(estoque|item|itens|produto|material|materiais|chamado|equipamento|saldo|banco|tabela|conectores?|onus?)\b/,
+    re: /\b(apague|exclua|delete|remova|de baixa|dar baixa|transfira|transferir|compre|comprar|efetue (a )?compra|altere o estoque|ajuste o estoque|zere o estoque|adicione|adicionar|acrescente|acrescentar|cadastre|cadastrar|crie|criar|insira|inserir|lance|lancar|registre|registrar|atualize|atualizar|altere|alterar|mova|mover|devolva|materialize|efetive)\b.{0,60}\b(estoque|item|itens|produto|material|materiais|chamado|equipamento|saldo|banco|tabela|conectores?|onus?|pedido|deposito|depositos)\b/,
   },
   {
     motivo: 'credenciais',

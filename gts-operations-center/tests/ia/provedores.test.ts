@@ -196,9 +196,17 @@ describe('provedor mock (simulado)', () => {
     })
     assert.equal(r2.simulada, true); assert.ok(r2.texto!.startsWith(ROTULO_MOCK)); assert.match(r2.texto!, /Resumo X/)
   })
-  it('pergunta sem ferramenta correspondente pede esclarecimento', async () => {
-    const r = await pergunta('bom dia', TODAS)
-    assert.equal(r.chamadas.length, 0); assert.match(r.texto!, /Não entendi/)
+  it('pergunta sem ferramenta correspondente explica o modo de teste e lista exemplos da aba', async () => {
+    const r = await pergunta('IA burra qwerty', ['consultar_estoque', 'materiais_abaixo_minimo'])
+    assert.equal(r.chamadas.length, 0); assert.match(r.texto!, /Não entendi/); assert.match(r.texto!, /OpenRouter/)
+    assert.match(r.texto!, /Quais materiais precisamos repor\?/)
+    assert.doesNotMatch(r.texto!, /Como está o SLA/, 'so exemplos das ferramentas da aba aberta')
+  })
+  it('pedido de ajuda lista o que sabe responder e diz que so consulta', async () => {
+    for (const p of ['O que você pode fazer?', 'oque vc pode fazer ?', 'ajuda', 'bom dia']) {
+      const r = await pergunta(p, TODAS)
+      assert.equal(r.chamadas.length, 0, p); assert.match(r.texto!, /só CONSULTO/, p); assert.match(r.texto!, /Quais chamados estão críticos agora\?/, p)
+    }
   })
   it('marcadores de teste simulam falhas do provedor', async () => {
     for (const [m, c] of [['cota', 'COTA'], ['autenticacao', 'AUTENTICACAO'], ['timeout', 'TIMEOUT'], ['indisponivel', 'INDISPONIVEL'], ['invalida', 'RESPOSTA_INVALIDA']]) {
