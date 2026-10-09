@@ -8,7 +8,7 @@ import type { ContextoIA } from '@/lib/ia/tipos'
 
 export const MARCA = 'TESTE IA'
 // Credencial SOMENTE de teste: so existe no banco local isolado (gts_orbia_ai_test), usada para entrar no app local.
-export const SENHA_TESTE = 'TesteIA#Local-2026'
+export const SENHA_TESTE = '12345678'
 const h = (horas: number) => new Date(Date.now() - horas * 3_600_000)
 const d = (dias: number) => h(dias * 24)
 
