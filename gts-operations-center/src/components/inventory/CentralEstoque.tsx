@@ -2,15 +2,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Package, ArrowLeftRight, RotateCcw, Plus,
-  Search, Download, Upload, AlertTriangle,
-  RefreshCw, ChevronLeft, ChevronRight,
-  ArrowUpCircle, ArrowDownCircle, Edit2, Trash2, PackageMinus, History,
-  CheckCircle, XCircle, Clock,
-  ShieldCheck, Loader2, FileText, Eye, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode, ClipboardCheck, MoreHorizontal
+  Package, ArrowLeftRight, RotateCcw, Plus, Download, Upload, PackageMinus, History,
+  ShieldCheck, X, Repeat, PackageX, UserCog, FileSpreadsheet, ArrowRightLeft, ScanBarcode, ClipboardCheck, MoreHorizontal
 } from 'lucide-react'
-import { cn, formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
-import { CATEGORIA_LABELS, type CategoriaEstoque } from '@/types'
+import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import type { Session } from 'next-auth'
 import { NovoItemModal } from './NovoItemModal'
@@ -22,62 +17,27 @@ import { TransferenciaEstoqueModal } from './TransferenciaEstoqueModal'
 import { NovaReversaModal } from './NovaReversaModal'
 import { EntradaDefeitoModal } from './EntradaDefeitoModal'
 import { RelatorioCompletoModal } from './RelatorioCompletoModal'
-import { PorTecnicoTab } from './PorTecnicoTab'
 import { EstoqueIUTab } from './EstoqueIUTab'
-import { TermosEstoqueTab } from './TermosEstoqueTab'
 import { EntradaBipadaModal } from './EntradaBipadaModal'
 import { PAPEIS_ENTRADA_BIPADA } from '@/lib/estoqueBipado'
 import { podeUsarEstoqueIU } from '@/lib/estoqueIU'
 import { TransferenciaLocalModal } from './TransferenciaLocalModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { usePainelEstoque } from './PainelEstoque'
+import { AbaEstoqueItens } from './AbaEstoqueItens'
+import { AbaMovimentacoes } from './AbaMovimentacoes'
+import { AbaDevolucoes } from './AbaDevolucoes'
+import { AbaReversa } from './AbaReversa'
+import { AbaDefeituosos } from './AbaDefeituosos'
+import { AbaPorTecnico } from './AbaPorTecnico'
+import { AbaTermos } from './AbaTermos'
+
 type Aba = 'estoque' | 'movimentacoes' | 'devolucoes' | 'reversa' | 'defeituosos' | 'por-tecnico' | 'termos' | 'estoque-iu'
-const CATEGORIA_CORES: Record<CategoriaEstoque, string> = {
-  GTSNET:      'text-blue-700 bg-blue-500/10',
-  EACE:        'text-emerald-700 bg-emerald-500/10',
-  FERRAMENTAS: 'text-amber-700 bg-amber-500/10',
-  LIMPEZA:     'text-purple-700 bg-purple-500/10',
-  MANINFO:     'text-pink-700 bg-pink-500/10',
-}
-const TIPO_MOV: Record<string, { label: string; icon: React.ElementType; cls: string }> = {
-  ENTRADA:       { label: 'Entrada',       icon: ArrowUpCircle,   cls: 'text-emerald-700 bg-emerald-500/10' },
-  SAIDA:         { label: 'Saida',         icon: ArrowDownCircle, cls: 'text-red-700 bg-red-500/10' },
-  DEVOLUCAO:     { label: 'Devolucao',     icon: ArrowUpCircle,   cls: 'text-blue-700 bg-blue-500/10' },
-  RESERVA:       { label: 'Reserva',       icon: ArrowDownCircle, cls: 'text-amber-700 bg-amber-500/10' },
-  TRANSFERENCIA: { label: 'Transferencia', icon: ArrowLeftRight,  cls: 'text-purple-700 bg-purple-500/10' },
-}
-function isEstoqueBaixo(atual: number, minimo: number) {
-  return minimo > 0 && atual <= minimo
-}
+
 const BOTAO_SECUNDARIO = 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-tema-linha bg-tema-superficie text-sm font-medium text-tema-tinta hover:bg-tema-contraste/[0.03] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
 
-async function fetchInventory(params: any) {
-  const q = new URLSearchParams(params)
-  const res = await fetch(`/api/inventory?${q}`)
-  if (!res.ok) throw new Error()
-  return res.json()
-}
-async function fetchMovements(params: any) {
-  const q = new URLSearchParams(params)
-  const res = await fetch(`/api/movements?${q}`)
-  if (!res.ok) throw new Error()
-  return res.json()
-}
-async function fetchDevolucoes() {
-  const res = await fetch('/api/devolutions')
-  if (!res.ok) return []
-  return res.json()
-}
-async function fetchReversas() {
-  const res = await fetch('/api/inventory/reversa')
-  if (!res.ok) return { data: [] }
-  return res.json()
-}
-async function fetchEntradasDefeito() {
-  const res = await fetch('/api/inventory/entrada-defeito')
-  if (!res.ok) return { data: [] }
-  return res.json()
-}
 interface Props { session: Session }
+
 function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }) {
   const { data, isLoading } = useQuery({
     queryKey: ['saldo-por-local', item.id],
@@ -152,6 +112,9 @@ function DistribuicaoModal({ item, onClose }: { item: any; onClose: () => void }
   )
 }
 
+
+// Cada aba segue o modelo da aba Estoque IU: contadores clicaveis, controle com prazo,
+// busca com bipagem (serial/MAC abre a ficha do equipamento) e relatorio (ver ./Aba*.tsx).
 export function CentralEstoque({ session }: Props) {
   const queryClient = useQueryClient()
   const [aba, setAba] = useState<Aba>('estoque')
@@ -166,11 +129,6 @@ export function CentralEstoque({ session }: Props) {
     document.addEventListener('keydown', esc)
     return () => { document.removeEventListener('mousedown', fora); document.removeEventListener('keydown', esc) }
   }, [menuAcoes])
-  const [search, setSearch] = useState('')
-  const [categoria, setCategoria] = useState('')
-  const [tipoMov, setTipoMov] = useState('')
-  const [periodoMov, setPeriodoMov] = useState('')
-  const [page, setPage] = useState(1)
   const [showNovoItem, setShowNovoItem] = useState(false)
   const [showEntradaBipada, setShowEntradaBipada] = useState(false)
   const [showImportarNF, setShowImportarNF] = useState(false)
@@ -178,72 +136,20 @@ export function CentralEstoque({ session }: Props) {
   const [showHistoricoRetiradas, setShowHistoricoRetiradas] = useState(false)
   const [itemAjuste, setItemAjuste] = useState<any>(null)
   const [itemExcluir, setItemExcluir] = useState<any>(null)
-  const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false)
-  const [gerandoRelatorioMov, setGerandoRelatorioMov] = useState(false)
   const [showTransferencia, setShowTransferencia] = useState(false)
   const [itemDistribuicao, setItemDistribuicao] = useState<any>(null)
-  const role = (session.user as any)?.role
-  const isAdmin = role === 'ADMIN'
-  const { data: estoqueData, isLoading: loadingEstoque, isError: erroEstoque, refetch: refetchEstoque } = useQuery({
-    queryKey: ['inventory', search, categoria, page],
-    queryFn: () => fetchInventory({
-      ...(search ? { search } : {}),
-      ...(categoria ? { local: categoria } : {}),
-      page: String(page),
-      limit: '20',
-    }),
-    refetchInterval: 60000,
-  })
-  const { data: movData, isLoading: loadingMov } = useQuery({
-    queryKey: ['movements', tipoMov, periodoMov, page],
-    queryFn: () => fetchMovements({
-      ...(tipoMov ? { tipo: tipoMov } : {}),
-      ...(periodoMov ? { periodo: periodoMov } : {}),
-      page: String(page),
-      limit: '20',
-    }),
-    refetchInterval: 30000,
-  })
-  const { data: devolucoes = [], isLoading: loadingDev } = useQuery({
-    queryKey: ['devolutions'],
-    queryFn: fetchDevolucoes,
-    refetchInterval: 30000,
-  })
-  const { data: reversasData, isLoading: loadingReversas } = useQuery({
-    queryKey: ['reversas'],
-    queryFn: fetchReversas,
-    refetchInterval: 30000,
-  })
   const [showNovaReversa, setShowNovaReversa] = useState(false)
-  const { data: defeitosData, isLoading: loadingDefeitos } = useQuery({
-    queryKey: ['entradas-defeito'],
-    queryFn: fetchEntradasDefeito,
-    refetchInterval: 30000,
-  })
   const [showEntradaDefeito, setShowEntradaDefeito] = useState(false)
   const [showRelatorioCompleto, setShowRelatorioCompleto] = useState(false)
   const [showTransferenciaLocal, setShowTransferenciaLocal] = useState(false)
   const [entradaParaReversa, setEntradaParaReversa] = useState<any>(null)
-  const aprovarMutation = useMutation({
-    mutationFn: async ({ id, aprovado }: { id: string; aprovado: boolean }) => {
-      const res = await fetch('/api/devolutions', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, aprovado }),
-      })
-      if (!res.ok) throw new Error()
-      return res.json()
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['devolutions'] })
-      queryClient.invalidateQueries({ queryKey: ['inventory'] })
-      toast({
-        title: vars.aprovado ? 'Devolucao aprovada! Estoque atualizado.' : 'Devolucao rejeitada.',
-        variant: vars.aprovado ? 'success' : 'default',
-      })
-    },
-    onError: () => toast({ title: 'Erro ao processar', variant: 'destructive' }),
-  })
+  const role = (session.user as any)?.role
+  const isAdmin = role === 'ADMIN'
+
+  // Atualiza listas e paineis depois de qualquer acao que mexe no saldo.
+  function refetchEstoque() {
+    for (const k of ['inventory', 'movements', 'estoque-painel', 'estoque-unidades']) queryClient.invalidateQueries({ queryKey: [k] })
+  }
 
   async function handleExport() {
     try {
@@ -269,44 +175,6 @@ export function CentralEstoque({ session }: Props) {
     }
   }
 
-  async function handleGerarRelatorioEstoque() {
-    setGerandoRelatorioEstoque(true)
-    try {
-      const q = new URLSearchParams({ limit: '9999' })
-      if (search) q.set('search', search)
-      if (categoria) q.set('categoria', categoria)
-      const res = await fetch(`/api/inventory?${q}`)
-      if (!res.ok) throw new Error()
-      const data = await res.json()
-      const { gerarPDFEstoque } = await import('@/utils/pdf')
-      gerarPDFEstoque(data.data ?? [])
-      toast({ title: 'Relatorio gerado com sucesso!', variant: 'success' })
-    } catch {
-      toast({ title: 'Erro ao gerar relatorio', variant: 'destructive' })
-    } finally {
-      setGerandoRelatorioEstoque(false)
-    }
-  }
-
-  async function handleGerarRelatorioMovimentacoes() {
-    setGerandoRelatorioMov(true)
-    try {
-      const q = new URLSearchParams({ limit: '9999' })
-      if (tipoMov) q.set('tipo', tipoMov)
-      if (periodoMov) q.set('periodo', periodoMov)
-      const res = await fetch(`/api/movements?${q}`)
-      if (!res.ok) throw new Error()
-      const data = await res.json()
-      const { gerarPDFMovimentacoes } = await import('@/utils/pdf')
-      gerarPDFMovimentacoes(data.data ?? [], { periodo: periodoMov || 'todos', tipo: tipoMov || undefined })
-      toast({ title: 'Relatorio gerado com sucesso!', variant: 'success' })
-    } catch {
-      toast({ title: 'Erro ao gerar relatorio', variant: 'destructive' })
-    } finally {
-      setGerandoRelatorioMov(false)
-    }
-  }
-
   const excluirMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' })
@@ -317,7 +185,7 @@ export function CentralEstoque({ session }: Props) {
       return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      refetchEstoque()
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       toast({ title: 'Item excluido com sucesso!', variant: 'success' })
       setItemExcluir(null)
@@ -327,12 +195,14 @@ export function CentralEstoque({ session }: Props) {
       setItemExcluir(null)
     },
   })
-  const itens = estoqueData?.data ?? []
-  const totalPages = estoqueData?.totalPages ?? 1
-  const movimentos = movData?.data ?? []
-  const movTotalPages = movData?.totalPages ?? 1
-  const criticos = itens.filter((i: any) => isEstoqueBaixo(i.quantidadeAtual, i.quantidadeMinima)).length
-  const devPendentes = devolucoes.filter((d: any) => !d.aprovado && !d.aprovadoEm).length
+
+  // Badges das abas vindos dos paineis (contagem real, nao so da pagina aberta).
+  const painelItens = usePainelEstoque<any>('itens')
+  const painelDev = usePainelEstoque<any>('devolucoes')
+  const painelDef = usePainelEstoque<any>('defeituosos')
+  const criticos = painelItens.data?.contadores?.abaixoMinimo ?? 0
+  const devPendentes = painelDev.data?.contadores?.pendentes ?? 0
+  const defPendentes = painelDef.data?.contadores?.pendentes ?? 0
 
   // Termos de retirada do Estoque IU vencidos (sem conferencia no prazo).
   const { data: resumoTermosIU } = useQuery({
@@ -355,7 +225,7 @@ export function CentralEstoque({ session }: Props) {
     { id: 'movimentacoes' as Aba, label: 'Movimentacoes', icon: ArrowLeftRight, badge: 0,            badgeCor: '' },
     { id: 'devolucoes'    as Aba, label: 'Devolucoes',    icon: RotateCcw,      badge: devPendentes, badgeCor: 'bg-amber-500' },
     { id: 'reversa'       as Aba, label: 'Reversa ManINFO', icon: Repeat,       badge: 0,            badgeCor: '' },
-    { id: 'defeituosos'  as Aba, label: 'Defeituosos ManINFO', icon: PackageX, badge: (defeitosData?.data ?? []).filter((d: any) => d.status === 'PENDENTE_ACEITE').length, badgeCor: 'bg-amber-500' },
+    { id: 'defeituosos'  as Aba, label: 'Defeituosos ManINFO', icon: PackageX, badge: defPendentes, badgeCor: 'bg-amber-500' },
     { id: 'por-tecnico'  as Aba, label: 'Por Tecnico',    icon: UserCog,      badge: 0,            badgeCor: '' },
     ...(PAPEIS_ENTRADA_BIPADA.includes(role)
       ? [{ id: 'termos' as Aba, label: 'Termos GTSNET', icon: ClipboardCheck, badge: resumoTermos?.parados ?? 0, badgeCor: 'bg-red-500' }]
@@ -446,7 +316,7 @@ export function CentralEstoque({ session }: Props) {
               type="button"
               role="tab"
               aria-selected={aba === a.id}
-              onClick={() => { setAba(a.id); setPage(1) }}
+              onClick={() => setAba(a.id)}
               className={cn(
                 '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
                 aba === a.id
@@ -466,643 +336,34 @@ export function CentralEstoque({ session }: Props) {
         })}
       </div>
 
-      {/* ABA ESTOQUE */}
       {aba === 'estoque' && (
-        <div className="space-y-4">
-          <div className="card-orbia p-4 flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tema-apagado" aria-hidden />
-              <input
-                type="search"
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1) }}
-                placeholder="Buscar por código ou descrição..."
-                aria-label="Buscar itens"
-                className="w-full gts-input pl-9 text-sm"
-              />
-            </div>
-            <div className="flex gap-1.5 flex-wrap" role="group" aria-label="Categoria">
-              {['', 'GTSNET', 'EACE', 'FERRAMENTAS', 'LIMPEZA', 'MANINFO'].map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => { setCategoria(cat); setPage(1) }}
-                  aria-pressed={categoria === cat}
-                  className={cn(
-                    'px-3 py-2 rounded-lg text-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
-                    categoria === cat
-                      ? 'bg-orange-500/10 text-orange-700 border-orange-500/40 font-semibold'
-                      : 'bg-tema-superficie text-tema-suave hover:bg-tema-contraste/[0.03] border-tema-linha'
-                  )}
-                >
-                  {cat || 'Todos'}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => refetchEstoque()} aria-label="Atualizar estoque" className="gts-btn-secondary">
-              <RefreshCw className="w-4 h-4" aria-hidden />
-            </button>
-          </div>
-
-          {erroEstoque && (
-            <div className="card-orbia text-center py-14 px-4">
-              <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
-              <p className="font-medium text-tema-tinta">Não foi possível carregar o estoque</p>
-              <button type="button" onClick={() => refetchEstoque()} className="gts-btn-secondary mx-auto mt-4">Tentar novamente</button>
-            </div>
-          )}
-
-          {/* Relatorio PDF - Estoque */}
-          <div className="flex flex-wrap items-center gap-2 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl px-4 py-3">
-            <FileText className="w-4 h-4 text-tema-suave flex-shrink-0" />
-            <span className="text-sm text-tema-suave">
-              Relatorio de estoque: <strong className="text-tema-tinta">{categoria ? CATEGORIA_LABELS[categoria as CategoriaEstoque] : 'Todos (geral)'}</strong>
-            </span>
-            <button
-              onClick={handleGerarRelatorioEstoque}
-              disabled={gerandoRelatorioEstoque}
-              className="gts-btn-primary py-1.5 px-3 text-xs disabled:opacity-50 ml-auto"
-            >
-              <Download className="w-3.5 h-3.5" />
-              {gerandoRelatorioEstoque ? 'Gerando...' : 'Gerar Relatorio PDF'}
-            </button>
-          </div>
-
-          <div className={cn('gts-card overflow-hidden p-0', erroEstoque && 'hidden')}>
-            {/* Tabela - desktop/tablet */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="gts-table">
-                <thead>
-                  <tr>
-                    <th className="px-4 pt-4">Codigo</th>
-                    <th className="px-4 pt-4">Descricao</th>
-                    <th className="px-4 pt-4">Categoria</th>
-                    <th className="px-4 pt-4 text-right">Total</th>
-                    <th className="px-4 pt-4 text-right">Minimo</th>
-                    <th className="px-4 pt-4">Status</th>
-                    <th className="px-4 pt-4 text-center">Ajustar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingEstoque
-                    ? Array.from({ length: 8 }).map((_, i) => (
-                        <tr key={i}>{Array.from({ length: 7 }).map((_, j) => (
-                          <td key={j} className="px-4"><div className="h-4 skeleton rounded" /></td>
-                        ))}</tr>
-                      ))
-                    : itens.length === 0
-                    ? (
-                      <tr>
-                        <td colSpan={7} className="text-center py-16 text-tema-apagado">
-                          <Package className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
-                          Nenhum item cadastrado
-                        </td>
-                      </tr>
-                    )
-                    : itens.map((item: any) => {
-                        const baixo = isEstoqueBaixo(item.quantidadeAtual, item.quantidadeMinima)
-                        return (
-                          <tr key={item.id} className={baixo ? 'bg-red-500/5' : ''}>
-                            <td className="px-4">
-                              <code className="text-xs text-tema-suave font-mono">{item.codigo}</code>
-                            </td>
-                            <td className="px-4 text-tema-tinta font-medium text-sm">
-                              {item.descricao}
-                              {item.controlaSerial && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-500/10 border border-blue-500/25 rounded px-1.5 py-0.5">serial</span>}
-                            </td>
-                            <td className="px-4">
-                              <span className={cn('status-badge text-xs', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
-                                {CATEGORIA_LABELS[item.categoria as CategoriaEstoque]}
-                              </span>
-                            </td>
-                            <td className="px-4 text-right">
-                              <span className={cn('font-mono font-bold', baixo ? 'text-red-700' : 'text-tema-tinta')}>
-                                {formatNumber(item.quantidadeAtual)}
-                              </span>
-                              <span className="text-tema-apagado text-xs ml-1">{item.unidade}</span>
-                            </td>
-                            <td className="px-4 text-right text-tema-suave font-mono text-sm">
-                              {formatNumber(item.quantidadeMinima)}
-                            </td>
-                            <td className="px-4">
-                              {baixo
-                                ? <span className="flex items-center gap-1 text-red-700 text-xs font-medium">
-                                    <AlertTriangle className="w-3 h-3" />Critico
-                                  </span>
-                                : <span className="flex items-center gap-1 text-emerald-700 text-xs font-medium">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />OK
-                                  </span>
-                              }
-                            </td>
-                            <td className="px-4 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <button
-                                  onClick={() => setItemDistribuicao(item)}
-                                  className="p-1.5 text-tema-apagado hover:text-blue-700 hover:bg-blue-500/10 rounded-lg transition-colors"
-                                  title="Ver distribuicao por equipe"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => setItemAjuste(item)}
-                                  className="p-1.5 text-tema-apagado hover:text-orange-700 hover:bg-orange-500/10 rounded-lg transition-colors"
-                                  title="Ajustar quantidade"
-                                >
-                                  <Edit2 className="w-3.5 h-3.5" />
-                                </button>
-                                {isAdmin && (
-                                  <button
-                                    onClick={() => setItemExcluir(item)}
-                                    className="p-1.5 text-tema-apagado hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-colors"
-                                    title="Excluir item (somente admin)"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Cards - mobile */}
-            <div className="sm:hidden divide-y divide-tema-linha">
-              {loadingEstoque
-                ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="p-4"><div className="h-16 skeleton rounded-lg" /></div>)
-                : itens.length === 0
-                ? (
-                  <div className="text-center py-16 text-tema-apagado">
-                    <Package className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
-                    Nenhum item cadastrado
-                  </div>
-                )
-                : itens.map((item: any) => {
-                    const baixo = isEstoqueBaixo(item.quantidadeAtual, item.quantidadeMinima)
-                    return (
-                      <div key={item.id} className={cn('p-4', baixo && 'bg-red-500/5')}>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="min-w-0">
-                            <p className="text-tema-tinta font-medium text-sm truncate">
-                              {item.descricao}
-                              {item.controlaSerial && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-500/10 border border-blue-500/25 rounded px-1.5 py-0.5">serial</span>}
-                            </p>
-                            <code className="text-xs text-tema-apagado font-mono">{item.codigo}</code>
-                          </div>
-                          <span className={cn('status-badge text-xs flex-shrink-0', CATEGORIA_CORES[item.categoria as CategoriaEstoque])}>
-                            {CATEGORIA_LABELS[item.categoria as CategoriaEstoque]}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between mb-3">
-                          {baixo
-                            ? <span className="flex items-center gap-1 text-red-700 text-xs font-medium">
-                                <AlertTriangle className="w-3 h-3" />Critico (min. {formatNumber(item.quantidadeMinima)})
-                              </span>
-                            : <span className="flex items-center gap-1 text-emerald-700 text-xs font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />OK
-                              </span>
-                          }
-                          <span className={cn('font-mono font-bold text-sm', baixo ? 'text-red-700' : 'text-tema-tinta')}>
-                            {formatNumber(item.quantidadeAtual)} <span className="text-tema-apagado text-xs font-normal">{item.unidade}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setItemDistribuicao(item)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" />Ver
-                          </button>
-                          <button
-                            onClick={() => setItemAjuste(item)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-orange-700 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />Ajustar
-                          </button>
-                          {isAdmin && (
-                            <button
-                              onClick={() => setItemExcluir(item)}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-red-700 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />Excluir
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-            </div>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
-                <p className="text-xs text-tema-apagado">Pagina {page} de {totalPages} - {estoqueData?.total} itens</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <AbaEstoqueItens isAdmin={isAdmin} onAjustar={setItemAjuste} onDistribuicao={setItemDistribuicao} onExcluir={setItemExcluir} />
       )}
-
-      {/* ABA MOVIMENTACOES */}
-      {aba === 'movimentacoes' && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex flex-wrap gap-2">
-              {['', ...Object.keys(TIPO_MOV)].map(tipo => (
-                <button
-                  key={tipo}
-                  onClick={() => { setTipoMov(tipo); setPage(1) }}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-                    tipoMov === tipo
-                      ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
-                  )}
-                >
-                  {tipo ? TIPO_MOV[tipo].label : 'Todos'}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2 ml-auto">
-              {[
-                { valor: '', label: 'Todo periodo' },
-                { valor: 'dia', label: 'Hoje' },
-                { valor: 'mes', label: 'Este mes' },
-              ].map(p => (
-                <button
-                  key={p.valor}
-                  onClick={() => { setPeriodoMov(p.valor); setPage(1) }}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-                    periodoMov === p.valor
-                      ? 'bg-orange-500/15 text-orange-700 border-orange-500/25'
-                      : 'bg-tema-contraste/[0.03] text-tema-suave hover:text-tema-tinta border-transparent'
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Relatorio PDF - Movimentacoes */}
-          <div className="flex flex-wrap items-center gap-2 bg-tema-contraste/[0.02] border border-tema-linha rounded-xl px-4 py-3">
-            <FileText className="w-4 h-4 text-tema-suave flex-shrink-0" />
-            <span className="text-sm text-tema-suave">
-              Relatorio de movimentacoes: <strong className="text-tema-tinta">
-                {tipoMov ? TIPO_MOV[tipoMov].label : 'Todos os tipos'} - {periodoMov === 'dia' ? 'Hoje' : periodoMov === 'mes' ? 'Este mes' : 'Todo periodo'}
-              </strong>
-            </span>
-            <button
-              onClick={handleGerarRelatorioMovimentacoes}
-              disabled={gerandoRelatorioMov}
-              className="gts-btn-primary py-1.5 px-3 text-xs disabled:opacity-50 ml-auto"
-            >
-              <Download className="w-3.5 h-3.5" />
-              {gerandoRelatorioMov ? 'Gerando...' : 'Gerar Relatorio PDF'}
-            </button>
-          </div>
-
-          <div className="gts-card overflow-hidden p-0">
-            {/* Tabela - desktop/tablet */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="gts-table">
-                <thead>
-                  <tr>
-                    <th className="px-4 pt-4">Tipo</th>
-                    <th className="px-4 pt-4">Item</th>
-                    <th className="px-4 pt-4">Codigo</th>
-                    <th className="px-4 pt-4 text-right">Quantidade</th>
-                    <th className="px-4 pt-4">Motivo</th>
-                    <th className="px-4 pt-4">Data/Hora</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingMov
-                    ? Array.from({ length: 8 }).map((_, i) => (
-                        <tr key={i}>{Array.from({ length: 6 }).map((_, j) => (
-                          <td key={j} className="px-4"><div className="h-4 skeleton rounded" /></td>
-                        ))}</tr>
-                      ))
-                    : movimentos.length === 0
-                    ? (
-                      <tr>
-                        <td colSpan={6} className="text-center py-12 text-tema-apagado">
-                          <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
-                          Nenhuma movimentacao encontrada
-                        </td>
-                      </tr>
-                    )
-                    : movimentos.map((m: any) => {
-                        const cfg = TIPO_MOV[m.tipo] || TIPO_MOV.ENTRADA
-                        const Icon = cfg.icon
-                        return (
-                          <tr key={m.id}>
-                            <td className="px-4">
-                              <span className={cn('status-badge text-xs', cfg.cls)}>
-                                <Icon className="w-3 h-3" />
-                                {cfg.label}
-                              </span>
-                            </td>
-                            <td className="px-4 text-tema-tinta text-sm">{m.item?.descricao}</td>
-                            <td className="px-4"><code className="text-xs text-tema-suave font-mono">{m.item?.codigo}</code></td>
-                            <td className="px-4 text-right font-mono font-semibold text-tema-tinta">
-                              {formatNumber(m.quantidade)} {m.item?.unidade}
-                            </td>
-                            <td className="px-4 text-tema-apagado text-xs max-w-xs truncate">{m.motivo || '-'}</td>
-                            <td className="px-4 text-tema-apagado text-xs">{formatDateTime(m.createdAt)}</td>
-                          </tr>
-                        )
-                      })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Cards - mobile */}
-            <div className="sm:hidden divide-y divide-tema-linha">
-              {loadingMov
-                ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="p-4"><div className="h-14 skeleton rounded-lg" /></div>)
-                : movimentos.length === 0
-                ? (
-                  <div className="text-center py-12 text-tema-apagado">
-                    <ArrowLeftRight className="w-8 h-8 mx-auto mb-2 text-tema-linha-forte" />
-                    Nenhuma movimentacao encontrada
-                  </div>
-                )
-                : movimentos.map((m: any) => {
-                    const cfg = TIPO_MOV[m.tipo] || TIPO_MOV.ENTRADA
-                    const Icon = cfg.icon
-                    return (
-                      <div key={m.id} className="p-4">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className={cn('status-badge text-xs', cfg.cls)}>
-                            <Icon className="w-3 h-3" />
-                            {cfg.label}
-                          </span>
-                          <span className="font-mono font-semibold text-tema-tinta text-sm">
-                            {formatNumber(m.quantidade)} {m.item?.unidade}
-                          </span>
-                        </div>
-                        <p className="text-tema-tinta text-sm truncate">{m.item?.descricao}</p>
-                        <p className="text-xs text-tema-apagado font-mono">{m.item?.codigo}</p>
-                        {m.motivo && <p className="text-xs text-tema-apagado mt-1 truncate">{m.motivo}</p>}
-                        <p className="text-xs text-tema-apagado mt-1">{formatDateTime(m.createdAt)}</p>
-                      </div>
-                    )
-                  })}
-            </div>
-            {movTotalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-tema-linha">
-                <p className="text-xs text-tema-apagado">Pagina {page} de {movTotalPages}</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => setPage(p => Math.min(movTotalPages, p + 1))} disabled={page === movTotalPages} className="gts-btn-secondary py-2 px-3 disabled:opacity-30">
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      {aba === 'movimentacoes' && <AbaMovimentacoes />}
+      {aba === 'devolucoes' && <AbaDevolucoes podeAprovar={isAdmin} />}
+      {aba === 'reversa' && <AbaReversa onNova={() => setShowNovaReversa(true)} />}
+      {aba === 'defeituosos' && (
+        <AbaDefeituosos
+          onNovaEntrada={() => setShowEntradaDefeito(true)}
+          onEnviarReversa={async (d: any) => {
+            const res = await fetch('/api/inventory/locais')
+            const data = await res.json().catch(() => ({}))
+            const localDefeituosos = (data.data || []).find((l: any) => l.nome.toLowerCase().includes('defeituos'))
+            setEntradaParaReversa({ itemId: d.itemId, quantidade: d.quantidade, itemCodigo: d.item?.codigo, itemDescricao: d.item?.descricao, localId: localDefeituosos?.id, localNome: localDefeituosos?.nome })
+          }}
+        />
       )}
-
-      {/* ABA DEVOLUCOES */}
-      {aba === 'devolucoes' && (
-        <div className="space-y-4">
-          {isAdmin && devPendentes > 0 && (
-            <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/25 rounded-xl">
-              <ShieldCheck className="w-5 h-5 text-blue-700 flex-shrink-0" />
-              <p className="text-blue-700 text-sm font-medium">
-                {devPendentes} devolucao(oes) aguardando sua aprovacao
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {loadingDev
-              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)
-              : devolucoes.length === 0
-              ? (
-                <div className="gts-card text-center py-16">
-                  <RotateCcw className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
-                  <p className="text-tema-suave font-medium">Nenhuma devolucao registrada</p>
-                </div>
-              )
-              : devolucoes.map((d: any) => {
-                  const isPendente = !d.aprovado && !d.aprovadoEm
-                  const isAprovada = d.aprovado
-                  return (
-                    <div key={d.id} className={cn(
-                      'bg-tema-superficie border rounded-xl p-4',
-                      isPendente ? 'border-amber-500/30' :
-                      isAprovada ? 'border-emerald-500/25' : 'border-red-500/25'
-                    )}>
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Package className="w-3.5 h-3.5 text-tema-apagado" />
-                            <p className="text-tema-tinta font-semibold">{d.item?.descricao}</p>
-                            <code className="text-xs text-tema-apagado font-mono">{d.item?.codigo}</code>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm mb-1">
-                            <span className="text-tema-texto">
-                              Qtd: <span className="text-tema-tinta font-bold">{d.quantidade} {d.item?.unidade}</span>
-                            </span>
-                            <span className="text-emerald-700">
-                              {formatCurrency(d.quantidade * (d.item?.valorUnitario ?? 0))}
-                            </span>
-                          </div>
-                          {d.observacao && <p className="text-xs text-tema-apagado italic">{d.observacao}</p>}
-                          {d.chamado && (
-                            <p className="text-xs text-tema-apagado">
-                              Chamado: {d.chamado.cliente} - {d.chamado.equipe?.nome}
-                            </p>
-                          )}
-                          <p className="text-xs text-tema-apagado mt-1">{formatDateTime(d.createdAt)}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {isPendente ? (
-                            isAdmin ? (
-                              <>
-                                <button
-                                  onClick={() => aprovarMutation.mutate({ id: d.id, aprovado: false })}
-                                  disabled={aprovarMutation.isPending}
-                                  className="flex items-center gap-1 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 rounded-lg text-xs text-red-700 transition-colors disabled:opacity-50"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                  Rejeitar
-                                </button>
-                                <button
-                                  onClick={() => aprovarMutation.mutate({ id: d.id, aprovado: true })}
-                                  disabled={aprovarMutation.isPending}
-                                  className="flex items-center gap-1 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg text-xs text-emerald-700 transition-colors disabled:opacity-50"
-                                >
-                                  <CheckCircle className="w-3.5 h-3.5" />
-                                  Aprovar
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-xs px-2.5 py-1 bg-amber-500/10 border border-amber-500/25 text-amber-700 rounded-full flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                Aguardando Admin
-                              </span>
-                            )
-                          ) : (
-                            <span className={cn(
-                              'text-xs px-2.5 py-1 rounded-full flex items-center gap-1',
-                              isAprovada ? 'bg-emerald-500/10 text-emerald-700' : 'bg-red-500/10 text-red-700'
-                            )}>
-                              {isAprovada ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                              {isAprovada ? 'Aprovada' : 'Rejeitada'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-          </div>
-        </div>
-      )}
-      {/* ABA REVERSA MANINFO */}
-      {aba === 'reversa' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-tema-suave">Materiais enviados para troca junto ao ManINFO</p>
-            <button onClick={() => setShowNovaReversa(true)} className="gts-btn-primary flex-shrink-0">
-              <Repeat className="w-4 h-4" />
-              Nova Reversa
-            </button>
-          </div>
-          <div className="space-y-2">
-            {loadingReversas ? (
-              Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />)
-            ) : (reversasData?.data ?? []).length === 0 ? (
-              <div className="gts-card text-center py-16">
-                <Repeat className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhuma reversa registrada</p>
-              </div>
-            ) : (reversasData?.data ?? []).map((r: any) => (
-              <div key={r.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-3.5 h-3.5 text-tema-apagado" />
-                    <p className="text-tema-tinta font-semibold">{r.item?.descricao}</p>
-                    <code className="text-xs text-tema-apagado font-mono">{r.item?.codigo}</code>
-                  </div>
-                  <p className="text-sm text-tema-texto mb-1">
-                    Qtd: <span className="text-tema-tinta font-bold">{r.quantidade} {r.item?.unidade}</span>
-                  </p>
-                  {r.observacao && (
-                    <p className="text-xs text-tema-suave italic bg-tema-contraste/[0.02] rounded-lg px-3 py-2 mt-1">{r.observacao}</p>
-                  )}
-                  <p className="text-xs text-tema-apagado mt-2">{formatDateTime(r.data)} - {r.registradoPor}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {aba === 'por-tecnico' && <AbaPorTecnico />}
+      {aba === 'termos' && PAPEIS_ENTRADA_BIPADA.includes(role) && <AbaTermos />}
+      {aba === 'estoque-iu' && podeUsarEstoqueIU(role) && <EstoqueIUTab />}
 
       {/* Modal nova reversa */}
       {showNovaReversa && (
         <NovaReversaModal
           onClose={() => setShowNovaReversa(false)}
-          onSuccess={() => setShowNovaReversa(false)}
+          onSuccess={() => { setShowNovaReversa(false); queryClient.invalidateQueries({ queryKey: ['reversas'] }); refetchEstoque() }}
         />
       )}
-
-      {/* ABA DEFEITUOSOS MANINFO */}
-      {aba === 'defeituosos' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-tema-suave">Itens avariados/queimados recebidos ou recolhidos em campo</p>
-            <button onClick={() => setShowEntradaDefeito(true)} className="gts-btn-primary flex-shrink-0">
-              <PackageX className="w-4 h-4" />
-              Registrar Entrada Defeituosa
-            </button>
-          </div>
-          <div className="space-y-2">
-            {loadingDefeitos ? (
-              Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 skeleton rounded-xl" />)
-            ) : (defeitosData?.data ?? []).length === 0 ? (
-              <div className="gts-card text-center py-16">
-                <PackageX className="w-10 h-10 text-tema-linha-forte mx-auto mb-3" />
-                <p className="text-tema-suave font-medium">Nenhuma entrada defeituosa registrada</p>
-              </div>
-            ) : (defeitosData?.data ?? []).map((d: any) => (
-              <div key={d.id} className="bg-tema-superficie border border-tema-linha rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-tema-tinta font-semibold">{d.item?.descricao}</p>
-                      <code className="text-xs text-tema-apagado font-mono">{d.item?.codigo}</code>
-                      {d.status === 'PENDENTE_ACEITE' ? (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700">Pendente Aceite</span>
-                      ) : (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700">Aceito</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-tema-texto">Qtd: <span className="text-tema-tinta font-bold">{d.quantidade} {d.item?.unidade}</span></p>
-                    {d.numeroSerie && <p className="text-xs text-tema-apagado">Serie/Patrimonio: {d.numeroSerie}</p>}
-                    <p className="text-xs text-tema-suave italic bg-tema-contraste/[0.02] rounded-lg px-3 py-2 mt-1">{d.defeito}</p>
-                    <p className="text-xs text-tema-apagado mt-2">
-                      Origem: {d.origem === 'TECNICO' ? 'Tecnico' : d.origem === 'CLIENTE' ? 'Cliente' : 'Entrada Direta'}
-                      {d.tecnicoNome ? ` (${d.tecnicoNome})` : ''} - {formatDateTime(d.createdAt)}
-                    </p>
-                  </div>
-                  {d.status === 'PENDENTE_ACEITE' && (
-                    <button
-                      onClick={async () => {
-                        const res = await fetch(`/api/inventory/entrada-defeito/${d.id}`, { method: 'PATCH' })
-                        if (res.ok) { toast({ title: 'Entrada aceita no central!', variant: 'success' }); queryClient.invalidateQueries({ queryKey: ['entradas-defeito'] }); queryClient.invalidateQueries({ queryKey: ['inventory'] }) }
-                        else { const data = await res.json(); toast({ title: data.error || 'Erro ao aceitar', variant: 'destructive' }) }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-lg text-xs font-medium text-emerald-700 transition-colors flex-shrink-0"
-                    >
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Aceitar no Central
-                    </button>
-                  )}
-                  {d.status === 'ACEITO' && (
-                    <button
-                      onClick={async () => {
-                        const res = await fetch('/api/inventory/locais')
-                        const data = await res.json()
-                        const localDefeituosos = (data.data || []).find((l: any) => l.nome.toLowerCase().includes('defeituos'))
-                        setEntradaParaReversa({ itemId: d.itemId, quantidade: d.quantidade, itemCodigo: d.item?.codigo, itemDescricao: d.item?.descricao, localId: localDefeituosos?.id, localNome: localDefeituosos?.nome })
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-2.5 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/25 rounded-lg text-xs font-medium text-pink-700 transition-colors flex-shrink-0"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Enviar para Reversa
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ABA POR TECNICO */}
-      {aba === 'por-tecnico' && <PorTecnicoTab />}
-
-      {aba === 'termos' && PAPEIS_ENTRADA_BIPADA.includes(role) && <TermosEstoqueTab />}
-
-      {aba === 'estoque-iu' && podeUsarEstoqueIU(role) && <EstoqueIUTab />}
 
       {/* Modal entrada defeituosa */}
       {showEntradaDefeito && (

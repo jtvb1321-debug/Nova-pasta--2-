@@ -30,9 +30,9 @@ async function fetchItens() {
   return res.json()
 }
 
-export function PorTecnicoTab() {
+export function PorTecnicoTab({ equipeInicial }: { equipeInicial?: string } = {}) {
   const queryClient = useQueryClient()
-  const [equipeId, setEquipeId] = useState<string | null>(null)
+  const [equipeId, setEquipeId] = useState<string | null>(equipeInicial ?? null)
   const [baixandoItemId, setBaixandoItemId] = useState<string | null>(null)
   const [qtdBaixa, setQtdBaixa] = useState('')
   const [motivoBaixa, setMotivoBaixa] = useState('')

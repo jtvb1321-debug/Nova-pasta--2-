@@ -508,7 +508,7 @@ export function gerarPDFMovimentacoes(movimentos: any[], filtros: { periodo: str
     DEVOLUCAO: 'Devolucao',
   }
 
-  const periodoLabel = filtros.periodo === 'dia' ? 'Hoje' : filtros.periodo === 'mes' ? 'Este mes' : 'Todos os periodos'
+  const periodoLabel = filtros.periodo === 'dia' ? 'Hoje' : filtros.periodo === 'mes' ? 'Este mes' : filtros.periodo === 'todos' || !filtros.periodo ? 'Todos os periodos' : filtros.periodo
   const subtitulo = `Periodo: ${periodoLabel}${filtros.tipo ? ` | Tipo: ${TIPO_LABEL[filtros.tipo] || filtros.tipo}` : ''}`
 
   let y = cabecalho(doc, 'Relatorio de Movimentacoes', subtitulo)

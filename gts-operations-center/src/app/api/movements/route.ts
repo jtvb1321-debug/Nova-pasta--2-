@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { z } from 'zod'
+import { intervaloEstoque } from '@/lib/estoquePainel'
 const createSchema = z.object({
   itemId: z.string().min(1),
   tipo: z.enum(['ENTRADA', 'SAIDA', 'TRANSFERENCIA', 'RESERVA', 'DEVOLUCAO']),
@@ -25,8 +26,21 @@ export async function GET(request: NextRequest) {
   const where: any = {}
   if (itemId) where.itemId = itemId
   if (tipo) where.tipo = tipo
+  // Busca da aba Movimentacoes: produto (descricao/codigo) ou motivo.
+  const busca = (searchParams.get('search') || '').trim().slice(0, 80)
+  if (busca) {
+    where.OR = [
+      { item: { descricao: { contains: busca, mode: 'insensitive' } } },
+      { item: { codigo: { contains: busca, mode: 'insensitive' } } },
+      { motivo: { contains: busca, mode: 'insensitive' } },
+    ]
+  }
 
-  if (periodo === 'dia') {
+  if (periodo === 'hoje' || periodo === '7d' || periodo === 'mes_anterior' || periodo === '90d') {
+    // Mesmos periodos do painel da aba (lista e contadores batem).
+    const { inicio, fim } = intervaloEstoque(periodo)
+    where.createdAt = { gte: inicio, lt: fim }
+  } else if (periodo === 'dia') {
     const inicio = new Date()
     inicio.setHours(0, 0, 0, 0)
     where.createdAt = { gte: inicio }

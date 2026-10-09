@@ -85,6 +85,13 @@ export async function GET(request: NextRequest) {
     ]
   }
   if (categoria) where.categoria = categoria
+  // Filtro dos contadores da aba Estoque: abaixo do minimo / zerados.
+  const situacao = searchParams.get('situacao')
+  if (situacao === 'zerado') where.quantidadeAtual = { lte: 0 }
+  if (situacao === 'baixo') {
+    where.quantidadeMinima = { gt: 0 }
+    where.quantidadeAtual = { lte: prisma.itemEstoque.fields.quantidadeMinima }
+  }
 
   const [items, total] = await Promise.all([
     prisma.itemEstoque.findMany({
