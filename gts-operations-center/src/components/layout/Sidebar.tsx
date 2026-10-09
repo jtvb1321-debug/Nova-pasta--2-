@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, ClipboardList,
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
-  Monitor, TrendingUp, Map, ChevronDown, Shield,
+  Monitor, TrendingUp, BrainCircuit, Map, ChevronDown, Shield,
   UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
@@ -43,6 +43,7 @@ const TODOS_GRUPOS: MenuGroup[] = [
       { href: '/agenda',       label: 'Chamados',      icon: ClipboardList, permissao: 'verChamados' },
       { href: '/teams',        label: 'Equipes',       icon: Users,         permissao: 'verEquipes' },
       { href: '/desempenho',   label: 'Desempenho das Equipes', icon: TrendingUp, permissao: 'verDesempenho' },
+      { href: '/inteligencia-operacional', label: 'Inteligência Operacional', icon: BrainCircuit, permissao: 'usarAssistenteIA' },
       { href: '/solicitacoes', label: 'Solicitacoes de Equipe', icon: ClipboardCheck, permissao: 'verSolicitacoes' },
       { href: '/horas-extras', label: 'Horas Extras', icon: Clock, permissao: 'verHorasExtras' },
     ],

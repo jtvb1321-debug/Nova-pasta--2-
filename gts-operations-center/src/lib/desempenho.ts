@@ -58,7 +58,7 @@ function media(valores: number[]) {
   return valores.length > 0 ? Math.round(valores.reduce((a, b) => a + b, 0) / valores.length) : null
 }
 
-function resumoSla(chamados: { dentroSlaResposta: boolean | null; dentroSlaResolucao: boolean | null; slaRespostaMinutos: number | null; slaResolucaoMinutos: number | null }[]) {
+export function resumoSla(chamados: { dentroSlaResposta: boolean | null; dentroSlaResolucao: boolean | null; slaRespostaMinutos: number | null; slaResolucaoMinutos: number | null }[]) {
   const comResposta = chamados.filter(c => c.dentroSlaResposta !== null)
   const comResolucao = chamados.filter(c => c.dentroSlaResolucao !== null)
   const respostaDentro = comResposta.filter(c => c.dentroSlaResposta).length

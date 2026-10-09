@@ -29,6 +29,10 @@ export interface Permission {
   apenasMinhaEquipe: boolean
   verDesempenho:     boolean
   analisarAvaliacoes: boolean
+  // Inteligencia Operacional (assistente de IA somente leitura): modulo + um escopo por area.
+  usarAssistenteIA:  boolean
+  iaOperacional:     boolean
+  iaEstoque:         boolean
 }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
@@ -61,6 +65,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: false,
     verDesempenho:     true,
     analisarAvaliacoes: true,
+    usarAssistenteIA:  true,
+    iaOperacional:     true,
+    iaEstoque:         true,
   },
   GESTOR: {
     verDashboard:      true,
@@ -91,6 +98,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: false,
     verDesempenho:     true,
     analisarAvaliacoes: false,
+    usarAssistenteIA:  true,
+    iaOperacional:     true,
+    iaEstoque:         true,
   },
   OPERADOR: {
     verDashboard:      true,
@@ -121,6 +131,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: false,
     verDesempenho:     false,
     analisarAvaliacoes: false,
+    usarAssistenteIA:  false,
+    iaOperacional:     false,
+    iaEstoque:         false,
   },
   COMERCIAL: {
     verDashboard:      true,
@@ -151,6 +164,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: false,
     verDesempenho:     false,
     analisarAvaliacoes: false,
+    usarAssistenteIA:  false,
+    iaOperacional:     false,
+    iaEstoque:         false,
   },
   TECNICO: {
     verDashboard:      false,
@@ -181,6 +197,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: true,
     verDesempenho:     false,
     analisarAvaliacoes: false,
+    usarAssistenteIA:  false,
+    iaOperacional:     false,
+    iaEstoque:         false,
   },
   VENDEDOR: {
     verDashboard:      true,
@@ -211,6 +230,9 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     apenasMinhaEquipe: false,
     verDesempenho:     false,
     analisarAvaliacoes: false,
+    usarAssistenteIA:  false,
+    iaOperacional:     false,
+    iaEstoque:         false,
   },
 }
 

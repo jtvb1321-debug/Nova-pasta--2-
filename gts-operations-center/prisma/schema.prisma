@@ -1317,3 +1317,79 @@ model FechamentoBonificacao {
   @@index([periodoInicio, periodoFim])
   @@map("fechamentos_bonificacao")
 }
+
+// ---------------------------------------------------------------------------
+// Inteligencia Operacional (assistente de IA, somente leitura).
+// Tabelas novas e independentes: nao alteram nenhum modelo existente (por isso
+// usuarioId e' texto simples, sem relation, para nao mexer em "Usuario").
+// ---------------------------------------------------------------------------
+enum PapelMensagemIA {
+  USUARIO
+  ASSISTENTE
+}
+
+enum StatusExecucaoFerramentaIA {
+  OK
+  NEGADO
+  INVALIDO
+  ERRO
+}
+
+model ConversaIA {
+  id         String   @id @default(cuid())
+  usuarioId  String
+  aba        String   // "operacoes" | "estoque"
+  titulo     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  mensagens  MensagemIA[]
+  execucoes  ExecucaoFerramentaIA[]
+
+  @@index([usuarioId, updatedAt])
+  @@map("ia_conversas")
+}
+
+model MensagemIA {
+  id           String          @id @default(cuid())
+  conversaId   String
+  papel        PapelMensagemIA
+  conteudo     String
+  // Dados estruturados da resposta (indicadores, referencias, recomendacoes) - sempre
+  // vindos das ferramentas, nunca escritos pelo modelo.
+  indicadores  Json?
+  referencias  Json?
+  recomendacoes Json?
+  provedor     String?         // mock | openrouter
+  modelo       String?
+  simulada     Boolean         @default(false)
+  erro         String?
+  createdAt    DateTime        @default(now())
+
+  conversa ConversaIA @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId, createdAt])
+  @@map("ia_mensagens")
+}
+
+model ExecucaoFerramentaIA {
+  id          String                     @id @default(cuid())
+  conversaId  String?
+  usuarioId   String
+  origem      String                     // chat | mcp
+  ferramenta  String
+  // Parametros ja validados e sem segredos.
+  parametros  Json?
+  status      StatusExecucaoFerramentaIA
+  duracaoMs   Int                        @default(0)
+  // Resumo curto do resultado (contagens), nunca o conteudo completo.
+  resumo      String?
+  erro        String?
+  createdAt   DateTime                   @default(now())
+
+  conversa ConversaIA? @relation(fields: [conversaId], references: [id], onDelete: SetNull)
+
+  @@index([usuarioId, createdAt])
+  @@index([ferramenta, createdAt])
+  @@map("ia_execucoes_ferramenta")
+}
