@@ -13,13 +13,13 @@ import { toast } from '@/hooks/use-toast'
 // Tudo que aparece (numeros, referencias, recomendacoes) vem das consultas autorizadas do servidor;
 // o texto do assistente apenas resume. O assistente so le: nada aqui altera dados.
 
-type Aba = 'operacoes' | 'estoque'
+export type Aba = 'operacoes' | 'estoque'
 
-interface Indicador { rotulo: string; valor: string | number; detalhe?: string; tom?: 'neutro' | 'ok' | 'alerta' | 'perigo' }
-interface Referencia { tipo: string; id: string; rotulo: string }
-interface Fonte { consultadoEm: string; tabelas: string[] }
+export interface Indicador { rotulo: string; valor: string | number; detalhe?: string; tom?: 'neutro' | 'ok' | 'alerta' | 'perigo' }
+export interface Referencia { tipo: string; id: string; rotulo: string }
+export interface Fonte { consultadoEm: string; tabelas: string[] }
 
-interface MensagemTela {
+export interface MensagemTela {
   id: string
   papel: 'USUARIO' | 'ASSISTENTE'
   texto: string
@@ -34,7 +34,7 @@ interface MensagemTela {
   quando?: string
 }
 
-interface StatusIA {
+export interface StatusIA {
   habilitado: boolean
   provedor: 'mock' | 'openrouter'
   modelo: string | null
@@ -44,7 +44,7 @@ interface StatusIA {
   areas: { operacoes: boolean; estoque: boolean }
 }
 
-interface ConversaResumo { id: string; aba: Aba; titulo: string; updatedAt: string; _count: { mensagens: number } }
+export interface ConversaResumo { id: string; aba: Aba; titulo: string; updatedAt: string; _count: { mensagens: number } }
 
 const ABAS: { id: Aba; rotulo: string; icone: React.ElementType; descricao: string }[] = [
   { id: 'operacoes', rotulo: 'Operações', icone: Activity, descricao: 'Chamados, SLA, equipes, produtividade e metas.' },
@@ -80,7 +80,7 @@ const TOM: Record<NonNullable<Indicador['tom']>, string> = {
   perigo: 'bg-red-500/10 text-red-800',
 }
 
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
+export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
   const corpo = await r.json().catch(() => ({}))
   if (!r.ok) {
@@ -92,7 +92,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return corpo as T
 }
 
-function Selo({ children, tom = 'neutro' }: { children: React.ReactNode; tom?: 'neutro' | 'alerta' | 'ok' }) {
+export function Selo({ children, tom = 'neutro' }: { children: React.ReactNode; tom?: 'neutro' | 'alerta' | 'ok' }) {
   return (
     <span className={cn('inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold',
       tom === 'alerta' ? 'bg-amber-500/10 text-amber-800' : tom === 'ok' ? 'bg-emerald-500/10 text-emerald-800' : 'bg-tema-contraste/[0.06] text-tema-suave')}>
@@ -101,7 +101,7 @@ function Selo({ children, tom = 'neutro' }: { children: React.ReactNode; tom?: '
   )
 }
 
-function BlocoResposta({ m }: { m: MensagemTela }) {
+export function BlocoResposta({ m, compacto = false }: { m: MensagemTela; compacto?: boolean }) {
   const temDetalhes = (m.indicadores?.length ?? 0) + (m.recomendacoes?.length ?? 0) + (m.referencias?.length ?? 0) + (m.avisos?.length ?? 0) > 0
   return (
     <div className="space-y-3">
@@ -110,7 +110,7 @@ function BlocoResposta({ m }: { m: MensagemTela }) {
           <Selo tom="alerta"><FlaskConical className="w-3 h-3" aria-hidden /> Resposta simulada · modo de teste</Selo>
         )}
         {m.bloqueada && <Selo tom="alerta"><AlertTriangle className="w-3 h-3" aria-hidden /> Pedido bloqueado</Selo>}
-        {!m.simulada && !m.bloqueada && m.modelo && <Selo>{m.modelo}</Selo>}
+        {!m.simulada && !m.bloqueada && m.modelo && <Selo>{m.modelo === 'guia-do-sistema' ? 'Guia do sistema' : m.modelo}</Selo>}
       </div>
       <p className="text-sm text-tema-texto whitespace-pre-line break-words">{m.texto}</p>
 
@@ -119,7 +119,7 @@ function BlocoResposta({ m }: { m: MensagemTela }) {
           {(m.indicadores?.length ?? 0) > 0 && (
             <div>
               <p className="text-xs font-semibold text-tema-suave mb-1.5">Indicadores consultados</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className={cn('grid grid-cols-2 gap-2', !compacto && 'sm:grid-cols-3')}>
                 {m.indicadores!.map((i, k) => (
                   <div key={`${i.rotulo}-${k}`} className={cn('rounded-lg px-3 py-2', TOM[i.tom ?? 'neutro'])}>
                     <p className="text-[11px] opacity-80">{i.rotulo}</p>
@@ -133,7 +133,7 @@ function BlocoResposta({ m }: { m: MensagemTela }) {
 
           {(m.recomendacoes?.length ?? 0) > 0 && (
             <div className="rounded-lg border border-orange-500/25 bg-orange-500/[0.05] px-3 py-2.5">
-              <p className="text-xs font-semibold text-orange-800 flex items-center gap-1.5 mb-1"><Lightbulb className="w-3.5 h-3.5" aria-hidden /> Recomendações de gestão</p>
+              <p className="text-xs font-semibold text-orange-800 flex items-center gap-1.5 mb-1"><Lightbulb className="w-3.5 h-3.5" aria-hidden /> {m.modelo === 'guia-do-sistema' ? 'Veja também' : 'Recomendações de gestão'}</p>
               <ul className="list-disc pl-4 space-y-1 text-sm text-tema-texto">{m.recomendacoes!.map(r => <li key={r}>{r}</li>)}</ul>
             </div>
           )}

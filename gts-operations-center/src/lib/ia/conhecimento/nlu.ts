@@ -8,13 +8,13 @@ import { GUIAS, TELAS, type Guia } from './guias'
 
 export const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
-const COMO_FAZER = /\b(como (eu |a gente |que |faco para |se )?(faco|fazer|fazemos|posso|podemos|consigo|conseguimos|devo|faz|cadastro|adiciono|registro|lanco|crio|retiro|transfiro|ajusto|dou|vejo|abro|acesso|encontro|emito|gero|exporto|importo|mudo|altero|troco|configuro|aprovo|excluo|apago|volto|uso|usar|funciona)|onde (fica|eu|se|posso|podemos|vejo|encontro|acho|clico|cadastro|registro)|passo a passo|qual (e )?o caminho|me (ensin|expliq|oriente|guie|mostr)\w*|ensine|explique como|tutorial|como usar|nao sei (como|onde))\b/
+const COMO_FAZER = /\b(como(?! (o|a|os|as|um|uma|esta|estao|estava|foi|foram|ficou|ficaram|anda|andam|vai|vao|sera|tem|temos|e|sao|era|vem|evoluiu|evoluiram|variou)\b) (eu |a gente |que |se |faco para )?\w+|onde (?!esta\b|estao\b)(fica|ficam|eu|se|posso|podemos|vejo|encontro|acho|clico|cadastro|registro|coloco|lanco|digito|informo|\w+ o\b)|passo a passo|qual (e )?o caminho|me (ensin|expliq|oriente|guie|mostr)\w*|ensine|explique como|tutorial|nao sei (como|onde)|em qual (menu|tela|aba))\b/
 const INTENCAO = /\b(quero|preciso|gostaria|queria|desejo|necessito|vou|tenho que|tenho de|devo|posso)\b/
 const ONDE_TELA = /\b(onde (fica|esta|encontro|acho|vejo|abro)|como (abrir|acessar|chegar|entrar)|qual (a )?tela|em qual (menu|tela|aba)|caminho)\b/
 const REGRAS = /\bregras? (de|do|da|para)\b/
 
 const VERBO_CONSULTA = /\b(ver|veja|saber|consultar|consulte|mostrar|mostre|listar|liste|analisar|analise|quanto|quantos|quantas|qual|quais)\b/
-const TOM_DADOS = /\b(quantos|quantas|quanto temos|qual o saldo|saldo de|lista|liste|compare|comparar|ranking das|tendencia|consumo|previsao|criticos?)\b/
+const TOM_DADOS = /\b(quantos|quantas|quanto temos|qual o saldo|saldo de|lista|liste|compare|compar\w+|produtiv\w+|metas?|pendentes|movimentac\w+|ranking das|tendencia|consumo|previsao|criticos?)\b/
 
 export interface Classificacao {
   textoLimpo: string
@@ -51,7 +51,7 @@ export function classificar(pergunta: string): Classificacao {
 const PONTOS_MINIMOS = 3
 
 export interface RespostaConhecimento {
-  tipo: 'guia' | 'definicao' | 'tela' | 'escrita-sem-guia' | 'sem-guia'
+  tipo: 'guia' | 'definicao' | 'tela' | 'escrita-sem-guia' | 'sem-guia' | 'ajuda'
   texto: string
   recomendacoes: string[]
 }
@@ -67,9 +67,40 @@ function formatarGuia(g: Guia): { texto: string; sugestao?: string } {
   }
 }
 
+const NOME_AREA: Record<Guia['area'], string> = { estoque: 'Estoque', operacoes: 'Chamados, equipes e monitoramento', sistema: 'Sistema, vendas e financeiro' }
+
 export function listaDeAssuntos(area?: 'estoque' | 'operacoes'): string {
-  const guias = GUIAS.filter(g => !area || g.area === area || g.area === 'sistema')
-  return guias.map(g => `• ${g.titulo}`).join('\n')
+  const ordem: Guia['area'][] = area === 'operacoes' ? ['operacoes', 'estoque', 'sistema'] : ['estoque', 'operacoes', 'sistema']
+  return ordem
+    .map(a => `${NOME_AREA[a]}:\n${GUIAS.filter(g => g.area === a).map(g => `• ${g.titulo}`).join('\n')}`)
+    .join('\n\n')
+}
+
+const AJUDA = /\b(o ?que (voce|vc|tu) (pode|consegue|faz|sabe)|o ?que posso (perguntar|fazer)|ajuda|me ajud\w+|menu|comandos?|como funciona|ola|oi|bom dia|boa tarde|boa noite)\b/
+
+const EXEMPLOS_DADOS: Record<'operacoes' | 'estoque', string[]> = {
+  operacoes: ['Como está a operação hoje?', 'Quais chamados estão críticos agora?', 'Como está o SLA neste mês?', 'Compare as equipes no mês anterior', 'Qual a produtividade dos últimos 30 dias?', 'Quais atendimentos estão pendentes?'],
+  estoque: ['Quais materiais precisamos repor?', 'Quanto temos de "ONU" em estoque?', 'Mostre as movimentações da semana', 'Há devoluções aguardando aprovação?', 'Faça uma previsão de reposição para 30 dias', 'Onde está o equipamento AA:BB:CC:00:00:01?'],
+}
+
+function respostaAjuda(area: 'estoque' | 'operacoes' = 'operacoes'): RespostaConhecimento {
+  const outra = area === 'estoque' ? 'operacoes' : 'estoque'
+  return {
+    tipo: 'ajuda',
+    texto: [
+      'Olá! Eu sou o assistente do Orbia. Eu só CONSULTO: não altero estoque, chamados nem nada no sistema. Posso:',
+      '',
+      `1. Consultar dados reais (${area === 'estoque' ? 'Estoque' : 'Operações'}). Exemplos:`,
+      ...EXEMPLOS_DADOS[area].map(e => `• ${e}`),
+      `(Para ${outra === 'estoque' ? 'estoque' : 'operações'}, troque a aba acima.)`,
+      '',
+      '2. Ensinar a fazer as tarefas nas telas (pergunte "como faço para..."):',
+      listaDeAssuntos(area),
+      '',
+      '3. Explicar termos do sistema (ex.: "o que é EACE?", "o que é saldo livre?").',
+    ].join('\n'),
+    recomendacoes: [],
+  }
 }
 
 /** Monta a resposta de conhecimento (guia, definicao ou tela) ou null se a pergunta e' sobre DADOS. */
@@ -100,6 +131,9 @@ export function responderConhecimento(pergunta: string, opcoes: { escrita: boole
     return { tipo: 'definicao', texto: termos.map(t => `${t.termo}: ${t.definicao}`).join('\n\n'), recomendacoes: [] }
   }
 
+  // 2b) Pedido de ajuda / cumprimento, sem assunto especifico: apresenta o que sabe fazer.
+  if (AJUDA.test(c.textoLimpo) && escolherGuias(c.guias, 1).length === 0) return respostaAjuda(opcoes.area)
+
   // 3) Como fazer / onde fica
   if (c.comoFazer || c.ondeTela || c.intencao) {
     const escolhidos = escolherGuias(c.guias, 2)
@@ -120,7 +154,7 @@ export function responderConhecimento(pergunta: string, opcoes: { escrita: boole
   return null
 }
 
-const COMO_FAZER_EXPLICITO = /\b(como (eu |a gente )?(faco|fazer|posso|podemos|consigo)|passo a passo|me ensin\w*|ensine|tutorial|nao sei (como|onde))\b/
+const COMO_FAZER_EXPLICITO = /\b(como(?! (o|a|os|as|um|uma|esta|estao|estava|foi|foram|ficou|ficaram|anda|andam|vai|vao|sera|tem|temos|e|sao|era|vem|evoluiu|evoluiram|variou)\b) (eu |a gente )?\w+|passo a passo|me ensin\w*|ensine|tutorial|nao sei (como|onde))\b/
 
 function escolherGuias(lista: { guia: Guia; pontos: number }[], max: number): Guia[] {
   if (lista.length === 0 || lista[0].pontos < PONTOS_MINIMOS) return []

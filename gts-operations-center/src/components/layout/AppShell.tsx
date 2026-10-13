@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { TopBarCompacta } from './TopBarCompacta'
 import { AlertasPanel } from './AlertasPanel'
+import { ChatLateralIA } from '@/components/ia/ChatLateralIA'
 import { useQuery } from '@tanstack/react-query'
 
 interface AppShellProps {
@@ -56,6 +57,9 @@ export function AppShell({ children, title, variante, paginaAtual }: AppShellPro
           {children}
         </main>
       </div>
+
+      {/* Assistente (chat lateral): so aparece para quem tem permissao */}
+      <ChatLateralIA />
 
       {/* Painel de alertas */}
       {alertasAberto && (

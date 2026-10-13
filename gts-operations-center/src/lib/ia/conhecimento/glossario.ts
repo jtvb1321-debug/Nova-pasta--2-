@@ -85,6 +85,61 @@ export const GLOSSARIO: Termo[] = [
     definicao: 'O desempenho e a produtividade são medidos por EQUIPE. O sistema não registra qual técnico executou cada chamado.',
     re: /\btecnicos?\b/,
   },
+  {
+    id: 'cto', termo: 'CTO',
+    definicao: 'Caixa de terminação óptica: a caixa na rua onde saem as fibras que atendem os clientes. No mapa de rede aparece como camada "CTOs".',
+    re: /\bctos?\b/,
+  },
+  {
+    id: 'olt-onu', termo: 'OLT e ONU',
+    definicao: 'OLT é o equipamento do provedor que "alimenta" a rede óptica; ONU é o equipamento óptico instalado no cliente. O SmartOLT acompanha ambos.',
+    re: /\b(olt|onus?)\b/,
+  },
+  {
+    id: 'viabilidade', termo: 'Viabilidade',
+    definicao: 'Se um endereço pode ser atendido pela rede. O mapa responde "Tem viabilidade", "Sem viabilidade", "Viabilidade a confirmar" ou "Endereço não encontrado".',
+    re: /\bviabilidade\b/,
+  },
+  {
+    id: 'prioridade', termo: 'Prioridade do chamado',
+    definicao: 'Urgência da Ordem de Serviço: Normal, Urgente ou Crítico. Chamados críticos e com SLA estourando aparecem nas listas de atenção.',
+    re: /\bprioridade\b|\bcritico\b/,
+  },
+  {
+    id: 'os', termo: 'O.S. / despacho',
+    definicao: 'Ordem de Serviço: o chamado enviado à equipe. "Novo chamado" abre a "Nova Ordem de Servico" (o despacho), com modalidade, prioridade, endereço e, no EACE, escola e INEP.',
+    re: /\b(o\.s\.|o s|ordem de servico|ordens de servico|despacho|despachar)\b/,
+  },
+  {
+    id: 'inep', termo: 'INEP',
+    definicao: 'Código da escola atendida nos chamados EACE (campo "INEP" da Ordem de Serviço).',
+    re: /\binep\b/,
+  },
+  {
+    id: 'status-chamado', termo: 'Situações do chamado',
+    definicao: 'Aberto (aguardando), Agendado (com data/hora marcada), Em atendimento (equipe iniciou), Concluído e Cancelado.',
+    re: /\b(situacoes?|status)\b.{0,20}\bchamados?\b|\bchamados?\b.{0,20}\b(situacoes?|status)\b/,
+  },
+  {
+    id: 'status-equipe', termo: 'Status da equipe',
+    definicao: 'Disponível (livre para novos chamados), Em deslocamento (a caminho) e Em atividade (atendendo).',
+    re: /\b(em deslocamento|em atividade)\b|\bstatus da equipe\b/,
+  },
+  {
+    id: 'gts-empresas', termo: 'GTS Provedor / GTS EACE / GTS Administrativo',
+    definicao: 'As três empresas/centros do Financeiro: cada solicitação de pagamento é lançada em uma delas.',
+    re: /\b(gts provedor|gts eace|gts administrativo)\b/,
+  },
+  {
+    id: 'perfil', termo: 'Perfil de acesso',
+    definicao: 'Define o que cada usuário vê e faz: Administrador, Gestor, Operador NOC, Técnico e Vendedor. É escolhido em Usuarios > "Perfil de Acesso".',
+    re: /\b(perfil|perfis|role)\b/,
+  },
+  {
+    id: 'assistente', termo: 'Assistente (Inteligência Operacional)',
+    definicao: 'Este chat. Consulta dados reais de operações e estoque e explica como fazer as tarefas nas telas. Ele nunca altera nada no sistema.',
+    re: /\b(assistente|inteligencia operacional|orbia)\b/,
+  },
 ]
 
-export const PERGUNTA_DE_DEFINICAO = /\b(o que e|oque e|o que sao|o que significa|oque significa|o que quer dizer|quer dizer|significa|significado|defina|definicao|conceito|explique o que|diferenca entre|qual a diferenca)\b/
+export const PERGUNTA_DE_DEFINICAO = /\b(como funciona|como funcionam|o que e|oque e|o que sao|o que significa|oque significa|o que quer dizer|quer dizer|significa|significado|defina|definicao|conceito|explique o que|diferenca entre|qual a diferenca)\b/

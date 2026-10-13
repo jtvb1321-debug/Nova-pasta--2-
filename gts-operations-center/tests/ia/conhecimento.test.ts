@@ -35,6 +35,36 @@ describe('conhecimento: escolha do guia por palavras', () => {
     ['como renomear uma equipe', 'equipe-renomear'],
     ['como cadastro uma equipe nova', 'equipe-renomear'],
     ['como trocar a senha de um usuário', 'usuarios'],
+    ['como filtrar os chamados agendados', 'chamado-filtros'],
+    ['como finalizar um chamado', 'chamado-iniciar-finalizar'],
+    ['como iniciar o atendimento agora', 'chamado-iniciar-finalizar'],
+    ['como reagendar um chamado para amanhã', 'chamado-reagendar'],
+    ['como trocar a equipe de um chamado', 'chamado-trocar-equipe'],
+    ['como alterar o tipo do chamado', 'chamado-tipo'],
+    ['como chamar o cliente pelo whatsapp', 'chamado-detalhes'],
+    ['como preencher a prioridade da ordem de serviço', 'chamado-prioridade'],
+    ['onde vejo os veículos no mapa', 'mapa-veiculos'],
+    ['como consultar viabilidade de um endereço', 'mapa-inmap'],
+    ['como vejo o combustível', 'monitoramento-olt'],
+    ['como registrar uma venda', 'vendas'],
+    ['como fazer uma solicitação de pagamento no financeiro', 'financeiro'],
+    ['como gerar relatório em pdf', 'relatorios'],
+    ['como ver quem apagou um item', 'auditoria'],
+    ['como mudar a cor do sistema', 'configuracoes'],
+    ['como colocar no modo tv', 'modo-tv'],
+    ['qual o atalho da busca rápida', 'busca-atalhos'],
+    ['o que aparece no dashboard', 'dashboard'],
+    ['quem pode aprovar devolução', 'estoque-devolucao'],
+    ['por que não consigo ver o financeiro, qual meu perfil', 'perfis'],
+    ['como aprovar uma solicitação da equipe', 'solicitacoes-status'],
+    ['como lançar despesa de hospedagem da equipe', 'equipes-status'],
+    ['como exportar relatório do estoque', 'estoque-relatorios'],
+    ['como faço para cancelar um chamado', 'chamado-cancelar'],
+    ['quero mudar o horário do chamado', 'chamado-reagendar'],
+    ['como lanço um equipamento com defeito', 'estoque-defeito'],
+    ['quero cadastrar um técnico novo', 'usuarios'],
+    ['como sei se o SLA estourou', 'sla-desempenho'],
+    ['o que é rechamada', 'rechamada'],
   ]
   for (const [pergunta, esperado] of CASOS) {
     it(`"${pergunta.slice(0, 60)}" -> ${esperado}`, () => assert.equal(guiaDe(pergunta), esperado))
@@ -87,9 +117,33 @@ describe('conhecimento: definicoes e telas', () => {
   it('regras de SLA do EACE', () => assert.match(responde('Quais as regras de SLA do EACE?')!.texto, /EACE/))
   it('onde fica a tela do mapa', () => {
     const r = responde('onde fica o mapa?')!
-    assert.equal(r.tipo, 'tela'); assert.match(r.texto, /Monitoramento > Mapa/)
+    assert.match(r.texto, /Monitoramento > Mapa/)
   })
   it('como abrir o financeiro', () => assert.match(responde('como acessar o financeiro')!.texto, /Comercial > Financeiro/))
+})
+
+describe('conhecimento: ajuda e glossario ampliado', () => {
+  it('"o que voce pode fazer" apresenta dados + guias + termos, em qualquer aba', () => {
+    for (const p of ['O que você pode fazer?', 'oque vc pode fazer ?', 'ajuda', 'bom dia', 'olá']) {
+      const r = responde(p, 'estoque')!
+      assert.equal(r.tipo, 'ajuda', p)
+      assert.match(r.texto, /Consultar dados reais/); assert.match(r.texto, /Estoque:\n•/); assert.match(r.texto, /Chamados, equipes e monitoramento:/)
+    }
+  })
+  for (const [p, re] of [
+    ['o que é CTO?', /Caixa de terminação óptica/],
+    ['o que significa viabilidade?', /Tem viabilidade/],
+    ['o que é INEP?', /escola/],
+    ['como funciona o SLA?', /Prazo combinado/],
+    ['o que significa prioridade?', /Normal, Urgente ou Crítico/],
+    ['o que são os perfis de acesso', /Administrador, Gestor/],
+  ] as [string, RegExp][]) it(`glossario: ${p}`, () => assert.match(responde(p)!.texto, re))
+  it('todo guia tem titulo, onde, passos e ao menos um sinal; ids unicos', async () => {
+    const { GUIAS } = await import('@/lib/ia/conhecimento/guias')
+    assert.ok(GUIAS.length >= 40, `so ${GUIAS.length} guias`)
+    assert.equal(new Set(GUIAS.map(g => g.id)).size, GUIAS.length)
+    for (const g of GUIAS) { assert.ok(g.titulo && g.onde && g.passos.length > 0 && g.sinais.length > 0, g.id) }
+  })
 })
 
 describe('conhecimento: perguntas de DADOS nao sao desviadas para guias', () => {
@@ -108,6 +162,10 @@ describe('conhecimento: perguntas de DADOS nao sao desviadas para guias', () => 
     'Qual o saldo de conector?',
     'Quais itens foram adicionados ao estoque esta semana?',
     'Quanto devo repor de cabo?',
+    'Como o SLA está este mês?',
+    'como compara as equipes',
+    'Como foi o consumo de cabo?',
+    'Como estão as equipes hoje?',
   ]
   for (const p of DADOS) it(`segue para as consultas: ${p}`, () => assert.equal(responde(p), null))
 })

@@ -56,6 +56,13 @@ Antes de chamar qualquer modelo, o servidor interpreta a pergunta **por palavras
 | Definição | "o que é EACE?", "o que é saldo livre?" | Texto do glossário do sistema |
 | Dados | "como está o SLA neste mês?" | Segue para as ferramentas (mock ou OpenRouter) |
 
+Cobertura atual: 43 guias (estoque, chamados, equipes, desempenho, mapas, vendas, financeiro, relatórios, auditoria, configurações,
+Modo TV, perfis de acesso...), um glossário de 27 termos, a apresentação "o que você pode fazer" e o mapa de menus.
+
+Onde aparece: na tela cheia (`/inteligencia-operacional`) e no **chat lateral**, um botão "Assistente" no canto inferior direito de
+qualquer tela (componente `ChatLateralIA`, montado no `AppShell`; só para quem tem a permissão `usarAssistenteIA`). Em telas largas
+ocupa uma coluna ao lado do conteúdo; no celular abre sobre a tela. A conversa continua ao trocar de página (sessionStorage).
+
 Essas respostas são fixas (não são IA e não consomem cota do OpenRouter) e valem em qualquer provedor. Para ensinar um assunto novo,
 adicione um item em `guias.ts` (nomes de telas/botões conferidos no código) ou em `glossario.ts` e um teste em `tests/ia/conhecimento.test.ts`.
 Manipulação (ignorar regras, revelar prompt, SQL, credenciais) continua **bloqueada**, com `IA_INJECAO_SUSPEITA`.
