@@ -3,7 +3,7 @@
 # Uso (PowerShell):  powershell -ExecutionPolicy Bypass -File C:\Users\GTSNET\Projetos\wt-orbia-ai\deploy\discloud-1.0.40\backup-producao.ps1
 $ErrorActionPreference = 'Stop'
 
-$envFile = 'C:\Users\GTSNET\Projetos\wt-producao\gts-operations-center\.env'
+$envFile = 'C:\Users\GTSNET\Projetos\Nova-pasta--2-\gts-operations-center\.env'
 if (-not (Test-Path $envFile)) { throw "Nao achei $envFile" }
 
 function Ler-Variavel($nome) {
