@@ -56,7 +56,7 @@ Antes de chamar qualquer modelo, o servidor interpreta a pergunta **por palavras
 | Definição | "o que é EACE?", "o que é saldo livre?" | Texto do glossário do sistema |
 | Dados | "como está o SLA neste mês?" | Segue para as ferramentas (mock ou OpenRouter) |
 
-Cobertura atual: 43 guias (estoque, chamados, equipes, desempenho, mapas, vendas, financeiro, relatórios, auditoria, configurações,
+Cobertura atual: 45 guias (estoque, chamados, equipes, desempenho, mapas, vendas, financeiro, relatórios, auditoria, configurações,
 Modo TV, perfis de acesso...), um glossário de 27 termos, a apresentação "o que você pode fazer" e o mapa de menus.
 
 Onde aparece: na tela cheia (`/inteligencia-operacional`) e no **chat lateral**, um botão "Assistente" no canto inferior direito de
