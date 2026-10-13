@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { signOut } from 'next-auth/react'
-import { ClipboardList, Truck, Map, Clock, LogOut, History } from 'lucide-react'
+import { ClipboardList, Truck, Map, LogOut, History } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, getInitials } from '@/lib/utils'
 import { situacaoLabel } from '@/lib/jornada'
@@ -19,7 +19,6 @@ const NAV: { id: PaginaTecnico; href: string; label: string; icon: React.Element
   { id: 'historico', href: '/historico-os', label: 'Histórico de O.S.', icon: History },
   { id: 'carro',    href: '/meu-carro',     label: 'Meu carro / estoque', icon: Truck },
   { id: 'mapa',     href: '/mapa-inmap',    label: 'InMap / rotas', icon: Map },
-  { id: 'ponto',    href: '/ponto',         label: 'Ponto', icon: Clock },
 ]
 
 const SITUACAO_HOJE_CFG: Record<string, { cor: string; bg: string; dot: string }> = {
