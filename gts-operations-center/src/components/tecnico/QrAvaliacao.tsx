@@ -10,13 +10,32 @@ interface Props {
   tipoLabel: string
   token: string
   onConcluir: () => void
+  /** Nome do proximo chamado da lista (se houver): o botao vira "Proximo chamado" em vez de "Concluir". */
+  proximoCliente?: string | null
 }
 
 // Mostrada ao tecnico logo depois de finalizar: o cliente escaneia o QR e
 // avalia na hora, numa pagina publica do GTS Center. O link sempre usa o
 // endereco por onde o tecnico acessa o sistema (o mesmo dominio publico).
-export function QrAvaliacao({ chamado, tipoLabel, token, onConcluir }: Props) {
+export function QrAvaliacao({ chamado, tipoLabel, token, onConcluir, proximoCliente }: Props) {
   const [svg, setSvg] = useState<string | null>(null)
+  const [situacao, setSituacao] = useState<'PENDENTE' | 'RESPONDIDA' | 'EXPIRADA' | 'SEM_AVALIACAO'>('PENDENTE')
+
+  // Avisa na hora quando o cliente avalia (consulta leve a cada 5 s; para ao responder ou ao sair da tela).
+  useEffect(() => {
+    if (situacao === 'RESPONDIDA') return
+    let ativo = true
+    const consultar = async () => {
+      try {
+        const r = await fetch(`/api/tickets/${chamado.id}/avaliacao/status`, { cache: 'no-store' })
+        if (!r.ok) return
+        const d = await r.json()
+        if (ativo && d?.status) setSituacao(d.status)
+      } catch { /* sem conexao: tenta de novo no proximo ciclo */ }
+    }
+    const t = setInterval(consultar, 5000)
+    return () => { ativo = false; clearInterval(t) }
+  }, [chamado.id, situacao])
   const [enviando, setEnviando] = useState(false)
   const [enviadoWhatsApp, setEnviadoWhatsApp] = useState(false)
 
@@ -59,6 +78,18 @@ export function QrAvaliacao({ chamado, tipoLabel, token, onConcluir }: Props) {
         </div>
         <p className="text-sm font-bold text-tema-tinta">Peça ao cliente para avaliar</p>
         <p className="text-xs text-tema-suave text-center">Ele aponta a câmera do celular para o código e responde em menos de 1 minuto.</p>
+        {situacao === 'RESPONDIDA' ? (
+          <p role="status" className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 text-sm font-semibold text-emerald-800">
+            <CheckCircle className="w-4 h-4" aria-hidden /> O cliente avaliou. Obrigado!
+          </p>
+        ) : (
+          <p role="status" className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-500/10 px-3 py-2.5 text-sm font-semibold text-blue-800">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" aria-hidden /> Aguardando a avaliação do cliente…
+          </p>
+        )}
+        {situacao !== 'RESPONDIDA' && (
+          <p className="text-[11px] text-tema-apagado text-center">Se ele não responder agora, o link vai por WhatsApp em 1 hora.</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -76,7 +107,7 @@ export function QrAvaliacao({ chamado, tipoLabel, token, onConcluir }: Props) {
           onClick={onConcluir}
           className="w-full py-3.5 bg-tema-tinta hover:bg-tema-texto text-tema-superficie font-bold rounded-xl transition-colors"
         >
-          Concluir
+          {proximoCliente ? `Próximo chamado · ${proximoCliente}` : 'Concluir'}
         </button>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { FotosAtendimento, useFotosAtendimento } from './FotosAtendimento'
 import { CLASSIFICACAO_EMOJI, CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
 import { useAgora } from '@/hooks/useAgora'
 import {
-  ETAPAS_ROTULOS, MSG_MIN_FOTOS, acaoPrincipal, etapaDoChamado, fotosSalvas, prioridadeDe, rotuloDaEtapa, situacaoDeTempo,
+  ETAPAS_ROTULOS, MOTIVOS_CLIENTE_AUSENTE, MSG_MIN_FOTOS, acaoPrincipal, acrescentarFrase, etapaDoChamado, fotosSalvas, frasesDeRelato, pendenciasFinalizacao, prioridadeDe, rotuloDaEtapa, situacaoDeTempo,
 } from '@/lib/tecnicoChamado'
 
 export type AvancarChamado = (
@@ -32,6 +32,8 @@ interface Props {
   onClose: () => void
   onAvancar: AvancarChamado
   enviando: boolean
+  /** Nome do proximo chamado da lista, para o botao final da tela do QR. */
+  proximoCliente?: string | null
 }
 
 const PRIORIDADE_CFG: Record<string, { label: string; cor: string }> = {
@@ -82,7 +84,7 @@ function limparRascunho(id: string) {
   try { sessionStorage.removeItem(chaveRascunho(id)) } catch { /* ignore */ }
 }
 
-export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Props) {
+export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proximoCliente }: Props) {
   const agora = useAgora(30000)
   const [rascunho] = useState(() => lerRascunho(chamado.id))
   const [relato, setRelato] = useState(chamado.relato || rascunho.relato)
@@ -94,6 +96,9 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
   const [showDiagnostico, setShowDiagnostico] = useState(false)
   const [mostrarDiagnosticoCompleto, setMostrarDiagnosticoCompleto] = useState(false)
   const [tokenAvaliacao, setTokenAvaliacao] = useState<string | null>(null)
+  const [revisando, setRevisando] = useState(false)
+  const [ausenteAberto, setAusenteAberto] = useState(false)
+  const [motivoAusente, setMotivoAusente] = useState<string>(MOTIVOS_CLIENTE_AUSENTE[0])
 
   const etapa = etapaDoChamado(chamado)
   const acao = acaoPrincipal(etapa)
@@ -157,16 +162,24 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
     setEquipamentosUtilizadosIds([])
   }
 
-  async function marcarClienteAusente() {
-    if (!window.confirm('Confirma que o cliente nao estava presente? O chamado sera reagendado para amanha.')) return
+  // Cliente ausente: abre a folha com ligar/WhatsApp e o motivo; so devolve a agenda quando o tecnico confirma.
+  function marcarClienteAusente() { setAusenteAberto(true) }
+
+  async function confirmarClienteAusente() {
     const amanha = new Date()
     amanha.setDate(amanha.getDate() + 1)
+    const base = `Cliente ausente: ${motivoAusente}.`
     const ok = await onAvancar('ABERTO', {
       clienteAusente: true,
       dataAgendada: amanha.toISOString(),
-      relato: relato.trim() || 'Cliente ausente no momento do atendimento',
+      relato: relato.trim() ? `${base} ${relato.trim()}` : base,
     }, { sucesso: 'Chamado devolvido à agenda (cliente ausente).' })
     if (ok) onClose()
+  }
+
+  // O que falta para finalizar (mostrado antes do toque) e atalho para ir ate o item que falta.
+  function irPara(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   async function finalizarChamado() {
@@ -217,6 +230,15 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
     }
   }
 
+  const pend = pendenciasFinalizacao({ relato, fotosValidas: fotos.qtdValidas, enviandoFotos: fotos.enviando, equipamentoPendente })
+  const IDS_SECAO: Record<string, string> = { fotos: 'secao-fotos', relato: 'relato-atendimento', equipamento: 'secao-equipamento' }
+
+  function tocarFinalizar() {
+    if (pend.completo) { setRevisando(true); return }
+    setTentouFinalizar(true)
+    if (pend.primeiroQueFalta) irPara(IDS_SECAO[pend.primeiroQueFalta])
+  }
+
   const botaoPrincipal = 'w-full min-h-[52px] flex items-center justify-center gap-2 px-4 rounded-xl text-base font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2'
   const botaoSecundario = 'min-h-[44px] inline-flex items-center justify-center gap-2 px-4 rounded-xl border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-suave hover:bg-tema-contraste/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
 
@@ -225,7 +247,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={`Chamado de ${chamado.cliente}`}>
-      <div className="bg-tema-superficie border border-tema-linha w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative bg-tema-superficie border border-tema-linha w-full sm:max-w-lg sm:rounded-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* Cabecalho */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-tema-linha flex-shrink-0">
@@ -245,6 +267,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
               tipoLabel={TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
               token={tokenAvaliacao}
               onConcluir={onClose}
+              proximoCliente={proximoCliente}
             />
           ) : (<>
 
@@ -293,12 +316,17 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
             {obs && <p className="text-xs text-tema-apagado italic border-t border-tema-linha pt-2 break-words">{obs}</p>}
 
             <div className="flex gap-2 pt-1">
-              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1')}>
-                <Navigation className="w-4 h-4" aria-hidden /> Ver rota
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1 min-w-0 px-2 whitespace-nowrap')}>
+                <Navigation className="w-4 h-4" aria-hidden /> Rota
               </a>
+              {chamado.telefone && (
+                <a href={`tel:${chamado.telefone}`} className={cn(botaoSecundario, 'flex-1 min-w-0 px-2 whitespace-nowrap')}>
+                  <Phone className="w-4 h-4" aria-hidden /> Ligar
+                </a>
+              )}
               {digitos.length >= 10 && (
-                <a href={`https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1')}>
-                  <MessageCircle className="w-4 h-4" aria-hidden /> Contatar cliente
+                <a href={`https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1 min-w-0 px-2 whitespace-nowrap')}>
+                  <MessageCircle className="w-4 h-4" aria-hidden /> WhatsApp
                 </a>
               )}
             </div>
@@ -306,27 +334,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
 
           <PainelIxc chamadoId={chamado.id} ehEace={!!chamado.eace} />
 
-          {/* ETAPA: Aguardando */}
-          {etapa === 'AGUARDANDO' && acao && (
-            <button type="button" onClick={() => onAvancar('ABERTO')} disabled={enviando} className={botaoPrincipal}>
-              {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Truck className="w-5 h-5" aria-hidden />}
-              {acao.rotulo}
-            </button>
-          )}
-
-          {/* ETAPA: Em deslocamento */}
-          {etapa === 'DESLOCAMENTO' && acao && (
-            <div className="space-y-3">
-              <button type="button" onClick={() => onAvancar('EM_ANDAMENTO')} disabled={enviando} className={botaoPrincipal}>
-                {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Zap className="w-5 h-5" aria-hidden />}
-                {acao.rotulo}
-              </button>
-              <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
-                <AlertTriangle className="w-4 h-4" aria-hidden />
-                Cliente ausente — devolver à agenda
-              </button>
-            </div>
-          )}
+          {/* As acoes principais de cada etapa ficam fixas no rodape (ao alcance do polegar): ver "rodape" abaixo. */}
 
           {/* ETAPA: Em atendimento */}
           {etapa === 'ATENDIMENTO' && (
@@ -384,10 +392,39 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
                 <Activity className="w-4 h-4" aria-hidden /> Diagnóstico técnico
               </button>
 
+              <section aria-label="O que falta para finalizar" className="rounded-xl border border-tema-linha p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-tema-suave">Para finalizar</p>
+                  <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', pend.completo ? 'bg-emerald-500/10 text-emerald-700' : 'bg-tema-contraste/[0.06] text-tema-suave')}>{pend.prontos} de {pend.total} prontos</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {pend.itens.map(i => (
+                    <li key={i.id}>
+                      <button type="button" onClick={() => irPara(IDS_SECAO[i.id])} className="w-full min-h-[44px] flex items-center gap-3 text-left rounded-lg px-2 hover:bg-tema-contraste/[0.04]">
+                        <span className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0', i.ok ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-tema-linha-forte')}>
+                          {i.ok && <CheckCircle className="w-3.5 h-3.5" aria-hidden />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-tema-tinta">{i.rotulo}</span>
+                          <span className={cn('block text-xs', i.ok ? 'text-tema-apagado' : 'text-orange-700')}>{i.detalhe}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
               <div>
                 <label htmlFor="relato-atendimento" className="text-sm font-semibold text-tema-tinta mb-1.5 flex items-center gap-1.5">
                   <FileText className="w-4 h-4" aria-hidden /> Relato do atendimento *
                 </label>
+                <div className="flex flex-wrap gap-2 mb-2" aria-label="Frases prontas">
+                  {frasesDeRelato(chamado.tipo).map(f => (
+                    <button key={f} type="button" onClick={() => setRelato((r: string) => acrescentarFrase(r, f))} className="min-h-[40px] px-3 rounded-full border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-texto hover:border-orange-500/40 hover:text-orange-700 transition-colors">
+                      {f}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   id="relato-atendimento"
                   value={relato}
@@ -399,7 +436,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
                 {tentouFinalizar && !relato.trim() && <p className="text-xs text-red-700 mt-1">Preencha o relato do atendimento.</p>}
               </div>
 
-              <FotosAtendimento fotos={fotos} tentouFinalizar={tentouFinalizar} />
+              <div id="secao-fotos"><FotosAtendimento fotos={fotos} tentouFinalizar={tentouFinalizar} /></div>
 
               {materiaisDisponiveis.length > 0 && (
                 <div>
@@ -444,7 +481,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
               )}
 
               {unidadesDisponiveis.length > 0 && (
-                <div>
+                <div id="secao-equipamento">
                   <p className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5"><ScanLine className="w-4 h-4" aria-hidden /> Equipamento utilizado *</p>
                   <div className="space-y-2">
                     {unidadesDisponiveis.map((u: any) => {
@@ -484,24 +521,12 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
                 </div>
               )}
 
-              <div className="space-y-2 pt-1">
-                {equipamentoPendente && tentouFinalizar && (
-                  <p className="text-center text-xs text-red-700 flex items-center justify-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
-                    Informe o equipamento usado ou marque &quot;Nenhum equipamento foi utilizado&quot;
-                  </p>
-                )}
-                {fotos.enviando && <p className="text-center text-xs text-tema-suave">Aguarde o envio das fotos para finalizar.</p>}
-                <button type="button" onClick={finalizarChamado} disabled={enviando || fotos.enviando} className={botaoPrincipal}>
-                  {enviando
-                    ? <><Loader2 className="w-5 h-5 animate-spin" aria-hidden /> Finalizando...</>
-                    : <><CheckCircle className="w-5 h-5" aria-hidden /> {acao?.rotulo ?? 'Finalizar chamado'}</>}
-                </button>
-                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
-                  <AlertTriangle className="w-4 h-4" aria-hidden />
-                  Cliente ausente — devolver à agenda
-                </button>
-              </div>
+              {equipamentoPendente && tentouFinalizar && (
+                <p className="text-center text-xs text-red-700 flex items-center justify-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
+                  Informe o equipamento usado ou marque &quot;Nenhum equipamento foi utilizado&quot;
+                </p>
+              )}
             </div>
           )}
 
@@ -512,6 +537,101 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando }: Prop
           )}
           </>)}
         </div>
+
+        {/* Rodape fixo: a acao principal da etapa fica sempre ao alcance do polegar */}
+        {!tokenAvaliacao && (etapa === 'AGUARDANDO' || etapa === 'DESLOCAMENTO' || etapa === 'ATENDIMENTO') && (
+          <div className="flex-shrink-0 border-t border-tema-linha bg-tema-superficie px-4 pt-3 pb-4 space-y-2">
+            {etapa === 'AGUARDANDO' && acao && (
+              <button type="button" onClick={() => onAvancar('ABERTO')} disabled={enviando} className={botaoPrincipal}>
+                {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Truck className="w-5 h-5" aria-hidden />}
+                {acao.rotulo}
+              </button>
+            )}
+            {etapa === 'DESLOCAMENTO' && acao && (
+              <>
+                <button type="button" onClick={() => onAvancar('EM_ANDAMENTO')} disabled={enviando} className={botaoPrincipal}>
+                  {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Zap className="w-5 h-5" aria-hidden />}
+                  {acao.rotulo}
+                </button>
+                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
+                  <AlertTriangle className="w-4 h-4" aria-hidden /> Cliente ausente
+                </button>
+              </>
+            )}
+            {etapa === 'ATENDIMENTO' && (
+              <>
+                <button
+                  type="button"
+                  onClick={tocarFinalizar}
+                  disabled={enviando}
+                  className={pend.completo ? botaoPrincipal : cn(botaoPrincipal, 'bg-tema-contraste/[0.12] text-tema-tinta hover:bg-tema-contraste/[0.16]')}
+                >
+                  {pend.completo
+                    ? <><CheckCircle className="w-5 h-5" aria-hidden /> Revisar e finalizar</>
+                    : <><AlertTriangle className="w-5 h-5" aria-hidden /> {pend.textoFalta}</>}
+                </button>
+                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
+                  <AlertTriangle className="w-4 h-4" aria-hidden /> Cliente ausente
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Revisao antes de finalizar: tudo que sera registrado, numa tela so */}
+        {revisando && !tokenAvaliacao && (
+          <div className="absolute inset-0 z-10 flex items-end bg-black/45" role="dialog" aria-modal="true" aria-label="Revisar e finalizar">
+            <div className="w-full bg-tema-superficie rounded-t-3xl px-4 pt-3 pb-5 space-y-3">
+              <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
+              <h3 className="text-lg font-bold text-tema-tinta">Tudo pronto para finalizar?</h3>
+              <ul className="space-y-2 text-sm text-tema-texto">
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>{fotos.qtdValidas} {fotos.qtdValidas === 1 ? 'foto' : 'fotos'}</b> enviada{fotos.qtdValidas === 1 ? '' : 's'}</span></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>Relato</b> escrito</span></li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span>{nenhumEquipamentoUsado ? <b>Nenhum equipamento utilizado</b> : equipamentosUtilizadosIds.length > 0 ? <><b>{equipamentosUtilizadosIds.length} {equipamentosUtilizadosIds.length === 1 ? 'equipamento' : 'equipamentos'}</b> utilizado{equipamentosUtilizadosIds.length === 1 ? '' : 's'}</> : <b>Sem equipamento na sua carga</b>}</span></li>
+                {Object.keys(materiaisUtilizados).length > 0 && (
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>{Object.keys(materiaisUtilizados).length} {Object.keys(materiaisUtilizados).length === 1 ? 'material' : 'materiais'}</b> saem do seu carro</span></li>
+                )}
+              </ul>
+              <p className="text-xs text-tema-suave">Depois de finalizar, o cliente já pode avaliar pelo QR code ou por WhatsApp.</p>
+              <button type="button" onClick={async () => { await finalizarChamado(); setRevisando(false) }} disabled={enviando || fotos.enviando} className="w-full min-h-[52px] flex items-center justify-center gap-2 rounded-xl text-base font-bold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 transition-colors">
+                {enviando ? <><Loader2 className="w-5 h-5 animate-spin" aria-hidden /> Finalizando...</> : <><CheckCircle className="w-5 h-5" aria-hidden /> Finalizar chamado</>}
+              </button>
+              <button type="button" onClick={() => setRevisando(false)} disabled={enviando} className={cn(botaoSecundario, 'w-full')}>Voltar e editar</button>
+            </div>
+          </div>
+        )}
+
+        {/* Cliente ausente: tentar contato e escolher o motivo antes de devolver a agenda */}
+        {ausenteAberto && !tokenAvaliacao && (
+          <div className="absolute inset-0 z-10 flex items-end bg-black/45" role="dialog" aria-modal="true" aria-label="Cliente ausente">
+            <div className="w-full bg-tema-superficie rounded-t-3xl px-4 pt-3 pb-5 space-y-3">
+              <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
+              <h3 className="text-lg font-bold text-tema-tinta">Cliente ausente</h3>
+              <p className="text-sm text-tema-suave">Antes de devolver à agenda, tente o contato. O chamado volta amanhã e o motivo fica no relato.</p>
+              {chamado.telefone && (
+                <div className="flex gap-2">
+                  <a href={`tel:${chamado.telefone}`} className={cn(botaoSecundario, 'flex-1 min-h-[52px]')}><Phone className="w-4 h-4" aria-hidden /> Ligar agora</a>
+                  {digitos.length >= 10 && (
+                    <a href={`https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`} target="_blank" rel="noopener noreferrer" className={cn(botaoSecundario, 'flex-1 min-h-[52px]')}><MessageCircle className="w-4 h-4" aria-hidden /> WhatsApp</a>
+                  )}
+                </div>
+              )}
+              <p className="text-xs font-bold uppercase tracking-wide text-tema-suave">Motivo</p>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Motivo">
+                {MOTIVOS_CLIENTE_AUSENTE.map(m => (
+                  <button key={m} type="button" role="radio" aria-checked={motivoAusente === m} onClick={() => setMotivoAusente(m)}
+                    className={cn('min-h-[44px] px-4 rounded-full border text-sm font-semibold transition-colors', motivoAusente === m ? 'border-orange-500 bg-orange-500/10 text-orange-800' : 'border-tema-linha text-tema-texto')}>
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={confirmarClienteAusente} disabled={enviando} className={botaoPrincipal}>
+                {enviando ? <><Loader2 className="w-5 h-5 animate-spin" aria-hidden /> Devolvendo...</> : 'Devolver à agenda'}
+              </button>
+              <button type="button" onClick={() => setAusenteAberto(false)} disabled={enviando} className={cn(botaoSecundario, 'w-full')}>Voltar</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showDiagnostico && (

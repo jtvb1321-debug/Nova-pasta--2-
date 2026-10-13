@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle, Calendar, CheckCircle, ClipboardList, Clock, History, Map, MapPin, RefreshCw, Truck, Zap,
+  AlertTriangle, Bell, Calendar, CheckCircle, ClipboardList, Clock, History, Map, MapPin, RefreshCw, Truck, X, Zap,
 } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
@@ -44,6 +44,26 @@ function formatarDataAgendada(data: string | Date) {
 }
 
 type FiltroEtapa = '' | 'AGUARDANDO' | 'DESLOCAMENTO' | 'ATENDIMENTO'
+
+// Aviso de chamado novo: vibra e toca um "bip" curto (se o aparelho permitir). Nunca quebra a tela.
+function avisarChamadoNovo() {
+  try { navigator.vibrate?.([200, 100, 200]) } catch { /* sem vibracao */ }
+  try {
+    const AC = (window as any).AudioContext || (window as any).webkitAudioContext
+    if (!AC) return
+    const ctx = new AC()
+    const osc = ctx.createOscillator()
+    const ganho = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = 880
+    ganho.gain.value = 0.08
+    osc.connect(ganho)
+    ganho.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.25)
+    setTimeout(() => { try { ctx.close?.() } catch { /* ignore */ } }, 500)
+  } catch { /* som bloqueado pelo navegador */ }
+}
 
 const MENSAGENS: Record<string, string> = {
   ABERTO: 'Deslocamento iniciado.',
@@ -96,6 +116,32 @@ export function PainelTecnico({ session }: { session: Session }) {
 
   // Detalhes e cards leem do MESMO cache: nao ha como divergirem.
   const selecionado = selecao ? (todos.find(c => c.id === selecao.id) ?? selecao.reserva) : null
+
+  // Proximo da fila (para o botao "Proximo chamado" da tela do QR).
+  const proximo = ativos.find(c => c.id !== selecao?.id && etapaDoChamado(c) !== 'ATENDIMENTO')
+  const proximoCliente = proximo?.cliente ? String(proximo.cliente).slice(0, 24) : null
+
+  // Chamado novo na lista (alem dos que ja estavam ao abrir a tela): banner + vibracao + bip.
+  const idsConhecidos = useRef<Set<string> | null>(null)
+  const [novoChamado, setNovoChamado] = useState<{ id: string; cliente: string; tipo: string } | null>(null)
+  useEffect(() => {
+    if (!data) return
+    const ids = new Set<string>(todos.map(c => c.id))
+    if (idsConhecidos.current === null) { idsConhecidos.current = ids; return }
+    const novos = todos.filter(c => !idsConhecidos.current!.has(c.id) && (c.status === 'ABERTO' || c.status === 'AGENDADO'))
+    idsConhecidos.current = ids
+    if (novos.length > 0) {
+      const n = novos[0]
+      setNovoChamado({ id: n.id, cliente: n.cliente, tipo: TIPO_CHAMADO_LABELS[n.tipo as TipoChamado] ?? n.tipo })
+      avisarChamadoNovo()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+  useEffect(() => {
+    if (!novoChamado) return
+    const t = setTimeout(() => setNovoChamado(null), 20000)
+    return () => clearTimeout(t)
+  }, [novoChamado])
 
   useEffect(() => {
     function aoPedirAbrir(e: any) { if (e.detail?.id) setSelecao({ id: e.detail.id, reserva: e.detail }) }
@@ -230,6 +276,18 @@ export function PainelTecnico({ session }: { session: Session }) {
           </div>
         </div>
 
+        {novoChamado && (
+          <div role="status" className="flex items-center gap-3 rounded-2xl bg-tema-tinta text-tema-superficie px-4 py-3">
+            <Bell className="w-5 h-5 flex-shrink-0" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold">Novo chamado agora</p>
+              <p className="text-xs opacity-80 truncate">{novoChamado.cliente} · {novoChamado.tipo}</p>
+            </div>
+            <button type="button" onClick={() => { const c = todos.find(x => x.id === novoChamado.id); if (c) setSelecao({ id: c.id, reserva: c }); setNovoChamado(null) }} className="min-h-[40px] px-3 rounded-lg bg-white/15 text-sm font-semibold">Ver</button>
+            <button type="button" onClick={() => setNovoChamado(null)} aria-label="Dispensar aviso" className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10"><X className="w-4 h-4" aria-hidden /></button>
+          </div>
+        )}
+
         {isError && data && (
           <p role="status" className="flex items-center gap-2 text-xs rounded-xl border border-amber-500/25 bg-amber-500/[0.08] text-amber-800 px-3 py-2">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" aria-hidden />
@@ -299,6 +357,7 @@ export function PainelTecnico({ session }: { session: Session }) {
           onClose={() => setSelecao(null)}
           onAvancar={(status, extra, opcoes) => avancar(selecionado, status, extra, opcoes)}
           enviando={emEnvioId === selecionado.id}
+          proximoCliente={proximoCliente}
         />
       )}
     </TecnicoShell>

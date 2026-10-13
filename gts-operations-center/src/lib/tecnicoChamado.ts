@@ -37,11 +37,79 @@ export function rotuloDaEtapa(etapa: Etapa) {
 export function acaoPrincipal(etapa: Etapa): { rotulo: string; proximoStatus: 'ABERTO' | 'EM_ANDAMENTO' | 'FINALIZADO' } | null {
   switch (etapa) {
     case 'AGUARDANDO': return { rotulo: 'Iniciar deslocamento', proximoStatus: 'ABERTO' }
-    case 'DESLOCAMENTO': return { rotulo: 'Iniciar atendimento', proximoStatus: 'EM_ANDAMENTO' }
+    case 'DESLOCAMENTO': return { rotulo: 'Cheguei · iniciar atendimento', proximoStatus: 'EM_ANDAMENTO' }
     case 'ATENDIMENTO': return { rotulo: 'Finalizar chamado', proximoStatus: 'FINALIZADO' }
     default: return null
   }
 }
+
+// ---------------------------------------------------------------- finalizacao
+// O que falta para finalizar, calculado ANTES do toque: o botao mostra "Falta 1 foto e o relato"
+// em vez de dar erro depois. As regras sao as mesmas que o servidor e o modal ja exigiam.
+export interface EntradaPendencias {
+  relato: string
+  fotosValidas: number
+  enviandoFotos: boolean
+  /** true quando ha equipamentos na carga da equipe e nenhum foi escolhido (nem "nenhum usado"). */
+  equipamentoPendente: boolean
+  minFotos?: number
+}
+
+export interface ItemPendencia {
+  id: 'fotos' | 'relato' | 'equipamento'
+  rotulo: string
+  ok: boolean
+  detalhe: string
+}
+
+export function pendenciasFinalizacao(e: EntradaPendencias) {
+  const min = e.minFotos ?? MIN_FOTOS
+  const faltamFotos = Math.max(0, min - e.fotosValidas)
+  const itens: ItemPendencia[] = [
+    {
+      id: 'fotos', rotulo: 'Fotos do atendimento', ok: faltamFotos === 0 && !e.enviandoFotos,
+      detalhe: e.enviandoFotos ? 'Enviando fotos...' : faltamFotos === 0 ? `${e.fotosValidas} ${e.fotosValidas === 1 ? 'foto enviada' : 'fotos enviadas'}` : `Falta pelo menos ${faltamFotos} ${faltamFotos === 1 ? 'foto' : 'fotos'}`,
+    },
+    { id: 'relato', rotulo: 'Relato', ok: e.relato.trim().length > 0, detalhe: e.relato.trim() ? 'Escrito' : 'O que foi feito e como ficou' },
+    { id: 'equipamento', rotulo: 'Equipamento usado', ok: !e.equipamentoPendente, detalhe: e.equipamentoPendente ? 'Escolha o equipamento ou marque "Nenhum equipamento foi utilizado"' : 'Informado' },
+  ]
+  const faltam = itens.filter(i => !i.ok)
+  const nomes: Record<ItemPendencia['id'], string> = { fotos: 'foto', relato: 'o relato', equipamento: 'o equipamento' }
+  const lista = faltam.map(i => nomes[i.id])
+  const texto = lista.length <= 1 ? lista[0] ?? '' : `${lista.slice(0, -1).join(', ')} e ${lista[lista.length - 1]}`
+  return {
+    itens,
+    prontos: itens.length - faltam.length,
+    total: itens.length,
+    completo: faltam.length === 0,
+    /** Texto do botao quando falta algo (ex.: "Falta foto e o relato"). Vazio quando esta tudo pronto. */
+    textoFalta: !faltam.length ? '' : e.enviandoFotos && faltamFotos === 0 && faltam.length === 1 ? 'Aguarde o envio das fotos' : `Falta ${texto}`,
+    primeiroQueFalta: faltam[0]?.id ?? null,
+  }
+}
+
+// Frases prontas para montar o relato com toques (o tecnico completa o que faltar).
+const FRASES_RELATO: Record<string, string[]> = {
+  INSTALACAO: ['Instalação concluída', 'Sinal ok', 'ONU ligada', 'Cliente orientado', 'Cliente testou a internet'],
+  MANUTENCAO: ['Problema resolvido', 'Cabo substituído', 'Conector trocado', 'Sinal normalizado', 'Cliente testou a internet'],
+  SUPORTE: ['Problema resolvido', 'Equipamento reiniciado', 'Sinal normalizado', 'Cliente orientado', 'Cliente testou a internet'],
+  RETIRADA: ['Equipamento recolhido', 'Cabo recolhido', 'Cliente informado', 'Local organizado'],
+  ROMPIMENTO_MASSIVO: ['Fibra emendada', 'Sinal restabelecido', 'Teste de potência ok', 'Local sinalizado'],
+}
+
+export function frasesDeRelato(tipo?: string | null): string[] {
+  return FRASES_RELATO[tipo ?? ''] ?? ['Serviço concluído', 'Sinal ok', 'Cliente orientado']
+}
+
+/** Junta uma frase ao relato (sem repetir e com pontuacao simples). */
+export function acrescentarFrase(relato: string, frase: string): string {
+  const atual = relato.trim()
+  if (atual.toLowerCase().includes(frase.toLowerCase())) return relato
+  if (!atual) return `${frase}.`
+  return `${atual}${/[.!?]$/.test(atual) ? '' : '.'} ${frase}.`
+}
+
+export const MOTIVOS_CLIENTE_AUSENTE = ['Não atendeu', 'Endereço errado', 'Pediu para remarcar', 'Ninguém no local'] as const
 
 const para = (v: any) => (v ? new Date(v) : null)
 
