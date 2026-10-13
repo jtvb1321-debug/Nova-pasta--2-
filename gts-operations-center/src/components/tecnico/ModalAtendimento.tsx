@@ -99,6 +99,9 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
   const [revisando, setRevisando] = useState(false)
   const [ausenteAberto, setAusenteAberto] = useState(false)
   const [motivoAusente, setMotivoAusente] = useState<string>(MOTIVOS_CLIENTE_AUSENTE[0])
+  const [detalhesAberto, setDetalhesAberto] = useState(false)
+  const [usadoAberto, setUsadoAberto] = useState(false)
+  const [abaUsado, setAbaUsado] = useState<'mat' | 'eq'>('mat')
 
   const etapa = etapaDoChamado(chamado)
   const acao = acaoPrincipal(etapa)
@@ -230,7 +233,8 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
     }
   }
 
-  const pend = pendenciasFinalizacao({ relato, fotosValidas: fotos.qtdValidas, enviandoFotos: fotos.enviando, equipamentoPendente })
+  // No rodape, so foto e relato bloqueiam. O equipamento e' confirmado na folha de revisao ("Nao usei equipamento do carro").
+  const pend = pendenciasFinalizacao({ relato, fotosValidas: fotos.qtdValidas, enviandoFotos: fotos.enviando, equipamentoPendente: false })
   const IDS_SECAO: Record<string, string> = { fotos: 'secao-fotos', relato: 'relato-atendimento', equipamento: 'secao-equipamento' }
 
   function tocarFinalizar() {
@@ -238,6 +242,30 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
     setTentouFinalizar(true)
     if (pend.primeiroQueFalta) irPara(IDS_SECAO[pend.primeiroQueFalta])
   }
+
+  // "O que foi usado": so o que o tecnico adicionou aparece na tela; o estoque do carro fica na folha "Adicionar".
+  const temOpcoesDeUso = materiaisDisponiveis.length > 0 || unidadesDisponiveis.length > 0
+  const abaUsadoEfetiva: 'mat' | 'eq' = materiaisDisponiveis.length === 0 ? 'eq' : unidadesDisponiveis.length === 0 ? 'mat' : abaUsado
+  const resumoUsado: string[] = [
+    ...Object.entries(materiaisUtilizados).filter(([, d]) => d.quantidade > 0).map(([id, d]) => {
+      const m = materiaisDisponiveis.find((x: any) => x.itemId === id)
+      return `${m?.item?.descricao ?? 'Material'} ${d.quantidade} ${m?.item?.unidade ?? ''}`.trim()
+    }),
+    ...unidadesDisponiveis.filter((u: any) => equipamentosUtilizadosIds.includes(u.id)).map((u: any) => `${u.item?.descricao ?? 'Equipamento'} ${String(u.macAddress ?? '').slice(-5)}`),
+  ]
+  function mudarQtd(itemId: string, nova: number, max: number) {
+    const qtd = Math.min(max, Math.max(0, Math.round(nova * 100) / 100))
+    setMateriaisUtilizados(prev => {
+      if (qtd <= 0) { const { [itemId]: _, ...rest } = prev; return rest }
+      return { ...prev, [itemId]: { quantidade: qtd, observacao: prev[itemId]?.observacao ?? '' } }
+    })
+  }
+  const algumaFolha = detalhesAberto || usadoAberto || revisando || ausenteAberto
+  function fecharFolhas() { setDetalhesAberto(false); setUsadoAberto(false); setRevisando(false); setAusenteAberto(false) }
+  const folha = (aberta: boolean) => cn(
+    'absolute inset-x-0 bottom-0 z-10 max-h-[82%] overflow-y-auto rounded-t-3xl border-t border-tema-linha bg-tema-superficie px-4 pt-3 pb-5 space-y-3 shadow-2xl transition-transform duration-300 ease-out',
+    aberta ? 'translate-y-0' : 'invisible translate-y-full pointer-events-none',
+  )
 
   const botaoPrincipal = 'w-full min-h-[52px] flex items-center justify-center gap-2 px-4 rounded-xl text-base font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2'
   const botaoSecundario = 'min-h-[44px] inline-flex items-center justify-center gap-2 px-4 rounded-xl border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-suave hover:bg-tema-contraste/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
@@ -255,12 +283,24 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
             <h2 className="text-tema-tinta font-bold text-base break-words">{chamado.cliente}</h2>
             {pCfg && <span className={cn('text-xs px-2 py-0.5 rounded-full border font-semibold', pCfg.cor)}>{pCfg.label}</span>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="text-tema-suave hover:text-tema-tinta w-11 h-11 -mr-2 flex items-center justify-center rounded-xl hover:bg-tema-contraste/[0.04] flex-shrink-0">
-            <X className="w-5 h-5" aria-hidden />
-          </button>
+          <div className="flex items-center flex-shrink-0">
+            {etapa === 'ATENDIMENTO' && !tokenAvaliacao && (
+              <>
+                <button type="button" onClick={() => setDetalhesAberto(true)} aria-label="Dados do cliente" title="Dados do cliente" className="text-tema-suave hover:text-tema-tinta w-11 h-11 flex items-center justify-center rounded-xl hover:bg-tema-contraste/[0.04]">
+                  <FileText className="w-5 h-5" aria-hidden />
+                </button>
+                <button type="button" onClick={() => setShowDiagnostico(true)} aria-label="Diagnóstico técnico" title="Diagnóstico técnico" className="text-cyan-700 w-11 h-11 flex items-center justify-center rounded-xl hover:bg-cyan-600/10">
+                  <Activity className="w-5 h-5" aria-hidden />
+                </button>
+              </>
+            )}
+            <button type="button" onClick={onClose} aria-label="Fechar" className="text-tema-suave hover:text-tema-tinta w-11 h-11 -mr-2 flex items-center justify-center rounded-xl hover:bg-tema-contraste/[0.04]">
+              <X className="w-5 h-5" aria-hidden />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div key={etapa} className={cn('tec-etapa flex-1 overflow-y-auto', etapa === 'ATENDIMENTO' ? 'p-3 space-y-2.5' : 'p-4 space-y-4')}>
           {tokenAvaliacao ? (
             <QrAvaliacao
               chamado={chamado}
@@ -280,13 +320,23 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
                 <li key={e.etapa} className="text-center" aria-current={atual ? 'step' : undefined}>
                   <div className={cn('h-1.5 rounded-full mb-1.5', feita || atual ? 'bg-orange-500' : 'bg-tema-contraste/[0.08]')} />
                   <p className={cn('text-[11px] leading-tight font-semibold', atual ? 'text-orange-700' : feita ? 'text-tema-tinta' : 'text-tema-apagado')}>{e.rotulo}</p>
-                  <p className="text-[10px] text-tema-apagado tabular-nums">{(feita || atual) && instantes[i] ? hora(instantes[i]) : '—'}</p>
+                  {etapa !== 'ATENDIMENTO' && <p className="text-[10px] text-tema-apagado tabular-nums">{(feita || atual) && instantes[i] ? hora(instantes[i]) : '—'}</p>}
                 </li>
               )
             })}
           </ol>
 
-          {/* Dados do chamado */}
+          {/* Dados do chamado (e IXC): na etapa de atendimento viram uma folha "Dados do cliente" */}
+          <div className={etapa === 'ATENDIMENTO' ? folha(detalhesAberto) : 'space-y-4'} aria-hidden={etapa === 'ATENDIMENTO' && !detalhesAberto ? true : undefined}>
+          {etapa === 'ATENDIMENTO' && (
+            <>
+              <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-tema-tinta">Dados do cliente</h3>
+                <button type="button" onClick={() => setDetalhesAberto(false)} aria-label="Fechar dados do cliente" className="w-11 h-11 -mr-2 flex items-center justify-center rounded-xl hover:bg-tema-contraste/[0.04]"><X className="w-5 h-5" aria-hidden /></button>
+              </div>
+            </>
+          )}
           <div className="rounded-xl border border-tema-linha p-4 space-y-2.5">
             <div className="flex items-center gap-2 flex-wrap text-xs">
               <span className="px-2 py-0.5 rounded-full bg-tema-contraste/[0.05] text-tema-suave font-medium">{TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}</span>
@@ -334,93 +384,75 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
 
           <PainelIxc chamadoId={chamado.id} ehEace={!!chamado.eace} />
 
+          {etapa === 'ATENDIMENTO' && diagnosticoRemoto && (
+                <>
+                  <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-1">
+                    <p className="text-xs text-cyan-700 font-bold flex items-center gap-1.5">
+                      <Brain className="w-3.5 h-3.5" aria-hidden /> Diagnostico do NOC
+                    </p>
+                    <p className="text-sm text-tema-texto">
+                      {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
+                      {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
+                      {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
+                    </p>
+                    {diagnosticoRemoto.hipotese && <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>}
+                    <div className="flex items-center gap-3 pt-1">
+                      <button type="button" onClick={() => setMostrarDiagnosticoCompleto(v => !v)} className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]">
+                        {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))}
+                        className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]"
+                      >
+                        Ver relatorio
+                      </button>
+                    </div>
+                    {mostrarDiagnosticoCompleto && (
+                      <div className="pt-2 border-t border-cyan-600/15 space-y-2">
+                        {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
+                          <div>
+                            <p className="text-[11px] text-tema-apagado mb-1">Evidencias</p>
+                            <ul className="space-y-0.5">{diagnosticoRemoto.evidencias.map((ev: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {ev}</li>)}</ul>
+                          </div>
+                        )}
+                        {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
+                          <div>
+                            <p className="text-[11px] text-tema-apagado mb-1">Recomendacoes</p>
+                            <ul className="space-y-0.5">{diagnosticoRemoto.recomendacoes.map((r: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {r}</li>)}</ul>
+                          </div>
+                        )}
+                        {diagnosticoRemoto.resumo?.downloadMbps != null && <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>}
+                        {diagnosticoRemoto.resumo?.onuStatus && (
+                          <p className="text-xs text-tema-apagado">
+                            ONU: <span className="text-tema-texto">{diagnosticoRemoto.resumo.onuStatus}</span>
+                            {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+          )}
+          </div>
+
           {/* As acoes principais de cada etapa ficam fixas no rodape (ao alcance do polegar): ver "rodape" abaixo. */}
 
-          {/* ETAPA: Em atendimento */}
+          {/* ETAPA: Em atendimento - tudo numa tela so: fotos, relato e o que foi usado */}
           {etapa === 'ATENDIMENTO' && (
-            <div className="space-y-4">
-              {diagnosticoRemoto && (
-                <div className="p-3 bg-cyan-600/5 border border-cyan-600/20 rounded-xl space-y-1">
-                  <p className="text-xs text-cyan-700 font-bold flex items-center gap-1.5">
-                    <Brain className="w-3.5 h-3.5" aria-hidden /> Diagnostico do NOC
-                  </p>
-                  <p className="text-sm text-tema-texto">
-                    {CLASSIFICACAO_EMOJI[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_EMOJI] ?? '⚪'}{' '}
-                    {CLASSIFICACAO_LABEL[diagnosticoRemoto.classificacao as keyof typeof CLASSIFICACAO_LABEL] ?? diagnosticoRemoto.classificacao}
-                    {diagnosticoRemoto.confianca != null ? ` (${diagnosticoRemoto.confianca}%)` : ''}
-                  </p>
-                  {diagnosticoRemoto.hipotese && <p className="text-xs text-tema-suave">{diagnosticoRemoto.hipotese}</p>}
-                  <div className="flex items-center gap-3 pt-1">
-                    <button type="button" onClick={() => setMostrarDiagnosticoCompleto(v => !v)} className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]">
-                      {mostrarDiagnosticoCompleto ? 'Ocultar diagnostico completo' : 'Ver diagnostico completo'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => import('@/utils/pdf').then(({ gerarRelatorioDiagnostico }) => gerarRelatorioDiagnostico(diagnosticoRemoto, chamado, 'abrir'))}
-                      className="text-xs text-cyan-700 hover:text-cyan-800 underline decoration-dotted min-h-[32px]"
-                    >
-                      Ver relatorio
-                    </button>
-                  </div>
-                  {mostrarDiagnosticoCompleto && (
-                    <div className="pt-2 border-t border-cyan-600/15 space-y-2">
-                      {Array.isArray(diagnosticoRemoto.evidencias) && diagnosticoRemoto.evidencias.length > 0 && (
-                        <div>
-                          <p className="text-[11px] text-tema-apagado mb-1">Evidencias</p>
-                          <ul className="space-y-0.5">{diagnosticoRemoto.evidencias.map((ev: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {ev}</li>)}</ul>
-                        </div>
-                      )}
-                      {Array.isArray(diagnosticoRemoto.recomendacoes) && diagnosticoRemoto.recomendacoes.length > 0 && (
-                        <div>
-                          <p className="text-[11px] text-tema-apagado mb-1">Recomendacoes</p>
-                          <ul className="space-y-0.5">{diagnosticoRemoto.recomendacoes.map((r: string, i: number) => <li key={i} className="text-xs text-tema-texto">• {r}</li>)}</ul>
-                        </div>
-                      )}
-                      {diagnosticoRemoto.resumo?.downloadMbps != null && <p className="text-xs text-tema-apagado">Teste: {diagnosticoRemoto.resumo.downloadMbps.toFixed(0)} Mbps</p>}
-                      {diagnosticoRemoto.resumo?.onuStatus && (
-                        <p className="text-xs text-tema-apagado">
-                          ONU: <span className="text-tema-texto">{diagnosticoRemoto.resumo.onuStatus}</span>
-                          {diagnosticoRemoto.resumo.sinalRxDbm != null ? ` · Sinal ${diagnosticoRemoto.resumo.sinalRxDbm.toFixed(1)} dBm` : ''}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <button type="button" onClick={() => setShowDiagnostico(true)} className={cn(botaoSecundario, 'w-full text-cyan-700 border-cyan-600/30')}>
-                <Activity className="w-4 h-4" aria-hidden /> Diagnóstico técnico
-              </button>
-
-              <section aria-label="O que falta para finalizar" className="rounded-xl border border-tema-linha p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold uppercase tracking-wide text-tema-suave">Para finalizar</p>
-                  <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', pend.completo ? 'bg-emerald-500/10 text-emerald-700' : 'bg-tema-contraste/[0.06] text-tema-suave')}>{pend.prontos} de {pend.total} prontos</span>
-                </div>
-                <ul className="space-y-1.5">
-                  {pend.itens.map(i => (
-                    <li key={i.id}>
-                      <button type="button" onClick={() => irPara(IDS_SECAO[i.id])} className="w-full min-h-[44px] flex items-center gap-3 text-left rounded-lg px-2 hover:bg-tema-contraste/[0.04]">
-                        <span className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0', i.ok ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-tema-linha-forte')}>
-                          {i.ok && <CheckCircle className="w-3.5 h-3.5" aria-hidden />}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-tema-tinta">{i.rotulo}</span>
-                          <span className={cn('block text-xs', i.ok ? 'text-tema-apagado' : 'text-orange-700')}>{i.detalhe}</span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+            <div className="space-y-3">
+              <section id="secao-fotos" className={cn('rounded-2xl border p-3', tentouFinalizar && !fotos.atendeMinimo ? 'border-2 border-orange-500' : fotos.atendeMinimo ? 'border-emerald-500/30 bg-emerald-500/[0.05]' : 'border-tema-linha')}>
+                <FotosAtendimento fotos={fotos} tentouFinalizar={tentouFinalizar} compacto />
               </section>
 
-              <div>
-                <label htmlFor="relato-atendimento" className="text-sm font-semibold text-tema-tinta mb-1.5 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" aria-hidden /> Relato do atendimento *
+              <section id="secao-relato" className={cn('rounded-2xl border p-3 space-y-2', tentouFinalizar && !relato.trim() ? 'border-2 border-orange-500' : 'border-tema-linha')}>
+                <label htmlFor="relato-atendimento" className="flex items-center justify-between gap-2 text-sm font-semibold text-tema-tinta">
+                  <span className="flex items-center gap-1.5"><FileText className="w-4 h-4" aria-hidden /> Relato *</span>
+                  <span className="text-xs font-normal text-tema-apagado">toque nas frases</span>
                 </label>
-                <div className="flex flex-wrap gap-2 mb-2" aria-label="Frases prontas">
-                  {frasesDeRelato(chamado.tipo).map(f => (
-                    <button key={f} type="button" onClick={() => setRelato((r: string) => acrescentarFrase(r, f))} className="min-h-[40px] px-3 rounded-full border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-texto hover:border-orange-500/40 hover:text-orange-700 transition-colors">
+                <div className="flex flex-wrap gap-2" aria-label="Frases prontas">
+                  {frasesDeRelato(chamado.tipo).slice(0, 4).map(f => (
+                    <button key={f} type="button" onClick={() => setRelato((r: string) => acrescentarFrase(r, f))} className="min-h-[40px] px-3 rounded-full border border-tema-linha bg-tema-superficie text-[13px] font-semibold text-tema-texto hover:border-orange-500/40 hover:text-orange-700 transition-colors">
                       {f}
                     </button>
                   ))}
@@ -429,104 +461,35 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
                   id="relato-atendimento"
                   value={relato}
                   onChange={e => setRelato(e.target.value)}
-                  rows={3}
-                  placeholder="Descreva o servico realizado, problema encontrado e solucao aplicada..."
+                  rows={2}
+                  placeholder="Serviço realizado e como ficou..."
                   className="w-full bg-tema-superficie border border-tema-linha-forte rounded-xl px-3 py-2.5 text-base sm:text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-600 resize-none"
                 />
-                {tentouFinalizar && !relato.trim() && <p className="text-xs text-red-700 mt-1">Preencha o relato do atendimento.</p>}
-              </div>
+                {tentouFinalizar && !relato.trim() && <p className="text-xs text-red-700">Preencha o relato do atendimento.</p>}
+              </section>
 
-              <div id="secao-fotos"><FotosAtendimento fotos={fotos} tentouFinalizar={tentouFinalizar} /></div>
-
-              {materiaisDisponiveis.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5"><Package className="w-4 h-4" aria-hidden /> Materiais utilizados</p>
-                  <div className="space-y-2">
-                    {materiaisDisponiveis.map((m: any) => {
-                      const usado = materiaisUtilizados[m.itemId]
-                      const selecionado = !!usado
-                      return (
-                        <div key={m.itemId} className={cn('p-3 rounded-xl border transition-all', selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha')}>
-                          <button type="button" onClick={() => toggleMaterialUtilizado(m.itemId, m.quantidade)} className="w-full flex items-center justify-between min-h-[40px]" aria-pressed={selecionado}>
-                            <div className="flex items-center gap-2">
-                              <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte')}>
-                                {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" aria-hidden />}
-                              </div>
-                              <div className="text-left">
-                                <p className="text-sm text-tema-tinta font-medium">{m.item?.descricao}</p>
-                                <p className="text-xs text-tema-apagado">Disponivel: {m.quantidade} {m.item?.unidade}</p>
-                              </div>
-                            </div>
-                          </button>
-                          {selecionado && (
-                            <div className="flex items-center gap-2 mt-2 pl-7">
-                              <label className="text-xs text-tema-apagado">Qtd usada:</label>
-                              <input
-                                type="number"
-                                value={usado.quantidade}
-                                onChange={e => atualizarQtdUtilizada(m.itemId, Math.min(m.quantidade, Math.max(0, Number(e.target.value))))}
-                                min={0}
-                                max={m.quantidade}
-                                step={0.01}
-                                className="w-24 bg-tema-superficie border border-tema-linha-forte rounded-lg px-2 py-2 text-base sm:text-sm text-tema-tinta text-center"
-                              />
-                              <span className="text-xs text-tema-apagado">{m.item?.unidade}</span>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+              <section id="secao-usado" className="rounded-2xl border border-tema-linha p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-tema-tinta flex items-center gap-1.5"><Package className="w-4 h-4" aria-hidden /> O que foi usado</p>
+                  <button
+                    type="button"
+                    onClick={() => setUsadoAberto(true)}
+                    disabled={!temOpcoesDeUso}
+                    className="min-h-[44px] px-4 rounded-xl bg-orange-500/10 text-orange-800 text-sm font-bold hover:bg-orange-500/15 disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+                  >
+                    + Adicionar
+                  </button>
                 </div>
-              )}
-
-              {unidadesDisponiveis.length > 0 && (
-                <div id="secao-equipamento">
-                  <p className="text-sm font-semibold text-tema-tinta mb-2 flex items-center gap-1.5"><ScanLine className="w-4 h-4" aria-hidden /> Equipamento utilizado *</p>
-                  <div className="space-y-2">
-                    {unidadesDisponiveis.map((u: any) => {
-                      const selecionado = equipamentosUtilizadosIds.includes(u.id)
-                      return (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => toggleEquipamentoUtilizado(u.id)}
-                          aria-pressed={selecionado}
-                          className={cn('w-full flex items-center p-3 rounded-xl border transition-all min-h-[52px]', selecionado ? 'border-orange-500/40 bg-orange-500/5' : 'border-tema-linha')}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', selecionado ? 'bg-orange-500 border-orange-500' : 'border-tema-linha-forte')}>
-                              {selecionado && <CheckCircle className="w-3.5 h-3.5 text-white" aria-hidden />}
-                            </div>
-                            <div className="text-left">
-                              <p className="text-sm text-tema-tinta font-medium">{u.item?.descricao}</p>
-                              <p className="text-xs text-tema-apagado font-mono">{u.macAddress}</p>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                    <button
-                      type="button"
-                      onClick={toggleNenhumEquipamentoUsado}
-                      aria-pressed={nenhumEquipamentoUsado}
-                      className={cn('w-full flex items-center gap-2 p-3 rounded-xl border transition-all min-h-[52px]', nenhumEquipamentoUsado ? 'border-tema-apagado/40 bg-tema-contraste/[0.04]' : 'border-tema-linha')}
-                    >
-                      <div className={cn('w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0', nenhumEquipamentoUsado ? 'bg-tema-apagado border-tema-apagado' : 'border-tema-linha-forte')}>
-                        {nenhumEquipamentoUsado && <Ban className="w-3.5 h-3.5 text-white" aria-hidden />}
-                      </div>
-                      <p className="text-sm text-tema-texto">Nenhum equipamento foi utilizado</p>
-                    </button>
+                {resumoUsado.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {resumoUsado.map(u => <span key={u} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-800">{u}</span>)}
                   </div>
-                </div>
-              )}
-
-              {equipamentoPendente && tentouFinalizar && (
-                <p className="text-center text-xs text-red-700 flex items-center justify-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5" aria-hidden />
-                  Informe o equipamento usado ou marque &quot;Nenhum equipamento foi utilizado&quot;
-                </p>
-              )}
+                ) : (
+                  <p className="text-xs text-tema-suave">
+                    {temOpcoesDeUso ? 'Nada adicionado. O estoque do seu carro só aparece quando você toca em Adicionar.' : 'Nada reservado para este chamado e nenhum equipamento no seu carro.'}
+                  </p>
+                )}
+              </section>
             </div>
           )}
 
@@ -570,41 +533,106 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
                     ? <><CheckCircle className="w-5 h-5" aria-hidden /> Revisar e finalizar</>
                     : <><AlertTriangle className="w-5 h-5" aria-hidden /> {pend.textoFalta}</>}
                 </button>
-                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className={cn(botaoSecundario, 'w-full text-orange-700 border-orange-500/30')}>
-                  <AlertTriangle className="w-4 h-4" aria-hidden /> Cliente ausente
+                <button type="button" onClick={marcarClienteAusente} disabled={enviando} className="w-full min-h-[36px] text-sm font-semibold text-orange-700 hover:underline">
+                  Cliente ausente
                 </button>
               </>
             )}
           </div>
         )}
 
-        {/* Revisao antes de finalizar: tudo que sera registrado, numa tela so */}
-        {revisando && !tokenAvaliacao && (
-          <div className="absolute inset-0 z-10 flex items-end bg-black/45" role="dialog" aria-modal="true" aria-label="Revisar e finalizar">
-            <div className="w-full bg-tema-superficie rounded-t-3xl px-4 pt-3 pb-5 space-y-3">
+        {/* Folhas que sobem de baixo (sem trocar de tela). O estoque do carro so aparece em "Adicionar". */}
+        {!tokenAvaliacao && (
+          <>
+            <div className={cn('absolute inset-0 z-[5] bg-black/45 transition-opacity duration-300', algumaFolha ? 'opacity-100' : 'opacity-0 pointer-events-none')} onClick={fecharFolhas} aria-hidden />
+
+            {/* O que foi usado: materiais e equipamentos do estoque do carro */}
+            <div className={folha(usadoAberto)} role="dialog" aria-modal="true" aria-label="O que foi usado" aria-hidden={!usadoAberto}>
+              <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="text-lg font-bold text-tema-tinta">O que foi usado</h3>
+                <span className="text-xs text-tema-suave">Do estoque do seu carro</span>
+              </div>
+              {materiaisDisponiveis.length > 0 && unidadesDisponiveis.length > 0 && (
+                <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-tema-contraste/[0.05] p-1" role="tablist" aria-label="Tipo">
+                  {(['mat', 'eq'] as const).map(a => (
+                    <button key={a} type="button" role="tab" aria-selected={abaUsadoEfetiva === a} onClick={() => setAbaUsado(a)}
+                      className={cn('min-h-[40px] rounded-lg text-sm font-bold transition-colors', abaUsadoEfetiva === a ? 'bg-tema-superficie text-tema-tinta shadow-sm' : 'text-tema-suave')}>
+                      {a === 'mat' ? 'Materiais' : 'Equipamentos'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {abaUsadoEfetiva === 'mat' && materiaisDisponiveis.length > 0 && (
+                <ul className="divide-y divide-tema-linha">
+                  {materiaisDisponiveis.map((m: any) => {
+                    const qtd = materiaisUtilizados[m.itemId]?.quantidade ?? 0
+                    const passo = m.item?.unidade === 'M' ? 5 : 1
+                    return (
+                      <li key={m.itemId} className="flex items-center gap-2 py-2 min-h-[60px]">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-tema-tinta truncate">{m.item?.descricao}</p>
+                          <p className="text-xs text-tema-apagado">Disponível: {m.quantidade} {m.item?.unidade}</p>
+                        </div>
+                        <button type="button" aria-label={`Diminuir ${m.item?.descricao}`} onClick={() => mudarQtd(m.itemId, qtd - passo, m.quantidade)} className="w-11 h-11 rounded-xl border border-tema-linha text-xl font-bold text-tema-tinta">−</button>
+                        <span className="w-16 text-center text-sm font-bold tabular-nums">{qtd} {m.item?.unidade}</span>
+                        <button type="button" aria-label={`Aumentar ${m.item?.descricao}`} onClick={() => mudarQtd(m.itemId, qtd + passo, m.quantidade)} className="w-11 h-11 rounded-xl border border-tema-linha text-xl font-bold text-tema-tinta">+</button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+              {abaUsadoEfetiva === 'eq' && unidadesDisponiveis.length > 0 && (
+                <ul className="divide-y divide-tema-linha">
+                  {unidadesDisponiveis.map((u: any) => {
+                    const sel = equipamentosUtilizadosIds.includes(u.id)
+                    return (
+                      <li key={u.id}>
+                        <button type="button" onClick={() => toggleEquipamentoUtilizado(u.id)} aria-pressed={sel} className="w-full flex items-center gap-3 py-2 min-h-[60px] text-left">
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-tema-tinta truncate">{u.item?.descricao}</span>
+                            <span className="block text-xs text-tema-apagado font-mono">{u.macAddress}</span>
+                          </span>
+                          <span className={cn('w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0', sel ? 'bg-orange-500 border-orange-500 text-white' : 'border-tema-linha-forte')}>
+                            {sel && <CheckCircle className="w-4 h-4" aria-hidden />}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+              <button type="button" onClick={() => setUsadoAberto(false)} className={botaoPrincipal}>{resumoUsado.length > 0 ? `Adicionar (${resumoUsado.length})` : 'Fechar'}</button>
+            </div>
+
+            {/* Revisao antes de finalizar: tudo que sera registrado, numa folha so */}
+            <div className={folha(revisando)} role="dialog" aria-modal="true" aria-label="Revisar e finalizar" aria-hidden={!revisando}>
               <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
               <h3 className="text-lg font-bold text-tema-tinta">Tudo pronto para finalizar?</h3>
               <ul className="space-y-2 text-sm text-tema-texto">
                 <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>{fotos.qtdValidas} {fotos.qtdValidas === 1 ? 'foto' : 'fotos'}</b> enviada{fotos.qtdValidas === 1 ? '' : 's'}</span></li>
                 <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>Relato</b> escrito</span></li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span>{nenhumEquipamentoUsado ? <b>Nenhum equipamento utilizado</b> : equipamentosUtilizadosIds.length > 0 ? <><b>{equipamentosUtilizadosIds.length} {equipamentosUtilizadosIds.length === 1 ? 'equipamento' : 'equipamentos'}</b> utilizado{equipamentosUtilizadosIds.length === 1 ? '' : 's'}</> : <b>Sem equipamento na sua carga</b>}</span></li>
-                {Object.keys(materiaisUtilizados).length > 0 && (
-                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>{Object.keys(materiaisUtilizados).length} {Object.keys(materiaisUtilizados).length === 1 ? 'material' : 'materiais'}</b> saem do seu carro</span></li>
-                )}
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden /><span><b>Usado:</b> {resumoUsado.length > 0 ? resumoUsado.join(', ') : 'nada do estoque'}</span></li>
               </ul>
+              {unidadesDisponiveis.length > 0 && equipamentosUtilizadosIds.length === 0 && (
+                <button type="button" onClick={toggleNenhumEquipamentoUsado} aria-pressed={nenhumEquipamentoUsado}
+                  className={cn('w-full min-h-[52px] flex items-center gap-3 px-3 rounded-xl border text-left transition-colors', nenhumEquipamentoUsado ? 'border-emerald-500/40 bg-emerald-500/[0.06]' : 'border-orange-500/50')}>
+                  <span className={cn('w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0', nenhumEquipamentoUsado ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-tema-linha-forte')}>
+                    {nenhumEquipamentoUsado && <CheckCircle className="w-3.5 h-3.5" aria-hidden />}
+                  </span>
+                  <span className="text-sm font-semibold text-tema-tinta">Não usei equipamento do carro</span>
+                </button>
+              )}
               <p className="text-xs text-tema-suave">Depois de finalizar, o cliente já pode avaliar pelo QR code ou por WhatsApp.</p>
-              <button type="button" onClick={async () => { await finalizarChamado(); setRevisando(false) }} disabled={enviando || fotos.enviando} className="w-full min-h-[52px] flex items-center justify-center gap-2 rounded-xl text-base font-bold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 transition-colors">
+              <button type="button" onClick={async () => { await finalizarChamado(); setRevisando(false) }} disabled={enviando || fotos.enviando || equipamentoPendente}
+                className="w-full min-h-[52px] flex items-center justify-center gap-2 rounded-xl text-base font-bold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 transition-colors">
                 {enviando ? <><Loader2 className="w-5 h-5 animate-spin" aria-hidden /> Finalizando...</> : <><CheckCircle className="w-5 h-5" aria-hidden /> Finalizar chamado</>}
               </button>
               <button type="button" onClick={() => setRevisando(false)} disabled={enviando} className={cn(botaoSecundario, 'w-full')}>Voltar e editar</button>
             </div>
-          </div>
-        )}
 
-        {/* Cliente ausente: tentar contato e escolher o motivo antes de devolver a agenda */}
-        {ausenteAberto && !tokenAvaliacao && (
-          <div className="absolute inset-0 z-10 flex items-end bg-black/45" role="dialog" aria-modal="true" aria-label="Cliente ausente">
-            <div className="w-full bg-tema-superficie rounded-t-3xl px-4 pt-3 pb-5 space-y-3">
+            {/* Cliente ausente: tentar contato e escolher o motivo antes de devolver a agenda */}
+            <div className={folha(ausenteAberto)} role="dialog" aria-modal="true" aria-label="Cliente ausente" aria-hidden={!ausenteAberto}>
               <div className="w-11 h-1.5 rounded-full bg-tema-linha mx-auto" aria-hidden />
               <h3 className="text-lg font-bold text-tema-tinta">Cliente ausente</h3>
               <p className="text-sm text-tema-suave">Antes de devolver à agenda, tente o contato. O chamado volta amanhã e o motivo fica no relato.</p>
@@ -630,7 +658,7 @@ export function ModalAtendimento({ chamado, onClose, onAvancar, enviando, proxim
               </button>
               <button type="button" onClick={() => setAusenteAberto(false)} disabled={enviando} className={cn(botaoSecundario, 'w-full')}>Voltar</button>
             </div>
-          </div>
+          </>
         )}
       </div>
 

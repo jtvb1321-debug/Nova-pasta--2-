@@ -372,3 +372,11 @@ html:not(.dark) .dash-orbia {
   background: rgb(var(--c-superficie));
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
+
+/* Troca de etapa do chamado (area do tecnico): entra de baixo, curta e suave. */
+@keyframes tec-subir {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.tec-etapa { animation: tec-subir 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .tec-etapa { animation: none; } }

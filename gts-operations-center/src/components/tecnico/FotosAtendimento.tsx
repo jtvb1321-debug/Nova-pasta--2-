@@ -163,10 +163,11 @@ export type EstadoFotos = ReturnType<typeof useFotosAtendimento>
 
 // ---------------------------------------------------------------------------
 
-export function FotosAtendimento({ fotos, tentouFinalizar }: { fotos: EstadoFotos; tentouFinalizar: boolean }) {
+export function FotosAtendimento({ fotos, tentouFinalizar, compacto = false }: { fotos: EstadoFotos; tentouFinalizar: boolean; compacto?: boolean }) {
   const inputCamera = useRef<HTMLInputElement>(null)
   const inputGaleria = useRef<HTMLInputElement>(null)
   const [temCamera, setTemCamera] = useState(false)
+  const [legendaId, setLegendaId] = useState<string | null>(null)
 
   useEffect(() => {
     setTemCamera(typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window))
@@ -180,6 +181,92 @@ export function FotosAtendimento({ fotos, tentouFinalizar }: { fotos: EstadoFoto
 
   const faltaMinimo = !fotos.atendeMinimo
   const botao = 'flex-1 min-h-[48px] inline-flex items-center justify-center gap-2 px-3 rounded-xl border-2 border-dashed border-tema-linha-forte text-sm font-semibold text-tema-suave hover:text-orange-700 hover:border-orange-500/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+
+  // Versao compacta (tela de atendimento sem rolagem): camera em destaque e miniaturas numa linha.
+  // A observacao de cada foto continua disponivel: toque na miniatura para escrever.
+  if (compacto) {
+    const aberta = fotos.itens.find(f => f.id === legendaId && f.status !== 'erro')
+    return (
+      <section aria-labelledby="titulo-fotos" className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 id="titulo-fotos" className="text-sm font-semibold text-tema-tinta flex items-center gap-1.5">
+            <Camera className="w-4 h-4" aria-hidden /> Fotos *
+          </h3>
+          <div className="flex items-center gap-2">
+            {temCamera && (
+              <button type="button" onClick={() => inputGaleria.current?.click()} className="text-xs font-semibold text-tema-suave underline decoration-dotted min-h-[32px]">Galeria</button>
+            )}
+            <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0', fotos.atendeMinimo ? 'bg-emerald-500/10 text-emerald-700' : 'bg-orange-500/10 text-orange-800')}>
+              {fotos.atendeMinimo ? `${fotos.qtdValidas} ${fotos.qtdValidas === 1 ? 'enviada' : 'enviadas'}` : `falta ${MIN_FOTOS - fotos.qtdValidas}`}
+            </span>
+          </div>
+        </div>
+        {fotos.comFalha > 0 && (
+          <p className="text-xs text-red-700">
+            {fotos.comFalha} {fotos.comFalha === 1 ? 'foto não foi enviada' : 'fotos não foram enviadas'} e não {fotos.comFalha === 1 ? 'conta' : 'contam'}. Toque em &quot;Tentar de novo&quot;.
+          </p>
+        )}
+        <input ref={inputCamera} type="file" accept="image/*" capture="environment" onChange={aoEscolher} className="hidden" />
+        <input ref={inputGaleria} type="file" accept="image/*" multiple onChange={aoEscolher} className="hidden" />
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => (temCamera ? inputCamera : inputGaleria).current?.click()}
+            className="w-[76px] h-[76px] flex-shrink-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-orange-500/60 bg-orange-500/[0.07] text-orange-800 text-[11px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+          >
+            <Camera className="w-6 h-6" aria-hidden /> {temCamera ? 'Tirar foto' : 'Adicionar'}
+          </button>
+          <ul className="flex gap-2 overflow-x-auto min-w-0 py-0.5">
+            {fotos.itens.map((f, i) => {
+              const src = f.preview || f.url
+              return (
+                <li key={f.id} className="relative w-[76px] h-[76px] flex-shrink-0 rounded-2xl overflow-hidden border border-tema-linha bg-tema-contraste/[0.05]">
+                  <button type="button" onClick={() => setLegendaId(id => (id === f.id ? null : f.id))} aria-label={`Foto ${i + 1}: escrever observação`} className="absolute inset-0">
+                    {src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={src} alt={`Foto ${i + 1} do atendimento`} className={cn('w-full h-full object-cover', f.status !== 'ok' && 'opacity-50')} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center"><ImageIcon className="w-6 h-6 text-tema-apagado" aria-hidden /></span>
+                    )}
+                  </button>
+                  {f.status === 'enviando' && (
+                    <span className="absolute inset-x-0 bottom-0 bg-black/60 text-[10px] text-white font-medium px-1.5 py-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" aria-hidden /> {f.progresso}%</span>
+                  )}
+                  {f.status === 'erro' && (
+                    <button type="button" onClick={() => fotos.tentarNovamente(f.id)} className="absolute inset-0 bg-red-950/75 text-white text-[10px] font-bold flex flex-col items-center justify-center gap-1 p-1 text-center">
+                      <RotateCw className="w-4 h-4" aria-hidden /> Tentar de novo
+                    </button>
+                  )}
+                  {f.status === 'ok' && (
+                    <span className="absolute left-1 bottom-1 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center" aria-hidden><CheckCircle className="w-3.5 h-3.5" /></span>
+                  )}
+                  {f.origem === 'nova' && (
+                    <button type="button" onClick={() => fotos.remover(f.id)} aria-label={`Remover foto ${i + 1}`} className="absolute top-0.5 right-0.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center">
+                      <X className="w-3.5 h-3.5" aria-hidden />
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        {aberta && (
+          <div>
+            <label htmlFor={`legenda-${aberta.id}`} className="sr-only">Observação da foto (opcional)</label>
+            <input
+              id={`legenda-${aberta.id}`}
+              type="text"
+              value={fotos.legendas[aberta.id] ?? ''}
+              onChange={e => fotos.definirLegenda(aberta.id, e.target.value)}
+              maxLength={MAX_LEGENDA}
+              placeholder="Observação desta foto (opcional)"
+              className="w-full min-h-[44px] rounded-xl border border-tema-linha bg-tema-superficie px-3 text-sm text-tema-tinta placeholder:text-tema-apagado focus:outline-none focus:ring-2 focus:ring-orange-500/40"
+            />
+          </div>
+        )}
+      </section>
+    )
+  }
 
   return (
     <section aria-labelledby="titulo-fotos">
