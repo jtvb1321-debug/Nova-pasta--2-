@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma'
-import type { Indicador, Referencia } from './tipos'
+import type { AcaoIA, Indicador, Referencia, TabelaIA } from './tipos'
+
+export type AbaIA = 'operacoes' | 'estoque' | 'comercial'
+export const ABAS_IA: AbaIA[] = ['operacoes', 'estoque', 'comercial']
 
 // Historico de conversas. Toda leitura filtra pelo usuario dono: um usuario nunca ve conversa de outro.
 
@@ -11,7 +14,7 @@ export function tituloDaPergunta(pergunta: string) {
   return t.length > 60 ? `${t.slice(0, 57)}...` : t
 }
 
-export async function criarConversa(usuarioId: string, aba: 'operacoes' | 'estoque', pergunta: string) {
+export async function criarConversa(usuarioId: string, aba: AbaIA, pergunta: string) {
   return prisma.conversaIA.create({ data: { usuarioId, aba, titulo: tituloDaPergunta(pergunta) }, select: { id: true } })
 }
 
@@ -19,7 +22,7 @@ export async function conversaDoUsuario(usuarioId: string, conversaId: string) {
   return prisma.conversaIA.findFirst({ where: { id: conversaId, usuarioId }, select: { id: true, aba: true, titulo: true, createdAt: true, updatedAt: true } })
 }
 
-export async function listarConversas(usuarioId: string, aba?: 'operacoes' | 'estoque') {
+export async function listarConversas(usuarioId: string, aba?: AbaIA) {
   return prisma.conversaIA.findMany({
     where: { usuarioId, ...(aba ? { aba } : {}) },
     orderBy: { updatedAt: 'desc' },
@@ -35,7 +38,7 @@ export async function lerMensagens(usuarioId: string, conversaId: string) {
     where: { conversaId },
     orderBy: { createdAt: 'asc' },
     take: MAX_MENSAGENS_LIDAS,
-    select: { id: true, papel: true, conteudo: true, indicadores: true, referencias: true, recomendacoes: true, provedor: true, modelo: true, simulada: true, erro: true, createdAt: true },
+    select: { id: true, papel: true, conteudo: true, indicadores: true, referencias: true, recomendacoes: true, extras: true, provedor: true, modelo: true, simulada: true, erro: true, createdAt: true },
   })
   return { conversa, mensagens }
 }
@@ -47,6 +50,7 @@ export async function salvarMensagem(dados: {
   indicadores?: Indicador[]
   referencias?: Referencia[]
   recomendacoes?: string[]
+  extras?: { tabelas?: TabelaIA[]; acoes?: AcaoIA[] }
   provedor?: string
   modelo?: string
   simulada?: boolean
@@ -56,7 +60,7 @@ export async function salvarMensagem(dados: {
     prisma.mensagemIA.create({
       data: {
         conversaId: dados.conversaId, papel: dados.papel, conteudo: dados.conteudo.slice(0, 8000),
-        indicadores: dados.indicadores as any, referencias: dados.referencias as any, recomendacoes: dados.recomendacoes as any,
+        indicadores: dados.indicadores as any, referencias: dados.referencias as any, recomendacoes: dados.recomendacoes as any, extras: dados.extras as any,
         provedor: dados.provedor, modelo: dados.modelo, simulada: dados.simulada ?? false, erro: dados.erro,
       },
       select: { id: true, createdAt: true },

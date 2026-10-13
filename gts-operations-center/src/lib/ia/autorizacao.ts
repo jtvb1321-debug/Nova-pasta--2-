@@ -10,8 +10,11 @@ export function permissoesDoPapel(role: string): PermissoesIA {
     usarAssistenteIA: p.usarAssistenteIA,
     iaOperacional: p.iaOperacional,
     iaEstoque: p.iaEstoque,
+    iaComercial: p.iaComercial,
     verDesempenho: p.verDesempenho,
     verEstoque: p.verEstoque,
+    verVendas: p.verVendas,
+    verClientes: p.verClientes,
     apenasMinhaEquipe: p.apenasMinhaEquipe,
   }
 }
@@ -47,6 +50,7 @@ export function motivoNegado(ctx: ContextoIA, area: AreaFerramenta): string | nu
   if (!p.usarAssistenteIA) return 'Seu perfil não tem acesso ao assistente de IA.'
   if (area === 'operacoes' && !(p.iaOperacional && p.verDesempenho)) return 'Seu perfil não tem permissão para consultas operacionais.'
   if (area === 'estoque' && !(p.iaEstoque && p.verEstoque)) return 'Seu perfil não tem permissão para consultas de estoque.'
+  if (area === 'comercial' && !(p.iaComercial && p.verVendas)) return 'Seu perfil não tem permissão para consultas comerciais.'
   return null
 }
 

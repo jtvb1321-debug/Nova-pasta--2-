@@ -6,7 +6,7 @@ import { listarIXC } from './ixc'
 // traz `ativo = S`), entao a unica forma de ter esse dado e consultando o
 // IXC na hora.
 
-interface RegistroContratoIxc {
+export interface RegistroContratoIxc {
   id: string
   id_cliente: string
   status: string
@@ -78,7 +78,9 @@ async function buscarMapaCidades(): Promise<Map<string, string>> {
   return mapa
 }
 
-export async function buscarContratosCanceladosPorMes(ano: number, mes: number): Promise<ClienteCanceladoIxc[]> {
+// Contratos cancelados no mes, como vem do IXC (sem buscar o cliente de cada um).
+// Usado pela tela de cancelamentos e pelo assistente (so contagem, rapido).
+export async function buscarContratosCanceladosBrutos(ano: number, mes: number): Promise<RegistroContratoIxc[]> {
   const inicio = new Date(ano, mes - 1, 1)
   const fim = new Date(ano, mes, 0)
   const inicioStr = inicio.toISOString().slice(0, 10)
@@ -90,10 +92,16 @@ export async function buscarContratosCanceladosPorMes(ano: number, mes: number):
     qtype: 'data_cancelamento', query: inicioStr, oper: '>=', sortname: 'data_cancelamento', sortorder: 'asc',
   })
 
-  const doMes = candidatos.filter(c => {
+  return candidatos.filter(c => {
     const d = c.data_cancelamento
     return d && d !== '0000-00-00' && d <= fimStr
   })
+}
+
+export { extrairMotivoResumo }
+
+export async function buscarContratosCanceladosPorMes(ano: number, mes: number): Promise<ClienteCanceladoIxc[]> {
+  const doMes = await buscarContratosCanceladosBrutos(ano, mes)
 
   if (doMes.length === 0) return []
 

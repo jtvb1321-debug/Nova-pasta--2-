@@ -4,6 +4,8 @@ import type { AreaFerramenta, ContextoIA, ResultadoFerramenta } from './tipos'
 import { esquemaPaginacao, esquemaPeriodo } from './periodo'
 import * as op from './servicos/operacoes'
 import * as est from './servicos/estoque'
+import * as ges from './servicos/gestao'
+import * as com from './servicos/comercial'
 
 // Registro unico de ferramentas, independente de protocolo: o assistente interno e o servidor MCP
 // usam exatamente estas definicoes e passam pelo mesmo executor (validacao, permissao, auditoria).
@@ -66,6 +68,32 @@ export const FERRAMENTAS: FerramentaIA[] = [
     descricao: 'Tendência semanal de volume e de SLA de resolução (convencional e EACE separados), calculada por regra fixa.',
     parametros: objeto({ semanas: z.number().int().min(5).max(12).optional().describe('Quantas semanas (5-12). Padrão 8.'), equipeId }),
     executar: (c, a) => op.tendenciasDesempenho(c, a),
+  },
+  {
+    nome: 'chamados_por_equipe', area: 'operacoes',
+    descricao: 'Chamados abertos no período por equipe: total, concluídos, cancelados, pendentes, índice de conclusão (qual equipe conclui mais) e recolhimentos (chamados do tipo RETIRADA) por equipe. Oferece relatório para baixar.',
+    parametros: objeto({ ...esquemaPeriodo, tipo: tipoChamado.optional(), equipeId }), executar: (c, a) => ges.chamadosPorEquipe(c, a),
+  },
+  {
+    nome: 'rechamadas_clientes', area: 'operacoes',
+    descricao: 'Rechamadas (reincidências possíveis ou confirmadas) por cliente no período: quais clientes têm o maior índice de rechamada. Oferece relatório para baixar. Nomes de clientes aparecem só na tela.',
+    parametros: objeto({ ...esquemaPeriodo, limite: esquemaPaginacao.limite }), executar: (c, a) => ges.rechamadasClientes(c, a),
+  },
+  // ------------------------------------------------------------ comercial
+  {
+    nome: 'vendas_periodo', area: 'comercial',
+    descricao: 'Vendas do período (padrão: este mês; use dataInicio/dataFim ou mes_anterior para meses anteriores): total aprovado, valor, comparativo com o período anterior e RANKING de quem mais vendeu. Oferece relatório para baixar.',
+    parametros: objeto({ ...esquemaPeriodo, limite: esquemaPaginacao.limite }), executar: (c, a) => com.vendasPeriodo(c, a),
+  },
+  {
+    nome: 'cancelamentos_ixc', area: 'comercial',
+    descricao: 'Quantidade de contratos de clientes CANCELADOS em um mês, consultando direto o IXC ao vivo. Informe ano e mes (padrão: mês atual). Traz os motivos mais citados e oferece relatório para baixar.',
+    parametros: objeto({
+      ano: z.number().int().min(2015).max(2100).optional().describe('Ano com 4 dígitos. Padrão: ano atual.'),
+      mes: z.number().int().min(1).max(12).optional().describe('Mês de 1 a 12. Padrão: mês atual.'),
+      compararMesAnterior: z.boolean().optional().describe('Compara com o mês anterior (faz uma consulta a mais ao IXC).'),
+    }),
+    executar: (c, a) => com.cancelamentosIxc(c, a),
   },
   // ------------------------------------------------------------ estoque
   {
@@ -134,5 +162,7 @@ export function ferramentasDisponiveis(ctx: ContextoIA, area?: AreaFerramenta) {
 function permiteArea(ctx: ContextoIA, area: AreaFerramenta) {
   const p = ctx.permissoes
   if (!p.usarAssistenteIA) return false
-  return area === 'operacoes' ? p.iaOperacional && p.verDesempenho : p.iaEstoque && p.verEstoque
+  if (area === 'operacoes') return p.iaOperacional && p.verDesempenho
+  if (area === 'comercial') return p.iaComercial && p.verVendas
+  return p.iaEstoque && p.verEstoque
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle, Boxes, BrainCircuit, Database, FlaskConical, History, Info, Lightbulb, Link2, Loader2,
-  Plus, RefreshCw, Send, Trash2, Activity,
+  Plus, RefreshCw, Send, Trash2, Activity, ShoppingCart, Download,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -13,7 +13,9 @@ import { toast } from '@/hooks/use-toast'
 // Tudo que aparece (numeros, referencias, recomendacoes) vem das consultas autorizadas do servidor;
 // o texto do assistente apenas resume. O assistente so le: nada aqui altera dados.
 
-export type Aba = 'operacoes' | 'estoque'
+export type Aba = 'operacoes' | 'estoque' | 'comercial'
+export interface TabelaTela { titulo: string; colunas: string[]; linhas: (string | number)[][] }
+export interface AcaoTela { tipo: 'relatorio'; rotulo: string; url: string }
 
 export interface Indicador { rotulo: string; valor: string | number; detalhe?: string; tom?: 'neutro' | 'ok' | 'alerta' | 'perigo' }
 export interface Referencia { tipo: string; id: string; rotulo: string }
@@ -28,6 +30,8 @@ export interface MensagemTela {
   recomendacoes?: string[]
   avisos?: string[]
   fontes?: Fonte[]
+  tabelas?: TabelaTela[]
+  acoes?: AcaoTela[]
   simulada?: boolean
   bloqueada?: boolean
   modelo?: string
@@ -41,7 +45,7 @@ export interface StatusIA {
   simulado: boolean
   avisos: string[]
   limites: { porMinuto: number; porDia: number; maxEntrada: number }
-  areas: { operacoes: boolean; estoque: boolean }
+  areas: { operacoes: boolean; estoque: boolean; comercial: boolean }
 }
 
 export interface ConversaResumo { id: string; aba: Aba; titulo: string; updatedAt: string; _count: { mensagens: number } }
@@ -49,6 +53,7 @@ export interface ConversaResumo { id: string; aba: Aba; titulo: string; updatedA
 const ABAS: { id: Aba; rotulo: string; icone: React.ElementType; descricao: string }[] = [
   { id: 'operacoes', rotulo: 'Operações', icone: Activity, descricao: 'Chamados, SLA, equipes, produtividade e metas.' },
   { id: 'estoque', rotulo: 'Estoque', icone: Boxes, descricao: 'Saldos, mínimos, movimentações, equipamentos e reposição.' },
+  { id: 'comercial', rotulo: 'Comercial', icone: ShoppingCart, descricao: 'Vendas e ranking de vendedores, e cancelamentos consultados direto no IXC.' },
 ]
 
 const SUGESTOES: Record<Aba, string[]> = {
@@ -61,6 +66,16 @@ const SUGESTOES: Record<Aba, string[]> = {
     'Quais são as metas de SLA?',
     'Quais atendimentos estão pendentes?',
     'Qual a tendência de desempenho?',
+    'Quantos chamados de recolhimento foram feitos e por qual equipe?',
+    'Qual equipe tem o maior índice de chamados concluídos?',
+    'Quais clientes têm mais rechamadas?',
+  ],
+  comercial: [
+    'Como foram as vendas deste mês? Quem mais vendeu?',
+    'Vendas do mês anterior',
+    'Compare as vendas de agosto',
+    'Quantos cancelamentos tivemos neste mês no IXC?',
+    'Quantos cancelamentos no mês passado? Compare com o anterior',
   ],
   estoque: [
     'Quais materiais precisamos repor?',
@@ -113,6 +128,30 @@ export function BlocoResposta({ m, compacto = false }: { m: MensagemTela; compac
         {!m.simulada && !m.bloqueada && m.modelo && <Selo>{m.modelo === 'guia-do-sistema' ? 'Guia do sistema' : m.modelo}</Selo>}
       </div>
       <p className="text-sm text-tema-texto whitespace-pre-line break-words">{m.texto}</p>
+
+      {(m.tabelas?.length ?? 0) > 0 && m.tabelas!.map(t => (
+        <div key={t.titulo} className="space-y-1.5">
+          <p className="text-xs font-semibold text-tema-suave">{t.titulo}</p>
+          <div className="overflow-x-auto rounded-lg border border-tema-linha">
+            <table className="min-w-full text-xs">
+              <thead className="bg-tema-contraste/[0.04] text-tema-suave"><tr>{t.colunas.map(c => <th key={c} scope="col" className="px-2.5 py-1.5 text-left font-semibold whitespace-nowrap">{c}</th>)}</tr></thead>
+              <tbody>{t.linhas.map((l, i) => (
+                <tr key={i} className="border-t border-tema-linha">{l.map((v, j) => <td key={j} className={cn('px-2.5 py-1.5 whitespace-nowrap', typeof v === 'number' && 'tabular-nums')}>{typeof v === 'number' ? v.toLocaleString('pt-BR') : v}</td>)}</tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+
+      {(m.acoes?.length ?? 0) > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {m.acoes!.map(a => (
+            <a key={a.url} href={a.url} download className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/[0.07] px-3 py-1.5 text-sm font-semibold text-orange-800 hover:bg-orange-500/15 transition-colors">
+              <Download className="w-4 h-4" aria-hidden /> {a.rotulo}
+            </a>
+          ))}
+        </div>
+      )}
 
       {temDetalhes && (
         <div className="space-y-3 border-t border-tema-linha pt-3">
@@ -204,7 +243,7 @@ export function InteligenciaOperacional() {
       setConversaId(r.conversaId)
       setMensagens(m => [...m, {
         id: r.mensagemId, papel: 'ASSISTENTE', texto: r.texto, indicadores: r.indicadores, referencias: r.referencias,
-        recomendacoes: r.recomendacoes, avisos: r.avisos, fontes: r.fontes, simulada: r.simulada, bloqueada: r.bloqueada, modelo: r.modelo,
+        recomendacoes: r.recomendacoes, avisos: r.avisos, fontes: r.fontes, tabelas: r.tabelas, acoes: r.acoes, simulada: r.simulada, bloqueada: r.bloqueada, modelo: r.modelo,
       }])
       queryClient.invalidateQueries({ queryKey: ['ia-conversas'] })
     },
@@ -241,7 +280,7 @@ export function InteligenciaOperacional() {
       setConversaId(id); setErro(null)
       setMensagens(d.mensagens.map(m => ({
         id: m.id, papel: m.papel, texto: m.conteudo, indicadores: m.indicadores ?? undefined, referencias: m.referencias ?? undefined,
-        recomendacoes: m.recomendacoes ?? undefined, simulada: m.simulada, modelo: m.modelo ?? undefined, quando: m.createdAt,
+        recomendacoes: m.recomendacoes ?? undefined, tabelas: m.extras?.tabelas, acoes: m.extras?.acoes, simulada: m.simulada, modelo: m.modelo ?? undefined, quando: m.createdAt,
       })))
     } catch (e: any) {
       toast({ title: e.message, variant: 'destructive' })
@@ -386,7 +425,7 @@ export function InteligenciaOperacional() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); perguntar(texto) } }}
                 rows={2}
                 maxLength={max}
-                placeholder={aba === 'estoque' ? 'Ex.: Quais materiais precisamos repor?' : 'Ex.: Como está o SLA neste mês?'}
+                placeholder={aba === 'estoque' ? 'Ex.: Quais materiais precisamos repor?' : aba === 'comercial' ? 'Ex.: Quem mais vendeu neste mês?' : 'Ex.: Como está o SLA neste mês?'}
                 className="gts-input flex-1 resize-none text-sm"
               />
               <button type="submit" disabled={!texto.trim() || enviar.isPending} className="gts-btn-primary h-[44px] disabled:opacity-50" aria-label="Enviar pergunta">

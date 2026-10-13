@@ -26,12 +26,12 @@ async function conectar(ctx: ContextoIA, env: Record<string, string> = {}) {
 const texto = (r: any) => (r.content as { type: string; text: string }[]).map(c => c.text).join('\n')
 
 describe('servidor MCP (stdio local, mesmas ferramentas e mesmo executor)', () => {
-  it('anuncia nome e expoe as 16 ferramentas, todas marcadas como somente leitura', async () => {
+  it('anuncia nome e expoe as 20 ferramentas, todas marcadas como somente leitura', async () => {
     const { cliente, fechar } = await conectar(D.ctxDe('ADMIN'))
     try {
       assert.equal(cliente.getServerVersion()?.name, NOME_SERVIDOR_MCP)
       const { tools } = await cliente.listTools()
-      assert.equal(tools.length, 16)
+      assert.equal(tools.length, 20)
       for (const t of tools) {
         assert.equal(t.annotations?.readOnlyHint, true, t.name); assert.equal(t.annotations?.destructiveHint, false, t.name)
         assert.match(t.description ?? '', /somente leitura/)
@@ -83,7 +83,7 @@ describe('servidor MCP (stdio local, mesmas ferramentas e mesmo executor)', () =
     const { cliente, fechar } = await conectar(ctx)
     try {
       const { tools } = await cliente.listTools()
-      assert.equal(tools.length, 8); assert.ok(tools.every(t => !/estoque|movimentacoes|equipamento|consumo|reposicao|devolucoes|materiais/.test(t.name)))
+      assert.equal(tools.length, 12); assert.ok(tools.every(t => !/estoque|movimentacoes|equipamento|consumo|reposicao|devolucoes|materiais/.test(t.name)))
       const r: any = await cliente.callTool({ name: 'consultar_estoque', arguments: {} }).catch(e => ({ isError: true, content: [{ type: 'text', text: String(e.message) }] }))
       assert.equal(r.isError, true)
     } finally { await fechar() }

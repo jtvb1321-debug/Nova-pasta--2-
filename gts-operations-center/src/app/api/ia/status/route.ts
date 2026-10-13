@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     areas: {
       operacoes: ferramentasDisponiveis(ctx, 'operacoes').length > 0,
       estoque: ferramentasDisponiveis(ctx, 'estoque').length > 0,
+      comercial: ferramentasDisponiveis(ctx, 'comercial').length > 0,
     },
   })
 }

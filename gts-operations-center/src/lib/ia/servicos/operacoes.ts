@@ -58,7 +58,7 @@ const SELECAO_ABERTOS = {
   dataAbertura: true, inicioSla: true, dataInicio: true, dataAgendada: true, reincidente: true,
 } as const
 
-async function nomesEquipes(ids: string[]) {
+export async function nomesEquipes(ids: string[]) {
   const equipes = ids.length
     ? await prisma.equipe.findMany({ where: { id: { in: ids } }, select: { id: true, nome: true } })
     : []

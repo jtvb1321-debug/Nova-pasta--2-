@@ -492,6 +492,29 @@ export const GUIAS: Guia[] = [
     sinais: [s(/\b(venda|vendas|vender|comissao|comissoes|vendedor)\b/, 3)],
   },
   {
+    id: 'assistente-relatorios',
+    titulo: 'Gerar relatórios pelo assistente (vendas, chamados, rechamadas, cancelamentos)',
+    area: 'sistema',
+    onde: 'Assistente (chat lateral ou Inteligência Operacional)',
+    passos: [
+      'Pergunte o que quer ver. Exemplos: "Como foram as vendas deste mês? Quem mais vendeu?", "Vendas de agosto", "Quantos chamados de recolhimento por equipe?", "Qual equipe tem o maior índice de conclusão?", "Quais clientes têm mais rechamadas?", "Quantos cancelamentos tivemos neste mês no IXC?".',
+      'A resposta traz o resumo, as tabelas (rankings) e um botão laranja "Baixar relatório (Excel/CSV)".',
+      'Clique no botão: o arquivo abre direto no Excel, com o ranking e o detalhe linha a linha.',
+      'Para outro mês, escreva o mês na pergunta ("de agosto", "do mês passado", "setembro de 2025").',
+    ],
+    notas: [
+      'Vendas, ranking e cancelamentos ficam na aba "Comercial"; chamados e rechamadas, em "Operações". Só Admin e Gestor usam.',
+      'Os cancelamentos vêm direto do IXC, na hora da pergunta.',
+      'Cada relatório baixado fica registrado na Auditoria.',
+    ],
+    perguntaRelacionada: 'Como foram as vendas deste mês? Quem mais vendeu?',
+    sinais: [
+      s(/\b(gerar|gere|baixar|baixe|emitir|emita|exportar|exporte|tirar)\b.{0,30}\b(relatorio|relatorios|planilha|excel|csv)\b/, 3),
+      s(/\b(relatorio|relatorios)\b.{0,40}\b(vendas|vendedor|chamados|rechamadas?|cancelamentos?|recolhimentos?|equipes?)\b/, 4),
+      s(/\b(vendas|chamados|rechamadas?|cancelamentos?)\b.{0,30}\brelatorio\b/, 4),
+    ],
+  },
+  {
     id: 'clientes',
     titulo: 'Consultar clientes',
     area: 'sistema',

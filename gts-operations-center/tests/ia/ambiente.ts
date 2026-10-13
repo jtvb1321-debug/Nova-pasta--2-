@@ -7,5 +7,8 @@ process.env.DATABASE_URL = url
 process.env.PRISMA_LOG_QUERIES = 'false'
 process.env.ORBIA_AI_PROVIDER = 'mock'
 process.env.ORBIA_AI_ENABLED = 'true'
+// IXC FALSO (so os testes; nenhuma chamada real: o fetch e' simulado dentro dos testes que o usam).
+process.env.IXC_API_URL = 'http://ixc.teste.invalid/webservice/v1'
+process.env.IXC_API_TOKEN = 'token-falso-de-teste'
 
 export const BANCO_TESTE = { host, banco }

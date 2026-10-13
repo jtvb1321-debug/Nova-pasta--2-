@@ -7,7 +7,7 @@ import { responderPergunta } from '@/lib/ia/orquestrador'
 // acontecem no servidor (ver lib/ia/orquestrador). O corpo e' pequeno e estrito.
 const corpo = z.object({
   pergunta: z.string().max(4000),
-  aba: z.enum(['operacoes', 'estoque']),
+  aba: z.enum(['operacoes', 'estoque', 'comercial']),
   conversaId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).nullish(),
 }).strict()
 

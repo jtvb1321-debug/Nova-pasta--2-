@@ -25,17 +25,25 @@ Pergunta -> validação/limites -> (modelo escolhe ferramentas) -> servidor vali
 | `usarAssistenteIA` | Abrir a tela e as rotas `/api/ia/*` | sim | sim | não |
 | `iaOperacional` (+ `verDesempenho`) | Ferramentas operacionais | sim | sim | não |
 | `iaEstoque` (+ `verEstoque`) | Ferramentas de estoque | sim | sim | não |
+| `iaComercial` (+ `verVendas`; cancelamentos exigem `verClientes`) | Vendas e cancelamentos (IXC) | sim | sim | não |
 | `apenasMinhaEquipe` | Escopo: só dados da própria equipe | — | — | — |
 
 Quem tiver escopo de equipe só consulta a própria equipe; pedir outra é **negado e auditado**. Consultas do estoque geral
 (`consultar_estoque`, `materiais_abaixo_minimo`, `prever_reposicao`) exigem acesso a todas as equipes.
 O sistema atende uma única empresa (não há multiempresa), então o isolamento é por usuário e por equipe.
 
-## Ferramentas (16)
+## Ferramentas (20)
 
 **Operações:** `resumo_diario_chamados`, `chamados_criticos`, `analisar_sla`, `comparar_equipes`, `produtividade`,
 `consultar_metas`, `atendimentos_pendentes`, `tendencias_desempenho`.
 Chamados **EACE** e **convencionais** são sempre separados: no EACE o SLA só começa no início do atendimento.
+
+**Gestão de chamados (aba Operações):** `chamados_por_equipe` (total, concluídos, cancelados, índice de conclusão e
+recolhimentos = tipo Retirada, por equipe) e `rechamadas_clientes` (clientes com mais rechamadas, índice = rechamadas ÷ chamados do cliente).
+
+**Comercial (aba Comercial):** `vendas_periodo` (vendas aprovadas, valor, comparativo com o período anterior e ranking de vendedores;
+meses anteriores por `periodo=mes_anterior` ou `dataInicio/dataFim`) e `cancelamentos_ixc` (contratos cancelados no mês, **consultando o IXC ao vivo**;
+não usa cópia local).
 
 **Estoque:** `consultar_estoque`, `materiais_abaixo_minimo`, `consultar_movimentacoes`, `materiais_por_equipe`,
 `consultar_equipamento`, `analisar_consumo`, `prever_reposicao`, `consultar_devolucoes`.
@@ -67,6 +75,16 @@ Essas respostas são fixas (não são IA e não consomem cota do OpenRouter) e v
 adicione um item em `guias.ts` (nomes de telas/botões conferidos no código) ou em `glossario.ts` e um teste em `tests/ia/conhecimento.test.ts`.
 Manipulação (ignorar regras, revelar prompt, SQL, credenciais) continua **bloqueada**, com `IA_INJECAO_SUSPEITA`.
 Limite: é correspondência por palavras; frases muito diferentes das previstas caem na lista "assuntos que eu sei ensinar".
+
+## Relatórios para baixar
+
+As consultas acima oferecem o botão **Baixar relatório (Excel/CSV)**, que chama `GET /api/ia/relatorio?tipo=vendas|chamados|rechamadas|cancelamentos`
+(com `dataInicio/dataFim` ou `ano/mes`). CSV com `;` e BOM (abre direto no Excel em português), células protegidas contra fórmulas.
+Mesmas permissões das consultas, limite de 6 por minuto por usuário e cada download vira `IA_RELATORIO` na auditoria. O arquivo traz nomes de
+clientes (só Admin/Gestor); **o que vai ao modelo nunca tem nome de cliente** (rankings usam "Cliente 1..."; os nomes aparecem só em tabelas na tela).
+Tabelas e botões ficam em `ia_mensagens.extras` (histórico do próprio usuário).
+
+As ferramentas oferecidas ao modelo são **todas as que o usuário pode usar**, em qualquer aba (a aba organiza histórico e sugestões).
 
 ## Provedor de IA
 

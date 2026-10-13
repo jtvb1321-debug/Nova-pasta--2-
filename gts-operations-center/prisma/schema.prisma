@@ -1338,7 +1338,7 @@ enum StatusExecucaoFerramentaIA {
 model ConversaIA {
   id         String   @id @default(cuid())
   usuarioId  String
-  aba        String   // "operacoes" | "estoque"
+  aba        String   // "operacoes" | "estoque" | "comercial"
   titulo     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -1360,6 +1360,8 @@ model MensagemIA {
   indicadores  Json?
   referencias  Json?
   recomendacoes Json?
+  // Tabelas (rankings) e acoes (relatorios) mostradas na tela; nunca vao ao modelo.
+  extras       Json?
   provedor     String?         // mock | openrouter
   modelo       String?
   simulada     Boolean         @default(false)

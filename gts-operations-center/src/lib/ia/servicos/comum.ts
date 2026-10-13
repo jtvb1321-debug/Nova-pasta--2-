@@ -1,4 +1,4 @@
-import type { Indicador, Referencia, ResultadoFerramenta } from '../tipos'
+import type { AcaoIA, Indicador, Referencia, ResultadoFerramenta, TabelaIA } from '../tipos'
 
 // Utilitarios comuns dos servicos. Servicos NAO sabem de chat, de modelo nem de MCP.
 
@@ -18,6 +18,9 @@ export function montarResultado(p: {
   avisos?: string[]
   tabelas: string[]
   truncado?: boolean
+  /** Rankings com nomes, so para a tela. */
+  tabelasTela?: TabelaIA[]
+  acoes?: AcaoIA[]
 }): ResultadoFerramenta {
   return {
     resumo: p.resumo,
@@ -28,6 +31,8 @@ export function montarResultado(p: {
     avisos: p.avisos ?? [],
     fonte: { consultadoEm: new Date().toISOString(), tabelas: p.tabelas },
     truncado: p.truncado,
+    tabelas: p.tabelasTela,
+    acoes: p.acoes,
   }
 }
 

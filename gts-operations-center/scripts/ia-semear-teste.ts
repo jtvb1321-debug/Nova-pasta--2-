@@ -3,9 +3,10 @@
 // Usuarios de teste: admin@, gestor@, operador@ e tecnico@teste-ia.local (senha de teste em tests/ia/dados.ts).
 import '../tests/ia/ambiente'
 import { prisma } from '../src/lib/prisma'
-import { semear, MARCA } from '../tests/ia/dados'
+import { semear, semearComercial, MARCA } from '../tests/ia/dados'
 
 semear()
+  .then(base => semearComercial(base))
   .then(async () => {
     console.log(`Dados sinteticos (${MARCA}) criados no banco de teste isolado.`)
     await prisma.$disconnect()

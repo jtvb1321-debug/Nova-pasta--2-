@@ -17,7 +17,8 @@ import { api, BlocoResposta, Selo, type Aba, type MensagemTela, type StatusIA } 
 const CHAVE = 'orbia-chat-lateral'
 
 const SUGESTOES: Record<Aba, string[]> = {
-  operacoes: ['Como está a operação hoje?', 'Como está o SLA neste mês?', 'Quais chamados estão críticos?', 'Como abrir um chamado novo?', 'O que é EACE?'],
+  operacoes: ['Como está a operação hoje?', 'Como está o SLA neste mês?', 'Quais chamados estão críticos?', 'Quantos chamados de recolhimento por equipe?', 'Quais clientes têm mais rechamadas?', 'Como abrir um chamado novo?'],
+  comercial: ['Como foram as vendas deste mês? Quem mais vendeu?', 'Vendas do mês anterior', 'Quantos cancelamentos tivemos neste mês no IXC?', 'Como vejo o financeiro?'],
   estoque: ['Quais materiais precisamos repor?', 'Quanto temos de ONU em estoque?', 'Como retirar material do estoque?', 'Como transferir material?', 'Como dar entrada de itens?'],
 }
 
@@ -60,7 +61,7 @@ export function ChatLateralIA() {
       api<{ mensagens: any[] }>(`/api/ia/conversas/${s.conversaId}`)
         .then(d => setMensagens(d.mensagens.map(m => ({
           id: m.id, papel: m.papel, texto: m.conteudo, indicadores: m.indicadores ?? undefined, referencias: m.referencias ?? undefined,
-          recomendacoes: m.recomendacoes ?? undefined, simulada: m.simulada, modelo: m.modelo ?? undefined,
+          recomendacoes: m.recomendacoes ?? undefined, tabelas: m.extras?.tabelas, acoes: m.extras?.acoes, simulada: m.simulada, modelo: m.modelo ?? undefined,
         }))))
         .catch(() => { setConversaId(null) })
     }
@@ -81,7 +82,7 @@ export function ChatLateralIA() {
   const areas = status.data?.areas
   useEffect(() => {
     if (areas && !areas[aba]) {
-      const outra: Aba | null = areas.operacoes ? 'operacoes' : areas.estoque ? 'estoque' : null
+      const outra: Aba | null = areas.operacoes ? 'operacoes' : areas.estoque ? 'estoque' : areas.comercial ? 'comercial' : null
       if (outra) setAba(outra)
     }
   }, [areas, aba])
@@ -95,7 +96,7 @@ export function ChatLateralIA() {
       setConversaId(r.conversaId)
       setMensagens(m => [...m, {
         id: r.mensagemId, papel: 'ASSISTENTE', texto: r.texto, indicadores: r.indicadores, referencias: r.referencias,
-        recomendacoes: r.recomendacoes, avisos: r.avisos, fontes: r.fontes, simulada: r.simulada, bloqueada: r.bloqueada, modelo: r.modelo,
+        recomendacoes: r.recomendacoes, avisos: r.avisos, fontes: r.fontes, tabelas: r.tabelas, acoes: r.acoes, simulada: r.simulada, bloqueada: r.bloqueada, modelo: r.modelo,
       }])
       queryClient.invalidateQueries({ queryKey: ['ia-conversas'] })
     },
@@ -114,10 +115,10 @@ export function ChatLateralIA() {
   function trocarAba(a: Aba) { if (a !== aba) { setAba(a); nova() } }
 
   if (!permitido || naTelaCheia) return null
-  if (status.isError || (status.data && (!status.data.habilitado || (!status.data.areas.operacoes && !status.data.areas.estoque)))) return null
+  if (status.isError || (status.data && (!status.data.habilitado || (!status.data.areas.operacoes && !status.data.areas.estoque && !status.data.areas.comercial)))) return null
 
   const max = status.data?.limites.maxEntrada ?? 1000
-  const abasLiberadas = (['operacoes', 'estoque'] as Aba[]).filter(a => areas?.[a] ?? true)
+  const abasLiberadas = (['operacoes', 'estoque', 'comercial'] as Aba[]).filter(a => areas?.[a] ?? true)
 
   return (
     <>
@@ -148,7 +149,7 @@ export function ChatLateralIA() {
               {abasLiberadas.map(a => (
                 <button key={a} type="button" role="tab" aria-selected={a === aba} onClick={() => trocarAba(a)}
                   className={cn('rounded-full px-3 py-1 text-xs font-semibold transition-colors', a === aba ? 'bg-orange-500/15 text-orange-800' : 'text-tema-suave hover:bg-tema-contraste/[0.06]')}>
-                  {a === 'operacoes' ? 'Operações' : 'Estoque'}
+                  {a === 'operacoes' ? 'Operações' : a === 'estoque' ? 'Estoque' : 'Comercial'}
                 </button>
               ))}
             </div>

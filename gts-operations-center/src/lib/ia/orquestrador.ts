@@ -8,7 +8,7 @@ import { criarConversa, conversaDoUsuario, historicoParaModelo, salvarMensagem }
 import { provedorDaConfig, ErroProvedor, mensagemErroProvedor, type MensagemProvedor, type Provedor } from './provedores'
 import { responderConhecimento } from './conhecimento/nlu'
 import { RESPOSTA_INJECAO, detectarManipulacao, detectarPedidoEscrita, ErroEntrada, limparEntrada, limparRespostaModelo } from './seguranca'
-import type { AreaFerramenta, ContextoIA, FonteConsulta, Indicador, Referencia } from './tipos'
+import type { AcaoIA, AreaFerramenta, ContextoIA, FonteConsulta, Indicador, Referencia, TabelaIA } from './tipos'
 
 // Fluxo de uma pergunta: valida -> limita -> checa injecao -> (modelo <-> ferramentas, no maximo N) -> resposta.
 // O modelo so ESCOLHE ferramentas; quem valida, autoriza, executa e audita e' o servidor.
@@ -26,6 +26,9 @@ export interface RespostaAssistente {
   recomendacoes: string[]
   avisos: string[]
   fontes: FonteConsulta[]
+  /** Rankings (com nomes) e acoes (relatorios): so para a tela. */
+  tabelas?: TabelaIA[]
+  acoes?: AcaoIA[]
   ferramentas: { nome: string; status: string; duracaoMs: number }[]
 }
 
@@ -53,6 +56,7 @@ export const PROMPT_SISTEMA = [
   '7. Em estoque, nunca some unidades de medida diferentes, nunca classifique itens como perdidos, extraviados ou desviados, e deixe claro quando uma previsão é aproximada.',
   '8. Cite o período consultado. Use poucas linhas e listas curtas. Os indicadores e as recomendações detalhadas aparecem na tela; resuma o essencial.',
   '9. Escolha a ferramenta mais específica e peça apenas o necessário. Se a pergunta for ambígua, faça uma pergunta curta de esclarecimento.',
+  '10. Meses anteriores: use dataInicio/dataFim (AAAA-MM-DD) ou periodo=mes_anterior; para cancelamentos use ano e mes. Cancelamentos de clientes vêm do IXC ao vivo. Quando a ferramenta oferecer relatório, o botão aparece na tela: não escreva links nem invente dados. Nomes de clientes só aparecem em tabelas na tela.',
 ].join('\n')
 
 export interface EntradaPergunta {
@@ -116,7 +120,9 @@ export async function responderPergunta(e: EntradaPergunta): Promise<RespostaAss
 
   const provedor = e.provedor ?? provedorDaConfig(config)
   const segredos = [config.openrouterChave]
-  const disponiveis = ferramentasDisponiveis(ctx, e.aba)
+  // Todas as ferramentas que o usuario pode usar (a aba so organiza o historico e as sugestoes): assim uma pergunta
+  // de vendas funciona mesmo no chat lateral aberto na aba de Operacoes. Quem nao tem permissao da area nao a ve.
+  const disponiveis = ferramentasDisponiveis(ctx)
   const definicoes = disponiveis.map(definicaoParaModelo)
   const permitidas = new Set(disponiveis.map(f => f.nome))
   const historico = await historicoParaModelo(ctx.usuarioId, conversaId, 6)
@@ -131,6 +137,8 @@ export async function responderPergunta(e: EntradaPergunta): Promise<RespostaAss
   const recomendacoes: string[] = []
   const avisos: string[] = []
   const fontes: FonteConsulta[] = []
+  const tabelas: TabelaIA[] = []
+  const acoes: AcaoIA[] = []
   let chamadasFeitas = 0
   let resposta: Awaited<ReturnType<Provedor['completar']>> | null = null
   const prazo = Date.now() + config.timeoutMs * 2
@@ -160,6 +168,8 @@ export async function responderPergunta(e: EntradaPergunta): Promise<RespostaAss
             recomendacoes.push(...r.recomendacoes)
             avisos.push(...r.avisos)
             fontes.push(r.fonte)
+            if (r.tabelas) tabelas.push(...r.tabelas)
+            if (r.acoes) acoes.push(...r.acoes)
             conteudo = resultadoParaModelo(r)
           } else {
             conteudo = JSON.stringify({ erro: exec.erro ?? 'Consulta não realizada.', status: exec.status })
@@ -196,12 +206,13 @@ export async function responderPergunta(e: EntradaPergunta): Promise<RespostaAss
   }
   const m = await salvarMensagem({
     conversaId, papel: 'ASSISTENTE', conteudo: texto, indicadores: saida.indicadores, referencias: saida.referencias, recomendacoes: saida.recomendacoes,
+    extras: tabelas.length || acoes.length ? { tabelas: tabelas.slice(0, 4), acoes: acoes.slice(0, 4) } : undefined,
     provedor: ultima?.provedor ?? provedor.nome, modelo: ultima?.modelo, simulada,
   })
   return {
     conversaId, mensagemId: m.id, texto, simulada, bloqueada: false,
     provedor: ultima?.provedor ?? provedor.nome, modelo: ultima?.modelo ?? 'desconhecido',
-    ...saida, fontes: fontes.slice(0, 6),
+    ...saida, fontes: fontes.slice(0, 6), tabelas: tabelas.slice(0, 4), acoes: acoes.slice(0, 4),
     ferramentas: execucoes.map(x => ({ nome: x.ferramenta, status: x.status, duracaoMs: x.duracaoMs })),
   }
 }

@@ -8,6 +8,6 @@ export async function GET(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
   if (!ctx.permissoes.usarAssistenteIA) return NextResponse.json({ error: 'Sem permissao' }, { status: 403 })
   const aba = request.nextUrl.searchParams.get('aba')
-  const conversas = await listarConversas(ctx.usuarioId, aba === 'operacoes' || aba === 'estoque' ? aba : undefined)
+  const conversas = await listarConversas(ctx.usuarioId, aba === 'operacoes' || aba === 'estoque' || aba === 'comercial' ? aba : undefined)
   return NextResponse.json({ conversas }, { headers: { 'Cache-Control': 'no-store' } })
 }

@@ -21,6 +21,8 @@ export async function semear() {
   await prisma.execucaoFerramentaIA.deleteMany()
   await prisma.mensagemIA.deleteMany()
   await prisma.conversaIA.deleteMany()
+  await prisma.comissao.deleteMany()
+  await prisma.venda.deleteMany()
   await prisma.log.deleteMany()
   await prisma.termoEstoqueEvento.deleteMany()
   await prisma.termoEstoqueItem.deleteMany()
@@ -166,4 +168,62 @@ export async function semear() {
     chamados: { finA, finB, finEace, atrasadoConv, eaceAguardando, eaceEmAtendimento, convResolucaoEstourada, criticoTag, massivo, instalacaoAgendada },
     termoAberto, ctxDe,
   }
+}
+
+/**
+ * Dados sinteticos COMERCIAIS e de gestao de chamados (vendas, recolhimentos, rechamadas), criados por cima de semear().
+ * Datas relativas ao mes atual; nada depende do dia do mes em que o teste roda.
+ */
+export async function semearComercial(base: Dados) {
+  const hash = await bcrypt.hash(SENHA_TESTE, 4)
+  const vendedor = (n: number) => prisma.usuario.create({ data: { nome: `Vendedor ${n} (${MARCA})`, email: `vendedor${n}@teste-ia.local`, senha: hash, role: 'VENDEDOR' } })
+  const [v1, v2] = [await vendedor(1), await vendedor(2)]
+  const agora = new Date()
+  const noMes = (deslocamentoMeses: number, dia: number) => new Date(agora.getFullYear(), agora.getMonth() + deslocamentoMeses, dia, 12, 0, 0)
+  let seq = 0
+  const venda = async (vendedorId: string, valor: number, quando: Date, status: 'APROVADO' | 'PENDENTE' | 'REPROVADO', instalada = false) => {
+    const v = await prisma.venda.create({
+      data: {
+        clienteNome: `CLIENTE VENDA ${MARCA} ${++seq}`, planoVendido: seq % 2 ? 'Fibra 300 Mega' : 'Fibra 500 Mega', valor, data: quando, status, vendedorId,
+        statusInstalacao: instalada ? 'INSTALADA' : 'AGUARDANDO', cidade: 'Cidade Teste',
+      },
+    })
+    if (status === 'APROVADO') await prisma.comissao.create({ data: { vendaId: v.id, valor: 25 } })
+    return v
+  }
+  // Este mes (dia 1): Vendedor 1 lidera com 3 aprovadas (350); Vendedor 2 tem 2 aprovadas (240); 1 pendente e 1 reprovada.
+  const mesAtual = noMes(0, 1)
+  await venda(v1.id, 100, mesAtual, 'APROVADO', true); await venda(v1.id, 100, mesAtual, 'APROVADO'); await venda(v1.id, 150, mesAtual, 'APROVADO', true)
+  await venda(v2.id, 120, mesAtual, 'APROVADO', true); await venda(v2.id, 120, mesAtual, 'APROVADO')
+  await venda(v2.id, 99, mesAtual, 'PENDENTE'); await venda(v1.id, 99, mesAtual, 'REPROVADO')
+  // Mes anterior (dia 15): 2 aprovadas. Dois meses atras (dia 20): 1 aprovada.
+  await venda(v2.id, 200, noMes(-1, 15), 'APROVADO'); await venda(v2.id, 200, noMes(-1, 15), 'APROVADO')
+  await venda(v1.id, 300, noMes(-2, 20), 'APROVADO')
+
+  // Chamados abertos ~120 dias atras (janela propria: nao se misturam com os chamados do cenario base). Equipe A: 4 retiradas (3 concluidas) + 3 manutencoes concluidas.
+  // Equipe B: 2 retiradas (1 concluida, 1 cancelada) + 5 instalacoes (2 concluidas, 2 abertas, 1 cancelada).
+  const janelaAbertura = d(120)
+  const isoDia = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+  const janela = { dataInicio: isoDia(d(125)), dataFim: isoDia(d(115)) }
+  const ch = (equipeId: string, tipo: any, status: any, extra: object = {}) => prisma.chamado.create({
+    data: { cliente: `CLIENTE GESTAO ${MARCA} ${++seq}`, endereco: 'Rua Teste 2', cidade: 'Cidade Teste', tipo, status, equipeId, dataAbertura: janelaAbertura, dataFim: status === 'FINALIZADO' ? janelaAbertura : null, ...extra },
+  })
+  const A = base.equipeA.id, B = base.equipeB.id
+  for (const s of ['FINALIZADO', 'FINALIZADO', 'FINALIZADO', 'ABERTO']) await ch(A, 'RETIRADA', s)
+  for (let i = 0; i < 3; i++) await ch(A, 'MANUTENCAO', 'FINALIZADO')
+  for (const s of ['FINALIZADO', 'CANCELADO']) await ch(B, 'RETIRADA', s)
+  for (const s of ['FINALIZADO', 'FINALIZADO', 'ABERTO', 'ABERTO', 'CANCELADO']) await ch(B, 'INSTALACAO', s)
+
+  // Rechamadas: cliente R1 (3 rechamadas: 2 confirmadas + 1 a validar, +1 chamado normal => indice 75%),
+  // cliente R2 (1 a validar + 2 normais), cliente R3 (2 DESCARTADAS: nao contam).
+  const clienteR = (n: number) => `CLIENTE RECHAMADA ${MARCA} ${n}`
+  const rech = (n: number, statusRechamada: any, equipeId: string) => prisma.chamado.create({
+    data: { cliente: clienteR(n), endereco: 'Rua Teste 3', cidade: 'Cidade Teste', tipo: 'SUPORTE', status: 'FINALIZADO', equipeId, dataAbertura: janelaAbertura, dataFim: janelaAbertura, statusRechamada, reincidente: !!statusRechamada },
+  })
+  await rech(1, 'CONFIRMADA', A); await rech(1, 'CONFIRMADA', A); await rech(1, 'POSSIVEL', B); await rech(1, null, A)
+  await rech(2, 'POSSIVEL', B); await rech(2, null, B); await rech(2, null, B)
+  await rech(3, 'DESCARTADA', A); await rech(3, 'DESCARTADA', A)
+
+  const ctxVendedor = (role = 'VENDEDOR') => criarContexto({ usuarioId: v1.id, nome: v1.nome, role, origem: 'chat' })
+  return { vendedores: { v1, v2 }, clienteR, ctxVendedor, janela }
 }

@@ -69,8 +69,10 @@ function formatarGuia(g: Guia): { texto: string; sugestao?: string } {
 
 const NOME_AREA: Record<Guia['area'], string> = { estoque: 'Estoque', operacoes: 'Chamados, equipes e monitoramento', sistema: 'Sistema, vendas e financeiro' }
 
-export function listaDeAssuntos(area?: 'estoque' | 'operacoes'): string {
-  const ordem: Guia['area'][] = area === 'operacoes' ? ['operacoes', 'estoque', 'sistema'] : ['estoque', 'operacoes', 'sistema']
+export type AreaAssistente = 'estoque' | 'operacoes' | 'comercial'
+
+export function listaDeAssuntos(area?: AreaAssistente): string {
+  const ordem: Guia['area'][] = area === 'operacoes' ? ['operacoes', 'estoque', 'sistema'] : area === 'comercial' ? ['sistema', 'operacoes', 'estoque'] : ['estoque', 'operacoes', 'sistema']
   return ordem
     .map(a => `${NOME_AREA[a]}:\n${GUIAS.filter(g => g.area === a).map(g => `• ${g.titulo}`).join('\n')}`)
     .join('\n\n')
@@ -78,21 +80,23 @@ export function listaDeAssuntos(area?: 'estoque' | 'operacoes'): string {
 
 const AJUDA = /\b(o ?que (voce|vc|tu) (pode|consegue|faz|sabe)|o ?que posso (perguntar|fazer)|ajuda|me ajud\w+|menu|comandos?|como funciona|ola|oi|bom dia|boa tarde|boa noite)\b/
 
-const EXEMPLOS_DADOS: Record<'operacoes' | 'estoque', string[]> = {
-  operacoes: ['Como está a operação hoje?', 'Quais chamados estão críticos agora?', 'Como está o SLA neste mês?', 'Compare as equipes no mês anterior', 'Qual a produtividade dos últimos 30 dias?', 'Quais atendimentos estão pendentes?'],
+const EXEMPLOS_DADOS: Record<AreaAssistente, string[]> = {
+  comercial: ['Como foram as vendas deste mês? Quem mais vendeu?', 'Vendas do mês anterior', 'Compare as vendas de agosto', 'Quantos cancelamentos tivemos neste mês no IXC?', 'Quantos cancelamentos no mês passado? Compare com o anterior'],
+  operacoes: ['Como está a operação hoje?', 'Quais chamados estão críticos agora?', 'Como está o SLA neste mês?', 'Compare as equipes no mês anterior', 'Qual a produtividade dos últimos 30 dias?', 'Quais atendimentos estão pendentes?', 'Quantos chamados de recolhimento foram feitos e por qual equipe?', 'Qual equipe tem o maior índice de chamados concluídos?', 'Quais clientes têm mais rechamadas?'],
   estoque: ['Quais materiais precisamos repor?', 'Quanto temos de "ONU" em estoque?', 'Mostre as movimentações da semana', 'Há devoluções aguardando aprovação?', 'Faça uma previsão de reposição para 30 dias', 'Onde está o equipamento AA:BB:CC:00:00:01?'],
 }
 
-function respostaAjuda(area: 'estoque' | 'operacoes' = 'operacoes'): RespostaConhecimento {
-  const outra = area === 'estoque' ? 'operacoes' : 'estoque'
+const ROTULO_AREA: Record<AreaAssistente, string> = { estoque: 'Estoque', operacoes: 'Operações', comercial: 'Comercial' }
+
+function respostaAjuda(area: AreaAssistente = 'operacoes'): RespostaConhecimento {
   return {
     tipo: 'ajuda',
     texto: [
       'Olá! Eu sou o assistente do Orbia. Eu só CONSULTO: não altero estoque, chamados nem nada no sistema. Posso:',
       '',
-      `1. Consultar dados reais (${area === 'estoque' ? 'Estoque' : 'Operações'}). Exemplos:`,
+      `1. Consultar dados reais (${ROTULO_AREA[area]}). Exemplos:`,
       ...EXEMPLOS_DADOS[area].map(e => `• ${e}`),
-      `(Para ${outra === 'estoque' ? 'estoque' : 'operações'}, troque a aba acima.)`,
+      '(Para outros assuntos de dados — Operações, Estoque ou Comercial — troque a aba acima.)',
       '',
       '2. Ensinar a fazer as tarefas nas telas (pergunte "como faço para..."):',
       listaDeAssuntos(area),
@@ -104,7 +108,7 @@ function respostaAjuda(area: 'estoque' | 'operacoes' = 'operacoes'): RespostaCon
 }
 
 /** Monta a resposta de conhecimento (guia, definicao ou tela) ou null se a pergunta e' sobre DADOS. */
-export function responderConhecimento(pergunta: string, opcoes: { escrita: boolean; area?: 'estoque' | 'operacoes' }): RespostaConhecimento | null {
+export function responderConhecimento(pergunta: string, opcoes: { escrita: boolean; area?: AreaAssistente }): RespostaConhecimento | null {
   const c = classificar(pergunta)
 
   // 1) Pedido de alteracao: nao executa, mas ensina o caminho.

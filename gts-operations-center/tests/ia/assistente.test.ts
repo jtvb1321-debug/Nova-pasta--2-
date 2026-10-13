@@ -31,11 +31,12 @@ const erroAssistente = (codigo: string, status?: number) => (e: unknown) => e in
 const execucoes = (where: object = {}) => prisma.execucaoFerramentaIA.findMany({ where, orderBy: { createdAt: 'asc' } })
 
 describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
-  it('existem as 8 ferramentas de estoque e as 8 operacionais pedidas', () => {
+  it('existem as 8 de estoque, as 8 operacionais pedidas e as 4 novas (comercial e gestao)', () => {
     const nomes = new Set(FERRAMENTAS.map(f => f.nome))
     for (const n of ['consultar_estoque', 'materiais_abaixo_minimo', 'consultar_movimentacoes', 'materiais_por_equipe', 'consultar_equipamento', 'analisar_consumo', 'prever_reposicao', 'consultar_devolucoes',
       'resumo_diario_chamados', 'chamados_criticos', 'analisar_sla', 'comparar_equipes', 'produtividade', 'consultar_metas', 'atendimentos_pendentes', 'tendencias_desempenho']) assert.ok(nomes.has(n), n)
-    assert.equal(FERRAMENTAS.length, 16)
+    for (const n of ['chamados_por_equipe', 'rechamadas_clientes', 'vendas_periodo', 'cancelamentos_ixc']) assert.ok(nomes.has(n), n)
+    assert.equal(FERRAMENTAS.length, 20)
   })
   it('nenhuma ferramenta tem nome de escrita nem parametro de SQL/comando', () => {
     for (const f of FERRAMENTAS) {
@@ -46,7 +47,7 @@ describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
   })
   it('codigo dos servicos nao contem nenhuma escrita no banco nem SQL cru (verificacao estatica)', () => {
     const dir = path.resolve(__dirname, '../../src/lib/ia')
-    const arquivos = ['servicos/operacoes.ts', 'servicos/estoque.ts', 'servicos/comum.ts', 'ferramentas.ts', 'mcp/servidor.ts']
+    const arquivos = ['servicos/operacoes.ts', 'servicos/estoque.ts', 'servicos/comum.ts', 'servicos/gestao.ts', 'servicos/comercial.ts', 'servicos/relatorios.ts', 'ferramentas.ts', 'mcp/servidor.ts']
     for (const a of arquivos) {
       const fonte = fs.readFileSync(path.join(dir, a), 'utf8')
       assert.doesNotMatch(fonte, /\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\(/, `${a} tem escrita`)
@@ -61,9 +62,9 @@ describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
     }
   })
   it('a IA so ve as ferramentas que o usuario pode usar', () => {
-    assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN')).length, 16)
+    assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN')).length, 20)
     assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN'), 'estoque').length, 8)
-    assert.equal(ferramentasDisponiveis(D.ctxDe('GESTOR', { permissoes: { iaEstoque: false } })).every(f => f.area === 'operacoes'), true)
+    assert.equal(ferramentasDisponiveis(D.ctxDe('GESTOR', { permissoes: { iaEstoque: false } })).every(f => f.area !== 'estoque'), true)
     assert.equal(ferramentasDisponiveis(D.ctxDe('OPERADOR')).length, 0)
     assert.equal(ferramentasDisponiveis(D.ctxDe('TECNICO')).length, 0)
   })
@@ -190,9 +191,9 @@ describe('assistente: permissoes por area e por usuario', () => {
     assert.match(r.texto, /não realizada/i)
     assert.equal(await prisma.log.count({ where: { acao: 'IA_FERRAMENTA_NEGADA' } }), antes + 1)
   })
-  it('modelo pede ferramenta de outra area da aba, mesmo permitida ao usuario: negada', async () => {
-    const r = await perguntar(D.ctxDe('ADMIN'), 'teste [[mock:ferramenta-proibida]]', 'estoque') // mock pede resumo_diario_chamados (operacional)
-    assert.equal(r.ferramentas[0].nome, 'resumo_diario_chamados'); assert.equal(r.ferramentas[0].status, 'NEGADO')
+  it('as ferramentas valem para todas as areas que o usuario pode usar, mesmo com outra aba aberta (chat lateral)', async () => {
+    const r = await perguntar(D.ctxDe('ADMIN'), 'Como está o SLA neste mês?', 'estoque')
+    assert.equal(r.ferramentas[0].nome, 'analisar_sla'); assert.equal(r.ferramentas[0].status, 'OK')
   })
   it('modelo pede ferramenta inexistente de escrita: invalida, sem efeito no estoque', async () => {
     const antes = await prisma.itemEstoque.findMany({ orderBy: { codigo: 'asc' }, select: { codigo: true, quantidadeAtual: true } })
@@ -373,8 +374,8 @@ describe('assistente com OpenRouter (fetch simulado, nenhuma chamada real)', () 
     assert.equal(r.ferramentas[0].status, 'OK'); assert.ok(r.indicadores.length > 0)
     assert.equal(reg.length, 2); assert.ok(reg.every(x => x.auth === `Bearer ${CHAVE}`))
     const corpo1 = JSON.parse(reg[0].corpo)
-    assert.equal(corpo1.tools.length, 8, 'so as 8 ferramentas de estoque na aba Estoque'); assert.doesNotMatch(reg[0].corpo, /sk-or-v1/)
-    assert.deepEqual(corpo1.tools.map((t: any) => t.function.name).sort(), FERRAMENTAS.filter(x => x.area === 'estoque').map(x => x.nome).sort())
+    assert.equal(corpo1.tools.length, 20, 'todas as ferramentas que o usuario pode usar (nao so as da aba)'); assert.doesNotMatch(reg[0].corpo, /sk-or-v1/)
+    assert.deepEqual(corpo1.tools.map((t: any) => t.function.name).sort(), FERRAMENTAS.map(x => x.nome).sort())
     const msgs2 = JSON.parse(reg[1].corpo).messages as any[]
     assert.equal(msgs2.at(-1).role, 'tool'); assert.doesNotMatch(reg[1].corpo, /sk-or-v1|CLIENTE TESTE IA/)
     // nada da chave foi gravado

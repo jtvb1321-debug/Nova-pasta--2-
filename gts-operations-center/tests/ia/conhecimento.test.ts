@@ -34,6 +34,8 @@ describe('conhecimento: escolha do guia por palavras', () => {
     ['como funciona a bonificação', 'bonificacao'],
     ['como renomear uma equipe', 'equipe-renomear'],
     ['como cadastro uma equipe nova', 'equipe-renomear'],
+    ['como gerar relatório de vendas', 'assistente-relatorios'],
+    ['quero baixar o relatório de rechamadas', 'assistente-relatorios'],
     ['como trocar a senha de um usuário', 'usuarios'],
     ['como filtrar os chamados agendados', 'chamado-filtros'],
     ['como finalizar um chamado', 'chamado-iniciar-finalizar'],
@@ -166,6 +168,13 @@ describe('conhecimento: perguntas de DADOS nao sao desviadas para guias', () => 
     'como compara as equipes',
     'Como foi o consumo de cabo?',
     'Como estão as equipes hoje?',
+    'Como foram as vendas deste mês? Quem mais vendeu?',
+    'Compare as vendas de agosto',
+    'Quero ver as vendas de setembro',
+    'Quantos cancelamentos tivemos neste mês no IXC?',
+    'Quantos chamados de recolhimento foram feitos e por qual equipe?',
+    'Qual equipe tem o maior índice de chamados concluídos?',
+    'Quais clientes têm mais rechamadas?',
   ]
   for (const p of DADOS) it(`segue para as consultas: ${p}`, () => assert.equal(responde(p), null))
 })

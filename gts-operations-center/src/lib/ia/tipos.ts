@@ -2,12 +2,12 @@ import type { Permission } from '@/lib/permissions'
 
 // Tipos comuns do assistente. Nada aqui depende de protocolo (chat interno ou MCP).
 
-export type AreaFerramenta = 'operacoes' | 'estoque'
+export type AreaFerramenta = 'operacoes' | 'estoque' | 'comercial'
 export type OrigemChamada = 'chat' | 'mcp'
 
 export type PermissoesIA = Pick<
   Permission,
-  'usarAssistenteIA' | 'iaOperacional' | 'iaEstoque' | 'verDesempenho' | 'verEstoque' | 'apenasMinhaEquipe'
+  'usarAssistenteIA' | 'iaOperacional' | 'iaEstoque' | 'iaComercial' | 'verDesempenho' | 'verEstoque' | 'verVendas' | 'verClientes' | 'apenasMinhaEquipe'
 >
 
 /** Quem esta consultando. Montado no servidor a partir da sessao - nunca vem do modelo. */
@@ -41,6 +41,20 @@ export interface FonteConsulta {
   tabelas: string[]
 }
 
+/** Tabela para a TELA (nunca vai ao modelo): pode ter nomes de clientes e vendedores. */
+export interface TabelaIA {
+  titulo: string
+  colunas: string[]
+  linhas: (string | number)[][]
+}
+
+/** Acao oferecida na tela depois da resposta (ex.: baixar relatorio). Sempre uma consulta, nunca uma alteracao. */
+export interface AcaoIA {
+  tipo: 'relatorio'
+  rotulo: string
+  url: string
+}
+
 /** Resultado padrao de qualquer ferramenta. Todo numero daqui vem do banco. */
 export interface ResultadoFerramenta {
   resumo: string
@@ -52,6 +66,9 @@ export interface ResultadoFerramenta {
   fonte: FonteConsulta
   /** Verdadeiro quando ha mais registros do que o limite devolvido. */
   truncado?: boolean
+  /** So para a tela (rankings com nomes). Nao entra no que e' enviado ao modelo. */
+  tabelas?: TabelaIA[]
+  acoes?: AcaoIA[]
 }
 
 export class ErroFerramenta extends Error {

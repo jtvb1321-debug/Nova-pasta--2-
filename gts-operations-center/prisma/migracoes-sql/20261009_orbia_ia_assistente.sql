@@ -29,6 +29,7 @@ CREATE TABLE "ia_mensagens" (
     "indicadores" JSONB,
     "referencias" JSONB,
     "recomendacoes" JSONB,
+    "extras" JSONB,
     "provedor" TEXT,
     "modelo" TEXT,
     "simulada" BOOLEAN NOT NULL DEFAULT false,
