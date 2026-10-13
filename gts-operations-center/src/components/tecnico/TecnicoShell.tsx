@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
 import { signOut } from 'next-auth/react'
 import { ClipboardList, Truck, Map, LogOut, History } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, getInitials } from '@/lib/utils'
-import { situacaoLabel } from '@/lib/jornada'
 
 // Moldura da area do tecnico (menu lateral no computador, barra no celular).
 // Compartilhada por /meus-chamados e /meu-carro para a navegacao ser a mesma.
 
-export type PaginaTecnico = 'chamados' | 'historico' | 'carro' | 'mapa' | 'ponto'
+export type PaginaTecnico = 'chamados' | 'historico' | 'carro' | 'mapa'
 
 const NAV: { id: PaginaTecnico; href: string; label: string; icon: React.ElementType }[] = [
   { id: 'chamados', href: '/meus-chamados', label: 'Meus chamados', icon: ClipboardList },
@@ -20,21 +18,6 @@ const NAV: { id: PaginaTecnico; href: string; label: string; icon: React.Element
   { id: 'carro',    href: '/meu-carro',     label: 'Meu carro / estoque', icon: Truck },
   { id: 'mapa',     href: '/mapa-inmap',    label: 'InMap / rotas', icon: Map },
 ]
-
-const SITUACAO_HOJE_CFG: Record<string, { cor: string; bg: string; dot: string }> = {
-  Trabalhado:         { cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25', dot: 'bg-emerald-600' },
-  'Ponto Incompleto': { cor: 'text-blue-700',    bg: 'bg-blue-500/10 border-blue-500/25',       dot: 'bg-blue-600' },
-  Falta:              { cor: 'text-red-700',     bg: 'bg-red-500/10 border-red-500/25',         dot: 'bg-red-600' },
-  Atestado:           { cor: 'text-purple-700',  bg: 'bg-purple-500/10 border-purple-500/25',   dot: 'bg-purple-600' },
-  Folga:              { cor: 'text-sky-700',     bg: 'bg-sky-500/10 border-sky-500/25',         dot: 'bg-sky-600' },
-  Feriado:            { cor: 'text-emerald-700', bg: 'bg-emerald-500/10 border-emerald-500/25', dot: 'bg-emerald-500' },
-}
-
-async function fetchMeuPonto() {
-  const res = await fetch('/api/ponto/meu')
-  if (!res.ok) throw new Error()
-  return res.json()
-}
 
 export function TecnicoShell({ session, ativo, children }: { session: Session; ativo: PaginaTecnico; children: React.ReactNode }) {
   const [agora, setAgora] = useState('')
@@ -46,21 +29,7 @@ export function TecnicoShell({ session, ativo, children }: { session: Session; a
     return () => clearInterval(i)
   }, [])
 
-  const { data: meuPonto } = useQuery({
-    queryKey: ['meu-ponto-painel'],
-    queryFn: fetchMeuPonto,
-    refetchInterval: 60000,
-  })
-  const situacaoHoje = meuPonto?.hoje ? situacaoLabel(meuPonto.hoje.tipoRegistro, meuPonto.hoje.horasTrabalhadas) : null
-  const situacaoCfg = situacaoHoje ? (SITUACAO_HOJE_CFG[situacaoHoje] || SITUACAO_HOJE_CFG['Ponto Incompleto']) : null
   const primeiroNome = session.user?.name?.split(' ')[0] ?? ''
-
-  const BadgeSituacao = ({ className }: { className?: string }) => situacaoCfg ? (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full border', situacaoCfg.cor, situacaoCfg.bg, className)}>
-      <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', situacaoCfg.dot)} aria-hidden />
-      {situacaoHoje}
-    </span>
-  ) : null
 
   return (
     <div className="min-h-screen bg-tema-fundo lg:flex lg:items-start">
@@ -82,7 +51,6 @@ export function TecnicoShell({ session, ativo, children }: { session: Session; a
             <p className="text-tema-apagado text-xs tabular-nums">{agora}</p>
           </div>
         </div>
-        <BadgeSituacao className="w-fit" />
 
         <nav className="flex flex-col gap-1" aria-label="Área do técnico">
           {NAV.map(n => (
@@ -122,7 +90,6 @@ export function TecnicoShell({ session, ativo, children }: { session: Session; a
                 <p className="text-tema-apagado text-xs tabular-nums">{agora}</p>
               </div>
             </div>
-            <BadgeSituacao className="flex-shrink-0" />
           </div>
           <nav aria-label="Área do técnico" className="flex items-center gap-1.5 px-3 pb-2.5 overflow-x-auto">
             {NAV.map(n => (

@@ -612,7 +612,7 @@ export const GUIAS: Guia[] = [
       'Administrador: acesso a tudo, inclusive usuários, auditoria, configurações, bonificação e exclusões; é o único que aprova/rejeita devoluções.',
       'Gestor: operação, estoque, financeiro, vendas, desempenho, auditoria e Inteligência Operacional; aprova vendas, mas não edita usuários.',
       'Operador NOC: chamados, equipes, mapas, estoque, vendas, financeiro e clientes.',
-      'Técnico: só os chamados e a equipe dele (vê apenas a própria equipe) e o ponto.',
+      'Técnico: só os chamados e a equipe dele (vê apenas a própria equipe), o histórico de O.S., o carro e as rotas.',
       'Vendedor: Dashboard, Vendas e "Minha Comissão".',
     ],
     notas: ['Se você não vê um menu, é porque o seu perfil não tem acesso. Peça ao Administrador.'],
