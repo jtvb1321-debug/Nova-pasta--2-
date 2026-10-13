@@ -42,5 +42,8 @@ fi
 
 # Garantia extra: nada de artefato local ou dado de runtime no pacote.
 rm -rf "$SAIDA/public/uploads" "$SAIDA/node_modules" "$SAIDA/dist" "$SAIDA/.next"
+# O servidor MCP do assistente roda so localmente (scripts/ia-mcp.ts) e nao e importado pelo app:
+# fora do pacote, nao precisa do SDK MCP (e das ~60 dependencias dele) em producao.
+rm -rf "$SAIDA/src/lib/ia/mcp"
 
 echo "Pacote montado em $SAIDA a partir de $COMMIT (config: $CONFIG)"
