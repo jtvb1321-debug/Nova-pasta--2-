@@ -490,7 +490,7 @@ export function TVDashboard() {
 
             </div>
 
-            {/* Agenda do dia - Alex e Bernardo / Heitor e Pedro */}
+            {/* Agenda do dia - equipes operacionais */}
             <div className="flex-1 min-h-0">
               <TVAgendaEquipes />
             </div>

@@ -4,5 +4,7 @@
 // "operacional" propria).
 export const EQUIPES_OPERACIONAIS = [
   { chave: 'alex e bernardo', label: 'Alex e Bernardo' },
-  { chave: 'heitor e pedro',  label: 'Heitor e Pedro' },
+  // Equipe 02 foi renomeada no cadastro para "Pedro e Heytor": a chave antiga nao encontrava mais a equipe.
+  { chave: 'pedro e heytor',  label: 'Pedro e Heytor' },
+  { chave: 'bernardo e pedro', label: 'Bernardo e Pedro' },
 ]
