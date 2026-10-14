@@ -198,6 +198,12 @@ async function lerSessoes(login: string, periodo: PeriodoConsulta): Promise<{ re
   return { registros: todos, truncado }
 }
 
+// Codigos do IXC. Codigo desconhecido aparece como esta, sem inventar significado.
+const TECNOLOGIA: Record<string, string> = { F: 'Fibra' }
+const AUTENTICACAO: Record<string, string> = { L: 'PPPoE (login e senha)' }
+export const rotuloTecnologia = (c: string | null) => (c ? (TECNOLOGIA[c] ?? `código ${c}`) : null)
+export const rotuloAutenticacao = (c: string | null) => (c ? (AUTENTICACAO[c] ?? `código ${c}`) : null)
+
 /** Conexao atual, a partir dos campos do proprio login no IXC (existem mesmo quando a tabela de sessoes nao e' exposta). */
 export function sessaoAtualDe(login: LoginIxc | null): Disponibilidade<SessaoAtual> {
   if (!login) return { disponivel: false, motivo: 'Este contrato não tem login de conexão cadastrado no IXC.' }
@@ -269,6 +275,7 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
     login: loginIxc ? {
       login: loginIxc.login, online: loginIxc.online, ativo: loginIxc.ativo, ip: loginIxc.ip, mac: loginIxc.mac,
       ultimaConexao: dataHoraIxc(loginIxc.ultimaConexao) ?? loginIxc.ultimaConexao, tipoConexao: loginIxc.tipoConexao, concentrador: loginIxc.concentrador,
+      ipv6: loginIxc.ipv6, interfaceConexao: loginIxc.conexao, tecnologia: rotuloTecnologia(loginIxc.tecnologia), autenticacao: rotuloAutenticacao(loginIxc.autenticacao),
     } : null,
     velocidade: {
       rotuloDownload, rotuloUpload, downloadMbps: paraMbps(rotuloDownload), uploadMbps: paraMbps(rotuloUpload),
@@ -301,11 +308,11 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
   }
 
   const sessaoAtual = sessaoAtualDe(loginIxc)
-  const equipamento = await lerEquipamento(loginIxc?.onuSerial ?? null)
+  const equipamento = await lerEquipamento(loginIxc?.id ?? null, loginIxc?.onuSerial ?? null)
   // So comenta a convencao do historico (RADIUS) quando existe historico; a sessao atual tem observacao propria.
   const observacoesFinais = consumo.disponivel ? observacoes : [OBSERVACOES_PADRAO[0]]
   if (sessaoAtual.disponivel) observacoesFinais.push(OBSERVACAO_SESSAO_ATUAL)
-  if (equipamento.disponivel) observacoesFinais.push('Status e sinal óptico da ONU são leituras da OLT (SmartOLT), no momento da consulta; não são velocidade nem qualidade da conexão do cliente.')
+  if (equipamento.disponivel) observacoesFinais.push('Sinal, temperatura e tensão da ONU são leituras da OLT registradas no IXC (aba Fibra) na data indicada; não são velocidade nem medem a estabilidade da conexão do cliente.')
 
   return {
     tipo: 'ok',

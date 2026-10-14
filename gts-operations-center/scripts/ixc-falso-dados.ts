@@ -14,9 +14,9 @@ const cliente_contrato = [
 const vd_contratos = [{ id: '11', nome: 'FIBRA 300 MEGA' }, { id: '12', nome: 'FIBRA 500 MEGA' }]
 const radgrupos = [{ id: '21', grupo: 'PLANO 300M', download: '310M', upload: '155M' }, { id: '22', grupo: 'PLANO 500M', download: '510M', upload: '255M' }]
 const radusuarios = [
-  { id: '1', login: 'teste.diag.um', id_cliente: '9001', id_contrato: '7001', id_grupo: '21', online: 'S', ativo: 'S', ip: '10.10.0.21', mac: 'AA:BB:CC:00:10:01', onu_mac: '48575443AABB0001', ultima_conexao_final: '0000-00-00 00:00:00', tempo_conectado: '67477', download_atual: '4634235783', upload_atual: '528551714', ultima_atualizacao: fmt(new Date(Date.now() - 600_000)), motivo_desconexao: '', count_desconexao: '', ultima_conexao_inicial: fmt(new Date(Date.now() - 6 * 3600_000)), tipo_conexao: 'Ethernet', conexao: 'eth 0/3/4096.153', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
-  { id: '2', login: 'teste.diag.dois.a', id_cliente: '9002', id_contrato: '7002', id_grupo: '22', online: 'N', ativo: 'S', ip: '', mac: '', onu_mac: '', ultima_conexao_final: '2026-09-01 09:30:00', tempo_conectado: '0', download_atual: '0', upload_atual: '0', ultima_atualizacao: '2026-09-01 09:30:00', motivo_desconexao: 'Lost-Carrier', count_desconexao: '3', ultima_conexao_inicial: '2026-09-01 08:00:00', tipo_conexao: 'Ethernet', conexao: '', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
-  { id: '3', login: 'teste.diag.dois.b', id_cliente: '9002', id_contrato: '7003', id_grupo: '21', online: 'S', ativo: 'S', ip: '10.10.0.23', mac: 'AA:BB:CC:00:10:03', onu_mac: 'ZTEGAABB0003', ultima_conexao_final: '0000-00-00 00:00:00', tempo_conectado: '7200', download_atual: '1073741824', upload_atual: '104857600', ultima_atualizacao: fmt(new Date(Date.now() - 300_000)), motivo_desconexao: '', count_desconexao: '1', ultima_conexao_inicial: fmt(new Date(Date.now() - 2 * 3600_000)), tipo_conexao: 'Ethernet', conexao: '', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
+  { id: '1', login: 'teste.diag.um', autenticacao: 'L', tipo_conexao_mapa: 'F', pd_ipv6: '', id_cliente: '9001', id_contrato: '7001', id_grupo: '21', online: 'S', ativo: 'S', ip: '10.10.0.21', mac: 'AA:BB:CC:00:10:01', onu_mac: '48575443AABB0001', ultima_conexao_final: '0000-00-00 00:00:00', tempo_conectado: '67477', download_atual: '4634235783', upload_atual: '528551714', ultima_atualizacao: fmt(new Date(Date.now() - 600_000)), motivo_desconexao: '', count_desconexao: '', ultima_conexao_inicial: fmt(new Date(Date.now() - 6 * 3600_000)), tipo_conexao: 'Ethernet', conexao: 'eth 0/3/4096.153', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
+  { id: '2', login: 'teste.diag.dois.a', autenticacao: 'L', tipo_conexao_mapa: 'F', pd_ipv6: '2001:db8:1::/56', id_cliente: '9002', id_contrato: '7002', id_grupo: '22', online: 'N', ativo: 'S', ip: '', mac: '', onu_mac: '', ultima_conexao_final: '2026-09-01 09:30:00', tempo_conectado: '0', download_atual: '0', upload_atual: '0', ultima_atualizacao: '2026-09-01 09:30:00', motivo_desconexao: 'Lost-Carrier', count_desconexao: '3', ultima_conexao_inicial: '2026-09-01 08:00:00', tipo_conexao: 'Ethernet', conexao: '', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
+  { id: '3', login: 'teste.diag.dois.b', autenticacao: 'L', tipo_conexao_mapa: 'F', pd_ipv6: '', id_cliente: '9002', id_contrato: '7003', id_grupo: '21', online: 'S', ativo: 'S', ip: '10.10.0.23', mac: 'AA:BB:CC:00:10:03', onu_mac: 'ZTEGAABB0003', ultima_conexao_final: '0000-00-00 00:00:00', tempo_conectado: '7200', download_atual: '1073741824', upload_atual: '104857600', ultima_atualizacao: fmt(new Date(Date.now() - 300_000)), motivo_desconexao: '', count_desconexao: '1', ultima_conexao_inicial: fmt(new Date(Date.now() - 2 * 3600_000)), tipo_conexao: 'Ethernet', conexao: '', concentrador: '1', id_caixa_ftth: '0', ftth_porta: '0' },
 ]
 
 // Sessoes (radacct) so para teste.diag.um (40 dias, deterministico) e teste.diag.dois.b (sem campos de volume).
@@ -46,7 +46,14 @@ function sessoes(): any[] {
   return out
 }
 
-export const TABELAS: Record<string, any[]> = { cliente, cliente_contrato, vd_contratos, radgrupos, radusuarios, radacct: sessoes(), cidade: [{ id: '1', nome: 'Cidade Teste' }], rad_caixa_ftth: [] }
+export // Aba "Fibra" do login (radpop_radio_cliente_fibra): sinal, temperatura, tensao, modelo. Sinal "0" = sem leitura.
+const radpop_radio_cliente_fibra = [
+  { id: '1', id_login: '1', id_contrato: '7001', onu_tipo: 'ITBS-1200R', mac: '48575443AABB0001', sinal_rx: '-21.30', sinal_tx: '-23.10', temperatura: '31.00', voltagem: '3.30', data_sinal: fmt(new Date(Date.now() - 3600_000)), causa_ultima_queda: '', distancia_onu: '' },
+  { id: '2', id_login: '2', id_contrato: '7002', onu_tipo: 'FHTT-WKE2', mac: '4648545400000002', sinal_rx: '-29.50', sinal_tx: '-24.00', temperatura: '40.50', voltagem: '3.20', data_sinal: '2026-09-01 09:00:00', causa_ultima_queda: 'Falta de energia', distancia_onu: '1850' },
+  { id: '3', id_login: '3', id_contrato: '7003', onu_tipo: 'xPON-ONT1', mac: '5A54454700000003', sinal_rx: '0', sinal_tx: '0', temperatura: '0', voltagem: '0', data_sinal: '0000-00-00 00:00:00', causa_ultima_queda: '', distancia_onu: '' },
+]
+
+const TABELAS: Record<string, any[]> = { cliente, cliente_contrato, vd_contratos, radgrupos, radusuarios, radpop_radio_cliente_fibra, radacct: sessoes(), cidade: [{ id: '1', nome: 'Cidade Teste' }], rad_caixa_ftth: [] }
 
 function filtrar(linhas: any[], qtype: string, query: string, oper: string) {
   if (!query && oper !== 'L') return linhas

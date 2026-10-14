@@ -1,3 +1,4 @@
+import { foraDaFaixaRx } from './equipamento'
 import { formatarBytes, formatarDuracao, formatarMbps } from './formato'
 import { NAO_DISPONIVEL, type DiagnosticoConexao } from './tipos'
 
@@ -38,7 +39,11 @@ export function resumoTecnico(d: DiagnosticoConexao): string[] {
   }
   if (d.equipamento.disponivel) {
     const e = d.equipamento
-    linhas.push(`ONU (leitura da OLT no SmartOLT): status ${e.status ?? NAO_DISPONIVEL}${e.sinalRxDbm != null ? `, sinal de recepção ${e.sinalRxDbm} dBm` : ''}${e.sinalTxDbm != null ? `, transmissão ${e.sinalTxDbm} dBm` : ''}. Sinal óptico não mede a velocidade nem a estabilidade da conexão.`)
+    const partes = [e.sinalRxDbm != null ? `sinal de recepção ${e.sinalRxDbm} dBm${foraDaFaixaRx(e.sinalRxDbm) ? ' (fora da faixa usual de -27 a -8 dBm)' : ''}` : 'sem leitura de sinal de recepção']
+    if (e.sinalTxDbm != null) partes.push(`transmissão ${e.sinalTxDbm} dBm`)
+    if (e.temperaturaC != null) partes.push(`temperatura ${e.temperaturaC} °C`)
+    if (e.voltagemV != null) partes.push(`tensão ${e.voltagemV} V`)
+    linhas.push(`ONU (leitura da OLT no IXC${e.leituraEm ? `, em ${e.leituraEm}` : ''}): ${partes.join(', ')}${e.causaUltimaQueda ? `. Causa da última queda: ${e.causaUltimaQueda}` : ''}. Sinal óptico não mede a velocidade nem a estabilidade da conexão.`)
   }
   linhas.push('Não foram obtidos velocidade medida, latência, jitter, perda de pacotes nem estabilidade. O consumo registrado, isoladamente, não permite concluir que a conexão esteja estável ou normal.')
   return linhas

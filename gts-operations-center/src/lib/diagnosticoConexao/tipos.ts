@@ -39,7 +39,7 @@ export interface VelocidadeContratada {
 export interface IdentificacaoConexao {
   cliente: { codigo: string; nome: string | null }
   contrato: { id: string; plano: string | null; status: string | null; internet: string | null; velocidadeStatus: string | null }
-  login: { login: string; online: boolean; ativo: boolean; ip: string | null; mac: string | null; ultimaConexao: string | null; tipoConexao: string | null; concentrador: string | null } | null
+  login: { login: string; online: boolean; ativo: boolean; ip: string | null; ipv6: string | null; mac: string | null; ultimaConexao: string | null; tipoConexao: string | null; concentrador: string | null; interfaceConexao: string | null; tecnologia: string | null; autenticacao: string | null } | null
   velocidade: VelocidadeContratada
 }
 
@@ -103,12 +103,23 @@ export interface SessaoAtual {
   desconexoes: number | null
 }
 
-/** ONU do cliente lida do SmartOLT (somente leitura). Sinal optico e status sao leituras da OLT, nao do IXC. */
+/**
+ * ONU do cliente: a aba "Fibra" do cadastro do login no IXC (sinal, temperatura, tensao, modelo) e, quando o serial
+ * casa exatamente, o status da ONU no SmartOLT. Sinal e status sao leituras da OLT, nao medidas da conexao do cliente.
+ */
 export interface EquipamentoOnu {
-  fonte: 'SmartOLT'
-  status: string | null
+  fonte: string
+  modelo: string | null
+  mac: string | null
+  /** Sinal 0 ou vazio no IXC significa "sem leitura" e vira null (nunca 0 dBm). */
   sinalRxDbm: number | null
   sinalTxDbm: number | null
+  temperaturaC: number | null
+  voltagemV: number | null
+  leituraEm: string | null
+  causaUltimaQueda: string | null
+  distanciaM: number | null
+  statusOlt: string | null
   ultimaMudancaStatus: string | null
 }
 

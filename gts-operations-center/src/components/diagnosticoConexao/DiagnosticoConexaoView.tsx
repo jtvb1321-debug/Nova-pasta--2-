@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { FileDown, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
+import { foraDaFaixaRx, FAIXA_RX_DBM } from '@/lib/diagnosticoConexao/equipamento'
 import { formatarBytes, formatarDuracao, formatarMbps } from '@/lib/diagnosticoConexao/formato'
 import { montarConteudoRelatorio, renderizarPdf, type EvidenciaManual } from '@/lib/diagnosticoConexao/relatorio'
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
@@ -33,9 +34,9 @@ function Area({ numero, titulo, children }: { numero: number; titulo: string; ch
   )
 }
 
-function Cartao({ rotulo, valor, detalhe, indisponivel }: { rotulo: string; valor: string; detalhe: string; indisponivel?: boolean }) {
+function Cartao({ rotulo, valor, detalhe, indisponivel, alerta }: { rotulo: string; valor: string; detalhe: string; indisponivel?: boolean; alerta?: boolean }) {
   return (
-    <div className="rounded-xl border border-tema-linha p-4">
+    <div className={cn('rounded-xl border p-4', alerta ? 'border-amber-500/50 bg-amber-500/[0.06]' : 'border-tema-linha')}>
       <p className="text-xs font-semibold text-tema-suave">{rotulo}</p>
       <p className={cn('mt-1 tabular-nums', indisponivel ? 'text-sm font-medium text-tema-apagado' : 'text-2xl font-bold text-tema-tinta')}>{valor}</p>
       <p className="mt-1 text-[11px] leading-snug text-tema-apagado">{detalhe}</p>
@@ -271,7 +272,9 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
               ['Cliente', ident.cliente.nome], ['Código no IXC', ident.cliente.codigo], ['Contrato', ident.contrato.id],
               ['Plano contratado', ident.contrato.plano], ['Situação do contrato', ident.contrato.status], ['Situação da internet', ident.contrato.internet],
               ['Login de conexão', ident.login?.login], ['Conectado agora', ident.login ? (ident.login.online ? 'Sim' : 'Não') : null], ['Última conexão', ident.login?.ultimaConexao],
-              ['Tipo de conexão', ident.login?.tipoConexao], ['Concentrador', ident.login?.concentrador], ['IP atual', ident.login?.ip],
+              ['Tecnologia', ident.login?.tecnologia], ['Tipo de autenticação', ident.login?.autenticacao], ['Concentrador', ident.login?.concentrador],
+              ['IPv4', ident.login?.ip], ['IPv6', ident.login?.ipv6], ['MAC', ident.login?.mac],
+              ['Interface de conexão', ident.login?.interfaceConexao], ['Tipo de conexão', ident.login?.tipoConexao],
             ] as [string, string | null | undefined][]).map(([k, v]) => (
               <div key={k}><dt className="text-xs text-tema-apagado">{k}</dt><dd className={cn('font-medium', v ? 'text-tema-tinta' : 'text-tema-apagado')}>{v || NAO_DISPONIVEL}</dd></div>
             ))}
@@ -292,7 +295,13 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
               <Cartao rotulo={sa.disponivel && !sa.online ? 'Situação da conexão' : 'Conectado há'} valor={!sa.disponivel ? NAO_DISPONIVEL : !sa.online ? 'Desconectado' : sa.tempoConectadoSegundos != null ? formatarDuracao(sa.tempoConectadoSegundos) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || (sa.online && sa.tempoConectadoSegundos == null)} detalhe={sa.disponivel ? (sa.online ? (sa.inicio ? `Desde ${sa.inicio}` : 'Conexão atual, segundo o IXC') : (sa.ultimaDesconexao ? `Última desconexão em ${sa.ultimaDesconexao}` : 'Sem conexão no momento da consulta')) : sa.motivo} />
               <Cartao rotulo={sa.disponivel && !sa.online ? 'Download da última sessão' : 'Download da sessão atual'} valor={sa.disponivel && sa.downloadBytes != null ? formatarBytes(sa.downloadBytes) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || sa.downloadBytes == null} detalhe="Volume desde o início da conexão, não velocidade" />
               <Cartao rotulo={sa.disponivel && !sa.online ? 'Upload da última sessão' : 'Upload da sessão atual'} valor={sa.disponivel && sa.uploadBytes != null ? formatarBytes(sa.uploadBytes) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || sa.uploadBytes == null} detalhe="Volume desde o início da conexão, não velocidade" />
-              <Cartao rotulo="Sinal óptico da ONU (RX)" valor={eq.disponivel && eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm` : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.sinalRxDbm == null} detalhe={eq.disponivel ? `Leitura da OLT (SmartOLT) · ONU ${eq.status ?? 'sem status'}` : eq.motivo} />
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Cartao rotulo="Sinal de recepção da ONU (RX)" valor={eq.disponivel && eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm` : eq.disponivel ? 'Sem leitura' : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.sinalRxDbm == null} alerta={eq.disponivel && foraDaFaixaRx(eq.sinalRxDbm)}
+                detalhe={eq.disponivel ? (foraDaFaixaRx(eq.sinalRxDbm) ? `Fora da faixa usual (${FAIXA_RX_DBM.min} a ${FAIXA_RX_DBM.max} dBm) · leitura da OLT` : `Leitura da OLT${eq.leituraEm ? ` em ${eq.leituraEm}` : ''}`) : eq.motivo} />
+              <Cartao rotulo="Sinal de transmissão da ONU (TX)" valor={eq.disponivel && eq.sinalTxDbm != null ? `${eq.sinalTxDbm} dBm` : eq.disponivel ? 'Sem leitura' : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.sinalTxDbm == null} detalhe="Leitura da OLT (aba Fibra do IXC)" />
+              <Cartao rotulo="Temperatura da ONU" valor={eq.disponivel && eq.temperaturaC != null ? `${eq.temperaturaC.toLocaleString('pt-BR')} °C` : eq.disponivel ? 'Sem leitura' : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.temperaturaC == null} detalhe="Leitura da OLT (aba Fibra do IXC)" />
+              <Cartao rotulo="Tensão da ONU" valor={eq.disponivel && eq.voltagemV != null ? `${eq.voltagemV.toLocaleString('pt-BR')} V` : eq.disponivel ? 'Sem leitura' : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.voltagemV == null} detalhe="Leitura da OLT (aba Fibra do IXC)" />
             </div>
             <p className="mt-3 text-xs text-tema-apagado">Não obtidos pelo IXC nesta consulta: {diag.naoMedidos.join(', ').toLowerCase()}. Eles não são estimados a partir do consumo.</p>
           </Area>
@@ -316,6 +325,21 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
                     <div key={k}><dt className="text-xs text-tema-apagado">{k}</dt><dd className={cn('font-medium', v ? 'text-tema-tinta' : 'text-tema-apagado')}>{v || NAO_DISPONIVEL}</dd></div>
                   ))}
                 </dl>
+              </div>
+            )}
+
+            {eq.disponivel && (
+              <div className="mt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-tema-suave">Equipamento do cliente (ONU)</p>
+                <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                  {([
+                    ['Modelo da ONU', eq.modelo], ['MAC / serial da ONU', eq.mac], ['Data da leitura', eq.leituraEm],
+                    ['Causa da última queda', eq.causaUltimaQueda], ['Distância da ONU', eq.distanciaM != null ? `${eq.distanciaM} m` : null], ['Status no SmartOLT', eq.statusOlt],
+                  ] as [string, string | null | undefined][]).map(([k, v]) => (
+                    <div key={k}><dt className="text-xs text-tema-apagado">{k}</dt><dd className={cn('font-medium', v ? 'text-tema-tinta' : 'text-tema-apagado')}>{v || NAO_DISPONIVEL}</dd></div>
+                  ))}
+                </dl>
+                <p className="mt-1 text-[11px] text-tema-apagado">Fonte: {eq.fonte}. Sinal, temperatura e tensão são leituras da OLT, não medem a velocidade nem a estabilidade da conexão do cliente.</p>
               </div>
             )}
 

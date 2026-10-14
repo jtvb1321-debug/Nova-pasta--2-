@@ -9,7 +9,7 @@ import { responderPergunta } from '@/lib/ia/orquestrador'
 import { zerarLimites } from '@/lib/ia/limites'
 import { escolherFerramentas, termoConexao } from '@/lib/ia/provedores/mock'
 import { MOTIVO_SEM_HISTORICO, OBSERVACAO_SESSAO_ATUAL, agregarSessoes, buscarClientes, consultarConexao, resolverPeriodo, sessaoAtualDe } from '@/lib/diagnosticoConexao/servico'
-import { montarEquipamento, variantesDeSerial } from '@/lib/diagnosticoConexao/equipamento'
+import { casarOnuSmartOlt, foraDaFaixaRx, leitura, mapearFibra, montarEquipamento, variantesDeSerial } from '@/lib/diagnosticoConexao/equipamento'
 import { formatarBytes, formatarMbps, octetos, paraMbps } from '@/lib/diagnosticoConexao/formato'
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { MEDICOES_SUGERIDAS, TEXTO_VDI, montarConteudoRelatorio } from '@/lib/diagnosticoConexao/relatorio'
@@ -318,21 +318,74 @@ describe('IXC sem historico de sessoes: conexao atual real (campos do cadastro d
   })
 })
 
-describe('ONU no SmartOLT: so casa por serial exato', () => {
+describe('ONU: aba Fibra do IXC (sinal, temperatura, tensao) e SmartOLT so por serial exato', () => {
   const onu = (sn: string, id = sn) => ({ unique_external_id: id, sn, olt_id: '1', board: '1', port: '1', onu: '1', zone_id: '1', name: 'x', status: 'Online', last_status_change: '2026-10-13 10:00:00' })
   const sinal = (id: string) => ({ unique_external_id: id, sn: '', olt_id: '1', board: '1', port: '1', onu: '1', zone_id: '1', name: 'x', signal_1310: '-21.50 dBm', signal: 'Very good', signal_1490: '-19.10 dBm' })
+  it('leitura 0 ou vazia e "sem leitura" (nunca 0 dBm)', () => {
+    assert.equal(leitura('-21.30'), -21.3); assert.equal(leitura('0'), null); assert.equal(leitura('0.00'), null); assert.equal(leitura(''), null); assert.equal(leitura(null), null); assert.equal(leitura('x'), null)
+    const f = mapearFibra({ onu_tipo: 'ITBS-1200R', mac: 'AA', sinal_rx: '0', sinal_tx: '-23.10', temperatura: '31.00', voltagem: '3.30', data_sinal: '2026-10-14 09:08:24', causa_ultima_queda: '' })!
+    assert.equal(f.sinalRxDbm, null); assert.equal(f.sinalTxDbm, -23.1); assert.equal(f.temperaturaC, 31); assert.equal(f.leituraEm, '14/10/2026 09:08'); assert.equal(f.causaUltimaQueda, null)
+    assert.equal(mapearFibra(undefined), null)
+  })
+  it('faixa usual de recepcao: avisa so fora de -27 a -8 dBm', () => {
+    assert.equal(foraDaFaixaRx(-21.3), false); assert.equal(foraDaFaixaRx(-29.5), true); assert.equal(foraDaFaixaRx(-5), true); assert.equal(foraDaFaixaRx(null), false)
+  })
   it('serial em hexadecimal casa com o serial em texto (HWTC...)', () => {
     assert.ok(variantesDeSerial('48575443AABB0001').includes('HWTCAABB0001')); assert.ok(variantesDeSerial('HWTCAABB0001').includes('48575443AABB0001'))
     assert.deepEqual(variantesDeSerial('abc'), []); assert.deepEqual(variantesDeSerial(null), [])
   })
-  it('encontra a ONU certa e mostra status e sinal (leitura da OLT)', () => {
-    const r = montarEquipamento('48575443AABB0001', [onu('HWTCAABB0002', 'b'), onu('HWTCAABB0001', 'a')], [sinal('a'), sinal('b')])
-    assert.ok(r.disponivel); if (r.disponivel) { assert.equal(r.status, 'Online'); assert.equal(r.sinalRxDbm, -21.5); assert.equal(r.sinalTxDbm, -19.1) }
+  it('SmartOLT: so ONU com o mesmo serial; sem serial, sem igual ou duplicada = nada (nunca chuta pelo nome)', () => {
+    const r = casarOnuSmartOlt('48575443AABB0001', [onu('HWTCAABB0002', 'b'), onu('HWTCAABB0001', 'a')], [sinal('a'), sinal('b')])
+    assert.ok(r); assert.equal(r!.status, 'Online'); assert.equal(r!.rxDbm, -21.5); assert.equal(r!.txDbm, -19.1)
+    assert.equal(casarOnuSmartOlt(null, [onu('HWTCAABB0001')], []), null)
+    assert.equal(casarOnuSmartOlt('48575443AABB0009', [onu('HWTCAABB0001')], []), null)
+    assert.equal(casarOnuSmartOlt('HWTCAABB0001', [onu('HWTCAABB0001', 'a'), onu('HWTCAABB0001', 'b')], []), null)
   })
-  it('sem serial, sem ONU igual ou com duplicidade: indisponivel (nunca chuta pelo nome)', () => {
-    assert.equal(montarEquipamento(null, [onu('HWTCAABB0001')], []).disponivel, false)
-    assert.equal(montarEquipamento('48575443AABB0009', [onu('HWTCAABB0001')], []).disponivel, false)
-    assert.equal(montarEquipamento('HWTCAABB0001', [onu('HWTCAABB0001', 'a'), onu('HWTCAABB0001', 'b')], []).disponivel, false)
+  it('montar: IXC e o preferido; SmartOLT so completa o que falta; sem nenhum = indisponivel', () => {
+    const fibra = mapearFibra({ onu_tipo: 'ITBS-1200R', mac: 'AA', sinal_rx: '0', sinal_tx: '-23.10', temperatura: '31', voltagem: '3.3', data_sinal: '2026-10-14 09:08:24' })
+    const m = montarEquipamento(fibra, { status: 'Online', ultimaMudancaStatus: null, rxDbm: -20.1, txDbm: -19 })
+    assert.ok(m.disponivel); if (m.disponivel) { assert.equal(m.sinalRxDbm, -20.1); assert.equal(m.sinalTxDbm, -23.1); assert.equal(m.statusOlt, 'Online'); assert.match(m.fonte, /IXC.*SmartOLT/) }
+    const so = montarEquipamento(fibra, null); assert.ok(so.disponivel); if (so.disponivel) { assert.equal(so.sinalRxDbm, null); assert.equal(so.fonte, 'IXC (aba Fibra)') }
+    assert.equal(montarEquipamento(null, null).disponivel, false)
+  })
+  it('consulta real (IXC falso): cabecalho do login e aba Fibra completos', async () => {
+    simularIxc({ radacctVazio: true })
+    const r = await consultarConexao({ codigoCliente: '9001', periodo: '7d' })
+    assert.equal(r.tipo, 'ok'); if (r.tipo !== 'ok') return
+    const l = r.diagnostico.identificacao.login!
+    assert.equal(l.tecnologia, 'Fibra'); assert.equal(l.autenticacao, 'PPPoE (login e senha)'); assert.equal(l.ip, '10.10.0.21'); assert.equal(l.ipv6, null); assert.ok(l.interfaceConexao === null || typeof l.interfaceConexao === 'string')
+    const e = r.diagnostico.equipamento; assert.ok(e.disponivel); if (!e.disponivel) return
+    assert.equal(e.modelo, 'ITBS-1200R'); assert.equal(e.sinalRxDbm, -21.3); assert.equal(e.sinalTxDbm, -23.1); assert.equal(e.temperaturaC, 31); assert.equal(e.voltagemV, 3.3); assert.equal(e.fonte, 'IXC (aba Fibra)')
+  })
+  it('sinal fora da faixa e causa da ultima queda aparecem; "0" do IXC vira sem leitura', async () => {
+    simularIxc({ radacctVazio: true })
+    const a = await consultarConexao({ codigoCliente: '9002', contratoId: '7002' }); if (a.tipo !== 'ok') throw new Error('x')
+    const ea = a.diagnostico.equipamento; assert.ok(ea.disponivel); if (ea.disponivel) { assert.equal(ea.sinalRxDbm, -29.5); assert.equal(ea.causaUltimaQueda, 'Falta de energia'); assert.equal(ea.distanciaM, 1850) }
+    assert.match(resumoTecnico(a.diagnostico).join(' '), /fora da faixa usual/); assert.match(resumoTecnico(a.diagnostico).join(' '), /Falta de energia/)
+    const b = await consultarConexao({ codigoCliente: '9002', contratoId: '7003' }); if (b.tipo !== 'ok') throw new Error('x')
+    const eb = b.diagnostico.equipamento; assert.ok(eb.disponivel); if (eb.disponivel) { assert.equal(eb.sinalRxDbm, null); assert.equal(eb.temperaturaC, null) }
+    assert.doesNotMatch(resumoTecnico(b.diagnostico).join(' '), /0 dBm/)
+  })
+  it('sem registro na aba Fibra: ONU indisponivel com motivo (e o resto da consulta segue)', async () => {
+    simularIxc({ radacctVazio: true, semTabela: ['radpop_radio_cliente_fibra'] })
+    const r = await consultarConexao({ codigoCliente: '9001', periodo: '7d' }); if (r.tipo !== 'ok') throw new Error('x')
+    assert.equal(r.diagnostico.equipamento.disponivel, false); assert.ok(r.diagnostico.sessaoAtual.disponivel)
+  })
+  it('PDF: secao do equipamento com sinal, temperatura, tensao e aviso de faixa; identificacao como a aba Diagnostico', async () => {
+    simularIxc({ radacctVazio: true })
+    const r = await consultarConexao({ codigoCliente: '9002', contratoId: '7002' }); if (r.tipo !== 'ok') throw new Error('x')
+    const c = montarConteudoRelatorio(r.diagnostico, { emitidoPor: 'Usuario Teste', emitidoEm: new Date(), vdi: false, evidencias: [] })
+    const eq = c.secoes.find(x => /Equipamento do cliente/.test(x.titulo)); assert.ok(eq)
+    const txt = JSON.stringify(eq); assert.match(txt, /-29.5 dBm/); assert.match(txt, /fora da faixa usual/); assert.match(txt, /40.5 °C/); assert.match(txt, /Falta de energia/)
+    const idn = JSON.stringify(c.secoes[0]); for (const k of ['Tecnologia', 'Tipo de autenticação', 'Concentrador', 'IPv4', 'IPv6', 'MAC', 'Interface de conexão']) assert.match(idn, new RegExp(k))
+    assert.match(idn, /2001:db8:1::\/56/)
+  })
+  it('assistente: indicadores de sinal e temperatura da ONU, alerta quando fora da faixa', async () => {
+    simularIxc({ radacctVazio: true })
+    const x = (await executarFerramenta(D.ctxDe('ADMIN'), 'diagnostico_conexao', { clienteId: '9002', contratoId: '7002', periodo: '7d' })).resultado!
+    const rx = x.indicadores.find(i => i.rotulo === 'Sinal óptico da ONU (RX)'); assert.ok(rx); assert.equal(rx!.tom, 'alerta')
+    assert.ok(x.indicadores.some(i => i.rotulo === 'Temperatura da ONU'))
+    assert.doesNotMatch(resultadoParaModelo(x), /teste\.diag|CLIENTE TESTE|2001:db8/i)
   })
 })
 

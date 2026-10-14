@@ -1,3 +1,4 @@
+import { foraDaFaixaRx, FAIXA_RX_DBM } from './equipamento'
 import { formatarBytes, formatarDuracao, formatarMbps } from './formato'
 import { NAO_DISPONIVEL, type DiagnosticoConexao } from './tipos'
 
@@ -71,6 +72,13 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
       ['Login de conexão', ou(id.login?.login)],
       ['Conectado no momento da consulta', id.login ? (id.login.online ? 'Sim' : 'Não') : NAO_DISPONIVEL],
       ['Última conexão registrada', ou(id.login?.ultimaConexao)],
+      ['Tecnologia', ou(id.login?.tecnologia)],
+      ['Tipo de autenticação', ou(id.login?.autenticacao)],
+      ['Concentrador', ou(id.login?.concentrador)],
+      ['Interface de conexão', ou(id.login?.interfaceConexao)],
+      ['IPv4', ou(id.login?.ip)],
+      ['IPv6', ou(id.login?.ipv6)],
+      ['MAC', ou(id.login?.mac)],
     ],
   })
 
@@ -153,16 +161,23 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
   const eq = d.equipamento
   secoes.push(eq.disponivel
     ? {
-      titulo: t('Equipamento do cliente (ONU, lido do SmartOLT)'),
+      titulo: t('Equipamento do cliente (ONU)'),
       pares: [
-        ['Status da ONU', ou(eq.status)],
-        ['Sinal de recepção (RX)', eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm` : NAO_DISPONIVEL],
-        ['Sinal de transmissão (TX)', eq.sinalTxDbm != null ? `${eq.sinalTxDbm} dBm` : NAO_DISPONIVEL],
-        ['Última mudança de status', ou(eq.ultimaMudancaStatus)],
+        ['Modelo da ONU', ou(eq.modelo)],
+        ['MAC / serial da ONU', ou(eq.mac)],
+        ['Sinal de recepção (RX)', eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm${foraDaFaixaRx(eq.sinalRxDbm) ? ` (fora da faixa usual de ${FAIXA_RX_DBM.min} a ${FAIXA_RX_DBM.max} dBm)` : ''}` : 'Sem leitura'],
+        ['Sinal de transmissão (TX)', eq.sinalTxDbm != null ? `${eq.sinalTxDbm} dBm` : 'Sem leitura'],
+        ['Temperatura da ONU', eq.temperaturaC != null ? `${eq.temperaturaC} °C` : 'Sem leitura'],
+        ['Tensão da ONU', eq.voltagemV != null ? `${eq.voltagemV} V` : 'Sem leitura'],
+        ['Data da leitura', ou(eq.leituraEm)],
+        ['Causa da última queda', ou(eq.causaUltimaQueda)],
+        ...(eq.distanciaM != null ? [['Distância da ONU', `${eq.distanciaM} m`] as [string, string]] : []),
+        ...(eq.statusOlt ? [['Status da ONU no SmartOLT', eq.statusOlt] as [string, string]] : []),
+        ['Fonte', eq.fonte],
       ],
-      paragrafos: ['Leituras da OLT no momento da consulta. Sinal óptico e status não medem a velocidade nem a estabilidade da conexão do cliente.'],
+      paragrafos: ['Leituras da OLT registradas no IXC (aba Fibra) na data indicada. Sinal, temperatura e tensão não medem a velocidade nem a estabilidade da conexão do cliente. "Sem leitura" significa que o IXC não tem valor registrado (nunca 0).'],
     }
-    : { titulo: t('Equipamento do cliente (ONU, lido do SmartOLT)'), paragrafos: [`${NAO_DISPONIVEL}. ${eq.motivo}`] })
+    : { titulo: t('Equipamento do cliente (ONU)'), paragrafos: [`${NAO_DISPONIVEL}. ${eq.motivo}`] })
 
   secoes.push({
     titulo: t('Indicadores não medidos'),

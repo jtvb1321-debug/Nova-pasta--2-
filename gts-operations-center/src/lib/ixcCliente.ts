@@ -33,6 +33,8 @@ export interface SessaoAtualIxc {
 }
 
 export interface LoginIxc {
+  /** Id do login no IXC (liga o login a aba Fibra). */
+  id: string | null
   login: string
   online: boolean
   ativo: boolean
@@ -49,6 +51,11 @@ export interface LoginIxc {
   sessaoAtual: SessaoAtualIxc
   /** Serial/MAC da ONU como cadastrado no IXC (para casar com o SmartOLT). */
   onuSerial: string | null
+  ipv6: string | null
+  /** Como o IXC grava: "L" = login e senha (PPPoE). */
+  autenticacao: string | null
+  /** Como o IXC grava: "F" = fibra. */
+  tecnologia: string | null
 }
 
 export interface ContratoIxc {
@@ -101,6 +108,7 @@ const numero = (v: any): number | null => {
 export function mapearLogin(reg: any, planos: Map<string, PlanoIxc | null>, caixas: Map<string, string | null> = new Map()): LoginIxc {
   const idCaixa = texto(reg.id_caixa_ftth)
   return {
+    id: texto(reg.id),
     login: String(reg.login ?? ''),
     online: reg.online === 'S',
     ativo: reg.ativo === 'S',
@@ -125,6 +133,9 @@ export function mapearLogin(reg: any, planos: Map<string, PlanoIxc | null>, caix
       desconexoes: numero(reg.count_desconexao),
     },
     onuSerial: texto(reg.onu_mac),
+    ipv6: texto(reg.pd_ipv6),
+    autenticacao: texto(reg.autenticacao),
+    tecnologia: texto(reg.tipo_conexao_mapa),
   }
 }
 
