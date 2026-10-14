@@ -1,6 +1,7 @@
 # Backup do banco de producao ANTES da migracao da Inteligencia Operacional (1.0.40).
 # Le a conexao do .env de producao, sem mostrar a senha na tela, e grava o backup em backups-gtscenter.
 # Uso (PowerShell):  powershell -ExecutionPolicy Bypass -File C:\Users\GTSNET\Projetos\wt-orbia-ai\deploy\discloud-1.0.40\backup-producao.ps1
+param([string]$Nome = 'backup-pre-ia-20261013.dump')
 $ErrorActionPreference = 'Stop'
 
 $envFile = 'C:\Users\GTSNET\Projetos\Nova-pasta--2-\gts-operations-center\.env'
@@ -22,7 +23,7 @@ $url = $url -replace '\?.*$', ''
 $url = $url -replace ':6543/', ':5432/'
 
 $pastaBackup = 'C:\Users\GTSNET\Projetos\backups-gtscenter'
-$saida = Join-Path $pastaBackup 'backup-pre-ia-20261013.dump'
+$saida = Join-Path $pastaBackup $Nome
 $pgDump = 'C:\Program Files\PostgreSQL\17\bin\pg_dump.exe'
 if (-not (Test-Path $pgDump)) { throw "Nao achei $pgDump" }
 if (Test-Path $saida) { throw "Ja existe $saida - apague ou renomeie antes de repetir" }
