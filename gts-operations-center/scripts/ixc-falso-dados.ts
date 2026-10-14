@@ -5,11 +5,29 @@ const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.ge
 const cliente = [
   { id: '9001', razao: 'CLIENTE TESTE IA DIAGNOSTICO UM', fantasia: '', cidade: '1', telefone_celular: '(86) 90000-0001', fone: '' },
   { id: '9002', razao: 'CLIENTE TESTE IA DIAGNOSTICO DOIS', fantasia: 'TESTE DOIS', cidade: '1', telefone_celular: '(86) 90000-0002', fone: '' },
+  { id: '9003', razao: 'CLIENTE TESTE CANCELADO TRES', fantasia: '', cidade: '1', telefone_celular: '(86) 90000-0003', fone: '' },
+  { id: '9004', razao: 'CLIENTE TESTE CANCELADO QUATRO', fantasia: '', cidade: '1', telefone_celular: '(86) 90000-0004', fone: '' },
 ]
+// Contratos CANCELADOS no mes atual (relatorio "Cancelamento de nao ativo"), de clientes proprios para nao misturar com o diagnostico.
+const agora = new Date()
+const mesAtual = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`
+const d = (dia: number) => `${mesAtual}-${pad(dia)}`
+const cancelado = (id: string, cliente: string, extra: Record<string, string>) => ({
+  id, id_cliente: cliente, id_vd_contrato: '11', status: 'I', status_internet: 'D', status_velocidade: 'N', contrato: 'FIBRA 300 MEGA',
+  data_ativacao: '2024-01-10', data_cancelamento: d(25), obs_cancelamento: 'Motivo do Cancelamento: Inadimplência', ...extra,
+})
+const cancelados = [
+  cancelado('7201', '9003', { dt_ult_bloq_manual: d(5) }),                                              // bloqueado ha 20 dias
+  cancelado('7202', '9004', { dt_ult_bloq_auto: d(10), dt_ult_desbloq_auto: d(12) }),                    // voltou a ficar ativo
+  cancelado('7203', '9003', { dt_ult_bloq_manual: d(24) }),                                             // bloqueio colado no cancelamento
+  cancelado('7204', '9004', { data_inicial_suspensao: d(1), obs_cancelamento: 'Motivo do Cancelamento: Mudou de cidade' }), // suspenso
+]
+
 const cliente_contrato = [
   { id: '7001', id_cliente: '9001', id_vd_contrato: '11', status: 'A', status_internet: 'A', status_velocidade: 'N', contrato: 'FIBRA 300 MEGA' },
   { id: '7002', id_cliente: '9002', id_vd_contrato: '12', status: 'A', status_internet: 'A', status_velocidade: 'N', contrato: 'FIBRA 500 MEGA' },
   { id: '7003', id_cliente: '9002', id_vd_contrato: '11', status: 'A', status_internet: 'CA', status_velocidade: 'R', contrato: 'FIBRA 300 MEGA' },
+  ...cancelados,
 ]
 const vd_contratos = [{ id: '11', nome: 'FIBRA 300 MEGA' }, { id: '12', nome: 'FIBRA 500 MEGA' }]
 const radgrupos = [{ id: '21', grupo: 'PLANO 300M', download: '310M', upload: '155M' }, { id: '22', grupo: 'PLANO 500M', download: '510M', upload: '255M' }]

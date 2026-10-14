@@ -1,4 +1,5 @@
 import { listarIXC } from './ixc'
+import { classificarEstadoAnterior, MIN_DIAS_PADRAO, resumir, type LinhaNaoAtivo, type ResumoNaoAtivo } from './cancelamentoNaoAtivo'
 
 // Consultas de relatorio direto na API do IXC (sem gravar nada no nosso
 // banco) - diferente de ixcSync.ts, que sincroniza clientes ATIVOS para a
@@ -16,6 +17,15 @@ export interface RegistroContratoIxc {
   obs_cancelamento: string
   contrato?: string
   descricao_aux_plano_venda?: string
+  // Datas de bloqueio/suspensao (usadas so pelo relatorio de cancelamento de nao ativo).
+  dt_ult_bloq_auto?: string
+  dt_ult_bloq_manual?: string
+  dt_ult_desbloq_auto?: string
+  dt_ult_desbloq_manual?: string
+  dt_ult_des_bloq_conf?: string
+  data_inicial_suspensao?: string
+  data_final_suspensao?: string
+  data_negativacao?: string
 }
 
 export interface ClienteCanceladoIxc {
@@ -101,8 +111,11 @@ export async function buscarContratosCanceladosBrutos(ano: number, mes: number):
 export { extrairMotivoResumo }
 
 export async function buscarContratosCanceladosPorMes(ano: number, mes: number): Promise<ClienteCanceladoIxc[]> {
-  const doMes = await buscarContratosCanceladosBrutos(ano, mes)
+  return enriquecerContratos(await buscarContratosCanceladosBrutos(ano, mes))
+}
 
+/** Busca o cliente (nome, cidade, telefone) de cada contrato. Compartilhado pelos relatorios de cancelamento. */
+export async function enriquecerContratos(doMes: RegistroContratoIxc[]): Promise<ClienteCanceladoIxc[]> {
   if (doMes.length === 0) return []
 
   const idsUnicos = [...new Set(doMes.map(c => String(c.id_cliente)))]
@@ -137,4 +150,44 @@ export async function buscarContratosCanceladosPorMes(ano: number, mes: number):
       }
     })
     .sort((a, b) => b.dataCancelamento.localeCompare(a.dataCancelamento))
+}
+
+export interface RelatorioNaoAtivo {
+  ano: number
+  mes: number
+  minDias: number
+  resumo: ResumoNaoAtivo
+  clientes: LinhaNaoAtivo[]
+}
+
+/**
+ * Cancelamento de nao ativo: dos contratos cancelados no mes, os que ja estavam suspensos ou bloqueados (ver cancelamentoNaoAtivo.ts).
+ * O cliente so e' consultado para os nao ativos (os demais entram so na contagem).
+ */
+export async function buscarCanceladosNaoAtivos(ano: number, mes: number, minDias = MIN_DIAS_PADRAO): Promise<RelatorioNaoAtivo> {
+  const brutos = await buscarContratosCanceladosBrutos(ano, mes)
+  const classificados = brutos.map(c => ({ c, estado: classificarEstadoAnterior(c, minDias) }))
+  const naoAtivos = classificados.filter(x => x.estado.naoAtivo)
+  const enriquecidos = await enriquecerContratos(naoAtivos.map(x => x.c))
+  const porContrato = new Map(enriquecidos.map(e => [e.contratoId, e]))
+
+  const clientes: LinhaNaoAtivo[] = naoAtivos.map(({ c, estado }) => {
+    const e = porContrato.get(String(c.id))
+    return {
+      contratoId: String(c.id),
+      clienteNome: e?.clienteNome ?? `Cliente ${c.id_cliente}`,
+      cidade: e?.cidade ?? null,
+      telefone: e?.telefone ?? null,
+      plano: e?.plano ?? null,
+      dataAtivacao: e?.dataAtivacao ?? null,
+      dataCancelamento: c.data_cancelamento,
+      situacao: estado.situacao!,
+      desde: estado.desde!,
+      diasAteCancelar: estado.diasAteCancelar!,
+      negativadoEm: estado.negativadoEm,
+      motivoResumo: e?.motivoResumo ?? null,
+    }
+  }).sort((a, b) => b.diasAteCancelar - a.diasAteCancelar)
+
+  return { ano, mes, minDias, resumo: resumir(brutos.length, clientes), clientes }
 }

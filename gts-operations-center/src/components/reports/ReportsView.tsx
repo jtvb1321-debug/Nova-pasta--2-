@@ -5,15 +5,17 @@ import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3, FileText, Download, Calendar,
   Users, Package, ClipboardList, TrendingUp,
-  Loader2, CheckCircle, CalendarDays, RefreshCw, UserX
+  Loader2, CheckCircle, CalendarDays, RefreshCw, UserX, UserMinus
 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { CampoTexto, CampoNumero, CampoPercentual, BotaoRemoverLinha, atualizarItem, removerItem } from './CamposEditaveis'
 import { calcularDesempenhoEquipes, totalDesempenho, type LinhaEquipe } from './desempenhoEquipes'
 import { IndiceAvaliacao } from './IndiceAvaliacao'
+import { CanceladosNaoAtivosPreview } from './CanceladosNaoAtivosPreview'
+import type { DadosRelatorioNaoAtivo } from '@/lib/cancelamentoNaoAtivoPdf'
 
-type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados'
+type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados' | 'cancelados_nao_ativos'
 
 const RELATORIOS = [
   { id: 'chamados_qualidade' as TipoRelatorio, title: 'Chamados & Qualidade', description: 'Historico de atendimentos, reincidencia e conformidade de SLA no mesmo periodo', icon: ClipboardList, cor: 'text-blue-700 bg-blue-500/10' },
@@ -21,6 +23,7 @@ const RELATORIOS = [
   { id: 'comercial'     as TipoRelatorio, title: 'Comercial',     description: 'Vendas, comissoes e ranking de vendedores',    icon: TrendingUp,    cor: 'text-emerald-700 bg-emerald-500/10' },
   { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-700 bg-orange-500/10' },
   { id: 'cancelados'    as TipoRelatorio, title: 'Cancelados (IXC)', description: 'Clientes cancelados no mes, consultado direto na API do IXC', icon: UserX, cor: 'text-red-700 bg-red-500/10' },
+  { id: 'cancelados_nao_ativos' as TipoRelatorio, title: 'Cancelamento de não ativo', description: 'Cancelados que já estavam suspensos ou bloqueados, direto do IXC', icon: UserMinus, cor: 'text-amber-700 bg-amber-500/10' },
 ]
 
 async function fetchEquipes() {
@@ -79,6 +82,11 @@ export function ReportsView() {
   const [dadosDiario, setDadosDiario] = useState<any>(null)
   const [carregandoDiario, setCarregandoDiario] = useState(false)
 
+  const [mesNaoAtivos, setMesNaoAtivos] = useState(mesAtualISO())
+  const [minDiasNaoAtivos, setMinDiasNaoAtivos] = useState('2')
+  const [dadosNaoAtivos, setDadosNaoAtivos] = useState<(DadosRelatorioNaoAtivo & { geradoPor?: string }) | null>(null)
+  const [carregandoNaoAtivos, setCarregandoNaoAtivos] = useState(false)
+
   const [dadosCancelados, setDadosCancelados] = useState<any>(null)
   const [carregandoCancelados, setCarregandoCancelados] = useState(false)
 
@@ -125,6 +133,21 @@ export function ReportsView() {
       toast({ title: err.message || 'Erro ao carregar cancelamentos do IXC', variant: 'destructive' })
     } finally {
       setCarregandoCancelados(false)
+    }
+  }
+
+  async function carregarNaoAtivos() {
+    setCarregandoNaoAtivos(true)
+    try {
+      const [ano, mes] = mesNaoAtivos.split('-')
+      const res = await fetch(`/api/reports/cancelados-nao-ativos?ano=${ano}&mes=${Number(mes)}&minDias=${encodeURIComponent(minDiasNaoAtivos.trim() || '2')}`)
+      const corpo = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(corpo?.error || 'Erro ao consultar o IXC')
+      setDadosNaoAtivos(corpo)
+    } catch (err: any) {
+      toast({ title: err.message || 'Erro ao carregar o relatório', variant: 'destructive' })
+    } finally {
+      setCarregandoNaoAtivos(false)
     }
   }
 
@@ -195,6 +218,7 @@ export function ReportsView() {
     tipo === 'estoque'            ? dadosEstoque :
     tipo === 'comercial'          ? dadosComercial :
     tipo === 'diario'             ? dadosDiario :
+    tipo === 'cancelados_nao_ativos' ? dadosNaoAtivos :
     dadosCancelados
 
   const carregando =
@@ -202,6 +226,7 @@ export function ReportsView() {
     tipo === 'estoque'            ? carregandoEstoque :
     tipo === 'comercial'          ? carregandoComercial :
     tipo === 'diario'             ? carregandoDiario :
+    tipo === 'cancelados_nao_ativos' ? carregandoNaoAtivos :
     carregandoCancelados
 
   function carregar() {
@@ -209,6 +234,7 @@ export function ReportsView() {
     if (tipo === 'estoque')            return carregarEstoque()
     if (tipo === 'comercial')          return carregarComercial()
     if (tipo === 'diario')             return carregarDiario()
+    if (tipo === 'cancelados_nao_ativos') return carregarNaoAtivos()
     return carregarCancelados()
   }
 
@@ -240,6 +266,10 @@ export function ReportsView() {
       } else if (tipo === 'diario' && dadosDiario) {
         const dataLabel = new Date(dataDiario + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
         pdfUtils.gerarPDFDiario(dadosDiario, dataLabel)
+      } else if (tipo === 'cancelados_nao_ativos' && dadosNaoAtivos) {
+        const { montarConteudoNaoAtivo } = await import('@/lib/cancelamentoNaoAtivoPdf')
+        const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio')
+        await renderizarPdf(montarConteudoNaoAtivo(dadosNaoAtivos, dadosNaoAtivos.geradoPor ?? 'Usuário'))
       } else if (tipo === 'cancelados' && dadosCancelados) {
         const mesLabel = new Date(mesCancelados + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
         const agregados = recomputarAgregadosCancelados(dadosCancelados.cancelados)
@@ -351,6 +381,18 @@ export function ReportsView() {
                   max={hojeISO()}
                   className="w-full gts-input"
                 />
+              </div>
+            ) : tipo === 'cancelados_nao_ativos' ? (
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="na-mes" className="block text-xs font-medium text-tema-suave mb-1.5">Mês do cancelamento</label>
+                  <input id="na-mes" type="month" value={mesNaoAtivos} onChange={e => { setMesNaoAtivos(e.target.value); setDadosNaoAtivos(null) }} max={mesAtualISO()} className="w-full gts-input" />
+                </div>
+                <div>
+                  <label htmlFor="na-dias" className="block text-xs font-medium text-tema-suave mb-1.5">Antecedência mínima (dias)</label>
+                  <input id="na-dias" type="number" min={0} max={60} value={minDiasNaoAtivos} onChange={e => { setMinDiasNaoAtivos(e.target.value.replace(/\D/g, '').slice(0, 2)); setDadosNaoAtivos(null) }} className="w-full gts-input" />
+                  <p className="text-xs text-tema-apagado mt-1.5">O contrato precisa estar suspenso ou bloqueado há pelo menos esses dias antes do cancelamento. Consulta direto no IXC.</p>
+                </div>
               </div>
             ) : tipo === 'cancelados' ? (
               <div>
@@ -1014,6 +1056,8 @@ export function ReportsView() {
                   </div>
                 </div>
               </div>
+            ) : tipo === 'cancelados_nao_ativos' && dadosNaoAtivos ? (
+              <CanceladosNaoAtivosPreview dados={dadosNaoAtivos} />
             ) : tipo === 'cancelados' && dadosCancelados ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -1076,9 +1120,14 @@ export function ReportsView() {
               </div>
             ) : null}
 
-            {dadosCarregados && (
+            {dadosCarregados && tipo !== 'cancelados_nao_ativos' && (
               <p className="text-xs text-tema-apagado text-center mt-4">
                 Corrija o que precisar acima e clique em <strong className="text-tema-tinta">Gerar e Baixar PDF</strong>. As correcoes valem so para este PDF.
+              </p>
+            )}
+            {dadosCarregados && tipo === 'cancelados_nao_ativos' && (
+              <p className="text-xs text-tema-apagado text-center mt-4">
+                O PDF traz o mês inteiro com o critério acima. Use o filtro e o botão CSV para levar só parte da lista.
               </p>
             )}
           </div>
