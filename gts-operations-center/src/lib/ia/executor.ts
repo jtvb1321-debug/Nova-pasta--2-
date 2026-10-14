@@ -98,6 +98,7 @@ export async function executarFerramenta(
   }
   const negado = motivoNegado(ctx, def.area)
   if (negado) return finalizar('NEGADO', { erro: negado }, parsed.data)
+  if (def.exige && !ctx.permissoes[def.exige]) return finalizar('NEGADO', { erro: 'Seu perfil não tem permissão para esta consulta.' }, parsed.data)
 
   try {
     const resultado = await comTimeout(def.executar(ctx, parsed.data), opcoes.timeoutMs ?? TIMEOUT_FERRAMENTA_MS)

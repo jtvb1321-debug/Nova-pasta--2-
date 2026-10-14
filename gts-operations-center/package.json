@@ -16,6 +16,8 @@
     "setup": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
     "test": "node --import tsx --test --test-concurrency=1 \"tests/ia/*.test.ts\" \"tests/tecnico/*.test.ts\"",
     "test:ia:banco": "node scripts/ia-banco-teste.mjs",
+    "ixc:falso": "tsx scripts/ixc-falso.ts",
+    "ixc:sonda": "node --env-file=.env.local --import tsx scripts/ixc-sonda-radacct.ts",
     "ia:mcp": "node --env-file=.env.local --import tsx scripts/ia-mcp.ts",
     "test:ia:semear": "node --import tsx scripts/ia-semear-teste.ts"
   },

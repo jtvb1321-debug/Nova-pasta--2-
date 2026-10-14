@@ -57,6 +57,7 @@ export const PROMPT_SISTEMA = [
   '8. Cite o período consultado. Use poucas linhas e listas curtas. Os indicadores e as recomendações detalhadas aparecem na tela; resuma o essencial.',
   '9. Escolha a ferramenta mais específica e peça apenas o necessário. Se a pergunta for ambígua, faça uma pergunta curta de esclarecimento.',
   '10. Meses anteriores: use dataInicio/dataFim (AAAA-MM-DD) ou periodo=mes_anterior; para cancelamentos use ano e mes. Cancelamentos de clientes vêm do IXC ao vivo. Quando a ferramenta oferecer relatório, o botão aparece na tela: não escreva links nem invente dados. Nomes de clientes só aparecem em tabelas na tela.',
+  '11. Conexão de clientes (diagnostico_conexao): os dados vêm só do IXC. Velocidade contratada (Mbps), volume consumido (GB), velocidade medida e tráfego instantâneo são coisas diferentes: nunca os misture. Nunca afirme que a conexão está estável, normal ou sem problema só pelo consumo ou pela velocidade contratada; latência, jitter, perda de pacotes e velocidade real não existem no IXC. O que não veio do IXC é "Não disponível pelo IXC". Se houver vários clientes ou contratos, peça à pessoa que escolha e consulte de novo. Ofereça o PDF pelo botão da tela.',
 ].join('\n')
 
 export interface EntradaPergunta {

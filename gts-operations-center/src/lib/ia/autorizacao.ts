@@ -16,6 +16,7 @@ export function permissoesDoPapel(role: string): PermissoesIA {
     verVendas: p.verVendas,
     verClientes: p.verClientes,
     apenasMinhaEquipe: p.apenasMinhaEquipe,
+    verDiagnosticoConexao: p.verDiagnosticoConexao,
   }
 }
 

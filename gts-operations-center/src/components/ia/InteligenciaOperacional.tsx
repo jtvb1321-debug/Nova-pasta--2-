@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle, Boxes, BrainCircuit, Database, FlaskConical, History, Info, Lightbulb, Link2, Loader2,
-  Plus, RefreshCw, Send, Trash2, Activity, ShoppingCart, Download,
+  Plus, RefreshCw, Send, Trash2, Activity, ShoppingCart, Download, ExternalLink,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast'
 
 export type Aba = 'operacoes' | 'estoque' | 'comercial'
 export interface TabelaTela { titulo: string; colunas: string[]; linhas: (string | number)[][] }
-export interface AcaoTela { tipo: 'relatorio'; rotulo: string; url: string }
+export interface AcaoTela { tipo: 'relatorio' | 'abrir'; rotulo: string; url: string }
 
 export interface Indicador { rotulo: string; valor: string | number; detalhe?: string; tom?: 'neutro' | 'ok' | 'alerta' | 'perigo' }
 export interface Referencia { tipo: string; id: string; rotulo: string }
@@ -69,6 +69,7 @@ const SUGESTOES: Record<Aba, string[]> = {
     'Quantos chamados de recolhimento foram feitos e por qual equipe?',
     'Qual equipe tem o maior índice de chamados concluídos?',
     'Quais clientes têm mais rechamadas?',
+    'Quero fazer o diagnóstico de conexão de um cliente',
   ],
   comercial: [
     'Como foram as vendas deste mês? Quem mais vendeu?',
@@ -146,8 +147,8 @@ export function BlocoResposta({ m, compacto = false }: { m: MensagemTela; compac
       {(m.acoes?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-2">
           {m.acoes!.map(a => (
-            <a key={a.url} href={a.url} download className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/[0.07] px-3 py-1.5 text-sm font-semibold text-orange-800 hover:bg-orange-500/15 transition-colors">
-              <Download className="w-4 h-4" aria-hidden /> {a.rotulo}
+            <a key={a.url} href={a.url} {...(a.tipo === 'relatorio' ? { download: true } : {})} className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/[0.07] px-3 py-1.5 text-sm font-semibold text-orange-800 hover:bg-orange-500/15 transition-colors">
+              {a.tipo === 'relatorio' ? <Download className="w-4 h-4" aria-hidden /> : <ExternalLink className="w-4 h-4" aria-hidden />} {a.rotulo}
             </a>
           ))}
         </div>

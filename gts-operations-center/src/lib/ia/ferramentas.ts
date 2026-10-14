@@ -6,6 +6,7 @@ import * as op from './servicos/operacoes'
 import * as est from './servicos/estoque'
 import * as ges from './servicos/gestao'
 import * as com from './servicos/comercial'
+import * as con from './servicos/conexao'
 
 // Registro unico de ferramentas, independente de protocolo: o assistente interno e o servidor MCP
 // usam exatamente estas definicoes e passam pelo mesmo executor (validacao, permissao, auditoria).
@@ -15,6 +16,8 @@ export interface FerramentaIA {
   nome: string
   descricao: string
   area: AreaFerramenta
+  /** Permissao extra, alem da area (ex.: Diagnostico de Conexao). */
+  exige?: 'verDiagnosticoConexao'
   parametros: z.ZodObject<z.ZodRawShape>
   executar: (ctx: ContextoIA, args: any) => Promise<ResultadoFerramenta>
 }
@@ -78,6 +81,21 @@ export const FERRAMENTAS: FerramentaIA[] = [
     nome: 'rechamadas_clientes', area: 'operacoes',
     descricao: 'Rechamadas (reincidências possíveis ou confirmadas) por cliente no período: quais clientes têm o maior índice de rechamada. Oferece relatório para baixar. Nomes de clientes aparecem só na tela.',
     parametros: objeto({ ...esquemaPeriodo, limite: esquemaPaginacao.limite }), executar: (c, a) => ges.rechamadasClientes(c, a),
+  },
+  {
+    nome: 'diagnostico_conexao', area: 'operacoes', exige: 'verDiagnosticoConexao',
+    descricao: 'Diagnóstico de conexão de um cliente direto no IXC (somente leitura): contratos, velocidade CONTRATADA do plano (Mbps), consumo de download/upload no período (volume em GB, NÃO velocidade) e desconexões. ' +
+      'Informe "busca" (nome, código do cliente, contrato ou login); se houver vários clientes ou contratos, a ferramenta devolve a lista para a pessoa escolher e você consulta de novo com clienteId/contratoId. ' +
+      'Velocidade medida, latência, jitter, perda de pacotes e estabilidade NÃO existem no IXC: nunca afirme que a conexão está estável ou normal só pelo consumo. Oferece botão para abrir o diagnóstico e gerar o PDF. Nomes e logins aparecem só na tela.',
+    parametros: objeto({
+      busca: z.string().trim().min(1).max(80).optional().describe('Nome, código do cliente, número do contrato ou login.'),
+      clienteId: z.string().regex(/^\d{1,12}$/, 'código inválido').optional().describe('Código do cliente no IXC (quando já escolhido).'),
+      contratoId: z.string().regex(/^\d{1,12}$/, 'contrato inválido').optional().describe('Número do contrato escolhido.'),
+      login: z.string().trim().regex(/^[\w.@-]{1,80}$/, 'login inválido').optional().describe('Login de conexão escolhido (só quando o contrato tem vários).'),
+      periodo: z.enum(['7d', '30d']).optional().describe('Período do consumo: 7d ou 30d. Padrão 30d.'),
+      vdi: z.boolean().optional().describe('Verdadeiro quando a análise é de VDI, VPN ou servidor remoto.'),
+    }),
+    executar: (c, a) => con.diagnosticoConexao(c, a),
   },
   // ------------------------------------------------------------ comercial
   {
@@ -156,7 +174,7 @@ export function definicaoParaModelo(f: FerramentaIA) {
 
 /** Ferramentas que o contexto pode usar (a IA so "ve" o que o usuario pode executar). */
 export function ferramentasDisponiveis(ctx: ContextoIA, area?: AreaFerramenta) {
-  return FERRAMENTAS.filter(f => (!area || f.area === area) && permiteArea(ctx, f.area))
+  return FERRAMENTAS.filter(f => (!area || f.area === area) && permiteArea(ctx, f.area) && (!f.exige || ctx.permissoes[f.exige]))
 }
 
 function permiteArea(ctx: ContextoIA, area: AreaFerramenta) {

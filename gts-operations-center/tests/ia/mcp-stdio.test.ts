@@ -26,7 +26,7 @@ describe('script ia-mcp (stdio local)', () => {
     try {
       await cliente.connect(transporte)
       const { tools } = await cliente.listTools()
-      assert.equal(tools.length, 20)
+      assert.equal(tools.length, 21)
       const r: any = await cliente.callTool({ name: 'consultar_metas', arguments: {} })
       assert.ok(!r.isError); assert.match(r.content[0].text, /Metas de SLA/)
       assert.ok((await prisma.execucaoFerramentaIA.findMany({ where: { origem: 'mcp', ferramenta: 'consultar_metas' } })).length >= 1)

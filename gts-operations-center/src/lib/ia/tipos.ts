@@ -7,7 +7,7 @@ export type OrigemChamada = 'chat' | 'mcp'
 
 export type PermissoesIA = Pick<
   Permission,
-  'usarAssistenteIA' | 'iaOperacional' | 'iaEstoque' | 'iaComercial' | 'verDesempenho' | 'verEstoque' | 'verVendas' | 'verClientes' | 'apenasMinhaEquipe'
+  'usarAssistenteIA' | 'iaOperacional' | 'iaEstoque' | 'iaComercial' | 'verDesempenho' | 'verEstoque' | 'verVendas' | 'verClientes' | 'apenasMinhaEquipe' | 'verDiagnosticoConexao'
 >
 
 /** Quem esta consultando. Montado no servidor a partir da sessao - nunca vem do modelo. */
@@ -48,9 +48,9 @@ export interface TabelaIA {
   linhas: (string | number)[][]
 }
 
-/** Acao oferecida na tela depois da resposta (ex.: baixar relatorio). Sempre uma consulta, nunca uma alteracao. */
+/** Acao oferecida na tela depois da resposta (baixar relatorio ou abrir uma tela do sistema). Sempre uma consulta, nunca uma alteracao. */
 export interface AcaoIA {
-  tipo: 'relatorio'
+  tipo: 'relatorio' | 'abrir'
   rotulo: string
   url: string
 }

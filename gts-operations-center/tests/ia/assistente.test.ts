@@ -31,12 +31,12 @@ const erroAssistente = (codigo: string, status?: number) => (e: unknown) => e in
 const execucoes = (where: object = {}) => prisma.execucaoFerramentaIA.findMany({ where, orderBy: { createdAt: 'asc' } })
 
 describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
-  it('existem as 8 de estoque, as 8 operacionais pedidas e as 4 novas (comercial e gestao)', () => {
+  it('existem as 8 de estoque, as 8 operacionais pedidas, as 4 novas (comercial e gestao) e o diagnostico de conexao', () => {
     const nomes = new Set(FERRAMENTAS.map(f => f.nome))
     for (const n of ['consultar_estoque', 'materiais_abaixo_minimo', 'consultar_movimentacoes', 'materiais_por_equipe', 'consultar_equipamento', 'analisar_consumo', 'prever_reposicao', 'consultar_devolucoes',
       'resumo_diario_chamados', 'chamados_criticos', 'analisar_sla', 'comparar_equipes', 'produtividade', 'consultar_metas', 'atendimentos_pendentes', 'tendencias_desempenho']) assert.ok(nomes.has(n), n)
-    for (const n of ['chamados_por_equipe', 'rechamadas_clientes', 'vendas_periodo', 'cancelamentos_ixc']) assert.ok(nomes.has(n), n)
-    assert.equal(FERRAMENTAS.length, 20)
+    for (const n of ['chamados_por_equipe', 'rechamadas_clientes', 'vendas_periodo', 'cancelamentos_ixc', 'diagnostico_conexao']) assert.ok(nomes.has(n), n)
+    assert.equal(FERRAMENTAS.length, 21)
   })
   it('nenhuma ferramenta tem nome de escrita nem parametro de SQL/comando', () => {
     for (const f of FERRAMENTAS) {
@@ -47,7 +47,7 @@ describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
   })
   it('codigo dos servicos nao contem nenhuma escrita no banco nem SQL cru (verificacao estatica)', () => {
     const dir = path.resolve(__dirname, '../../src/lib/ia')
-    const arquivos = ['servicos/operacoes.ts', 'servicos/estoque.ts', 'servicos/comum.ts', 'servicos/gestao.ts', 'servicos/comercial.ts', 'servicos/relatorios.ts', 'ferramentas.ts', 'mcp/servidor.ts']
+    const arquivos = ['servicos/operacoes.ts', 'servicos/estoque.ts', 'servicos/comum.ts', 'servicos/gestao.ts', 'servicos/comercial.ts', 'servicos/conexao.ts', 'servicos/relatorios.ts', 'ferramentas.ts', 'mcp/servidor.ts']
     for (const a of arquivos) {
       const fonte = fs.readFileSync(path.join(dir, a), 'utf8')
       assert.doesNotMatch(fonte, /\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\(/, `${a} tem escrita`)
@@ -62,7 +62,7 @@ describe('registro de ferramentas: somente leitura e sem SQL livre', () => {
     }
   })
   it('a IA so ve as ferramentas que o usuario pode usar', () => {
-    assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN')).length, 20)
+    assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN')).length, 21)
     assert.equal(ferramentasDisponiveis(D.ctxDe('ADMIN'), 'estoque').length, 8)
     assert.equal(ferramentasDisponiveis(D.ctxDe('GESTOR', { permissoes: { iaEstoque: false } })).every(f => f.area !== 'estoque'), true)
     assert.equal(ferramentasDisponiveis(D.ctxDe('OPERADOR')).length, 0)
@@ -374,7 +374,7 @@ describe('assistente com OpenRouter (fetch simulado, nenhuma chamada real)', () 
     assert.equal(r.ferramentas[0].status, 'OK'); assert.ok(r.indicadores.length > 0)
     assert.equal(reg.length, 2); assert.ok(reg.every(x => x.auth === `Bearer ${CHAVE}`))
     const corpo1 = JSON.parse(reg[0].corpo)
-    assert.equal(corpo1.tools.length, 20, 'todas as ferramentas que o usuario pode usar (nao so as da aba)'); assert.doesNotMatch(reg[0].corpo, /sk-or-v1/)
+    assert.equal(corpo1.tools.length, 21, 'todas as ferramentas que o usuario pode usar (nao so as da aba)'); assert.doesNotMatch(reg[0].corpo, /sk-or-v1/)
     assert.deepEqual(corpo1.tools.map((t: any) => t.function.name).sort(), FERRAMENTAS.map(x => x.nome).sort())
     const msgs2 = JSON.parse(reg[1].corpo).messages as any[]
     assert.equal(msgs2.at(-1).role, 'tool'); assert.doesNotMatch(reg[1].corpo, /sk-or-v1|CLIENTE TESTE IA/)

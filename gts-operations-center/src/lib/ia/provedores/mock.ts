@@ -38,7 +38,25 @@ const EXEMPLOS: { ferramenta: string; pergunta: string }[] = [
   { ferramenta: 'cancelamentos_ixc', pergunta: 'Quantos cancelamentos tivemos neste mês no IXC?' },
   { ferramenta: 'chamados_por_equipe', pergunta: 'Quantos chamados de recolhimento foram feitos e por qual equipe?' },
   { ferramenta: 'rechamadas_clientes', pergunta: 'Quais clientes têm mais rechamadas?' },
+  { ferramenta: 'diagnostico_conexao', pergunta: 'Consultar a conexão do cliente "nome ou código" nos últimos 7 dias' },
 ]
+
+const CONEXAO = /\b(conexao|conectividade|diagnostico de conexao|consumo de (download|upload|internet|banda)|pppoe|velocidade (contratada|do plano))\b/
+
+/** Termo de busca do cliente numa pergunta de conexao: texto entre aspas, codigo/contrato/login citado ou nome depois de "cliente". */
+export function termoConexao(pergunta: string): { busca?: string; clienteId?: string; contratoId?: string; login?: string } {
+  const aspas = pergunta.match(/["“'']([^"”'']{2,60})["”'']/)?.[1]?.trim()
+  const contrato = pergunta.match(/\bcontrato\s*(?:n[ºo°.]?\s*)?(\d{1,12})\b/i)?.[1]
+  const codigo = pergunta.match(/\b(?:cliente|codigo|código|id)\s*(?:n[ºo°.]?\s*)?(\d{1,12})\b/i)?.[1]
+  const login = pergunta.match(/\blogin\s+([\w.@-]{3,80})\b/i)?.[1]
+  if (codigo) return { clienteId: codigo, ...(contrato ? { contratoId: contrato } : {}), ...(login ? { login } : {}) }
+  if (aspas) return { busca: aspas }
+  if (login) return { busca: login, ...(contrato ? { contratoId: contrato } : {}) }
+  if (contrato) return { busca: contrato }
+  const nome = pergunta.match(/\b(?:do|da|de|para o|para a|cliente)\s+cliente\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ ]{2,60}?)(?=\s+(?:nos|nas|no|na|ultim\w+|em|com|por)\b|[?.!,]|$)/i)?.[1]
+    ?? pergunta.match(/\bcliente\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ ]{2,60}?)(?=\s+(?:nos|nas|no|na|ultim\w+|em|com|por)\b|[?.!,]|$)/i)?.[1]
+  return nome ? { busca: nome.trim() } : {}
+}
 
 function ultimaPergunta(m: MensagemProvedor[]): string {
   for (let i = m.length - 1; i >= 0; i--) if (m[i].role === 'user') return m[i].content ?? ''
@@ -110,6 +128,14 @@ export function escolherFerramentas(pergunta: string, disponiveis: Set<string>):
     quer('chamados_por_equipe', mn ? periodoMes : { periodo: 'mes' })
   }
   if (/rechamad|reincid/.test(t)) quer('rechamadas_clientes', mn ? periodoMes : Object.keys(per).length ? per : { periodo: '90d' })
+  // conexao de cliente (IXC): so quando a pessoa citou um cliente/contrato/login; senao deixa seguir
+  if (CONEXAO.test(t) && disponiveis.has('diagnostico_conexao')) {
+    const termo = termoConexao(pergunta)
+    if (termo.busca || termo.clienteId) {
+      const p7 = /(7 dias|semana)/.test(t)
+      quer('diagnostico_conexao', { ...termo, periodo: p7 ? '7d' : '30d', ...(/\b(vdi|vpn|servidor remoto)\b/.test(t) ? { vdi: true } : {}) })
+    }
+  }
   const foiGestao = alvo.length > 0
 
   // estoque
@@ -117,7 +143,7 @@ export function escolherFerramentas(pergunta: string, disponiveis: Set<string>):
   if (/(serial|\bmac\b|patrimonio|equipamento)/.test(t) && serial) quer('consultar_equipamento', { serial })
   if (/(movimenta|entrada|saida|transfer)/.test(t)) quer('consultar_movimentacoes', per)
   if (/devol/.test(t)) quer('consultar_devolucoes')
-  if (/consumo|consumiu|gasto de material/.test(t)) quer('analisar_consumo', { ...per, ...(citado ? { itemBusca: citado } : {}) })
+  if (/consumo|consumiu|gasto de material/.test(t) && !alvo.some(a => a.nome === 'diagnostico_conexao')) quer('analisar_consumo', { ...per, ...(citado ? { itemBusca: citado } : {}) })
   if (/(material|materiais).*(equipe|tecnico|carro)|(equipe|tecnico|carro).*(material|materiais)|prestacao de contas/.test(t)) quer('materiais_por_equipe')
   if (/(saldo|estoque|produto|quantos|quantas|disponivel)/.test(t) && alvo.length === 0 && !foiGestao) quer('consultar_estoque', citado ? { busca: citado } : {})
   // operacoes

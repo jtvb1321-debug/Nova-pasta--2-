@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, BrainCircuit, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search, Activity,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -43,6 +43,7 @@ const TODOS_GRUPOS: MenuGroup[] = [
       { href: '/agenda',       label: 'Chamados',      icon: ClipboardList, permissao: 'verChamados' },
       { href: '/teams',        label: 'Equipes',       icon: Users,         permissao: 'verEquipes' },
       { href: '/desempenho',   label: 'Desempenho das Equipes', icon: TrendingUp, permissao: 'verDesempenho' },
+      { href: '/diagnostico-conexao', label: 'Diagnóstico de Conexão', icon: Activity, permissao: 'verDiagnosticoConexao' },
       { href: '/inteligencia-operacional', label: 'Inteligência Operacional', icon: BrainCircuit, permissao: 'usarAssistenteIA' },
       { href: '/solicitacoes', label: 'Solicitacoes de Equipe', icon: ClipboardCheck, permissao: 'verSolicitacoes' },
       { href: '/horas-extras', label: 'Horas Extras', icon: Clock, permissao: 'verHorasExtras' },

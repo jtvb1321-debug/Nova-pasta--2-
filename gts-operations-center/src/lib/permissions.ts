@@ -34,6 +34,7 @@ export interface Permission {
   iaOperacional:     boolean
   iaEstoque:         boolean
   iaComercial:       boolean
+  verDiagnosticoConexao: boolean
 }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
@@ -70,6 +71,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     true,
     iaEstoque:         true,
     iaComercial:       true,
+    verDiagnosticoConexao: true,
   },
   GESTOR: {
     verDashboard:      true,
@@ -104,6 +106,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     true,
     iaEstoque:         true,
     iaComercial:       true,
+    verDiagnosticoConexao: true,
   },
   OPERADOR: {
     verDashboard:      true,
@@ -138,6 +141,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     false,
     iaEstoque:         false,
     iaComercial:       false,
+    verDiagnosticoConexao: true,
   },
   COMERCIAL: {
     verDashboard:      true,
@@ -172,6 +176,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     false,
     iaEstoque:         false,
     iaComercial:       false,
+    verDiagnosticoConexao: false,
   },
   TECNICO: {
     verDashboard:      false,
@@ -206,6 +211,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     false,
     iaEstoque:         false,
     iaComercial:       false,
+    verDiagnosticoConexao: false,
   },
   VENDEDOR: {
     verDashboard:      true,
@@ -240,6 +246,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaOperacional:     false,
     iaEstoque:         false,
     iaComercial:       false,
+    verDiagnosticoConexao: false,
   },
 }
 
