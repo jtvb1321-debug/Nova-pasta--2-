@@ -1,10 +1,11 @@
 import { listarIXC } from '@/lib/ixc'
-import { dadosIxcDoCliente, type DadosIxc } from '@/lib/ixcCliente'
+import { dadosIxcDoCliente, type DadosIxc, type LoginIxc } from '@/lib/ixcCliente'
 import { dataHoraIxc, dataIso, diaIxc, octetos, paraMbps } from './formato'
+import { lerEquipamento } from './equipamento'
 import {
   ErroDiagnostico, INDICADORES_NAO_MEDIDOS,
   type ConsumoDia, type ConsumoPeriodo, type ContratoConexao, type Disponibilidade, type DiagnosticoConexao,
-  type PeriodoConsulta, type RespostaConsulta, type ResultadoBusca, type SessaoConexao, type SessoesPeriodo,
+  type PeriodoConsulta, type RespostaConsulta, type ResultadoBusca, type SessaoAtual, type SessaoConexao, type SessoesPeriodo,
 } from './tipos'
 
 // Servico de Diagnostico de Conexao. SOMENTE LEITURA, SOMENTE IXC.
@@ -197,6 +198,20 @@ async function lerSessoes(login: string, periodo: PeriodoConsulta): Promise<{ re
   return { registros: todos, truncado }
 }
 
+/** Conexao atual, a partir dos campos do proprio login no IXC (existem mesmo quando a tabela de sessoes nao e' exposta). */
+export function sessaoAtualDe(login: LoginIxc | null): Disponibilidade<SessaoAtual> {
+  if (!login) return { disponivel: false, motivo: 'Este contrato não tem login de conexão cadastrado no IXC.' }
+  const s = login.sessaoAtual
+  if (!s.inicio && s.downloadBytes == null && s.uploadBytes == null && s.tempoConectadoSegundos == null) {
+    return { disponivel: false, motivo: 'O cadastro do login no IXC não traz dados da conexão atual.' }
+  }
+  return {
+    disponivel: true, online: login.online, inicio: dataHoraIxc(s.inicio) ?? s.inicio, tempoConectadoSegundos: s.tempoConectadoSegundos,
+    downloadBytes: s.downloadBytes, uploadBytes: s.uploadBytes, atualizadoEm: dataHoraIxc(s.atualizadoEm) ?? s.atualizadoEm,
+    ultimaDesconexao: dataHoraIxc(s.fim) ?? s.fim, motivoUltimaDesconexao: s.motivoDesconexao, desconexoes: s.desconexoes,
+  }
+}
+
 // ------------------------------------------------------------------ consulta completa
 export interface ParametrosConsulta {
   codigoCliente: string
@@ -213,6 +228,9 @@ export const OBSERVACOES_PADRAO = [
   'O volume de cada sessão é atribuído ao dia em que ela começou; sessões longas concentram o consumo no dia de início.',
   'Em sessões em curso, o volume é parcial (até a última atualização feita pelo concentrador no IXC).',
 ]
+
+export const OBSERVACAO_SESSAO_ATUAL = 'Volume da sessão atual é o contador que o IXC guarda no cadastro do login desde o início da conexão atual (zera quando a conexão cai e reconecta); não é consumo mensal nem velocidade.'
+export const MOTIVO_SEM_HISTORICO = 'O IXC deste provedor não devolveu histórico de sessões para este login (a tabela de sessões não é exposta pela API). Veja a conexão atual abaixo.'
 
 export async function consultarConexao(p: ParametrosConsulta, agora = new Date()): Promise<RespostaConsulta> {
   if (!/^\d+$/.test(p.codigoCliente)) throw new ErroDiagnostico('INVALIDO', 'Código de cliente inválido.')
@@ -267,8 +285,13 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
   } else {
     try {
       const lidas = await lerSessoes(loginEscolhido, periodo)
-      const ag = agregarSessoes(lidas.registros, periodo, lidas.truncado)
-      consumo = ag.consumo; sessoes = ag.sessoes
+      if (lidas.registros.length === 0) {
+        // Nenhuma sessao em nenhum periodo: a API deste IXC nao expoe o historico (nao e' "consumo zero").
+        consumo = { disponivel: false, motivo: MOTIVO_SEM_HISTORICO }; sessoes = { disponivel: false, motivo: MOTIVO_SEM_HISTORICO }
+      } else {
+        const ag = agregarSessoes(lidas.registros, periodo, lidas.truncado)
+        consumo = ag.consumo; sessoes = ag.sessoes
+      }
       if (lidas.truncado) observacoes.push('O período tem mais sessões do que o limite de leitura; os valores podem estar incompletos. Reduza o período.')
     } catch (e) {
       const erro = mapearErroIxc(e)
@@ -277,8 +300,15 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
     }
   }
 
+  const sessaoAtual = sessaoAtualDe(loginIxc)
+  const equipamento = await lerEquipamento(loginIxc?.onuSerial ?? null)
+  // So comenta a convencao do historico (RADIUS) quando existe historico; a sessao atual tem observacao propria.
+  const observacoesFinais = consumo.disponivel ? observacoes : [OBSERVACOES_PADRAO[0]]
+  if (sessaoAtual.disponivel) observacoesFinais.push(OBSERVACAO_SESSAO_ATUAL)
+  if (equipamento.disponivel) observacoesFinais.push('Status e sinal óptico da ONU são leituras da OLT (SmartOLT), no momento da consulta; não são velocidade nem qualidade da conexão do cliente.')
+
   return {
     tipo: 'ok',
-    diagnostico: { fonte: FONTE_ATIVA, consultadoEm: agora.toISOString(), periodo, identificacao, consumo, sessoes, naoMedidos: INDICADORES_NAO_MEDIDOS, observacoes },
+    diagnostico: { fonte: FONTE_ATIVA, consultadoEm: agora.toISOString(), periodo, identificacao, consumo, sessoes, sessaoAtual, equipamento, naoMedidos: INDICADORES_NAO_MEDIDOS, observacoes: observacoesFinais },
   }
 }

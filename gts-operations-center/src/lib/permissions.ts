@@ -35,6 +35,8 @@ export interface Permission {
   iaEstoque:         boolean
   iaComercial:       boolean
   verDiagnosticoConexao: boolean
+  /** Abrir o Diagnostico de Conexao a partir de um chamado (so o cliente do chamado; tecnico so da propria equipe). */
+  diagnosticoPeloChamado: boolean
 }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
@@ -72,6 +74,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         true,
     iaComercial:       true,
     verDiagnosticoConexao: true,
+    diagnosticoPeloChamado: true,
   },
   GESTOR: {
     verDashboard:      true,
@@ -107,6 +110,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         true,
     iaComercial:       true,
     verDiagnosticoConexao: true,
+    diagnosticoPeloChamado: true,
   },
   OPERADOR: {
     verDashboard:      true,
@@ -142,6 +146,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         false,
     iaComercial:       false,
     verDiagnosticoConexao: true,
+    diagnosticoPeloChamado: true,
   },
   COMERCIAL: {
     verDashboard:      true,
@@ -177,6 +182,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         false,
     iaComercial:       false,
     verDiagnosticoConexao: false,
+    diagnosticoPeloChamado: false,
   },
   TECNICO: {
     verDashboard:      false,
@@ -212,6 +218,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         false,
     iaComercial:       false,
     verDiagnosticoConexao: false,
+    diagnosticoPeloChamado: true,
   },
   VENDEDOR: {
     verDashboard:      true,
@@ -247,6 +254,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaEstoque:         false,
     iaComercial:       false,
     verDiagnosticoConexao: false,
+    diagnosticoPeloChamado: false,
   },
 }
 

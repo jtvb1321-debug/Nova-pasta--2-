@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Copy, EyeOff, Gauge, KeyRound, Loader2, RefreshCw, Router, UserRound, Wifi, WifiOff } from 'lucide-react'
+import Link from 'next/link'
+import { Activity, AlertTriangle, Copy, EyeOff, Gauge, KeyRound, Loader2, RefreshCw, Router, UserRound, Wifi, WifiOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { formatarVelocidade } from '@/lib/ixcFormato'
@@ -303,6 +304,12 @@ export function PainelIxc({ chamadoId, ehEace }: { chamadoId: string; ehEace: bo
               <FichaConexao login={l} chamadoId={chamadoId} />
             </div>
           ))}
+
+          {(data.logins?.length ?? 0) > 0 && (
+            <Link href={`/diagnostico-conexao?chamado=${encodeURIComponent(chamadoId)}`} className="min-h-[44px] w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/[0.07] text-sm font-semibold text-orange-800 hover:bg-orange-500/15">
+              <Activity className="w-4 h-4" aria-hidden /> Diagnóstico de conexão (sessão, consumo e sinal)
+            </Link>
+          )}
 
           {data.consultadoEm && <p className="text-[11px] text-tema-apagado">Consultado às {new Date(data.consultadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>}
         </>

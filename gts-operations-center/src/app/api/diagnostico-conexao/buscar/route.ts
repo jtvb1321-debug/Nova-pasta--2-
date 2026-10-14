@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auditar, limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
+import { MSG_SO_PELO_CHAMADO, auditar, limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
 import { buscarClientes, limparTermo } from '@/lib/diagnosticoConexao/servico'
 
 // Busca clientes no IXC por nome, codigo, contrato ou login. Somente leitura.
 export async function GET(request: NextRequest) {
   const a = await usuarioAutorizado()
   if ('resposta' in a) return a.resposta
+  if (!a.usuario.buscaLivre) return NextResponse.json({ error: MSG_SO_PELO_CHAMADO }, { status: 403 })
   const limite = limiteExcedido(a.usuario.id)
   if (limite) return limite
   try {

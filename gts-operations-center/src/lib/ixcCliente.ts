@@ -20,6 +20,18 @@ export interface PlanoIxc {
   upload: string | null
 }
 
+/** Contadores da conexao ATUAL que o proprio cadastro do login no IXC traz (nao e historico). */
+export interface SessaoAtualIxc {
+  inicio: string | null               // ultima_conexao_inicial
+  fim: string | null                  // ultima_conexao_final (vazio enquanto conectado)
+  tempoConectadoSegundos: number | null
+  downloadBytes: number | null        // download_atual: volume da sessao atual
+  uploadBytes: number | null          // upload_atual
+  atualizadoEm: string | null         // ultima_atualizacao
+  motivoDesconexao: string | null     // motivo_desconexao (ultima queda)
+  desconexoes: number | null          // count_desconexao
+}
+
 export interface LoginIxc {
   login: string
   online: boolean
@@ -34,6 +46,9 @@ export interface LoginIxc {
   concentrador: string | null
   caixaFtth: string | null       // nome da caixa (ou "#id" se o nome nao puder ser lido)
   portaFtth: string | null
+  sessaoAtual: SessaoAtualIxc
+  /** Serial/MAC da ONU como cadastrado no IXC (para casar com o SmartOLT). */
+  onuSerial: string | null
 }
 
 export interface ContratoIxc {
@@ -76,6 +91,13 @@ export function mapearPlano(reg: any): PlanoIxc | null {
   return { grupo: texto(reg.grupo), download: texto(reg.download), upload: texto(reg.upload) }
 }
 
+const numero = (v: any): number | null => {
+  const s = v === null || v === undefined ? '' : String(v).trim()
+  if (!s) return null
+  const n = Number(s.replace(',', '.'))
+  return Number.isFinite(n) && n >= 0 ? n : null
+}
+
 export function mapearLogin(reg: any, planos: Map<string, PlanoIxc | null>, caixas: Map<string, string | null> = new Map()): LoginIxc {
   const idCaixa = texto(reg.id_caixa_ftth)
   return {
@@ -92,6 +114,17 @@ export function mapearLogin(reg: any, planos: Map<string, PlanoIxc | null>, caix
     concentrador: texto(reg.concentrador),
     caixaFtth: idCaixa ? (caixas.get(idCaixa) ?? `#${idCaixa}`) : null,
     portaFtth: texto(reg.ftth_porta),
+    sessaoAtual: {
+      inicio: texto(reg.ultima_conexao_inicial),
+      fim: texto(reg.ultima_conexao_final) && !String(reg.ultima_conexao_final).startsWith('0000') ? String(reg.ultima_conexao_final) : null,
+      tempoConectadoSegundos: numero(reg.tempo_conectado),
+      downloadBytes: numero(reg.download_atual),
+      uploadBytes: numero(reg.upload_atual),
+      atualizadoEm: texto(reg.ultima_atualizacao) && !String(reg.ultima_atualizacao).startsWith('0000') ? String(reg.ultima_atualizacao) : null,
+      motivoDesconexao: texto(reg.motivo_desconexao),
+      desconexoes: numero(reg.count_desconexao),
+    },
+    onuSerial: texto(reg.onu_mac),
   }
 }
 

@@ -56,9 +56,11 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
   const id = d.identificacao
   const v = id.velocidade
   const secoes: SecaoRelatorio[] = []
+  let k = 0
+  const t = (titulo: string) => `${++k}. ${titulo}`
 
   secoes.push({
-    titulo: '1. Identificação do cliente e do contrato',
+    titulo: t('Identificação do cliente e do contrato'),
     pares: [
       ['Cliente', ou(id.cliente.nome)],
       ['Código no IXC', id.cliente.codigo],
@@ -73,7 +75,7 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
   })
 
   secoes.push({
-    titulo: '2. Velocidade contratada',
+    titulo: t('Velocidade contratada'),
     pares: [
       ['Download contratado', v.downloadMbps != null ? formatarMbps(v.downloadMbps) : ou(v.rotuloDownload)],
       ['Upload contratado', v.uploadMbps != null ? formatarMbps(v.uploadMbps) : ou(v.rotuloUpload)],
@@ -82,10 +84,31 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
     paragrafos: ['Velocidade contratada é a do plano. Não é velocidade medida na conexão.'],
   })
 
+  const sa = d.sessaoAtual
+  if (sa.disponivel) {
+    secoes.push({
+      titulo: t('Conexão atual (dados do cadastro do login no IXC)'),
+      pares: [
+        ['Situação', sa.online ? 'Conectado' : 'Desconectado'],
+        [sa.online ? 'Conectado desde' : 'Última conexão iniciada em', ou(sa.inicio)],
+        ...(sa.online ? [['Tempo da sessão atual', sa.tempoConectadoSegundos != null ? formatarDuracao(sa.tempoConectadoSegundos) : NAO_DISPONIVEL] as [string, string]] : []),
+        [sa.online ? 'Download da sessão atual' : 'Download da última sessão', sa.downloadBytes != null ? formatarBytes(sa.downloadBytes) : NAO_DISPONIVEL],
+        [sa.online ? 'Upload da sessão atual' : 'Upload da última sessão', sa.uploadBytes != null ? formatarBytes(sa.uploadBytes) : NAO_DISPONIVEL],
+        ['Última atualização do contador', ou(sa.atualizadoEm)],
+        ['Última desconexão', ou(sa.ultimaDesconexao)],
+        ['Motivo da última desconexão', ou(sa.motivoUltimaDesconexao)],
+        ['Desconexões contadas pelo IXC', sa.desconexoes != null ? String(sa.desconexoes) : NAO_DISPONIVEL],
+      ],
+      paragrafos: ['Volume é o contador do IXC desde o início da conexão atual (zera quando a conexão cai e reconecta). Não é consumo mensal nem velocidade.'],
+    })
+  } else {
+    secoes.push({ titulo: t('Conexão atual (dados do cadastro do login no IXC)'), paragrafos: [`${NAO_DISPONIVEL}. ${sa.motivo}`] })
+  }
+
   if (d.consumo.disponivel) {
     const c = d.consumo
     secoes.push({
-      titulo: '3. Consumo registrado no período',
+      titulo: t('Consumo registrado no período'),
       pares: [
         ['Período analisado', `${dmy(d.periodo.inicio)} a ${dmy(d.periodo.fim)} (${d.periodo.rotulo})`],
         ['Consumo de download', formatarBytes(c.downloadBytes)],
@@ -101,7 +124,7 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
     })
   } else {
     secoes.push({
-      titulo: '3. Consumo registrado no período',
+      titulo: t('Histórico de consumo no período'),
       pares: [['Período analisado', `${dmy(d.periodo.inicio)} a ${dmy(d.periodo.fim)} (${d.periodo.rotulo})`], ['Consumo de download', NAO_DISPONIVEL], ['Consumo de upload', NAO_DISPONIVEL]],
       paragrafos: [d.consumo.motivo],
     })
@@ -110,7 +133,7 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
   if (d.sessoes.disponivel) {
     const s = d.sessoes
     secoes.push({
-      titulo: '4. Sessões de conexão registradas no IXC',
+      titulo: t('Sessões de conexão registradas no IXC'),
       pares: [
         ['Sessões no período', String(s.total)],
         ['Sessões em curso', String(s.emCurso)],
@@ -124,19 +147,33 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
       paragrafos: [s.truncado ? 'A lista mostra as sessões mais recentes; o período tem mais sessões do que o limite de leitura.' : 'A lista mostra as sessões mais recentes do período.'],
     })
   } else {
-    secoes.push({ titulo: '4. Sessões de conexão registradas no IXC', paragrafos: [`${NAO_DISPONIVEL}. ${d.sessoes.motivo}`] })
+    secoes.push({ titulo: t('Sessões de conexão registradas no IXC'), paragrafos: [`${NAO_DISPONIVEL}. ${d.sessoes.motivo}`] })
   }
 
+  const eq = d.equipamento
+  secoes.push(eq.disponivel
+    ? {
+      titulo: t('Equipamento do cliente (ONU, lido do SmartOLT)'),
+      pares: [
+        ['Status da ONU', ou(eq.status)],
+        ['Sinal de recepção (RX)', eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm` : NAO_DISPONIVEL],
+        ['Sinal de transmissão (TX)', eq.sinalTxDbm != null ? `${eq.sinalTxDbm} dBm` : NAO_DISPONIVEL],
+        ['Última mudança de status', ou(eq.ultimaMudancaStatus)],
+      ],
+      paragrafos: ['Leituras da OLT no momento da consulta. Sinal óptico e status não medem a velocidade nem a estabilidade da conexão do cliente.'],
+    }
+    : { titulo: t('Equipamento do cliente (ONU, lido do SmartOLT)'), paragrafos: [`${NAO_DISPONIVEL}. ${eq.motivo}`] })
+
   secoes.push({
-    titulo: '5. Indicadores não medidos',
+    titulo: t('Indicadores não medidos'),
     paragrafos: ['Os indicadores abaixo não foram obtidos nesta consulta e não podem ser inferidos a partir do consumo:'],
     pares: d.naoMedidos.map(n => [n, NAO_DISPONIVEL] as [string, string]),
   })
 
   secoes.push({
-    titulo: '6. Dados da consulta',
+    titulo: t('Dados da consulta'),
     pares: [
-      ['Fonte dos dados', 'IXC Soft'],
+      ['Fonte dos dados', eq.disponivel ? 'IXC Soft (conexão) e SmartOLT (ONU)' : 'IXC Soft'],
       ['Data e hora da consulta', dataHora(new Date(d.consultadoEm))],
       ['Período analisado', `${dmy(d.periodo.inicio)} a ${dmy(d.periodo.fim)}`],
       ['Emitido por', o.emitidoPor],
@@ -145,16 +182,16 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
     ],
   })
 
-  secoes.push({ titulo: '7. Observações técnicas', lista: d.observacoes })
+  secoes.push({ titulo: t('Observações técnicas'), lista: d.observacoes })
 
   if (o.vdi) {
-    secoes.push({ titulo: '8. Análise para VDI, VPN e servidores remotos', paragrafos: TEXTO_VDI, lista: ['Medições necessárias para uma conclusão:', ...MEDICOES_SUGERIDAS] })
+    secoes.push({ titulo: t('Análise para VDI, VPN e servidores remotos'), paragrafos: TEXTO_VDI, lista: ['Medições necessárias para uma conclusão:', ...MEDICOES_SUGERIDAS] })
   }
 
   const ev = o.evidencias.filter(e => e.titulo.trim() || e.detalhe.trim())
   if (ev.length > 0 || o.observacaoTecnico?.trim()) {
     secoes.push({
-      titulo: `${o.vdi ? '9' : '8'}. Informações complementares fornecidas pelo técnico`,
+      titulo: t('Informações complementares fornecidas pelo técnico'),
       paragrafos: ['Estas informações foram registradas manualmente pelo técnico. NÃO são medições do IXC.', ...(o.observacaoTecnico?.trim() ? [`Observação: ${o.observacaoTecnico.trim()}`] : [])],
       tabela: ev.length ? { colunas: ['Evidência', 'Detalhe'], linhas: ev.map(e => [e.titulo.trim() || '—', e.detalhe.trim() || '—']) } : undefined,
     })

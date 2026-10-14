@@ -90,6 +90,28 @@ export interface SessoesPeriodo {
 /** Indicadores que o IXC NAO fornece nesta consulta. Sempre mostrados como indisponiveis, nunca simulados. */
 export const INDICADORES_NAO_MEDIDOS = ['Velocidade real medida', 'Latência', 'Jitter', 'Perda de pacotes', 'Estabilidade da conexão'] as const
 
+/** Conexao ATUAL, como o proprio cadastro do login no IXC informa (contadores desde o inicio da sessao atual). */
+export interface SessaoAtual {
+  online: boolean
+  inicio: string | null
+  tempoConectadoSegundos: number | null
+  downloadBytes: number | null
+  uploadBytes: number | null
+  atualizadoEm: string | null
+  ultimaDesconexao: string | null
+  motivoUltimaDesconexao: string | null
+  desconexoes: number | null
+}
+
+/** ONU do cliente lida do SmartOLT (somente leitura). Sinal optico e status sao leituras da OLT, nao do IXC. */
+export interface EquipamentoOnu {
+  fonte: 'SmartOLT'
+  status: string | null
+  sinalRxDbm: number | null
+  sinalTxDbm: number | null
+  ultimaMudancaStatus: string | null
+}
+
 export interface DiagnosticoConexao {
   fonte: FonteConectividade
   consultadoEm: string
@@ -97,6 +119,8 @@ export interface DiagnosticoConexao {
   identificacao: IdentificacaoConexao
   consumo: Disponibilidade<ConsumoPeriodo>
   sessoes: Disponibilidade<SessoesPeriodo>
+  sessaoAtual: Disponibilidade<SessaoAtual>
+  equipamento: Disponibilidade<EquipamentoOnu>
   naoMedidos: readonly string[]
   /** Avisos tecnicos sobre como ler os numeros (ex.: convencao de upload/download). */
   observacoes: string[]

@@ -43,8 +43,11 @@ function Cartao({ rotulo, valor, detalhe, indisponivel }: { rotulo: string; valo
   )
 }
 
-export function DiagnosticoConexaoView() {
+export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boolean }) {
   const params = useSearchParams()
+  // Aberto pelo chamado: o cliente e' sempre o do chamado (o servidor ignora qualquer outro codigo).
+  const chamadoParam = params.get('chamado')
+  const chamadoId = chamadoParam && /^[A-Za-z0-9_-]{1,40}$/.test(chamadoParam) ? chamadoParam : null
   const [termo, setTermo] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [resultados, setResultados] = useState<ResultadoBusca[] | null>(null)
@@ -74,14 +77,15 @@ export function DiagnosticoConexaoView() {
     } catch (x: any) { setErro(x.message) } finally { setBuscando(false) }
   }
 
-  async function carregarContratos(codigo: string, nome: string | null, preContrato?: string | null) {
-    setCliente({ codigo, nome }); setContratos(null); setContratoId(null); setLogin(null); setDiag(null); setErro(null)
+  async function carregarContratos(codigo: string | null, nome: string | null, preContrato?: string | null) {
+    if (codigo) setCliente({ codigo, nome })
+    setContratos(null); setContratoId(null); setLogin(null); setDiag(null); setErro(null)
     try {
-      const r = await api<{ cliente: { codigo: string; nome: string | null }; contratos: ContratoConexao[] }>(`/api/diagnostico-conexao/contratos?cliente=${codigo}`)
+      const r = await api<{ cliente: { codigo: string; nome: string | null }; contratos: ContratoConexao[] }>(chamadoId ? `/api/diagnostico-conexao/contratos?chamado=${chamadoId}` : `/api/diagnostico-conexao/contratos?cliente=${codigo}`)
       setCliente(r.cliente); setContratos(r.contratos)
       const alvo = preContrato ? r.contratos.find(c => c.id === preContrato) : r.contratos.length === 1 ? r.contratos[0] : undefined
       if (alvo) { setContratoId(alvo.id); if (alvo.logins.length === 1) setLogin(alvo.logins[0].login) }
-      return { contratos: r.contratos, alvo }
+      return { contratos: r.contratos, alvo, cliente: r.cliente }
     } catch (x: any) { setErro(x.message); return null }
   }
 
@@ -94,6 +98,7 @@ export function DiagnosticoConexaoView() {
     setErro(null); setConsultando(true); setDiag(null)
     try {
       const q = new URLSearchParams({ cliente: cod })
+      if (chamadoId) q.set('chamado', chamadoId)
       if (ctr) q.set('contrato', ctr)
       if (lg) q.set('login', lg)
       if (per === 'custom') { q.set('dataInicio', dataInicio); q.set('dataFim', dataFim) } else q.set('periodo', per)
@@ -108,10 +113,19 @@ export function DiagnosticoConexaoView() {
   useEffect(() => {
     if (iniciou.current) return
     iniciou.current = true
-    const c = params.get('cliente')
-    if (!c || !/^\d+$/.test(c)) return
     const ctr = params.get('contrato')
     const per = params.get('periodo') === '7d' ? '7d' : '30d'
+    if (chamadoId) {
+      // Pelo chamado: o codigo do cliente vem do servidor (nunca da tela).
+      setPeriodo(per); setVdi(params.get('vdi') === '1')
+      ;(async () => {
+        const r = await carregarContratos(null, null, ctr)
+        if (r?.alvo) await consultar({ cliente: r.cliente.codigo, contrato: r.alvo.id, login: params.get('login') || (r.alvo.logins.length === 1 ? r.alvo.logins[0].login : null), periodo: per })
+      })()
+      return
+    }
+    const c = params.get('cliente')
+    if (!podeBuscar || !c || !/^\d+$/.test(c)) return
     setPeriodo(per); setVdi(params.get('vdi') === '1')
     ;(async () => {
       const r = await carregarContratos(c, null, ctr)
@@ -130,7 +144,7 @@ export function DiagnosticoConexaoView() {
     try {
       const emitido = await api<{ emitidoPor: string; emitidoEm: string }>('/api/diagnostico-conexao/emitido', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cliente: diag.identificacao.cliente.codigo, contrato: diag.identificacao.contrato.id, inicio: diag.periodo.inicio, fim: diag.periodo.fim, vdi, comEvidencias: evidencias.length > 0 || !!observacaoTecnico.trim() }),
+        body: JSON.stringify({ cliente: diag.identificacao.cliente.codigo, ...(chamadoId ? { chamado: chamadoId } : {}), contrato: diag.identificacao.contrato.id, inicio: diag.periodo.inicio, fim: diag.periodo.fim, vdi, comEvidencias: evidencias.length > 0 || !!observacaoTecnico.trim() }),
       })
       const conteudo = montarConteudoRelatorio(diag, { emitidoPor: emitido.emitidoPor, emitidoEm: new Date(emitido.emitidoEm), vdi, evidencias, observacaoTecnico, finalidade })
       await renderizarPdf(conteudo)
@@ -144,6 +158,8 @@ export function DiagnosticoConexaoView() {
   const botaoSec = 'gts-btn-secondary'
   const ident = diag?.identificacao
   const consumo = diag?.consumo
+  const sa = diag?.sessaoAtual
+  const eq = diag?.equipamento
 
   return (
     <div className="space-y-4">
@@ -153,6 +169,8 @@ export function DiagnosticoConexaoView() {
       </div>
 
       <Area numero={1} titulo="Identificação">
+        {!podeBuscar && !chamadoId && <p className="rounded-lg border border-amber-500/25 bg-amber-500/[0.08] px-3 py-2 text-sm text-amber-900">O diagnóstico de conexão é aberto a partir de um chamado: entre em Meus chamados, abra o chamado do cliente e toque em &ldquo;Diagnóstico de conexão&rdquo;.</p>}
+        {podeBuscar && !chamadoId && (
         <form onSubmit={buscar} className="flex flex-col gap-2 sm:flex-row">
           <label htmlFor="dc-busca" className="sr-only">Buscar cliente</label>
           <input id="dc-busca" value={termo} onChange={e => setTermo(e.target.value)} maxLength={80} placeholder="Nome, código do cliente, número do contrato ou login" className={cn(campo, 'flex-1')} />
@@ -160,6 +178,8 @@ export function DiagnosticoConexaoView() {
             {buscando ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Search className="h-4 w-4" aria-hidden />} Buscar
           </button>
         </form>
+        )}
+        {chamadoId && !cliente && !erro && <p className="flex items-center gap-2 text-sm text-tema-suave"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Consultando o cliente do chamado no IXC...</p>}
 
         {erro && <p role="alert" className="mt-3 rounded-lg border border-red-500/25 bg-red-500/[0.06] px-3 py-2 text-sm text-red-800">{erro}</p>}
 
@@ -259,7 +279,7 @@ export function DiagnosticoConexaoView() {
         )}
       </Area>
 
-      {diag && ident && consumo && (
+      {diag && ident && consumo && sa && eq && (
         <>
           <Area numero={2} titulo="Indicadores">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -267,6 +287,12 @@ export function DiagnosticoConexaoView() {
               <Cartao rotulo="Upload contratado" valor={ident.velocidade.uploadMbps != null ? formatarMbps(ident.velocidade.uploadMbps) : NAO_DISPONIVEL} indisponivel={ident.velocidade.uploadMbps == null} detalhe="Velocidade do plano, não medida" />
               <Cartao rotulo="Consumo de download" valor={consumo.disponivel ? formatarBytes(consumo.downloadBytes) : NAO_DISPONIVEL} indisponivel={!consumo.disponivel} detalhe={consumo.disponivel ? `Volume no período (${diag.periodo.rotulo}), não velocidade` : consumo.motivo} />
               <Cartao rotulo="Consumo de upload" valor={consumo.disponivel ? formatarBytes(consumo.uploadBytes) : NAO_DISPONIVEL} indisponivel={!consumo.disponivel} detalhe={consumo.disponivel ? `Volume no período (${diag.periodo.rotulo}), não velocidade` : consumo.motivo} />
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Cartao rotulo={sa.disponivel && !sa.online ? 'Situação da conexão' : 'Conectado há'} valor={!sa.disponivel ? NAO_DISPONIVEL : !sa.online ? 'Desconectado' : sa.tempoConectadoSegundos != null ? formatarDuracao(sa.tempoConectadoSegundos) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || (sa.online && sa.tempoConectadoSegundos == null)} detalhe={sa.disponivel ? (sa.online ? (sa.inicio ? `Desde ${sa.inicio}` : 'Conexão atual, segundo o IXC') : (sa.ultimaDesconexao ? `Última desconexão em ${sa.ultimaDesconexao}` : 'Sem conexão no momento da consulta')) : sa.motivo} />
+              <Cartao rotulo={sa.disponivel && !sa.online ? 'Download da última sessão' : 'Download da sessão atual'} valor={sa.disponivel && sa.downloadBytes != null ? formatarBytes(sa.downloadBytes) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || sa.downloadBytes == null} detalhe="Volume desde o início da conexão, não velocidade" />
+              <Cartao rotulo={sa.disponivel && !sa.online ? 'Upload da última sessão' : 'Upload da sessão atual'} valor={sa.disponivel && sa.uploadBytes != null ? formatarBytes(sa.uploadBytes) : NAO_DISPONIVEL} indisponivel={!sa.disponivel || sa.uploadBytes == null} detalhe="Volume desde o início da conexão, não velocidade" />
+              <Cartao rotulo="Sinal óptico da ONU (RX)" valor={eq.disponivel && eq.sinalRxDbm != null ? `${eq.sinalRxDbm} dBm` : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.sinalRxDbm == null} detalhe={eq.disponivel ? `Leitura da OLT (SmartOLT) · ONU ${eq.status ?? 'sem status'}` : eq.motivo} />
             </div>
             <p className="mt-3 text-xs text-tema-apagado">Não obtidos pelo IXC nesta consulta: {diag.naoMedidos.join(', ').toLowerCase()}. Eles não são estimados a partir do consumo.</p>
           </Area>
@@ -277,7 +303,21 @@ export function DiagnosticoConexaoView() {
                 <p className="mb-3 text-sm text-tema-suave">{consumo.sessoes} sessão(ões) registrada(s) · total {formatarBytes(consumo.totalBytes)} no período.</p>
                 <GraficoConsumo porDia={consumo.porDia} inicio={diag.periodo.inicio} fim={diag.periodo.fim} />
               </>
-            ) : <p className="text-sm text-tema-suave">Histórico de consumo: {NAO_DISPONIVEL}. {consumo.motivo}</p>}
+            ) : <p className="text-sm text-tema-suave">Histórico de consumo por período: {NAO_DISPONIVEL}. {consumo.motivo}</p>}
+
+            {sa.disponivel && (
+              <div className="mt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-tema-suave">Conexão atual (cadastro do login no IXC)</p>
+                <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                  {([
+                    ['Situação', sa.online ? 'Conectado' : 'Desconectado'], [sa.online ? 'Conectado desde' : 'Última conexão iniciada em', sa.inicio], ['Contador atualizado em', sa.atualizadoEm],
+                    ['Última desconexão', sa.ultimaDesconexao], ['Motivo da última desconexão', sa.motivoUltimaDesconexao], ['Desconexões contadas pelo IXC', sa.desconexoes != null ? String(sa.desconexoes) : null],
+                  ] as [string, string | null | undefined][]).map(([k, v]) => (
+                    <div key={k}><dt className="text-xs text-tema-apagado">{k}</dt><dd className={cn('font-medium', v ? 'text-tema-tinta' : 'text-tema-apagado')}>{v || NAO_DISPONIVEL}</dd></div>
+                  ))}
+                </dl>
+              </div>
+            )}
 
             {diag.sessoes.disponivel && (
               <div className="mt-5">

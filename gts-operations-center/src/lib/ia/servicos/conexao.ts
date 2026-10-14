@@ -1,6 +1,6 @@
 import { registrarLog } from '@/lib/auditLog'
 import { buscarClientes, consultarConexao } from '@/lib/diagnosticoConexao/servico'
-import { formatarBytes, formatarMbps } from '@/lib/diagnosticoConexao/formato'
+import { formatarBytes, formatarDuracao, formatarMbps } from '@/lib/diagnosticoConexao/formato'
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { ErroDiagnostico, INDICADORES_NAO_MEDIDOS, NAO_DISPONIVEL, type ContratoConexao } from '@/lib/diagnosticoConexao/tipos'
 import { exigirArea } from '../autorizacao'
@@ -23,7 +23,7 @@ export interface ParamsConexao {
 }
 
 const AVISO_REGRA = 'Volume consumido (GB) não é velocidade (Mbps). Velocidade medida, latência, jitter, perda de pacotes e estabilidade não são fornecidos pelo IXC e não são estimados.'
-const FONTE = ['ixc: cliente', 'ixc: cliente_contrato', 'ixc: radusuarios', 'ixc: radgrupos', 'ixc: radacct']
+const FONTE = ['ixc: cliente', 'ixc: cliente_contrato', 'ixc: radusuarios', 'ixc: radgrupos', 'ixc: radacct', 'smartolt: onus']
 
 function traduzir(e: unknown): never {
   if (e instanceof ErroDiagnostico) {
@@ -122,6 +122,14 @@ export async function diagnosticoConexao(ctx: ContextoIA, p: ParamsConexao) {
         ? { rotulo: 'Consumo de upload', valor: formatarBytes(d.consumo.uploadBytes), detalhe: `Volume em ${d.periodo.rotulo}, não velocidade` }
         : { rotulo: 'Consumo de upload', valor: NAO_DISPONIVEL, tom: 'alerta' },
     ]
+    const sa = d.sessaoAtual
+    if (sa.disponivel) {
+      if (sa.tempoConectadoSegundos != null) indicadores.push({ rotulo: 'Conectado há', valor: formatarDuracao(sa.tempoConectadoSegundos), detalhe: sa.inicio ? `Desde ${sa.inicio}` : undefined })
+      if (sa.downloadBytes != null) indicadores.push({ rotulo: 'Download da sessão atual', valor: formatarBytes(sa.downloadBytes), detalhe: 'Volume desde o início da conexão, não velocidade' })
+      if (sa.uploadBytes != null) indicadores.push({ rotulo: 'Upload da sessão atual', valor: formatarBytes(sa.uploadBytes), detalhe: 'Volume desde o início da conexão, não velocidade' })
+    }
+    const eq = d.equipamento
+    if (eq.disponivel && eq.sinalRxDbm != null) indicadores.push({ rotulo: 'Sinal óptico da ONU (RX)', valor: `${eq.sinalRxDbm} dBm`, detalhe: `Leitura da OLT (SmartOLT) · ONU ${eq.status ?? 'sem status'}` })
     if (d.sessoes.disponivel) {
       indicadores.push({ rotulo: 'Desconexões no período', valor: d.sessoes.desconexoes, detalhe: `${d.sessoes.emCurso} sessão(ões) em curso` })
     }
@@ -145,6 +153,10 @@ export async function diagnosticoConexao(ctx: ContextoIA, p: ParamsConexao) {
         sessoes: d.sessoes.disponivel
           ? { total: d.sessoes.total, desconexoes: d.sessoes.desconexoes, emCurso: d.sessoes.emCurso, motivosDesconexao: d.sessoes.motivos }
           : { indisponivel: NAO_DISPONIVEL, motivo: d.sessoes.motivo },
+        conexaoAtual: sa.disponivel
+          ? { conectado: sa.online, desde: sa.inicio, tempoConectado: sa.tempoConectadoSegundos != null ? formatarDuracao(sa.tempoConectadoSegundos) : null, downloadSessaoGB: sa.downloadBytes != null ? Math.round((sa.downloadBytes / 1024 ** 3) * 100) / 100 : null, uploadSessaoGB: sa.uploadBytes != null ? Math.round((sa.uploadBytes / 1024 ** 3) * 100) / 100 : null, ultimaDesconexao: sa.ultimaDesconexao, motivoUltimaDesconexao: sa.motivoUltimaDesconexao, desconexoesContadasPeloIxc: sa.desconexoes, observacao: 'volume desde o início da conexão atual, não velocidade' }
+          : { indisponivel: NAO_DISPONIVEL, motivo: sa.motivo },
+        onuSmartOlt: eq.disponivel ? { status: eq.status, sinalRxDbm: eq.sinalRxDbm, sinalTxDbm: eq.sinalTxDbm, observacao: 'leitura da OLT; não mede velocidade nem estabilidade' } : { indisponivel: NAO_DISPONIVEL, motivo: eq.motivo },
         naoMedidosPeloIxc: [...INDICADORES_NAO_MEDIDOS],
         vdiVpn: p.vdi ? 'Análise de VDI/VPN/servidor remoto: consumo e velocidade contratada não comprovam ausência de problema; sem medições (latência, jitter, perda) não há conclusão de normalidade.' : undefined,
         resumoParaOUsuario: resumo,

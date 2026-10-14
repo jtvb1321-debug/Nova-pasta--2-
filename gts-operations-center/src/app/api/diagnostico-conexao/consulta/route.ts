@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auditar, limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
+import { auditar, clienteDaConsulta, limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
 import { consultarConexao } from '@/lib/diagnosticoConexao/servico'
 
 // Consulta a conexao de um contrato no IXC (identificacao, velocidade contratada, sessoes e consumo). Somente leitura.
@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   if (limite) return limite
   const sp = request.nextUrl.searchParams
   try {
-    const cliente = sp.get('cliente') ?? ''
+    const alvo = await clienteDaConsulta(a.usuario, sp.get('chamado'), sp.get('cliente'))
+    if ('resposta' in alvo) return alvo.resposta
+    const cliente = alvo.codigo
     const r = await consultarConexao({
       codigoCliente: cliente,
       contratoId: sp.get('contrato') || undefined,
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
       dataFim: sp.get('dataFim') || undefined,
     })
     if (r.tipo === 'ok') {
-      await auditar(a.usuario, 'DIAGNOSTICO_CONEXAO_CONSULTA', cliente, `Contrato ${r.diagnostico.identificacao.contrato.id}, ${r.diagnostico.periodo.inicio} a ${r.diagnostico.periodo.fim}`, request)
+      await auditar(a.usuario, 'DIAGNOSTICO_CONEXAO_CONSULTA', cliente, `Contrato ${r.diagnostico.identificacao.contrato.id}, ${r.diagnostico.periodo.inicio} a ${r.diagnostico.periodo.fim}${alvo.chamado ? `, pelo chamado ${alvo.chamado}` : ''}`, request)
     }
     return NextResponse.json(r, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e) {

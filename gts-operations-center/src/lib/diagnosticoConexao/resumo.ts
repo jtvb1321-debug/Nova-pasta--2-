@@ -1,4 +1,4 @@
-import { formatarBytes, formatarMbps } from './formato'
+import { formatarBytes, formatarDuracao, formatarMbps } from './formato'
 import { NAO_DISPONIVEL, type DiagnosticoConexao } from './tipos'
 
 // Resumo tecnico em texto, montado SO com o que o IXC devolveu. Sem nome de cliente e sem login
@@ -23,8 +23,22 @@ export function resumoTecnico(d: DiagnosticoConexao): string[] {
   } else {
     linhas.push(`Consumo no período: ${NAO_DISPONIVEL}. ${d.consumo.motivo}`)
   }
+  const sa = d.sessaoAtual
+  if (sa.disponivel) {
+    const partes = [sa.online
+      ? `Conexão atual (cadastro do login no IXC): conectado${sa.inicio ? ` desde ${sa.inicio}` : ''}${sa.tempoConectadoSegundos != null ? ` (${formatarDuracao(sa.tempoConectadoSegundos)})` : ''}.`
+      : `Conexão (cadastro do login no IXC): desconectado no momento da consulta${sa.inicio ? `; a última conexão começou em ${sa.inicio}` : ''}.`]
+    if (sa.downloadBytes != null || sa.uploadBytes != null) partes.push(`Volume da ${sa.online ? 'sessão atual' : 'última sessão'}: ${formatarBytes(sa.downloadBytes)} de download e ${formatarBytes(sa.uploadBytes)} de upload (volume desde o início da conexão, não velocidade).`)
+    if (sa.ultimaDesconexao) partes.push(`Última desconexão: ${sa.ultimaDesconexao}${sa.motivoUltimaDesconexao ? `, motivo ${sa.motivoUltimaDesconexao}` : ''}.`)
+    if (sa.desconexoes != null) partes.push(`Desconexões contadas pelo IXC: ${sa.desconexoes}.`)
+    linhas.push(partes.join(' '))
+  }
   if (d.sessoes.disponivel) {
     linhas.push(`Sessões: ${d.sessoes.desconexoes} desconexão(ões) registrada(s) e ${d.sessoes.emCurso} sessão(ões) em curso.`)
+  }
+  if (d.equipamento.disponivel) {
+    const e = d.equipamento
+    linhas.push(`ONU (leitura da OLT no SmartOLT): status ${e.status ?? NAO_DISPONIVEL}${e.sinalRxDbm != null ? `, sinal de recepção ${e.sinalRxDbm} dBm` : ''}${e.sinalTxDbm != null ? `, transmissão ${e.sinalTxDbm} dBm` : ''}. Sinal óptico não mede a velocidade nem a estabilidade da conexão.`)
   }
   linhas.push('Não foram obtidos velocidade medida, latência, jitter, perda de pacotes nem estabilidade. O consumo registrado, isoladamente, não permite concluir que a conexão esteja estável ou normal.')
   return linhas

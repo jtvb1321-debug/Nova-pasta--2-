@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
+import { clienteDaConsulta, limiteExcedido, respostaDeErro, usuarioAutorizado } from '@/lib/diagnosticoConexao/acesso'
 import { contratosDoCliente } from '@/lib/diagnosticoConexao/servico'
 
 // Contratos e logins de um cliente do IXC. Somente leitura.
@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
   const limite = limiteExcedido(a.usuario.id)
   if (limite) return limite
   try {
-    const dados = await contratosDoCliente(request.nextUrl.searchParams.get('cliente') ?? '')
+    const sp = request.nextUrl.searchParams
+    const alvo = await clienteDaConsulta(a.usuario, sp.get('chamado'), sp.get('cliente'))
+    if ('resposta' in alvo) return alvo.resposta
+    const dados = await contratosDoCliente(alvo.codigo)
     return NextResponse.json(dados, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e) {
     return respostaDeErro(e)

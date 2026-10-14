@@ -2,18 +2,21 @@ import './ambiente'
 import { describe, it, before, after, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { prisma } from '@/lib/prisma'
-import { semear, type Dados } from './dados'
+import { semear, MARCA, type Dados } from './dados'
 import { lerConfigIA } from '@/lib/ia/config'
 import { executarFerramenta, resultadoParaModelo } from '@/lib/ia/executor'
 import { responderPergunta } from '@/lib/ia/orquestrador'
 import { zerarLimites } from '@/lib/ia/limites'
 import { escolherFerramentas, termoConexao } from '@/lib/ia/provedores/mock'
-import { agregarSessoes, buscarClientes, consultarConexao, resolverPeriodo } from '@/lib/diagnosticoConexao/servico'
+import { MOTIVO_SEM_HISTORICO, OBSERVACAO_SESSAO_ATUAL, agregarSessoes, buscarClientes, consultarConexao, resolverPeriodo, sessaoAtualDe } from '@/lib/diagnosticoConexao/servico'
+import { montarEquipamento, variantesDeSerial } from '@/lib/diagnosticoConexao/equipamento'
 import { formatarBytes, formatarMbps, octetos, paraMbps } from '@/lib/diagnosticoConexao/formato'
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { MEDICOES_SUGERIDAS, TEXTO_VDI, montarConteudoRelatorio } from '@/lib/diagnosticoConexao/relatorio'
 import { ErroDiagnostico, NAO_DISPONIVEL, type DiagnosticoConexao } from '@/lib/diagnosticoConexao/tipos'
 import { responderIxc } from '../../scripts/ixc-falso-dados'
+import { clienteDaConsulta, type UsuarioDiagnostico } from '@/lib/diagnosticoConexao/acesso'
+import { getPermissions } from '@/lib/permissions'
 
 let D: Dados
 before(async () => { D = await semear() })
@@ -22,12 +25,13 @@ after(async () => { await prisma.$disconnect() })
 
 // IXC FALSO: mesmos dados ficticios do servidor local (scripts/ixc-falso-dados.ts). Nenhuma chamada de rede.
 const fetchOriginal = globalThis.fetch
-function simularIxc(opcoes: { semTabela?: string[]; falharTudo?: boolean } = {}) {
+function simularIxc(opcoes: { semTabela?: string[]; falharTudo?: boolean; radacctVazio?: boolean } = {}) {
   const chamadas: string[] = []
   globalThis.fetch = (async (url: any, init: any) => {
     const tabela = String(url).split('/').pop()!
     chamadas.push(tabela)
     if (opcoes.falharTudo) throw new Error('IXC fora do ar (simulado)')
+    if (opcoes.radacctVazio && tabela === 'radacct') return new Response('{"registros":[]}', { status: 200 })
     if (opcoes.semTabela?.includes(tabela)) return new Response('{"type":"error"}', { status: 404 })
     const r = responderIxc(tabela, JSON.parse(init.body))
     return r ? new Response(JSON.stringify(r), { status: 200 }) : new Response('{"type":"error"}', { status: 404 })
@@ -268,5 +272,109 @@ describe('assistente: busca por numero de contrato', () => {
     simularIxc()
     const x = (await executarFerramenta(D.ctxDe('ADMIN'), 'diagnostico_conexao', { busca: '7003', periodo: '7d' })).resultado!
     assert.equal((x.dados as any).situacao, 'diagnostico'); assert.match(x.acoes![0].url, /cliente=9002&periodo=7d&contrato=7003/)
+  })
+})
+
+describe('IXC sem historico de sessoes: conexao atual real (campos do cadastro do login)', () => {
+  it('radacct vazio: historico indisponivel com motivo claro, mas a sessao atual vem do cadastro do login', async () => {
+    simularIxc({ radacctVazio: true })
+    const r = await consultarConexao({ codigoCliente: '9001', periodo: '7d' })
+    assert.equal(r.tipo, 'ok'); if (r.tipo !== 'ok') return
+    const d = r.diagnostico
+    assert.equal(d.consumo.disponivel, false); if (!d.consumo.disponivel) assert.equal(d.consumo.motivo, MOTIVO_SEM_HISTORICO)
+    assert.ok(d.sessaoAtual.disponivel); if (!d.sessaoAtual.disponivel) return
+    assert.equal(d.sessaoAtual.online, true); assert.equal(d.sessaoAtual.tempoConectadoSegundos, 67477)
+    assert.equal(d.sessaoAtual.downloadBytes, 4634235783); assert.equal(d.sessaoAtual.uploadBytes, 528551714)
+    assert.equal(d.sessaoAtual.ultimaDesconexao, null)
+    assert.ok(d.observacoes.includes(OBSERVACAO_SESSAO_ATUAL)); assert.ok(!d.observacoes.some(o => /RADIUS/.test(o)))
+  })
+  it('login desconectado: mostra a ultima desconexao, o motivo e o contador do IXC', async () => {
+    simularIxc({ radacctVazio: true })
+    const r = await consultarConexao({ codigoCliente: '9002', contratoId: '7002' })
+    assert.equal(r.tipo, 'ok'); if (r.tipo !== 'ok') return
+    const sa = r.diagnostico.sessaoAtual; assert.ok(sa.disponivel); if (!sa.disponivel) return
+    assert.equal(sa.online, false); assert.equal(sa.ultimaDesconexao, '01/09/2026 09:30'); assert.equal(sa.motivoUltimaDesconexao, 'Lost-Carrier'); assert.equal(sa.desconexoes, 3)
+  })
+  it('sem login ou sem dados no cadastro: indisponivel (nunca zero)', () => {
+    assert.equal(sessaoAtualDe(null).disponivel, false)
+    const vazio: any = { login: 'x', online: false, sessaoAtual: { inicio: null, fim: null, tempoConectadoSegundos: null, downloadBytes: null, uploadBytes: null, atualizadoEm: null, motivoDesconexao: null, desconexoes: null } }
+    assert.equal(sessaoAtualDe(vazio).disponivel, false)
+  })
+  it('resumo e relatorio trazem a conexao atual; resumo continua sem nome nem login', async () => {
+    simularIxc({ radacctVazio: true })
+    const r = await consultarConexao({ codigoCliente: '9001', periodo: '7d' })
+    if (r.tipo !== 'ok') throw new Error('esperava diagnostico')
+    const t = resumoTecnico(r.diagnostico).join(' ')
+    assert.match(t, /Conexão atual/); assert.match(t, /4,32 GB|4,3 GB/); assert.doesNotMatch(t, /teste.diag|CLIENTE TESTE/i)
+    const c = montarConteudoRelatorio(r.diagnostico, { emitidoPor: 'Usuario Teste', emitidoEm: new Date(), vdi: false, evidencias: [] })
+    const sec = c.secoes.find(x => /Conexão atual/.test(x.titulo)); assert.ok(sec); assert.match(JSON.stringify(sec), /Download da sessão atual/)
+    assert.deepEqual(c.secoes.map(x => Number(x.titulo.split('.')[0])), c.secoes.map((_, i) => i + 1), 'numeracao das secoes sequencial')
+  })
+  it('assistente: indicadores da sessao atual e sem login/nome para o modelo', async () => {
+    simularIxc({ radacctVazio: true })
+    const x = (await executarFerramenta(D.ctxDe('ADMIN'), 'diagnostico_conexao', { clienteId: '9001', contratoId: '7001', periodo: '7d' })).resultado!
+    assert.ok(x.indicadores.some(i => i.rotulo === 'Download da sessão atual')); assert.ok(x.indicadores.some(i => i.rotulo === 'Conectado há'))
+    assert.doesNotMatch(resultadoParaModelo(x), /CLIENTE TESTE|teste.diag|10.10.0./i)
+  })
+})
+
+describe('ONU no SmartOLT: so casa por serial exato', () => {
+  const onu = (sn: string, id = sn) => ({ unique_external_id: id, sn, olt_id: '1', board: '1', port: '1', onu: '1', zone_id: '1', name: 'x', status: 'Online', last_status_change: '2026-10-13 10:00:00' })
+  const sinal = (id: string) => ({ unique_external_id: id, sn: '', olt_id: '1', board: '1', port: '1', onu: '1', zone_id: '1', name: 'x', signal_1310: '-21.50 dBm', signal: 'Very good', signal_1490: '-19.10 dBm' })
+  it('serial em hexadecimal casa com o serial em texto (HWTC...)', () => {
+    assert.ok(variantesDeSerial('48575443AABB0001').includes('HWTCAABB0001')); assert.ok(variantesDeSerial('HWTCAABB0001').includes('48575443AABB0001'))
+    assert.deepEqual(variantesDeSerial('abc'), []); assert.deepEqual(variantesDeSerial(null), [])
+  })
+  it('encontra a ONU certa e mostra status e sinal (leitura da OLT)', () => {
+    const r = montarEquipamento('48575443AABB0001', [onu('HWTCAABB0002', 'b'), onu('HWTCAABB0001', 'a')], [sinal('a'), sinal('b')])
+    assert.ok(r.disponivel); if (r.disponivel) { assert.equal(r.status, 'Online'); assert.equal(r.sinalRxDbm, -21.5); assert.equal(r.sinalTxDbm, -19.1) }
+  })
+  it('sem serial, sem ONU igual ou com duplicidade: indisponivel (nunca chuta pelo nome)', () => {
+    assert.equal(montarEquipamento(null, [onu('HWTCAABB0001')], []).disponivel, false)
+    assert.equal(montarEquipamento('48575443AABB0009', [onu('HWTCAABB0001')], []).disponivel, false)
+    assert.equal(montarEquipamento('HWTCAABB0001', [onu('HWTCAABB0001', 'a'), onu('HWTCAABB0001', 'b')], []).disponivel, false)
+  })
+})
+
+describe('equipe em campo: o tecnico so consulta o cliente do chamado da propria equipe', () => {
+  let chamadoA: string, chamadoB: string, chamadoEace: string, clienteId: string
+  const tecnico = (): UsuarioDiagnostico => ({ id: D.usuarios.tecnico.id, nome: 'Tecnico', role: 'TECNICO', buscaLivre: false })
+  const gestor = (): UsuarioDiagnostico => ({ id: D.usuarios.gestor.id, nome: 'Gestor', role: 'GESTOR', buscaLivre: true })
+  before(async () => {
+    const c = await prisma.cliente.create({ data: { nome: `CLIENTE DIAG ${MARCA}`, codigoIxc: '9001' } })
+    clienteId = c.id
+    const base = { cliente: `CLIENTE DIAG ${MARCA}`, endereco: 'Rua Teste 1', cidade: 'Cidade Teste', telefone: '(86) 99999-0001', tipo: 'SUPORTE' as const, status: 'ABERTO' as const, clienteId }
+    chamadoA = (await prisma.chamado.create({ data: { ...base, equipeId: D.equipeA.id } })).id
+    chamadoB = (await prisma.chamado.create({ data: { ...base, equipeId: D.equipeB.id } })).id
+    chamadoEace = (await prisma.chamado.create({ data: { ...base, equipeId: D.equipeA.id, eace: true } })).id
+  })
+  after(async () => {
+    await prisma.chamado.deleteMany({ where: { id: { in: [chamadoA, chamadoB, chamadoEace] } } })
+    await prisma.cliente.delete({ where: { id: clienteId } }).catch(() => {})
+  })
+  const status = (r: any) => ('resposta' in r ? r.resposta.status : 0)
+
+  it('permissoes: tecnico so pelo chamado; gestor com busca livre; vendedor nada', () => {
+    const t = getPermissions('TECNICO'); assert.equal(t.verDiagnosticoConexao, false); assert.equal(t.diagnosticoPeloChamado, true)
+    const g = getPermissions('GESTOR'); assert.equal(g.verDiagnosticoConexao, true); assert.equal(g.diagnosticoPeloChamado, true)
+    const v = getPermissions('VENDEDOR'); assert.equal(v.verDiagnosticoConexao, false); assert.equal(v.diagnosticoPeloChamado, false)
+  })
+  it('chamado da propria equipe: vale o cliente do chamado e o codigo informado na tela e ignorado', async () => {
+    const r: any = await clienteDaConsulta(tecnico(), chamadoA, '123456')
+    assert.equal(r.codigo, '9001'); assert.equal(r.chamado, chamadoA)
+  })
+  it('chamado de outra equipe, sem chamado, inexistente ou invalido: negado', async () => {
+    assert.equal(status(await clienteDaConsulta(tecnico(), chamadoB, '9001')), 403)
+    assert.equal(status(await clienteDaConsulta(tecnico(), null, '9001')), 403)
+    assert.equal(status(await clienteDaConsulta(tecnico(), 'chamado-que-nao-existe', null)), 404)
+    assert.equal(status(await clienteDaConsulta(tecnico(), "x'; drop table", null)), 400)
+  })
+  it('chamado EACE (escola, sem assinante no IXC): erro claro, nao consulta nada', async () => {
+    const r: any = await clienteDaConsulta(tecnico(), chamadoEace, null)
+    assert.equal(status(r), 404); assert.match(JSON.stringify(await r.resposta.json()), /EACE/)
+  })
+  it('gestor: com chamado usa o do chamado; sem chamado usa o codigo informado', async () => {
+    assert.equal(((await clienteDaConsulta(gestor(), chamadoB, '777')) as any).codigo, '9001')
+    assert.equal(((await clienteDaConsulta(gestor(), null, '777')) as any).codigo, '777')
   })
 })
