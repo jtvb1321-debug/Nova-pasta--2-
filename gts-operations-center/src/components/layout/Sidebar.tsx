@@ -10,7 +10,7 @@ import {
   Package, BarChart3, ShoppingCart, Settings,
   LogOut, ChevronLeft, ChevronRight, Bell,
   Monitor, TrendingUp, BrainCircuit, Map, ChevronDown, Shield,
-  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search, Activity,
+  UserCog, DollarSign, Wallet, ClipboardCheck, Clock, Network, Wifi, Radio, Search, Activity, FileText,
 } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { SearchModal } from './SearchModal'
@@ -73,6 +73,7 @@ const TODOS_GRUPOS: MenuGroup[] = [
     items: [
       { href: '/sales',           label: 'Vendas',         icon: ShoppingCart, permissao: 'verVendas' },
       { href: '/clientes', label: 'Clientes', icon: Users, permissao: 'verClientes' },
+      { href: '/orcamentos', label: 'Orçamentos', icon: FileText, permissao: 'verOrcamentos' },
       { href: '/minha-comissao',  label: 'Minha Comissao', icon: Wallet,       permissao: 'verMinhaComissao' },
       { href: '/financeiro', label: 'Financeiro',  icon: DollarSign,   permissao: 'verFinanceiro' },
       { href: '/reports',    label: 'Relatorios',  icon: BarChart3,    permissao: 'verRelatorios' },

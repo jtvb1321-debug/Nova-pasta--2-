@@ -37,6 +37,8 @@ export interface Permission {
   verDiagnosticoConexao: boolean
   /** Abrir o Diagnostico de Conexao a partir de um chamado (so o cliente do chamado; tecnico so da propria equipe). */
   diagnosticoPeloChamado: boolean
+  /** Empresas e orcamentos (propostas comerciais). */
+  verOrcamentos: boolean
 }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
@@ -75,6 +77,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       true,
     verDiagnosticoConexao: true,
     diagnosticoPeloChamado: true,
+    verOrcamentos: true,
   },
   GESTOR: {
     verDashboard:      true,
@@ -111,6 +114,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       true,
     verDiagnosticoConexao: true,
     diagnosticoPeloChamado: true,
+    verOrcamentos: true,
   },
   OPERADOR: {
     verDashboard:      true,
@@ -147,6 +151,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       false,
     verDiagnosticoConexao: true,
     diagnosticoPeloChamado: true,
+    verOrcamentos: false,
   },
   COMERCIAL: {
     verDashboard:      true,
@@ -183,6 +188,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       false,
     verDiagnosticoConexao: false,
     diagnosticoPeloChamado: false,
+    verOrcamentos: true,
   },
   TECNICO: {
     verDashboard:      false,
@@ -219,6 +225,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       false,
     verDiagnosticoConexao: false,
     diagnosticoPeloChamado: true,
+    verOrcamentos: false,
   },
   VENDEDOR: {
     verDashboard:      true,
@@ -255,6 +262,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     iaComercial:       false,
     verDiagnosticoConexao: false,
     diagnosticoPeloChamado: false,
+    verOrcamentos: true,
   },
 }
 

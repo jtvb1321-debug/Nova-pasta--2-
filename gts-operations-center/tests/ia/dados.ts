@@ -43,6 +43,10 @@ export async function semear() {
   await prisma.itemEstoque.deleteMany()
   await prisma.funcionario.deleteMany()
   await prisma.equipe.deleteMany()
+  // Orcamentos apontam para usuarios: saem antes deles.
+  await prisma.itemOrcamento.deleteMany()
+  await prisma.orcamento.deleteMany()
+  await prisma.empresa.deleteMany()
   await prisma.usuario.deleteMany()
 
   const hash = await bcrypt.hash(SENHA_TESTE, 4)

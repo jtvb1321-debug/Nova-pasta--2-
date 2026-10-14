@@ -106,6 +106,7 @@ model Usuario {
   baixasRealizadas    ContaReceber[]
   clientes            Cliente[]
   diagnosticosRemotos Diagnostico[]
+  orcamentos          Orcamento[]
 
   @@map("usuarios")
 }
@@ -1394,4 +1395,77 @@ model ExecucaoFerramentaIA {
   @@index([usuarioId, createdAt])
   @@index([ferramenta, createdAt])
   @@map("ia_execucoes_ferramenta")
+}
+
+// ---------------------------------------------------------------- Orcamentos (propostas comerciais)
+model Empresa {
+  id                String   @id @default(cuid())
+  razaoSocial       String
+  nomeFantasia      String?
+  cnpj              String?
+  inscricaoEstadual String?
+  contatoNome       String?
+  email             String?
+  telefone          String?
+  cep               String?
+  endereco          String?
+  numero            String?
+  complemento       String?
+  bairro            String?
+  cidade            String?
+  uf                String?
+  observacoes       String?
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  orcamentos Orcamento[]
+
+  @@index([razaoSocial])
+  @@index([cnpj])
+  @@map("empresas")
+}
+
+model Orcamento {
+  id                 String   @id @default(cuid())
+  // Numero sequencial exibido como ORC-0001.
+  numero             Int      @unique @default(autoincrement())
+  empresaId          String
+  emissao            DateTime @default(now())
+  validadeDias       Int      @default(15)
+  condicoesPagamento String?
+  prazoEntrega       String?
+  observacoes        String?
+  // Desconto geral em reais, aplicado depois dos descontos de cada item.
+  descontoGeral      Float    @default(0)
+  criadoPorId        String
+  // Chave aleatoria do link publico de consulta (nunca o id).
+  token              String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  empresa   Empresa         @relation(fields: [empresaId], references: [id])
+  criadoPor Usuario         @relation(fields: [criadoPorId], references: [id])
+  itens     ItemOrcamento[]
+
+  @@index([empresaId])
+  @@index([criadoPorId, emissao])
+  @@map("orcamentos")
+}
+
+model ItemOrcamento {
+  id            String @id @default(cuid())
+  orcamentoId   String
+  ordem         Int    @default(0)
+  descricao     String
+  unidade       String @default("un")
+  quantidade    Float
+  valorUnitario Float
+  // Desconto do item em reais (sobre quantidade x valor unitario).
+  desconto      Float  @default(0)
+
+  orcamento Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+
+  @@index([orcamentoId, ordem])
+  @@map("itens_orcamento")
 }

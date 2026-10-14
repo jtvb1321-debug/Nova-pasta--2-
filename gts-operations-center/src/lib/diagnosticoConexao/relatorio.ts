@@ -33,6 +33,10 @@ export interface ConteudoRelatorio {
   subtitulo: string
   secoes: SecaoRelatorio[]
   nomeArquivo: string
+  /** Texto do rodape de todas as paginas (padrao: o do Relatorio Tecnico de Conectividade). */
+  rodape?: string
+  /** Mostra o simbolo do Orbia no canto direito do cabecalho (a logo da GTSNET fica a esquerda). */
+  logoOrbia?: boolean
 }
 
 const dmy = (iso: string) => iso.split('-').reverse().join('/')
@@ -232,7 +236,7 @@ async function carregarLogo(): Promise<string | null> {
 }
 
 /** Desenha o PDF (A4) e devolve o documento. Separado do download para poder ser testado/gerado fora do navegador. */
-export async function montarPdf(c: ConteudoRelatorio, logo: string | null): Promise<import('jspdf').jsPDF> {
+export async function montarPdf(c: ConteudoRelatorio, logo: string | null, logoOrbia: string | null = null): Promise<import('jspdf').jsPDF> {
   const { default: jsPDF } = await import('jspdf')
   const { default: autoTable } = await import('jspdf-autotable')
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -248,6 +252,12 @@ export async function montarPdf(c: ConteudoRelatorio, logo: string | null): Prom
   doc.text(c.titulo, logo ? margem + 25 : margem, 20)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
   doc.text(c.subtitulo, logo ? margem + 25 : margem, 26)
+  if (logoOrbia) {
+    try { doc.addImage(logoOrbia, 'PNG', largura - margem - 14, 11, 14, 14) } catch { /* sem logo do Orbia */ }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0)
+    doc.text('Orbia', largura - margem - 7, 29, { align: 'center' })
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+  }
   doc.setDrawColor(0); doc.setLineWidth(0.4); doc.line(margem, 34, largura - margem, 34)
   let y = 42
 
@@ -302,13 +312,31 @@ export async function montarPdf(c: ConteudoRelatorio, logo: string | null): Prom
     doc.setPage(i)
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(60)
     doc.setDrawColor(150); doc.setLineWidth(0.2); doc.line(margem, altura - 14, largura - margem, altura - 14)
-    doc.text('GTSNET · Relatório Técnico de Conectividade · Fonte: IXC Soft', margem, altura - 9)
+    doc.text(c.rodape ?? 'GTSNET · Relatório Técnico de Conectividade · Fonte: IXC Soft', margem, altura - 9)
     doc.text(`Página ${i} de ${total}`, largura - margem, altura - 9, { align: 'right' })
   }
   return doc
 }
 
+/** O simbolo do Orbia e' SVG: vira PNG num canvas (o jsPDF so desenha PNG/JPEG). */
+async function carregarLogoOrbia(): Promise<string | null> {
+  try {
+    const r = await fetch('/images/orbia-simbolo.svg')
+    if (!r.ok) return null
+    const url = URL.createObjectURL(await r.blob())
+    try {
+      const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url })
+      const canvas = document.createElement('canvas')
+      canvas.width = 256; canvas.height = 256
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return null
+      ctx.drawImage(img, 0, 0, 256, 256)
+      return canvas.toDataURL('image/png')
+    } finally { URL.revokeObjectURL(url) }
+  } catch { return null }
+}
+
 export async function renderizarPdf(c: ConteudoRelatorio): Promise<void> {
-  const doc = await montarPdf(c, await carregarLogo())
+  const doc = await montarPdf(c, await carregarLogo(), c.logoOrbia ? await carregarLogoOrbia() : null)
   doc.save(c.nomeArquivo)
 }
