@@ -107,6 +107,9 @@ model Usuario {
   clientes            Cliente[]
   diagnosticosRemotos Diagnostico[]
   orcamentos          Orcamento[]
+  veiculosResponsavel Veiculo[]          @relation("VeiculoResponsavel")
+  vistoriasFrota      FrotaVistoria[]
+  escoposFrota        FrotaEscopo[]
 
   @@map("usuarios")
 }
@@ -165,15 +168,30 @@ model Veiculo {
   rastreadorId String?
   foto         String?
   ativo        Boolean  @default(true)
+  // Frota: cadastro completo da viatura (vistoria semanal). excluidoEm = exclusao logica (preserva o historico).
+  marca               String?
+  patrimonio          String?   @unique
+  uf                  String?
+  cidadeBase          String?
+  setor               String?
+  responsavelId       String?
+  kmAtual             Int?
+  licenciamentoVenceEm DateTime?
+  excluidoEm          DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   equipe         Equipe?                 @relation(fields: [equipeId], references: [id])
+  responsavel    Usuario?                @relation("VeiculoResponsavel", fields: [responsavelId], references: [id])
+  vistorias      FrotaVistoria[]
+  fotosFrota     FrotaFoto[]
   abastecimentos Abastecimento[]
   registrosKm    RegistroKm[]
   manutencoes    SolicitacaoManutencao[]
   despesas       DespesaViagem[]
 
+  @@index([uf])
+  @@index([responsavelId])
   @@map("veiculos")
 }
 
@@ -1468,4 +1486,140 @@ model ItemOrcamento {
 
   @@index([orcamentoId, ordem])
   @@map("itens_orcamento")
+}
+
+// ---------------------------------------------------------------- Frota (vistoria de viaturas)
+enum FrotaTipoVistoria {
+  SEMANAL
+  CONFERENCIA_INICIAL
+  SAIDA
+  RETORNO
+  AUDITORIA
+}
+
+enum FrotaStatusItem {
+  OK
+  FALTA
+  AVARIA
+}
+
+enum FrotaCombustivel {
+  RESERVA
+  UM_QUARTO
+  MEIO
+  TRES_QUARTOS
+  CHEIO
+}
+
+// Lista configuravel de itens exigidos (so o administrador altera; vale so para vistorias futuras).
+model FrotaCategoria {
+  id    String @id @default(cuid())
+  nome  String @unique
+  ordem Int    @default(0)
+
+  itens FrotaItem[]
+
+  @@map("frota_categorias")
+}
+
+model FrotaItem {
+  id          String  @id @default(cuid())
+  categoriaId String
+  nome        String
+  exigido     Boolean @default(false)
+  quantidade  Int?
+  ordem       Int     @default(0)
+
+  categoria FrotaCategoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([categoriaId, nome])
+  @@map("frota_itens")
+}
+
+model FrotaFotoObrigatoria {
+  id    String @id @default(cuid())
+  nome  String @unique
+  ordem Int    @default(0)
+
+  @@map("frota_fotos_obrigatorias")
+}
+
+// Escopo do GESTOR: ve as viaturas cujo UF/setor casam com alguma linha (campo vazio = qualquer). Sem linhas = nenhuma.
+model FrotaEscopo {
+  id        String  @id @default(cuid())
+  usuarioId String
+  uf        String?
+  setor     String?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("frota_escopos")
+}
+
+model FrotaVistoria {
+  id             String            @id @default(cuid())
+  veiculoId      String
+  tipo           FrotaTipoVistoria @default(SEMANAL)
+  vistoriadorId  String
+  // Copias para o historico nao mudar se o cadastro mudar.
+  vistoriadorNome String
+  placa          String
+  km             Int
+  combustivel    FrotaCombustivel
+  observacoes    String?
+  totalOk        Int               @default(0)
+  totalFalta     Int               @default(0)
+  totalAvaria    Int               @default(0)
+  // Segunda-feira (AAAA-MM-DD, America/Sao_Paulo) da semana que a vistoria cobre; so para a SEMANAL.
+  semanaRef      String?
+  criadoEm       DateTime          @default(now())
+
+  veiculo   Veiculo              @relation(fields: [veiculoId], references: [id])
+  vistoriador Usuario            @relation(fields: [vistoriadorId], references: [id])
+  itens     FrotaVistoriaItem[]
+  fotos     FrotaFoto[]
+
+  @@index([veiculoId, criadoEm])
+  @@index([tipo, semanaRef])
+  @@map("frota_vistorias")
+}
+
+model FrotaVistoriaItem {
+  id          String          @id @default(cuid())
+  vistoriaId  String
+  // Sem FK de proposito: e' so a copia do que foi conferido.
+  itemId      String?
+  categoria   String
+  nome        String
+  quantidade  Int?
+  status      FrotaStatusItem
+  descricao   String?
+  fotoId      String?
+  ordem       Int             @default(0)
+
+  vistoria FrotaVistoria @relation(fields: [vistoriaId], references: [id], onDelete: Cascade)
+
+  @@index([vistoriaId])
+  @@map("frota_vistoria_itens")
+}
+
+// Foto enviada na hora (vistoriaId vazio ate salvar a vistoria). Arquivo fica fora de public/, servido so a quem tem acesso.
+model FrotaFoto {
+  id         String   @id @default(cuid())
+  vistoriaId String?
+  veiculoId  String
+  // OBRIGATORIA (uma das fotos exigidas) ou AVARIA (de um item com avaria).
+  tipo       String
+  rotulo     String
+  arquivo    String
+  enviadoPorId String
+  criadoEm   DateTime @default(now())
+
+  vistoria FrotaVistoria? @relation(fields: [vistoriaId], references: [id], onDelete: Cascade)
+  veiculo  Veiculo        @relation(fields: [veiculoId], references: [id])
+
+  @@index([vistoriaId])
+  @@index([veiculoId])
+  @@map("frota_fotos")
 }

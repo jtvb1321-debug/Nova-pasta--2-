@@ -58,3 +58,6 @@ nfeeee.txt
 # script local de backup (Windows/Task Scheduler) - contem a senha do
 # Postgres em texto puro e so faz sentido nesta maquina, nunca no repositorio
 scripts/backup-diario.ps1
+
+# fotos das vistorias da frota (runtime; servidas so pela API autenticada)
+/uploads-frota/

@@ -74,7 +74,14 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      router.push('/dashboard')
+      // Link de vistoria da frota (/frota/vistoria/PLACA): volta para ele depois do login. So esse formato e' aceito
+      // (nunca um destino qualquer vindo da URL).
+      let destino = '/dashboard'
+      try {
+        const c = new URLSearchParams(window.location.search).get('callbackUrl') ?? ''
+        if (/^\/frota\/vistoria\/[A-Za-z0-9]{7}$/.test(c)) destino = c
+      } catch {}
+      router.push(destino)
       router.refresh()
     } catch {
       setError('Erro ao conectar. Tente novamente.')

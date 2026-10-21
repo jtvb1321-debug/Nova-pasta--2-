@@ -15,6 +15,8 @@ const ROTAS_TECNICO = [
   '/diagnostico-conexao',
   '/historico-os',
   '/meu-carro',
+  '/frota',
+  '/api/frota',
   '/ponto',
   '/mapa-inmap',
   '/api/tickets',
