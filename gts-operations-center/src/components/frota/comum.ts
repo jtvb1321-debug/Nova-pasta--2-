@@ -1,5 +1,5 @@
 import type { StatusSemana, NivelLicenciamento } from '@/lib/frota/semana'
-import type { TipoVistoria } from '@/lib/frota/regras'
+import type { Combustivel, StatusItem, TipoVistoria } from '@/lib/frota/regras'
 
 // Tipos e utilitarios do cliente (telas da Frota).
 
@@ -31,6 +31,14 @@ export interface PainelSemana {
   comPendencias: number
   pendentesHoje: number
   atrasadas: number
+}
+
+export interface DetalheVistoria {
+  id: string; veiculoId: string; placa: string; tipo: TipoVistoria; vistoriadorNome: string; km: number; combustivel: Combustivel; observacoes: string | null
+  totalOk: number; totalFalta: number; totalAvaria: number; criadoEm: string
+  viatura: { marca: string | null; modelo: string; ano: number | null; patrimonio: string | null; uf: string | null; cidadeBase: string | null; setor: string | null }
+  fotos: { id: string; tipo: string; rotulo: string }[]
+  itens: { categoria: string; nome: string; quantidade: number | null; status: StatusItem; descricao: string | null; fotoId: string | null }[]
 }
 
 export interface RespostaViaturas { painel: PainelSemana; viaturas: ViaturaFrota[]; ufs: string[]; podeVistoriar: boolean; podeAdministrar: boolean }

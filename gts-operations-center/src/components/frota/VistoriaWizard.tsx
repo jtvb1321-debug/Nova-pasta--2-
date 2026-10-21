@@ -190,7 +190,10 @@ function Formulario({ ctx, podeVoltarParaFrota }: { ctx: Contexto; podeVoltarPar
           {concluida.totalAvaria > 0 && <span className="rounded bg-red-500/10 px-2 py-1 text-red-800">{concluida.totalAvaria} avaria</span>}
         </p>
         {concluida.semanal && <p className="mt-3 text-sm text-emerald-700">Contou na vistoria semanal desta semana.</p>}
-        <Link href="/frota" className="gts-btn-primary mt-6 inline-flex">Voltar para a Frota</Link>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <Link href={`/frota/relatorio/${concluida.id}`} className="gts-btn-primary inline-flex min-h-[48px]">Ver relatório desta vistoria</Link>
+          <Link href="/frota" className="gts-btn-secondary inline-flex">Voltar para a Frota</Link>
+        </div>
       </div>
     )
   }

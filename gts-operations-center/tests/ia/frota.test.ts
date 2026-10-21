@@ -310,6 +310,7 @@ describe('frota: viaturas, escopo e vistoria no banco', () => {
     assert.equal(painel.viaturas.find(v => v.placa === 'BBB2B22')!.ultimaVistoria?.pendencias, 2)
     const h = await historico(admin, { soPendencias: true }); assert.deepEqual(h.vistorias.map(x => x.placa), ['BBB2B22'])
     const d = await detalheVistoria(admin, r.vistoria.id)
+    assert.deepEqual([d!.viatura.modelo, d!.viatura.patrimonio, d!.viatura.uf, d!.viatura.cidadeBase], ['Strada', 'GTS-000002', 'SP', 'Campinas'], 'o relatorio traz os dados da viatura')
     assert.equal(d!.itens.find(i => i.nome === 'Pneus')!.fotoId, avaria); assert.equal(d!.fotos.find(f => f.id === avaria)!.rotulo, 'Avaria: Pneus')
     assert.equal(d!.itens.find(i => i.nome === 'Cones')!.descricao, 'Só tem 1 cone')
   })

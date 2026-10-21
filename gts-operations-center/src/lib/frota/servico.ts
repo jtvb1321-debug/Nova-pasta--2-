@@ -220,10 +220,15 @@ export async function detalheVistoria(u: UsuarioFrota, id: string) {
   const filtro = await filtroViaturas(u)
   const v = await prisma.frotaVistoria.findFirst({
     where: { id, veiculo: filtro },
-    include: { itens: { orderBy: { ordem: 'asc' } }, fotos: { orderBy: { criadoEm: 'asc' }, select: { id: true, tipo: true, rotulo: true } } },
+    include: {
+      itens: { orderBy: { ordem: 'asc' } },
+      fotos: { orderBy: { criadoEm: 'asc' }, select: { id: true, tipo: true, rotulo: true } },
+      veiculo: { select: { marca: true, modelo: true, ano: true, patrimonio: true, uf: true, cidadeBase: true, setor: true } },
+    },
   })
   if (!v) return null
   return {
+    viatura: v.veiculo,
     id: v.id, veiculoId: v.veiculoId, placa: v.placa, tipo: v.tipo, vistoriadorNome: v.vistoriadorNome, km: v.km, combustivel: v.combustivel,
     observacoes: v.observacoes, totalOk: v.totalOk, totalFalta: v.totalFalta, totalAvaria: v.totalAvaria, criadoEm: iso(v.criadoEm),
     fotos: v.fotos,

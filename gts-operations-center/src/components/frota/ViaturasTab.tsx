@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CalendarClock, ClipboardCheck, Copy, FileUp, History, MoreVertical, Pencil, Plus, Trash2, UserRound, MapPin, Gauge } from 'lucide-react'
+import { AlertTriangle, CalendarClock, ClipboardCheck, Copy, FileUp, History, MoreVertical, FileText, Pencil, Plus, Trash2, UserRound, MapPin, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -157,13 +157,14 @@ export function ViaturasTab({ onHistorico }: { onHistorico: (veiculoId: string) 
                 <div className="flex items-center gap-2"><UserRound className="h-4 w-4 flex-shrink-0 text-tema-apagado" aria-hidden /><dt className="sr-only">Responsável</dt><dd>{v.responsavel?.nome.trim() ?? <span className="text-tema-apagado">Sem responsável</span>}</dd></div>
                 <div className="flex items-center gap-2"><Gauge className="h-4 w-4 flex-shrink-0 text-tema-apagado" aria-hidden /><dt className="sr-only">Quilometragem</dt><dd className="tabular-nums">{km(v.kmAtual)}</dd></div>
                 <div className="flex items-center gap-2"><CalendarClock className="h-4 w-4 flex-shrink-0 text-tema-apagado" aria-hidden /><dt className="sr-only">Última vistoria</dt>
-                  <dd>{v.ultimaVistoria ? <>Última vistoria {diaMes(v.ultimaVistoria.em)} · {v.ultimaVistoria.pendencias === 0 ? <span className="text-emerald-700">sem pendências</span> : <span className="font-semibold text-orange-700">{v.ultimaVistoria.pendencias} pendência{v.ultimaVistoria.pendencias === 1 ? '' : 's'}</span>}</> : <span className="text-tema-apagado">Nunca vistoriada</span>}</dd></div>
+                  <dd>{v.ultimaVistoria ? <><Link href={`/frota/relatorio/${v.ultimaVistoria.id}`} className="font-medium text-orange-700 underline-offset-2 hover:underline">Última vistoria {diaMes(v.ultimaVistoria.em)}</Link> · {v.ultimaVistoria.pendencias === 0 ? <span className="text-emerald-700">sem pendências</span> : <span className="font-semibold text-orange-700">{v.ultimaVistoria.pendencias} pendência{v.ultimaVistoria.pendencias === 1 ? '' : 's'}</span>}</> : <span className="text-tema-apagado">Nunca vistoriada</span>}</dd></div>
               </dl>
               <div className="mt-2"><Licenciamento v={v} /></div>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {d.podeVistoriar && <Link href={`/frota/vistoria/${v.placa}`} className="gts-btn-primary min-h-[40px] text-sm"><ClipboardCheck className="h-4 w-4" aria-hidden /> Vistoriar</Link>}
-                <button type="button" onClick={() => copiarLink(v)} className="gts-btn-secondary min-h-[40px] text-sm"><Copy className="h-4 w-4" aria-hidden /> Copiar link da vistoria</button>
+                {v.ultimaVistoria && <Link href={`/frota/relatorio/${v.ultimaVistoria.id}`} className="gts-btn-secondary min-h-[40px] text-sm"><FileText className="h-4 w-4" aria-hidden /> Ver relatório</Link>}
+                <button type="button" onClick={() => copiarLink(v)} className="gts-btn-secondary min-h-[40px] text-sm"><Copy className="h-4 w-4" aria-hidden /> Link de nova vistoria</button>
               </div>
             </li>
           )
