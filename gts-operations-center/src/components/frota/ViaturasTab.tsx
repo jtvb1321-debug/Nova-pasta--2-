@@ -163,7 +163,7 @@ export function ViaturasTab({ onHistorico }: { onHistorico: (veiculoId: string) 
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {d.podeVistoriar && <Link href={`/frota/vistoria/${v.placa}`} className="gts-btn-primary min-h-[40px] text-sm"><ClipboardCheck className="h-4 w-4" aria-hidden /> Vistoriar</Link>}
-                <button type="button" onClick={() => copiarLink(v)} className="gts-btn-secondary min-h-[40px] text-sm"><Copy className="h-4 w-4" aria-hidden /> Link do motorista</button>
+                <button type="button" onClick={() => copiarLink(v)} className="gts-btn-secondary min-h-[40px] text-sm"><Copy className="h-4 w-4" aria-hidden /> Copiar link da vistoria</button>
               </div>
             </li>
           )

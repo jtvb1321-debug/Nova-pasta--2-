@@ -39,7 +39,7 @@ export interface Permission {
   diagnosticoPeloChamado: boolean
   /** Empresas e orcamentos (propostas comerciais). */
   verOrcamentos: boolean
-  /** Frota: ver as viaturas do proprio escopo, vistoriar, e administrar (cadastro, itens exigidos, acessos). */
+  /** Frota: so o ADMIN (ver, vistoriar e administrar). */
   verFrota: boolean
   vistoriarFrota: boolean
   administrarFrota: boolean
@@ -122,8 +122,8 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verDiagnosticoConexao: true,
     diagnosticoPeloChamado: true,
     verOrcamentos: true,
-    verFrota: true,
-    vistoriarFrota: true,
+    verFrota: false,
+    vistoriarFrota: false,
     administrarFrota: false,
   },
   OPERADOR: {
@@ -242,8 +242,8 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     verDiagnosticoConexao: false,
     diagnosticoPeloChamado: true,
     verOrcamentos: false,
-    verFrota: true,
-    vistoriarFrota: true,
+    verFrota: false,
+    vistoriarFrota: false,
     administrarFrota: false,
   },
   VENDEDOR: {

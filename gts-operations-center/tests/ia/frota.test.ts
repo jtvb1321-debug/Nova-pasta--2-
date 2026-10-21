@@ -188,9 +188,9 @@ describe('frota: arquivos de foto', () => {
 })
 
 describe('frota: permissoes por perfil', () => {
-  it('administrador faz tudo, gestor e tecnico vistoriam, operador e comercial nao entram', () => {
+  it('so o administrador acessa a Frota (ver, vistoriar e administrar)', () => {
     const f = (r: string) => { const p = getPermissions(r); return [p.verFrota, p.vistoriarFrota, p.administrarFrota] }
-    assert.deepEqual(f('ADMIN'), [true, true, true]); assert.deepEqual(f('GESTOR'), [true, true, false]); assert.deepEqual(f('TECNICO'), [true, true, false])
+    assert.deepEqual(f('ADMIN'), [true, true, true]); assert.deepEqual(f('GESTOR'), [false, false, false]); assert.deepEqual(f('TECNICO'), [false, false, false])
     assert.deepEqual(f('OPERADOR'), [false, false, false]); assert.deepEqual(f('VENDEDOR'), [false, false, false]); assert.deepEqual(f('COMERCIAL'), [false, false, false])
   })
 })
@@ -364,5 +364,16 @@ describe('frota: edicao de itens exigidos', () => {
     assert.equal(itemSchema.parse({ categoriaId: 'c1', nome: 'Extintor' }).exigido, false, 'item novo nasce desligado se nao disser')
     assert.equal(itemPatchSchema.safeParse({ categoriaId: 'c1' }).success, false)
     assert.equal(itemPatchSchema.safeParse({ quantidade: 100 }).success, false)
+  })
+})
+
+describe('frota: acesso so do administrador (rotas e menus)', () => {
+  it('o tecnico nao tem /frota nem /api/frota liberados no middleware, nem item no menu dele', async () => {
+    const { readFileSync } = await import('node:fs')
+    const raiz = join(__dirname, '../..')
+    const mw = readFileSync(join(raiz, 'src/middleware.ts'), 'utf8')
+    const bloco = mw.slice(mw.indexOf('ROTAS_TECNICO'), mw.indexOf(']', mw.indexOf('ROTAS_TECNICO')))
+    assert.doesNotMatch(bloco, /frota/)
+    assert.doesNotMatch(readFileSync(join(raiz, 'src/components/tecnico/TecnicoShell.tsx'), 'utf8'), /frota/i)
   })
 })

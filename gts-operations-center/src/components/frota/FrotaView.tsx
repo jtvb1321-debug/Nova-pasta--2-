@@ -5,11 +5,10 @@ import { cn } from '@/lib/utils'
 import { ViaturasTab } from './ViaturasTab'
 import { HistoricoTab } from './HistoricoTab'
 import { ItensExigidosTab } from './ItensExigidosTab'
-import { AcessosTab } from './AcessosTab'
 
-// Frota: viaturas (tela inicial), historico de vistorias, itens exigidos e acessos (so administrador).
+// Frota (so administrador): viaturas (tela inicial), historico de vistorias e itens exigidos.
 
-type Aba = 'viaturas' | 'historico' | 'itens' | 'acessos'
+type Aba = 'viaturas' | 'historico' | 'itens'
 
 export function FrotaView({ podeAdministrar }: { podeAdministrar: boolean }) {
   const [aba, setAba] = useState<Aba>('viaturas')
@@ -18,7 +17,7 @@ export function FrotaView({ podeAdministrar }: { podeAdministrar: boolean }) {
   const abas: { id: Aba; rotulo: string }[] = [
     { id: 'viaturas', rotulo: 'Viaturas' },
     { id: 'historico', rotulo: 'Histórico' },
-    ...(podeAdministrar ? [{ id: 'itens' as Aba, rotulo: 'Itens exigidos' }, { id: 'acessos' as Aba, rotulo: 'Acessos' }] : []),
+    ...(podeAdministrar ? [{ id: 'itens' as Aba, rotulo: 'Itens exigidos' }] : []),
   ]
 
   return (
@@ -37,7 +36,6 @@ export function FrotaView({ podeAdministrar }: { podeAdministrar: boolean }) {
         {aba === 'viaturas' && <ViaturasTab onHistorico={id => { setVeiculoHistorico(id); setAba('historico') }} />}
         {aba === 'historico' && <HistoricoTab key={veiculoHistorico ?? 'todas'} veiculoInicial={veiculoHistorico} />}
         {aba === 'itens' && podeAdministrar && <ItensExigidosTab />}
-        {aba === 'acessos' && podeAdministrar && <AcessosTab />}
       </div>
     </div>
   )
