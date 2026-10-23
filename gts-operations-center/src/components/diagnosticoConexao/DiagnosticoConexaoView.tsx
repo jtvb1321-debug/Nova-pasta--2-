@@ -11,6 +11,7 @@ import { montarConteudoRelatorio, renderizarPdf, type EvidenciaManual } from '@/
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { NAO_DISPONIVEL, type ContratoConexao, type DiagnosticoConexao, type RespostaConsulta, type ResultadoBusca } from '@/lib/diagnosticoConexao/tipos'
 import { GraficoConsumo } from './GraficoConsumo'
+import { DadosIxcAba } from './DadosIxcAba'
 import { PainelFibra, PainelHipoteses, PainelOrdensServico, PainelVizinhanca } from './RedeAbas'
 
 // Diagnostico de Conexao: consulta o IXC (somente leitura) e gera o Relatorio Tecnico de Conectividade.
@@ -24,7 +25,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 type Periodo = '7d' | '30d' | 'custom'
-type AbaRede = 'geral' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os'
+type AbaRede = 'geral' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os' | 'dados'
 const ORIGEM: Record<ResultadoBusca['origem'], string> = { nome: 'nome', codigo: 'código', contrato: 'contrato', login: 'login' }
 
 function Area({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
@@ -288,7 +289,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
       {diag && ident && consumo && sa && eq && (
         <>
           <div role="tablist" aria-label="Seções do diagnóstico" className="flex gap-1 overflow-x-auto border-b border-tema-linha">
-            {([['geral', 'Visão geral'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['os', 'Ordens de serviço']] as [AbaRede, string][]).map(([id, rotulo]) => (
+            {([['geral', 'Visão geral'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['os', 'Ordens de serviço'], ['dados', 'Dados do IXC']] as [AbaRede, string][]).map(([id, rotulo]) => (
               <button key={id} role="tab" id={`dc-aba-${id}`} type="button" aria-selected={abaRede === id} aria-controls={`dc-painel-${id}`} onClick={() => setAbaRede(id)}
                 className={cn('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors', abaRede === id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta')}>{rotulo}</button>
             ))}
@@ -296,6 +297,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
           {abaRede === 'hipoteses' && <div role="tabpanel" id="dc-painel-hipoteses" aria-labelledby="dc-aba-hipoteses"><Area numero={2} titulo="Hipóteses técnicas"><PainelHipoteses hipoteses={diag.hipoteses} /></Area></div>}
           {abaRede === 'fibra' && <div role="tabpanel" id="dc-painel-fibra" aria-labelledby="dc-aba-fibra"><Area numero={2} titulo="ONU e fibra"><PainelFibra diag={diag} /></Area></div>}
           {abaRede === 'vizinhanca' && <div role="tabpanel" id="dc-painel-vizinhanca" aria-labelledby="dc-aba-vizinhanca"><Area numero={2} titulo="Caixa e PON"><PainelVizinhanca diag={diag} /></Area></div>}
+          {abaRede === 'dados' && <div role="tabpanel" id="dc-painel-dados" aria-labelledby="dc-aba-dados"><Area numero={2} titulo="Dados do IXC (todos os campos)"><DadosIxcAba cliente={ident.cliente.codigo} contrato={ident.contrato.id} login={ident.login?.login ?? null} chamadoId={chamadoId} podeVerSenhas /></Area></div>}
           {abaRede === 'os' && <div role="tabpanel" id="dc-painel-os" aria-labelledby="dc-aba-os"><Area numero={2} titulo="Ordens de serviço (IXC)"><PainelOrdensServico diag={diag} /></Area></div>}
           {abaRede === 'geral' && <>
           <Area numero={2} titulo="Indicadores">
