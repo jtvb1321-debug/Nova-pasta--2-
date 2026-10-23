@@ -1,0 +1,4582 @@
+{
+ "geradoEm": "2026-10-23T15:21:51.910Z",
+ "tabelas": {
+  "radusuarios": {
+   "responde": true,
+   "total": 6360,
+   "amostra": 60,
+   "campos": {
+    "autenticacao_por_mac": {
+     "preenchido": 100
+    },
+    "relacionar_concentrador_ao_login": {
+     "preenchido": 100
+    },
+    "agent_circuit_id": {
+     "preenchido": 0
+    },
+    "pool_radius": {
+     "preenchido": 0
+    },
+    "id_rad_dns": {
+     "preenchido": 0
+    },
+    "modelo_tranmissor": {
+     "preenchido": 0
+    },
+    "auto_preencher_ipv6": {
+     "preenchido": 100
+    },
+    "fixar_ipv6": {
+     "preenchido": 100
+    },
+    "relacionar_ipv6_ao_login": {
+     "preenchido": 100
+    },
+    "ip_aux": {
+     "preenchido": 0
+    },
+    "porta_aux": {
+     "preenchido": 0
+    },
+    "id_radgrupos_pools": {
+     "preenchido": 0
+    },
+    "service_tag_vlan": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "acct_session_id": {
+     "preenchido": 68
+    },
+    "senha_rede_sem_fio_5ghz": {
+     "preenchido": 100
+    },
+    "ssid_router_wifi_5ghz": {
+     "preenchido": 0
+    },
+    "mtu": {
+     "preenchido": 100,
+     "codigos": [
+      "1500"
+     ]
+    },
+    "onu_compartilhada": {
+     "preenchido": 2,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_reserva_rede_neutra": {
+     "preenchido": 0
+    },
+    "tipo_acesso": {
+     "preenchido": 100,
+     "codigos": [
+      "http"
+     ]
+    },
+    "usuario_wpa2aes": {
+     "preenchido": 0
+    },
+    "senha_wpa2aes": {
+     "preenchido": 0
+    },
+    "pacote_lte": {
+     "preenchido": 0
+    },
+    "id_predio": {
+     "preenchido": 0
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "online": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S",
+      "SS"
+     ]
+    },
+    "tipo_conexao_mapa": {
+     "preenchido": 100,
+     "codigos": [
+      "58",
+      "F"
+     ]
+    },
+    "id_contrato": {
+     "preenchido": 100
+    },
+    "id_grupo": {
+     "preenchido": 100,
+     "codigos": [
+      "62",
+      "90",
+      "92",
+      "97"
+     ]
+    },
+    "id_cliente": {
+     "preenchido": 100
+    },
+    "login": {
+     "preenchido": 100
+    },
+    "obs": {
+     "preenchido": 0
+    },
+    "senha": {
+     "preenchido": 100
+    },
+    "auto_preencher_ip": {
+     "preenchido": 100
+    },
+    "ip": {
+     "preenchido": 72
+    },
+    "auto_preencher_mac": {
+     "preenchido": 100
+    },
+    "pd_ipv6": {
+     "preenchido": 0
+    },
+    "mac": {
+     "preenchido": 78
+    },
+    "endereco": {
+     "preenchido": 0
+    },
+    "numero": {
+     "preenchido": 0
+    },
+    "complemento": {
+     "preenchido": 0
+    },
+    "relacionar_ip_ao_login": {
+     "preenchido": 100
+    },
+    "bairro": {
+     "preenchido": 0
+    },
+    "relacionar_mac_ao_login": {
+     "preenchido": 100
+    },
+    "conexao": {
+     "preenchido": 82
+    },
+    "id_concentrador": {
+     "preenchido": 82,
+     "codigos": [
+      "5",
+      "7"
+     ]
+    },
+    "latitude": {
+     "preenchido": 28
+    },
+    "longitude": {
+     "preenchido": 28
+    },
+    "concentrador": {
+     "preenchido": 82
+    },
+    "tipo_conexao": {
+     "preenchido": 82
+    },
+    "ultima_conexao_inicial": {
+     "preenchido": 82
+    },
+    "ultima_conexao_final": {
+     "preenchido": 10
+    },
+    "interface": {
+     "preenchido": 0
+    },
+    "tempo_conectado": {
+     "preenchido": 72
+    },
+    "franquia_maximo": {
+     "preenchido": 0
+    },
+    "franquia_consumo": {
+     "preenchido": 100
+    },
+    "autenticacao": {
+     "preenchido": 100,
+     "codigos": [
+      "L"
+     ]
+    },
+    "login_simultaneo": {
+     "preenchido": 100
+    },
+    "senha_md5": {
+     "preenchido": 100
+    },
+    "fixar_ip": {
+     "preenchido": 100
+    },
+    "ip_aviso": {
+     "preenchido": 68
+    },
+    "porta_http": {
+     "preenchido": 100,
+     "codigos": [
+      "80"
+     ]
+    },
+    "porta_router2": {
+     "preenchido": 100,
+     "codigos": [
+      "8080"
+     ]
+    },
+    "id_transmissor": {
+     "preenchido": 92,
+     "codigos": [
+      "2",
+      "3"
+     ]
+    },
+    "id_caixa_ftth": {
+     "preenchido": 90
+    },
+    "ftth_porta": {
+     "preenchido": 90
+    },
+    "senha_router1": {
+     "preenchido": 100
+    },
+    "senha_router2": {
+     "preenchido": 0
+    },
+    "senha_rede_sem_fio": {
+     "preenchido": 100
+    },
+    "id_porta_transmissor": {
+     "preenchido": 0
+    },
+    "cliente_tem_a_senha": {
+     "preenchido": 100
+    },
+    "franquia_atingida": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "autenticacao_wps": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_df_projeto": {
+     "preenchido": 92,
+     "codigos": [
+      "1",
+      "10",
+      "14",
+      "3",
+      "4",
+      "9"
+     ]
+    },
+    "autenticacao_mac": {
+     "preenchido": 100
+    },
+    "motivo_desconexao": {
+     "preenchido": 5
+    },
+    "autenticacao_wpa": {
+     "preenchido": 0
+    },
+    "tempo_conexao": {
+     "preenchido": 7
+    },
+    "tipo_vinculo_plano": {
+     "preenchido": 100,
+     "codigos": [
+      "D"
+     ]
+    },
+    "count_desconexao": {
+     "preenchido": 5,
+     "codigos": [
+      "1",
+      "2"
+     ]
+    },
+    "onu_mac": {
+     "preenchido": 92
+    },
+    "vlan": {
+     "preenchido": 0
+    },
+    "vlan_ip_rede": {
+     "preenchido": 0
+    },
+    "id_hardware": {
+     "preenchido": 0
+    },
+    "id_condominio": {
+     "preenchido": 0
+    },
+    "tipo_equipamento": {
+     "preenchido": 0
+    },
+    "metragem_interna": {
+     "preenchido": 0
+    },
+    "metragem_externa": {
+     "preenchido": 0
+    },
+    "tronco": {
+     "preenchido": 0
+    },
+    "splitter": {
+     "preenchido": 0
+    },
+    "sinal_ultimo_atendimento": {
+     "preenchido": 0
+    },
+    "interface_transmissao": {
+     "preenchido": 92
+    },
+    "franquia_consumo_up": {
+     "preenchido": 100
+    },
+    "endereco_padrao_cliente": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "cidade": {
+     "preenchido": 0
+    },
+    "cep": {
+     "preenchido": 0
+    },
+    "referencia": {
+     "preenchido": 0
+    },
+    "ssid_router_wifi": {
+     "preenchido": 0
+    },
+    "bloco": {
+     "preenchido": 0
+    },
+    "apartamento": {
+     "preenchido": 0
+    },
+    "usuario_router1": {
+     "preenchido": 100
+    },
+    "upload_atual": {
+     "preenchido": 70
+    },
+    "download_atual": {
+     "preenchido": 70
+    },
+    "gw_vlan": {
+     "preenchido": 0
+    },
+    "id_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "ponta": {
+     "preenchido": 0
+    },
+    "ultima_atualizacao": {
+     "preenchido": 97
+    },
+    "framed_fixar_ipv6": {
+     "preenchido": 100
+    },
+    "framed_autopreencher_ipv6": {
+     "preenchido": 100
+    },
+    "framed_relacionar_ipv6_ao_login": {
+     "preenchido": 100
+    },
+    "framed_pd_ipv6": {
+     "preenchido": 40
+    },
+    "lte_id": {
+     "preenchido": 0
+    },
+    "id_integracao": {
+     "preenchido": 0
+    }
+   }
+  },
+  "radpop_radio_cliente_fibra": {
+   "responde": true,
+   "total": 3300,
+   "amostra": 60,
+   "campos": {
+    "id_projeto": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "10",
+      "14",
+      "3",
+      "4",
+      "9"
+     ]
+    },
+    "gemport": {
+     "preenchido": 0
+    },
+    "login_onu_cliente": {
+     "preenchido": 0
+    },
+    "senha_onu_cliente": {
+     "preenchido": 0
+    },
+    "porta_telnet_onu_cliente": {
+     "preenchido": 0
+    },
+    "perfil_onu_cliente": {
+     "preenchido": 0
+    },
+    "script_onu_cliente": {
+     "preenchido": 0
+    },
+    "senorid": {
+     "preenchido": 0
+    },
+    "latitude": {
+     "preenchido": 48
+    },
+    "longitude": {
+     "preenchido": 48
+    },
+    "endereco_padrao_cliente": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_condominio": {
+     "preenchido": 0
+    },
+    "bloco": {
+     "preenchido": 0
+    },
+    "apartamento": {
+     "preenchido": 0
+    },
+    "cep": {
+     "preenchido": 0
+    },
+    "endereco": {
+     "preenchido": 0
+    },
+    "numero": {
+     "preenchido": 0
+    },
+    "bairro": {
+     "preenchido": 0
+    },
+    "cidade": {
+     "preenchido": 0
+    },
+    "referencia": {
+     "preenchido": 0
+    },
+    "complemento": {
+     "preenchido": 0
+    },
+    "distancia_onu": {
+     "preenchido": 0
+    },
+    "vlan_dhcp": {
+     "preenchido": 12,
+     "codigos": [
+      "1000",
+      "1056",
+      "2509"
+     ]
+    },
+    "vlan_tr69": {
+     "preenchido": 8,
+     "codigos": [
+      "201"
+     ]
+    },
+    "vlan_iptv": {
+     "preenchido": 3
+    },
+    "vlan_voip": {
+     "preenchido": 8,
+     "codigos": [
+      "200"
+     ]
+    },
+    "vlan_pppoe": {
+     "preenchido": 62
+    },
+    "vlan_outros": {
+     "preenchido": 0
+    },
+    "id_ramal": {
+     "preenchido": 0
+    },
+    "id_onu_unms": {
+     "preenchido": 0
+    },
+    "id_activity": {
+     "preenchido": 0
+    },
+    "radpop_estrutura": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "porta_web_onu_cliente": {
+     "preenchido": 0
+    },
+    "tipo_operacao": {
+     "preenchido": 0
+    },
+    "id_radpop_radio_porta": {
+     "preenchido": 100
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "id_transmissor": {
+     "preenchido": 100,
+     "codigos": [
+      "2",
+      "3"
+     ]
+    },
+    "nome": {
+     "preenchido": 100
+    },
+    "id_caixa_ftth": {
+     "preenchido": 100
+    },
+    "porta_ftth": {
+     "preenchido": 100
+    },
+    "id_login": {
+     "preenchido": 100
+    },
+    "id_contrato": {
+     "preenchido": 100
+    },
+    "onu_numero": {
+     "preenchido": 93
+    },
+    "service_port": {
+     "preenchido": 0
+    },
+    "onu_tipo": {
+     "preenchido": 95
+    },
+    "ponid": {
+     "preenchido": 100
+    },
+    "comandos": {
+     "preenchido": 100
+    },
+    "mac": {
+     "preenchido": 100
+    },
+    "sinal_rx": {
+     "preenchido": 100
+    },
+    "sinal_tx": {
+     "preenchido": 100
+    },
+    "temperatura": {
+     "preenchido": 100
+    },
+    "voltagem": {
+     "preenchido": 100
+    },
+    "data_sinal": {
+     "preenchido": 100
+    },
+    "ip_gerencia": {
+     "preenchido": 0
+    },
+    "id_perfil": {
+     "preenchido": 100,
+     "codigos": [
+      "18",
+      "22"
+     ]
+    },
+    "slotno": {
+     "preenchido": 50,
+     "codigos": [
+      "1",
+      "2",
+      "5"
+     ]
+    },
+    "ponno": {
+     "preenchido": 93
+    },
+    "tipo_autenticacao": {
+     "preenchido": 100,
+     "codigos": [
+      "MAC"
+     ]
+    },
+    "versao": {
+     "preenchido": 0
+    },
+    "vlan": {
+     "preenchido": 100
+    },
+    "causa_ultima_queda": {
+     "preenchido": 2,
+     "codigos": [
+      "-"
+     ]
+    },
+    "onu_rede_neutra": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_hardware": {
+     "preenchido": 23,
+     "codigos": [
+      "9"
+     ]
+    }
+   }
+  },
+  "rad_caixa_ftth": {
+   "responde": true,
+   "total": 1635,
+   "amostra": 60,
+   "campos": {
+    "codigo_estilo_caixa": {
+     "preenchido": 100
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "status": {
+     "preenchido": 100,
+     "codigos": [
+      "A"
+     ]
+    },
+    "id_transmissor": {
+     "preenchido": 100,
+     "codigos": [
+      "2",
+      "3"
+     ]
+    },
+    "id_interface": {
+     "preenchido": 0
+    },
+    "descricao": {
+     "preenchido": 100
+    },
+    "id_projeto": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "14",
+      "3"
+     ]
+    },
+    "id_tecnologia": {
+     "preenchido": 2,
+     "codigos": [
+      "1"
+     ]
+    },
+    "capacidade": {
+     "preenchido": 100,
+     "codigos": [
+      "16",
+      "8"
+     ]
+    },
+    "latitude": {
+     "preenchido": 100
+    },
+    "longitude": {
+     "preenchido": 100
+    },
+    "obs_caixa_ftth": {
+     "preenchido": 12
+    },
+    "cep": {
+     "preenchido": 48
+    },
+    "endereco": {
+     "preenchido": 50
+    },
+    "numero": {
+     "preenchido": 0
+    },
+    "bairro": {
+     "preenchido": 48
+    },
+    "id_cidade": {
+     "preenchido": 48,
+     "codigos": [
+      "881"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 67
+    },
+    "idx": {
+     "preenchido": 0
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    }
+   }
+  },
+  "radpop": {
+   "responde": true,
+   "total": 8,
+   "amostra": 8,
+   "campos": {
+    "tp_estacao": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "sn_enlace_proprio": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "sn_enlace_contratado": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "sn_enlace_satelite": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "pop": {
+     "preenchido": 100
+    },
+    "id_projeto": {
+     "preenchido": 100
+    },
+    "endereco": {
+     "preenchido": 13
+    },
+    "numero": {
+     "preenchido": 13,
+     "codigos": [
+      "5160"
+     ]
+    },
+    "id_cidade": {
+     "preenchido": 100,
+     "codigos": [
+      "881"
+     ]
+    },
+    "observacoes": {
+     "preenchido": 0
+    },
+    "cep": {
+     "preenchido": 38
+    },
+    "id_fornecedor": {
+     "preenchido": 0
+    },
+    "bairro": {
+     "preenchido": 13
+    },
+    "latitude": {
+     "preenchido": 88
+    },
+    "longitude": {
+     "preenchido": 88
+    },
+    "abertura": {
+     "preenchido": 100,
+     "codigos": [
+      "R"
+     ]
+    },
+    "numestacao_anatel": {
+     "preenchido": 0
+    }
+   }
+  },
+  "radpop_radio": {
+   "responde": true,
+   "total": 5,
+   "amostra": 5,
+   "campos": {
+    "login_hw": {
+     "preenchido": 0
+    },
+    "senha_hw": {
+     "preenchido": 80
+    },
+    "usa_smart": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id_pv_grupo_backup": {
+     "preenchido": 80,
+     "codigos": [
+      "2"
+     ]
+    },
+    "id_olt": {
+     "preenchido": 0
+    },
+    "id_servidor_unms": {
+     "preenchido": 0
+    },
+    "id_olt_unms": {
+     "preenchido": 0
+    },
+    "id_olt_conscius": {
+     "preenchido": 0
+    },
+    "perfil_fibra_padrao": {
+     "preenchido": 0
+    },
+    "id_olt_externo": {
+     "preenchido": 0
+    },
+    "usa_vpn": {
+     "preenchido": 0
+    },
+    "id_padrao_cores": {
+     "preenchido": 0
+    },
+    "operador_neutro": {
+     "preenchido": 0
+    },
+    "busca_potencia": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "perfil_neutro_bridge": {
+     "preenchido": 0
+    },
+    "perfil_neutro_router": {
+     "preenchido": 0
+    },
+    "timeout": {
+     "preenchido": 60,
+     "codigos": [
+      "10"
+     ]
+    },
+    "id": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "descricao": {
+     "preenchido": 100
+    },
+    "cor_mapa": {
+     "preenchido": 100
+    },
+    "fwversion": {
+     "preenchido": 40
+    },
+    "id_pop": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "3",
+      "5"
+     ]
+    },
+    "conexoes_ultima": {
+     "preenchido": 0
+    },
+    "ip": {
+     "preenchido": 100
+    },
+    "login": {
+     "preenchido": 100
+    },
+    "senha": {
+     "preenchido": 100
+    },
+    "porta_ssh": {
+     "preenchido": 100,
+     "codigos": [
+      "22"
+     ]
+    },
+    "fabricante_modelo": {
+     "preenchido": 100,
+     "codigos": [
+      "HW",
+      "VSOL"
+     ]
+    },
+    "uptime": {
+     "preenchido": 40
+    },
+    "time": {
+     "preenchido": 0
+    },
+    "speed_lan": {
+     "preenchido": 100
+    },
+    "conexoes_ulltima_data": {
+     "preenchido": 0
+    },
+    "speed_wlan": {
+     "preenchido": 100
+    },
+    "modelo": {
+     "preenchido": 40
+    },
+    "cpu_load": {
+     "preenchido": 0
+    },
+    "total_memory": {
+     "preenchido": 0
+    },
+    "txrate": {
+     "preenchido": 100
+    },
+    "free_memory": {
+     "preenchido": 0
+    },
+    "rxrate": {
+     "preenchido": 100
+    },
+    "temperatura": {
+     "preenchido": 0
+    },
+    "voltagem": {
+     "preenchido": 0
+    },
+    "autosave": {
+     "preenchido": 0
+    },
+    "httpd_port": {
+     "preenchido": 0
+    },
+    "current_firmware": {
+     "preenchido": 0
+    },
+    "upgrade_firmware": {
+     "preenchido": 0
+    },
+    "porta_telnet": {
+     "preenchido": 100,
+     "codigos": [
+      "23"
+     ]
+    },
+    "porta_api": {
+     "preenchido": 0
+    },
+    "ip_anm": {
+     "preenchido": 0
+    },
+    "gabinete": {
+     "preenchido": 0
+    },
+    "subrack": {
+     "preenchido": 0
+    },
+    "porta_telnet_tl1": {
+     "preenchido": 100,
+     "codigos": [
+      "3337"
+     ]
+    },
+    "login_anm": {
+     "preenchido": 0
+    },
+    "senha_anm": {
+     "preenchido": 80
+    },
+    "id_prov_snmp": {
+     "preenchido": 40,
+     "codigos": [
+      "1"
+     ]
+    }
+   }
+  },
+  "radpop_radio_cliente": {
+   "responde": false,
+   "status": 200,
+   "motivo": "{\"page\":\"1\",\"total\":\"0\"}"
+  },
+  "radacct": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Ocorreu um erro ao processar. Contate o suporte IXC Soft.<br />"
+  },
+  "radgrupos": {
+   "responde": true,
+   "total": 99,
+   "amostra": 60,
+   "campos": {
+    "nome_perfil_router": {
+     "preenchido": 0
+    },
+    "usa_active": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "nome_perfil_router_huawei": {
+     "preenchido": 0
+    },
+    "usa_perfil_huawei": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "olt_hw_download": {
+     "preenchido": 0
+    },
+    "olt_hw_upload": {
+     "preenchido": 0
+    },
+    "gera_param_accel": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "perfil_juniper_ipv6": {
+     "preenchido": 0
+    },
+    "address_list_ipv6": {
+     "preenchido": 0
+    },
+    "id_rad_dns": {
+     "preenchido": 22,
+     "codigos": [
+      "2"
+     ]
+    },
+    "cisco_ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "cisco_police_out": {
+     "preenchido": 28
+    },
+    "cisco_police_in": {
+     "preenchido": 28
+    },
+    "ativa_parametro_v6_juniper": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "perfil_fiberhome": {
+     "preenchido": 0
+    },
+    "usa_perfil_huawei_dinamico": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_plano_atraso": {
+     "preenchido": 22,
+     "codigos": [
+      "10",
+      "11",
+      "26"
+     ]
+    },
+    "red_prioridade": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "red_garantia_upload": {
+     "preenchido": 0
+    },
+    "red_garantia_download": {
+     "preenchido": 0
+    },
+    "tur_prioridade": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "tur_garantia_upload": {
+     "preenchido": 0
+    },
+    "tur_garantia_download": {
+     "preenchido": 0
+    },
+    "reduzir_dias_atraso": {
+     "preenchido": 22,
+     "codigos": [
+      "10",
+      "16",
+      "5",
+      "8"
+     ]
+    },
+    "cisco_static_qos": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "cisco_dinamic_qos": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_plano_reduzir": {
+     "preenchido": 0
+    },
+    "id_plano_turbinar": {
+     "preenchido": 0
+    },
+    "usa_perfil_nokia": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "usa_perfil_nokia_dinamico": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "nome_perfil_router_nokia": {
+     "preenchido": 0
+    },
+    "usar_perfil_nokia_e": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "type_band_control": {
+     "preenchido": 100,
+     "codigos": [
+      "l3"
+     ]
+    },
+    "ingress_juniper_policy_l2": {
+     "preenchido": 0
+    },
+    "egress_juniper_policy_l2": {
+     "preenchido": 0
+    },
+    "pacote_integracao": {
+     "preenchido": 0
+    },
+    "service_type": {
+     "preenchido": 0
+    },
+    "tipo_integracao_neutra": {
+     "preenchido": 87
+    },
+    "plano_velocidade_neutro": {
+     "preenchido": 0
+    },
+    "operador_neutro": {
+     "preenchido": 0
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "grupo": {
+     "preenchido": 100
+    },
+    "id_produto": {
+     "preenchido": 100
+    },
+    "cor_mapa": {
+     "preenchido": 100
+    },
+    "download": {
+     "preenchido": 98
+    },
+    "upload": {
+     "preenchido": 98
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "valor_produto": {
+     "preenchido": 100
+    },
+    "id_pool": {
+     "preenchido": 0
+    },
+    "sici_tecnologia": {
+     "preenchido": 100,
+     "codigos": [
+      "C",
+      "H"
+     ]
+    },
+    "upload_busrt": {
+     "preenchido": 0
+    },
+    "upload_busrt_th": {
+     "preenchido": 0
+    },
+    "franquia_mensal": {
+     "preenchido": 0
+    },
+    "upload_busrt_time": {
+     "preenchido": 0
+    },
+    "download_busrt": {
+     "preenchido": 0
+    },
+    "download_busrt_th": {
+     "preenchido": 0
+    },
+    "download_busrt_time": {
+     "preenchido": 0
+    },
+    "red_upload": {
+     "preenchido": 3
+    },
+    "red_ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "tur_ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "tur_upload": {
+     "preenchido": 0
+    },
+    "red_upload_busrt": {
+     "preenchido": 0
+    },
+    "tur_upload_busrt": {
+     "preenchido": 0
+    },
+    "red_upload_busrt_th": {
+     "preenchido": 0
+    },
+    "tur_upload_busrt_th": {
+     "preenchido": 0
+    },
+    "red_upload_busrt_time": {
+     "preenchido": 0
+    },
+    "tur_upload_busrt_time": {
+     "preenchido": 0
+    },
+    "red_download": {
+     "preenchido": 3
+    },
+    "tur_download": {
+     "preenchido": 0
+    },
+    "red_download_busrt": {
+     "preenchido": 0
+    },
+    "tur_download_busrt": {
+     "preenchido": 0
+    },
+    "red_download_busrt_th": {
+     "preenchido": 0
+    },
+    "tur_download_busrt_th": {
+     "preenchido": 0
+    },
+    "red_download_busrt_time": {
+     "preenchido": 0
+    },
+    "tur_download_busrt_time": {
+     "preenchido": 0
+    },
+    "alteracao_velocidade": {
+     "preenchido": 100,
+     "codigos": [
+      "C",
+      "P"
+     ]
+    },
+    "ativo_normal": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "horas_normal": {
+     "preenchido": 0
+    },
+    "horas_reduzido": {
+     "preenchido": 0
+    },
+    "horas_turbinado": {
+     "preenchido": 0
+    },
+    "tipo_franquia": {
+     "preenchido": 100,
+     "codigos": [
+      "M",
+      "U"
+     ]
+    },
+    "id_plano_franquia": {
+     "preenchido": 0
+    },
+    "prioridade": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "garantia_upload": {
+     "preenchido": 2
+    },
+    "garantia_download": {
+     "preenchido": 2
+    },
+    "qos_ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "address_list": {
+     "preenchido": 0
+    },
+    "egress_juniper_policy_ipv6": {
+     "preenchido": 0
+    },
+    "ingress_juniper_policy_ipv6": {
+     "preenchido": 0
+    },
+    "egress_juniper_policy_ipv4": {
+     "preenchido": 0
+    },
+    "ingress_juniper_policy_ipv4": {
+     "preenchido": 0
+    },
+    "juniper_static_policy": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "egress_cisco_policy_ipv6": {
+     "preenchido": 0
+    },
+    "ingress_cisco_policy_ipv6": {
+     "preenchido": 0
+    },
+    "ultima_atualizacao": {
+     "preenchido": 32
+    },
+    "dici_download": {
+     "preenchido": 37
+    },
+    "dici_tipo_conexao_mapa": {
+     "preenchido": 100,
+     "codigos": [
+      "58",
+      "F"
+     ]
+    }
+   }
+  },
+  "cliente_contrato": {
+   "responde": true,
+   "total": 7038,
+   "amostra": 60,
+   "campos": {
+    "id_instalador": {
+     "preenchido": 0
+    },
+    "indicacao_contrato_id": {
+     "preenchido": 0
+    },
+    "id_indexador_reajuste": {
+     "preenchido": 0
+    },
+    "data_desistencia": {
+     "preenchido": 3
+    },
+    "motivo_desistencia": {
+     "preenchido": 3,
+     "codigos": [
+      "2",
+      "3"
+     ]
+    },
+    "obs_desistencia": {
+     "preenchido": 3
+    },
+    "obs_contrato": {
+     "preenchido": 0
+    },
+    "alerta_contrato": {
+     "preenchido": 0
+    },
+    "ids_contratos_recorrencia": {
+     "preenchido": 0
+    },
+    "id_responsavel_desistencia": {
+     "preenchido": 3,
+     "codigos": [
+      "74"
+     ]
+    },
+    "id_responsavel_cancelamento": {
+     "preenchido": 3,
+     "codigos": [
+      "81"
+     ]
+    },
+    "id_responsavel_negativacao": {
+     "preenchido": 0
+    },
+    "origem_cancelamento": {
+     "preenchido": 7,
+     "codigos": [
+      "M"
+     ]
+    },
+    "situacao_financeira_contrato": {
+     "preenchido": 0
+    },
+    "dt_ult_desbloq_auto": {
+     "preenchido": 0
+    },
+    "dt_ult_desbloq_manual": {
+     "preenchido": 0
+    },
+    "aplicar_desconto_tempo_bloqueio": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "tempo_permanencia": {
+     "preenchido": 100,
+     "codigos": [
+      "0.0",
+      "0.1"
+     ]
+    },
+    "email_assinatura_digital": {
+     "preenchido": 0
+    },
+    "contato_assinatura_digital": {
+     "preenchido": 0
+    },
+    "motivo_adicional": {
+     "preenchido": 0
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "id_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "status": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "D",
+      "I",
+      "P"
+     ]
+    },
+    "status_internet": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "CA",
+      "CM",
+      "D",
+      "FA"
+     ]
+    },
+    "id_cliente": {
+     "preenchido": 100
+    },
+    "data_assinatura": {
+     "preenchido": 0
+    },
+    "data_ativacao": {
+     "preenchido": 92
+    },
+    "data": {
+     "preenchido": 97
+    },
+    "data_renovacao": {
+     "preenchido": 0
+    },
+    "bloqueio_automatico": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "imp_carteira": {
+     "preenchido": 0
+    },
+    "data_expiracao": {
+     "preenchido": 92
+    },
+    "isentar_contrato": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "pago_ate_data": {
+     "preenchido": 97
+    },
+    "id_vd_contrato": {
+     "preenchido": 100,
+     "codigos": [
+      "102",
+      "112",
+      "114",
+      "66"
+     ]
+    },
+    "contrato": {
+     "preenchido": 100
+    },
+    "endereco": {
+     "preenchido": 7
+    },
+    "numero": {
+     "preenchido": 7,
+     "codigos": [
+      "29",
+      "3633",
+      "47",
+      "5346"
+     ]
+    },
+    "comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "bairro": {
+     "preenchido": 7
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "descricao_aux_plano_venda": {
+     "preenchido": 15
+    },
+    "aviso_atraso": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_tipo_contrato": {
+     "preenchido": 100
+    },
+    "id_carteira_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "14",
+      "3"
+     ]
+    },
+    "obs": {
+     "preenchido": 0
+    },
+    "id_modelo": {
+     "preenchido": 100,
+     "codigos": [
+      "10",
+      "8"
+     ]
+    },
+    "status_velocidade": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "R"
+     ]
+    },
+    "id_vendedor": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "46",
+      "49"
+     ]
+    },
+    "cc_previsao": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "nao_avisar_ate": {
+     "preenchido": 2
+    },
+    "nao_bloquear_ate": {
+     "preenchido": 2
+    },
+    "id_tipo_documento": {
+     "preenchido": 100,
+     "codigos": [
+      "501"
+     ]
+    },
+    "tipo_doc_opc": {
+     "preenchido": 75,
+     "codigos": [
+      "8520"
+     ]
+    },
+    "desconto_fidelidade": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "tipo_doc_opc2": {
+     "preenchido": 0
+    },
+    "tipo_doc_opc3": {
+     "preenchido": 0
+    },
+    "taxa_improdutiva": {
+     "preenchido": 100
+    },
+    "tipo_doc_opc4": {
+     "preenchido": 0
+    },
+    "desbloqueio_confianca": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "data_negativacao": {
+     "preenchido": 0
+    },
+    "data_acesso_desativado": {
+     "preenchido": 7
+    },
+    "motivo_cancelamento": {
+     "preenchido": 3,
+     "codigos": [
+      "21",
+      "4"
+     ]
+    },
+    "data_cancelamento": {
+     "preenchido": 3
+    },
+    "obs_cancelamento": {
+     "preenchido": 3
+    },
+    "id_vendedor_ativ": {
+     "preenchido": 0
+    },
+    "fidelidade": {
+     "preenchido": 100,
+     "codigos": [
+      "12"
+     ]
+    },
+    "tipo_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "desbloqueio_confianca_ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_responsavel": {
+     "preenchido": 0
+    },
+    "taxa_instalacao": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "protocolo_negativacao": {
+     "preenchido": 0
+    },
+    "dt_ult_bloq_auto": {
+     "preenchido": 5
+    },
+    "dt_ult_bloq_manual": {
+     "preenchido": 8
+    },
+    "dt_ult_des_bloq_conf": {
+     "preenchido": 2
+    },
+    "dt_ult_ativacao": {
+     "preenchido": 2
+    },
+    "avalista_1": {
+     "preenchido": 0
+    },
+    "dt_ult_finan_atraso": {
+     "preenchido": 18
+    },
+    "avalista_2": {
+     "preenchido": 0
+    },
+    "dt_utl_negativacao": {
+     "preenchido": 0
+    },
+    "data_cadastro_sistema": {
+     "preenchido": 100
+    },
+    "ultima_atualizacao": {
+     "preenchido": 100
+    },
+    "complemento": {
+     "preenchido": 3
+    },
+    "cep": {
+     "preenchido": 7
+    },
+    "imp_importacao": {
+     "preenchido": 0
+    },
+    "cidade": {
+     "preenchido": 7,
+     "codigos": [
+      "881"
+     ]
+    },
+    "imp_rede": {
+     "preenchido": 0
+    },
+    "renovacao_automatica": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "imp_bkp": {
+     "preenchido": 0
+    },
+    "imp_treinamento": {
+     "preenchido": 0
+    },
+    "id_motivo_inclusao": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "imp_status": {
+     "preenchido": 0
+    },
+    "motivo_inclusao": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "imp_obs": {
+     "preenchido": 0
+    },
+    "liberacao_bloqueio_manual": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "imp_realizado": {
+     "preenchido": 0
+    },
+    "contrato_suspenso": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "imp_motivo": {
+     "preenchido": 0
+    },
+    "imp_inicial": {
+     "preenchido": 0
+    },
+    "imp_final": {
+     "preenchido": 0
+    },
+    "ativacao_numero_parcelas": {
+     "preenchido": 0
+    },
+    "ativacao_vencimentos": {
+     "preenchido": 0
+    },
+    "ativacao_valor_parcela": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "id_tipo_doc_ativ": {
+     "preenchido": 0
+    },
+    "id_produto_ativ": {
+     "preenchido": 0
+    },
+    "id_cond_pag_ativ": {
+     "preenchido": 0
+    },
+    "endereco_padrao_cliente": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "referencia": {
+     "preenchido": 7
+    },
+    "id_condominio": {
+     "preenchido": 0
+    },
+    "nf_info_adicionais": {
+     "preenchido": 0
+    },
+    "assinatura_digital": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "tipo_produtos_plano": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "bloco": {
+     "preenchido": 0
+    },
+    "apartamento": {
+     "preenchido": 0
+    },
+    "latitude": {
+     "preenchido": 0
+    },
+    "longitude": {
+     "preenchido": 0
+    },
+    "num_parcelas_atraso": {
+     "preenchido": 0
+    },
+    "dt_ult_desiste": {
+     "preenchido": 3
+    },
+    "id_contrato_principal": {
+     "preenchido": 0
+    },
+    "gerar_finan_assin_digital_contrato": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "credit_card_recorrente_token": {
+     "preenchido": 0
+    },
+    "credit_card_recorrente_bandeira_cartao": {
+     "preenchido": 0
+    },
+    "id_motivo_negativacao": {
+     "preenchido": 0
+    },
+    "obs_negativacao": {
+     "preenchido": 0
+    },
+    "restricao_auto_desbloqueio": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "motivo_restricao_auto_desbloq": {
+     "preenchido": 0
+    },
+    "nao_susp_parc_ate": {
+     "preenchido": 2
+    },
+    "liberacao_suspensao_parcial": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "utilizando_auto_libera_susp_parc": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "restricao_auto_libera_susp_parcial": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "motivo_restri_auto_libera_parc": {
+     "preenchido": 0
+    },
+    "data_inicial_suspensao": {
+     "preenchido": 0
+    },
+    "data_final_suspensao": {
+     "preenchido": 0
+    },
+    "data_retomada_contrato": {
+     "preenchido": 0
+    },
+    "dt_ult_liberacao_susp_parc": {
+     "preenchido": 0
+    },
+    "base_geracao_tipo_doc": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "integracao_assinatura_digital": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "url_assinatura_digital": {
+     "preenchido": 0
+    },
+    "token_assinatura_digital": {
+     "preenchido": 0
+    },
+    "testemunha_assinatura_digital": {
+     "preenchido": 0
+    },
+    "document_photo": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "selfie_photo": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "tipo_localidade": {
+     "preenchido": 100,
+     "codigos": [
+      "U"
+     ]
+    },
+    "estrato_social_col": {
+     "preenchido": 0
+    },
+    "agrupar_financeiro_contrato": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "status_recorrencia": {
+     "preenchido": 0
+    }
+   }
+  },
+  "cliente": {
+   "responde": true,
+   "total": 7149,
+   "amostra": 60,
+   "campos": {
+    "senha": {
+     "preenchido": 50
+    },
+    "acesso_automatico_central": {
+     "preenchido": 100,
+     "codigos": [
+      "P",
+      "S"
+     ]
+    },
+    "alterar_senha_primeiro_acesso": {
+     "preenchido": 100
+    },
+    "senha_hotsite_md5": {
+     "preenchido": 40
+    },
+    "indicado_por": {
+     "preenchido": 0
+    },
+    "regua_cobranca_wpp": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "regua_cobranca_notificacao": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "regua_cobranca_considera": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "rg_orgao_emissor": {
+     "preenchido": 0
+    },
+    "tipo_ente_governamental": {
+     "preenchido": 0
+    },
+    "nome_social": {
+     "preenchido": 0
+    },
+    "cadunico": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "grau_satisfacao": {
+     "preenchido": 0
+    },
+    "razao": {
+     "preenchido": 100
+    },
+    "fantasia": {
+     "preenchido": 18
+    },
+    "cnpj_cpf": {
+     "preenchido": 100
+    },
+    "tipo_documento_identificacao": {
+     "preenchido": 100,
+     "codigos": [
+      "13"
+     ]
+    },
+    "ie_identidade": {
+     "preenchido": 17
+    },
+    "uf": {
+     "preenchido": 100,
+     "codigos": [
+      "23"
+     ]
+    },
+    "data_cadastro": {
+     "preenchido": 100
+    },
+    "crm": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "endereco": {
+     "preenchido": 100
+    },
+    "cidade": {
+     "preenchido": 100,
+     "codigos": [
+      "4602",
+      "881"
+     ]
+    },
+    "cond_pagamento": {
+     "preenchido": 0
+    },
+    "bairro": {
+     "preenchido": 100
+    },
+    "fone": {
+     "preenchido": 85
+    },
+    "numero": {
+     "preenchido": 98
+    },
+    "cep": {
+     "preenchido": 100
+    },
+    "filial_id": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "contato": {
+     "preenchido": 0
+    },
+    "latitude": {
+     "preenchido": 0
+    },
+    "longitude": {
+     "preenchido": 0
+    },
+    "id_conta": {
+     "preenchido": 100
+    },
+    "obs": {
+     "preenchido": 0
+    },
+    "hotsite_email": {
+     "preenchido": 8
+    },
+    "email": {
+     "preenchido": 100
+    },
+    "id_tipo_cliente": {
+     "preenchido": 3,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_segmento": {
+     "preenchido": 0
+    },
+    "id_candato_tipo": {
+     "preenchido": 2,
+     "codigos": [
+      "1"
+     ]
+    },
+    "tipo_pessoa": {
+     "preenchido": 100,
+     "codigos": [
+      "F"
+     ]
+    },
+    "referencia": {
+     "preenchido": 28
+    },
+    "telefone_comercial": {
+     "preenchido": 2
+    },
+    "telefone_celular": {
+     "preenchido": 98
+    },
+    "ramal": {
+     "preenchido": 0
+    },
+    "complemento": {
+     "preenchido": 32
+    },
+    "id_condominio": {
+     "preenchido": 17,
+     "codigos": [
+      "1",
+      "12",
+      "2",
+      "3",
+      "8",
+      "9"
+     ]
+    },
+    "data_nascimento": {
+     "preenchido": 100
+    },
+    "id_vendedor": {
+     "preenchido": 5,
+     "codigos": [
+      "1"
+     ]
+    },
+    "participa_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "isuf": {
+     "preenchido": 0
+    },
+    "num_dias_cob": {
+     "preenchido": 0
+    },
+    "tipo_assinante": {
+     "preenchido": 100,
+     "codigos": [
+      "3"
+     ]
+    },
+    "tabela_preco": {
+     "preenchido": 0
+    },
+    "bloco": {
+     "preenchido": 17
+    },
+    "apartamento": {
+     "preenchido": 15
+    },
+    "idx": {
+     "preenchido": 0
+    },
+    "skype": {
+     "preenchido": 0
+    },
+    "hotsite_acesso": {
+     "preenchido": 82,
+     "codigos": [
+      "2"
+     ]
+    },
+    "whatsapp": {
+     "preenchido": 50
+    },
+    "id_perfil": {
+     "preenchido": 0
+    },
+    "estado_civil": {
+     "preenchido": 27
+    },
+    "id_concorrente": {
+     "preenchido": 0
+    },
+    "responsavel": {
+     "preenchido": 57,
+     "codigos": [
+      "22",
+      "54"
+     ]
+    },
+    "status_prospeccao": {
+     "preenchido": 100,
+     "codigos": [
+      "C"
+     ]
+    },
+    "crm_data_vencemos": {
+     "preenchido": 0
+    },
+    "ativo_serasa": {
+     "preenchido": 0
+    },
+    "iss_classificacao_padrao": {
+     "preenchido": 100,
+     "codigos": [
+      "99"
+     ]
+    },
+    "nacionalidade": {
+     "preenchido": 100
+    },
+    "deb_automatico": {
+     "preenchido": 0
+    },
+    "deb_agencia": {
+     "preenchido": 0
+    },
+    "ultima_atualizacao": {
+     "preenchido": 40
+    },
+    "deb_conta": {
+     "preenchido": 0
+    },
+    "cadastrado_via_viabilidade": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "alerta": {
+     "preenchido": 0
+    },
+    "endereco_cob": {
+     "preenchido": 0
+    },
+    "numero_cob": {
+     "preenchido": 0
+    },
+    "bairro_cob": {
+     "preenchido": 0
+    },
+    "cidade_cob": {
+     "preenchido": 0
+    },
+    "uf_cob": {
+     "preenchido": 0
+    },
+    "cep_cob": {
+     "preenchido": 0
+    },
+    "referencia_cob": {
+     "preenchido": 0
+    },
+    "complemento_cob": {
+     "preenchido": 0
+    },
+    "profissao": {
+     "preenchido": 38
+    },
+    "id_operadora_celular": {
+     "preenchido": 0
+    },
+    "participa_pre_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "cob_envia_email": {
+     "preenchido": 100
+    },
+    "cob_envia_sms": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "contribuinte_icms": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "Sexo": {
+     "preenchido": 73,
+     "codigos": [
+      "F",
+      "M"
+     ]
+    },
+    "nome_pai": {
+     "preenchido": 0
+    },
+    "nome_mae": {
+     "preenchido": 0
+    },
+    "quantidade_dependentes": {
+     "preenchido": 0
+    },
+    "nome_conjuge": {
+     "preenchido": 0
+    },
+    "fone_conjuge": {
+     "preenchido": 0
+    },
+    "cpf_conjuge": {
+     "preenchido": 0
+    },
+    "rg_conjuge": {
+     "preenchido": 0
+    },
+    "data_nascimento_conjuge": {
+     "preenchido": 0
+    },
+    "moradia": {
+     "preenchido": 30,
+     "codigos": [
+      "A",
+      "P"
+     ]
+    },
+    "nome_contador": {
+     "preenchido": 0
+    },
+    "telefone_contador": {
+     "preenchido": 0
+    },
+    "ref_com_empresa1": {
+     "preenchido": 0
+    },
+    "ref_com_empresa2": {
+     "preenchido": 0
+    },
+    "ref_com_fone1": {
+     "preenchido": 0
+    },
+    "ref_com_fone2": {
+     "preenchido": 0
+    },
+    "ref_pes_nome1": {
+     "preenchido": 0
+    },
+    "ref_pes_nome2": {
+     "preenchido": 0
+    },
+    "ref_pes_fone1": {
+     "preenchido": 0
+    },
+    "ref_pes_fone2": {
+     "preenchido": 0
+    },
+    "emp_empresa": {
+     "preenchido": 0
+    },
+    "emp_data_admissao": {
+     "preenchido": 0
+    },
+    "website": {
+     "preenchido": 0
+    },
+    "orgao_publico": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "pipe_id_organizacao": {
+     "preenchido": 0
+    },
+    "im": {
+     "preenchido": 0
+    },
+    "cif": {
+     "preenchido": 0
+    },
+    "tipo_cliente_scm": {
+     "preenchido": 100,
+     "codigos": [
+      "01"
+     ]
+    },
+    "pis_retem": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "cofins_retem": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "csll_retem": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "irrf_retem": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "nascimento_mae": {
+     "preenchido": 0
+    },
+    "nascimento_pai": {
+     "preenchido": 0
+    },
+    "identidade_mae": {
+     "preenchido": 0
+    },
+    "identidade_pai": {
+     "preenchido": 0
+    },
+    "cpf_mae": {
+     "preenchido": 0
+    },
+    "cpf_pai": {
+     "preenchido": 0
+    },
+    "inscricao_municipal": {
+     "preenchido": 0
+    },
+    "nome_representante_1": {
+     "preenchido": 0
+    },
+    "nome_representante_2": {
+     "preenchido": 0
+    },
+    "cpf_representante_1": {
+     "preenchido": 0
+    },
+    "cpf_representante_2": {
+     "preenchido": 0
+    },
+    "identidade_representante_1": {
+     "preenchido": 0
+    },
+    "identidade_representante_2": {
+     "preenchido": 0
+    },
+    "codigo_operacao": {
+     "preenchido": 0
+    },
+    "convert_cliente_forn": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "tipo_pessoa_titular_conta": {
+     "preenchido": 100,
+     "codigos": [
+      "F"
+     ]
+    },
+    "cnpj_cpf_titular_conta": {
+     "preenchido": 0
+    },
+    "crm_data_perdemos": {
+     "preenchido": 0
+    },
+    "crm_data_sem_viabilidade": {
+     "preenchido": 0
+    },
+    "crm_data_sem_porta_disponivel": {
+     "preenchido": 0
+    },
+    "crm_data_abortamos": {
+     "preenchido": 0
+    },
+    "crm_data_negociando": {
+     "preenchido": 0
+    },
+    "crm_data_apresentando": {
+     "preenchido": 0
+    },
+    "crm_data_sondagem": {
+     "preenchido": 0
+    },
+    "crm_data_novo": {
+     "preenchido": 100
+    },
+    "atualizar_cadastro_galaxPay": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "foto_cartao": {
+     "preenchido": 0
+    },
+    "cli_desconta_iss_retido_total": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "cidade_naturalidade": {
+     "preenchido": 42
+    },
+    "tipo_localidade": {
+     "preenchido": 100,
+     "codigos": [
+      "U"
+     ]
+    },
+    "facebook": {
+     "preenchido": 0
+    },
+    "id_campanha": {
+     "preenchido": 0
+    },
+    "desconto_irrf_valor_inferior": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "filtra_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "regime_fiscal_col": {
+     "preenchido": 0
+    },
+    "inss_retem": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "percentual_reducao": {
+     "preenchido": 92
+    }
+   }
+  },
+  "vd_contratos": {
+   "responde": true,
+   "total": 111,
+   "amostra": 60,
+   "campos": {
+    "fidelidade": {
+     "preenchido": 0
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "nome": {
+     "preenchido": 100
+    },
+    "descricao": {
+     "preenchido": 0
+    },
+    "tipo_pessoa": {
+     "preenchido": 100,
+     "codigos": [
+      "T"
+     ]
+    },
+    "moeda": {
+     "preenchido": 100,
+     "codigos": [
+      "R$"
+     ]
+    },
+    "valor_contrato": {
+     "preenchido": 100
+    },
+    "Ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_tipo_documento": {
+     "preenchido": 48,
+     "codigos": [
+      "501",
+      "632"
+     ]
+    },
+    "id_carteira_cobranca": {
+     "preenchido": 55,
+     "codigos": [
+      "1",
+      "12",
+      "14",
+      "9"
+     ]
+    },
+    "id_vendedor": {
+     "preenchido": 32,
+     "codigos": [
+      "1"
+     ]
+    },
+    "comissao": {
+     "preenchido": 100
+    },
+    "id_modelo": {
+     "preenchido": 67,
+     "codigos": [
+      "1",
+      "10",
+      "12",
+      "3",
+      "8"
+     ]
+    },
+    "limitar_n_logins": {
+     "preenchido": 100
+    },
+    "tipo_doc_opc": {
+     "preenchido": 28,
+     "codigos": [
+      "501",
+      "632",
+      "633",
+      "8521"
+     ]
+    },
+    "logins_simultaneos": {
+     "preenchido": 100
+    },
+    "tipo_doc_opc2": {
+     "preenchido": 0
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "tipo_doc_opc3": {
+     "preenchido": 0
+    },
+    "tel_franquia_segundos": {
+     "preenchido": 0
+    },
+    "tipo_doc_opc4": {
+     "preenchido": 0
+    },
+    "tel_franquia_prefix": {
+     "preenchido": 0
+    },
+    "id_tipo_doc_ativ": {
+     "preenchido": 15,
+     "codigos": [
+      "501"
+     ]
+    },
+    "id_cidade": {
+     "preenchido": 20,
+     "codigos": [
+      "811",
+      "881"
+     ]
+    },
+    "id_produto_ativ": {
+     "preenchido": 17,
+     "codigos": [
+      "33",
+      "366"
+     ]
+    },
+    "id_cond_pag_ativ": {
+     "preenchido": 15,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_vendedor_ativ": {
+     "preenchido": 15,
+     "codigos": [
+      "1"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 88
+    },
+    "id_filial": {
+     "preenchido": 75,
+     "codigos": [
+      "1",
+      "3",
+      "7"
+     ]
+    },
+    "utilizar_desconto_ate_vencimento": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id_produto_ate_vencimento": {
+     "preenchido": 8,
+     "codigos": [
+      "314",
+      "320",
+      "539",
+      "540",
+      "606"
+     ]
+    },
+    "valor_desconto": {
+     "preenchido": 100
+    },
+    "utilizar_desconto_por_repeticao": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "qtde_repeticoes_desconto": {
+     "preenchido": 2,
+     "codigos": [
+      "2"
+     ]
+    },
+    "id_produto_contrato_vinc": {
+     "preenchido": 7,
+     "codigos": [
+      "101",
+      "54",
+      "83",
+      "84"
+     ]
+    },
+    "utilizar_desconto_no_produto_plano": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "base_geracao_por_tipo_doc": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    }
+   }
+  },
+  "su_oss_chamado": {
+   "responde": true,
+   "total": 78635,
+   "amostra": 60,
+   "campos": {
+    "mensagem_resposta": {
+     "preenchido": 38
+    },
+    "data_hora_analise": {
+     "preenchido": 0
+    },
+    "data_hora_encaminhado": {
+     "preenchido": 0
+    },
+    "data_hora_assumido": {
+     "preenchido": 0
+    },
+    "data_hora_execucao": {
+     "preenchido": 0
+    },
+    "id_contrato_kit": {
+     "preenchido": 100
+    },
+    "preview": {
+     "preenchido": 0
+    },
+    "data_agenda_final": {
+     "preenchido": 0
+    },
+    "status_assinatura": {
+     "preenchido": 100,
+     "codigos": [
+      "A"
+     ]
+    },
+    "habilita_assinatura_cliente": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "status_pesquisa_satisfacao": {
+     "preenchido": 0
+    },
+    "id_receber": {
+     "preenchido": 52
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "C"
+     ]
+    },
+    "id_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "5"
+     ]
+    },
+    "id_wfl_tarefa": {
+     "preenchido": 2,
+     "codigos": [
+      "55"
+     ]
+    },
+    "status_sla": {
+     "preenchido": 43,
+     "codigos": [
+      "N"
+     ]
+    },
+    "data_abertura": {
+     "preenchido": 100
+    },
+    "melhor_horario_agenda": {
+     "preenchido": 45,
+     "codigos": [
+      "Q"
+     ]
+    },
+    "liberado": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "status": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "F"
+     ]
+    },
+    "id_cliente": {
+     "preenchido": 100
+    },
+    "id_assunto": {
+     "preenchido": 100
+    },
+    "setor": {
+     "preenchido": 100,
+     "codigos": [
+      "11",
+      "4",
+      "9"
+     ]
+    },
+    "id_cidade": {
+     "preenchido": 65,
+     "codigos": [
+      "881"
+     ]
+    },
+    "id_tecnico": {
+     "preenchido": 37,
+     "codigos": [
+      "22",
+      "54"
+     ]
+    },
+    "prioridade": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "N"
+     ]
+    },
+    "origem_os_aberta": {
+     "preenchido": 100,
+     "codigos": [
+      "CC",
+      "CRM",
+      "M",
+      "P"
+     ]
+    },
+    "mensagem": {
+     "preenchido": 100
+    },
+    "protocolo": {
+     "preenchido": 100
+    },
+    "endereco": {
+     "preenchido": 65
+    },
+    "complemento": {
+     "preenchido": 28
+    },
+    "id_condominio": {
+     "preenchido": 3,
+     "codigos": [
+      "4"
+     ]
+    },
+    "latitude": {
+     "preenchido": 27
+    },
+    "bloco": {
+     "preenchido": 7,
+     "codigos": [
+      "01",
+      "07",
+      "7",
+      "NULL"
+     ]
+    },
+    "longitude": {
+     "preenchido": 27
+    },
+    "apartamento": {
+     "preenchido": 7,
+     "codigos": [
+      "104",
+      "201",
+      "402",
+      "NULL"
+     ]
+    },
+    "bairro": {
+     "preenchido": 65
+    },
+    "referencia": {
+     "preenchido": 27
+    },
+    "impresso": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "data_inicio": {
+     "preenchido": 27
+    },
+    "data_agenda": {
+     "preenchido": 0
+    },
+    "data_final": {
+     "preenchido": 27
+    },
+    "data_fechamento": {
+     "preenchido": 38
+    },
+    "id_wfl_param_os": {
+     "preenchido": 57
+    },
+    "valor_outras_despesas": {
+     "preenchido": 43,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "valor_total_comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "valor_total": {
+     "preenchido": 43,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "gera_comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "idx": {
+     "preenchido": 0
+    },
+    "valor_unit_comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "id_su_diagnostico": {
+     "preenchido": 2,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_estrutura": {
+     "preenchido": 0
+    },
+    "id_login": {
+     "preenchido": 100
+    },
+    "data_prazo_limite": {
+     "preenchido": 57
+    },
+    "data_reservada": {
+     "preenchido": 0
+    },
+    "id_ticket": {
+     "preenchido": 2
+    },
+    "origem_endereco": {
+     "preenchido": 100,
+     "codigos": [
+      "CC",
+      "M"
+     ]
+    },
+    "justificativa_sla_atrasado": {
+     "preenchido": 0
+    },
+    "origem_endereco_estrutura": {
+     "preenchido": 100,
+     "codigos": [
+      "E",
+      "M"
+     ]
+    },
+    "data_reagendar": {
+     "preenchido": 0
+    },
+    "data_prev_final": {
+     "preenchido": 0
+    },
+    "origem_cadastro": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 100
+    }
+   }
+  },
+  "su_ticket": {
+   "responde": true,
+   "total": 111570,
+   "amostra": 60,
+   "campos": {
+    "id_resposta": {
+     "preenchido": 0
+    },
+    "latitude": {
+     "preenchido": 7
+    },
+    "longitude": {
+     "preenchido": 7
+    },
+    "origem_endereco_estrutura": {
+     "preenchido": 100,
+     "codigos": [
+      "E"
+     ]
+    },
+    "updated_user": {
+     "preenchido": 100,
+     "codigos": [
+      "71",
+      "73",
+      "74",
+      "81"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "C"
+     ]
+    },
+    "status_sla": {
+     "preenchido": 0
+    },
+    "id_cliente": {
+     "preenchido": 100
+    },
+    "id_assunto": {
+     "preenchido": 100
+    },
+    "titulo": {
+     "preenchido": 100
+    },
+    "data_criacao": {
+     "preenchido": 100
+    },
+    "data_ultima_alteracao": {
+     "preenchido": 100
+    },
+    "status": {
+     "preenchido": 92,
+     "codigos": [
+      "C",
+      "OSAB",
+      "T"
+     ]
+    },
+    "su_status": {
+     "preenchido": 100,
+     "codigos": [
+      "EP",
+      "N",
+      "S"
+     ]
+    },
+    "prioridade": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "id_ticket_setor": {
+     "preenchido": 100,
+     "codigos": [
+      "4"
+     ]
+    },
+    "mensagens_nao_lida_sup": {
+     "preenchido": 0
+    },
+    "id_ticket_origem": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "id_usuarios": {
+     "preenchido": 100
+    },
+    "mensagens_nao_lida_cli": {
+     "preenchido": 77,
+     "codigos": [
+      "1"
+     ]
+    },
+    "protocolo": {
+     "preenchido": 100
+    },
+    "token": {
+     "preenchido": 100
+    },
+    "id_wfl_processo": {
+     "preenchido": 2,
+     "codigos": [
+      "14"
+     ]
+    },
+    "id_su_diagnostico": {
+     "preenchido": 0
+    },
+    "origem_endereco": {
+     "preenchido": 100,
+     "codigos": [
+      "CC",
+      "M"
+     ]
+    },
+    "menssagem": {
+     "preenchido": 100
+    },
+    "endereco": {
+     "preenchido": 10
+    },
+    "id_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_responsavel_tecnico": {
+     "preenchido": 85,
+     "codigos": [
+      "22",
+      "54",
+      "55"
+     ]
+    },
+    "interacao_pendente": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_evento_status_processo": {
+     "preenchido": 0
+    },
+    "data_reservada": {
+     "preenchido": 0
+    },
+    "melhor_horario_reserva": {
+     "preenchido": 100,
+     "codigos": [
+      "Q"
+     ]
+    },
+    "id_canal_atendimento": {
+     "preenchido": 0
+    },
+    "id_login": {
+     "preenchido": 45
+    },
+    "id_contrato": {
+     "preenchido": 45
+    },
+    "id_estrutura": {
+     "preenchido": 0
+    },
+    "id_circuito": {
+     "preenchido": 0
+    },
+    "origem_cadastro": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 100
+    }
+   }
+  },
+  "cidade": {
+   "responde": true,
+   "total": 5565,
+   "amostra": 60,
+   "campos": {
+    "codigo": {
+     "preenchido": 0
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "nome": {
+     "preenchido": 100
+    },
+    "uf": {
+     "preenchido": 100,
+     "codigos": [
+      "10",
+      "12",
+      "15"
+     ]
+    },
+    "cod_ibge": {
+     "preenchido": 98
+    },
+    "regiao": {
+     "preenchido": 0
+    },
+    "cod_siafi": {
+     "preenchido": 0
+    },
+    "cod_cidade_nfse_forquilhinha_sc": {
+     "preenchido": 0
+    },
+    "origem": {
+     "preenchido": 100,
+     "codigos": [
+      "I",
+      "N"
+     ]
+    }
+   }
+  },
+  "radpop_estrutura": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radpop_estrutura não está disponível!"
+  },
+  "radpop_radio_porta": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radpop_radio_porta não está disponível!"
+  },
+  "radpop_radio_porta_pon": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radpop_radio_porta_pon não está disponível!"
+  },
+  "rad_porta_pon": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso rad_porta_pon não está disponível!"
+  },
+  "radpop_radio_cliente_fibra_historico": {
+   "responde": true,
+   "total": 29576244,
+   "amostra": 60,
+   "campos": {
+    "id": {
+     "preenchido": 100
+    },
+    "sinal_rx": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "sinal_tx": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "temperatura": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "voltagem": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "data_sinal": {
+     "preenchido": 100
+    },
+    "id_cliente_fibra": {
+     "preenchido": 100
+    }
+   }
+  },
+  "radusuarios_historico": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radusuarios_historico não está disponível!"
+  },
+  "rad_historico_conexao": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso rad_historico_conexao não está disponível!"
+  },
+  "radpop_radio_cliente_fibra_log": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radpop_radio_cliente_fibra_log não está disponível!"
+  },
+  "fn_areceber": {
+   "responde": true,
+   "total": 243230,
+   "amostra": 60,
+   "campos": {
+    "id_remessa": {
+     "preenchido": 0
+    },
+    "gateway_link": {
+     "preenchido": 0
+    },
+    "nn_boleto": {
+     "preenchido": 45
+    },
+    "boleto": {
+     "preenchido": 100
+    },
+    "data_inicial": {
+     "preenchido": 73
+    },
+    "data_final": {
+     "preenchido": 73
+    },
+    "estornado": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "conta_recebimento": {
+     "preenchido": 18,
+     "codigos": [
+      "11",
+      "2",
+      "34"
+     ]
+    },
+    "bandeira_pagamento": {
+     "preenchido": 0
+    },
+    "recebido_por_recorrencia": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "valor_juros": {
+     "preenchido": 18,
+     "codigos": [
+      "0.00",
+      "0.24"
+     ]
+    },
+    "valor_multas": {
+     "preenchido": 18,
+     "codigos": [
+      "0.00",
+      "1.70"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "liberado": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "filial_id": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "status": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "C",
+      "R"
+     ]
+    },
+    "data_emissao": {
+     "preenchido": 100
+    },
+    "data_vencimento": {
+     "preenchido": 100
+    },
+    "valor": {
+     "preenchido": 100
+    },
+    "obs": {
+     "preenchido": 77
+    },
+    "valor_recebido": {
+     "preenchido": 100
+    },
+    "valor_aberto": {
+     "preenchido": 100
+    },
+    "em_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_cliente": {
+     "preenchido": 100
+    },
+    "pagamento_valor": {
+     "preenchido": 18
+    },
+    "pagamento_data": {
+     "preenchido": 18
+    },
+    "id_carteira_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "14"
+     ]
+    },
+    "credito_data": {
+     "preenchido": 18
+    },
+    "baixa_data": {
+     "preenchido": 18
+    },
+    "numero_parcela_recorrente": {
+     "preenchido": 70
+    },
+    "documento": {
+     "preenchido": 100
+    },
+    "id_saida": {
+     "preenchido": 78
+    },
+    "tipo_renegociacao": {
+     "preenchido": 22,
+     "codigos": [
+      "N"
+     ]
+    },
+    "tipo_recebimento": {
+     "preenchido": 100
+    },
+    "valor_cancelado": {
+     "preenchido": 100
+    },
+    "data_cancelamento": {
+     "preenchido": 15
+    },
+    "id_mot_cancelamento": {
+     "preenchido": 15,
+     "codigos": [
+      "1",
+      "21",
+      "4"
+     ]
+    },
+    "previsao": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_renegociacao": {
+     "preenchido": 0
+    },
+    "id_cobranca": {
+     "preenchido": 5
+    },
+    "id_renegociacao_novo": {
+     "preenchido": 22
+    },
+    "libera_periodo": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "impresso": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "forma_recebimento": {
+     "preenchido": 18,
+     "codigos": [
+      "M",
+      "R"
+     ]
+    },
+    "arquivo_remessa_baixado": {
+     "preenchido": 0
+    },
+    "status_cobranca": {
+     "preenchido": 5,
+     "codigos": [
+      "F",
+      "P"
+     ]
+    },
+    "nparcela": {
+     "preenchido": 100,
+     "codigos": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "id_nota_gerada_opc4": {
+     "preenchido": 0
+    },
+    "tipo_cobranca": {
+     "preenchido": 100,
+     "codigos": [
+      "I"
+     ]
+    },
+    "id_contrato_principal": {
+     "preenchido": 0
+    },
+    "id_nota_gerada": {
+     "preenchido": 0
+    },
+    "id_contrato_avulso": {
+     "preenchido": 3,
+     "codigos": [
+      "8001",
+      "8003"
+     ]
+    },
+    "id_im_imovel": {
+     "preenchido": 0
+    },
+    "id_nota_gerada_opc3": {
+     "preenchido": 0
+    },
+    "id_contrato": {
+     "preenchido": 92
+    },
+    "duplicata": {
+     "preenchido": 0
+    },
+    "id_sip": {
+     "preenchido": 0
+    },
+    "parcela_proporcional": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "linha_digitavel": {
+     "preenchido": 45
+    },
+    "gerencianet_token": {
+     "preenchido": 0
+    },
+    "tipo_pagamento_cartao": {
+     "preenchido": 0
+    },
+    "titulo_protestado": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "desconto_condicional_valor": {
+     "preenchido": 0
+    },
+    "validade_desconto_condicional": {
+     "preenchido": 0
+    },
+    "id_conta": {
+     "preenchido": 100,
+     "codigos": [
+      "174"
+     ]
+    },
+    "titulo_renegociado": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "motivo_alteracao": {
+     "preenchido": 0
+    },
+    "id_remessa_alteracao": {
+     "preenchido": 0
+    },
+    "cancelamento_id_operador": {
+     "preenchido": 2,
+     "codigos": [
+      "73"
+     ]
+    },
+    "baixa_id_operador": {
+     "preenchido": 3,
+     "codigos": [
+      "73",
+      "81"
+     ]
+    },
+    "titulo_importado": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "origem_importacao": {
+     "preenchido": 0
+    },
+    "ultima_atualizacao": {
+     "preenchido": 100
+    },
+    "aguardando_confirmacao_pagamento": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "parcelado_cartao": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "pix_txid": {
+     "preenchido": 0
+    },
+    "id_nota_gerada_opc2": {
+     "preenchido": 0
+    },
+    "recebido_via_pix": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id_lote_geracao_financeiro_fatura": {
+     "preenchido": 0
+    },
+    "pix_txid_recorrente": {
+     "preenchido": 0
+    },
+    "pix_status_recorrente": {
+     "preenchido": 0
+    },
+    "tipo_cobranca_pix": {
+     "preenchido": 0
+    },
+    "data_prevista_tentativa_pix_recorrente": {
+     "preenchido": 0
+    },
+    "tentativa_pix_recorrente": {
+     "preenchido": 0
+    },
+    "agencia_sequencial": {
+     "preenchido": 0
+    }
+   }
+  },
+  "cliente_arquivos": {
+   "responde": true,
+   "total": 6704,
+   "amostra": 60,
+   "campos": {
+    "local_arquivo": {
+     "preenchido": 100
+    },
+    "id_contrato": {
+     "preenchido": 2,
+     "codigos": [
+      "7923"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "descricao": {
+     "preenchido": 100
+    },
+    "nome_arquivo": {
+     "preenchido": 100
+    },
+    "data_envio": {
+     "preenchido": 100
+    },
+    "id_cliente": {
+     "preenchido": 100
+    }
+   }
+  },
+  "su_diagnostico": {
+   "responde": true,
+   "total": 54,
+   "amostra": 54,
+   "campos": {
+    "id": {
+     "preenchido": 100
+    },
+    "ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "descricao": {
+     "preenchido": 100
+    },
+    "id_setor": {
+     "preenchido": 4,
+     "codigos": [
+      "4",
+      "7"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 93
+    }
+   }
+  },
+  "su_oss_assunto": {
+   "responde": true,
+   "total": 112,
+   "amostra": 60,
+   "campos": {
+    "imprimir_prod_serv": {
+     "preenchido": 0
+    },
+    "modelo_email": {
+     "preenchido": 0
+    },
+    "wiz_comodato": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_produtos": {
+     "preenchido": 100,
+     "codigos": [
+      "E",
+      "M"
+     ]
+    },
+    "wiz_mensalidade": {
+     "preenchido": 100,
+     "codigos": [
+      "E",
+      "M"
+     ]
+    },
+    "wiz_arquivos": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_localizacao": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_autorizar_ONU": {
+     "preenchido": 13,
+     "codigos": [
+      "E",
+      "M"
+     ]
+    },
+    "wiz_resumo_os": {
+     "preenchido": 13,
+     "codigos": [
+      "M"
+     ]
+    },
+    "localizacao_obrigatoria_cliente_finalizacao_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "localizacao_obrigatoria_login_finalizacao_os": {
+     "preenchido": 100
+    },
+    "obrigar_processo_atendimento": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_processo": {
+     "preenchido": 3,
+     "codigos": [
+      "14",
+      "17"
+     ]
+    },
+    "login_obrigatorio": {
+     "preenchido": 100
+    },
+    "id_resposta_padrao_finalizacao": {
+     "preenchido": 0
+    },
+    "mostrar_no_service": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "id_sms_deslocamento": {
+     "preenchido": 0
+    },
+    "considerar_sla": {
+     "preenchido": 100,
+     "codigos": [
+      "AB"
+     ]
+    },
+    "id_msg_omnichannel_deslocamento": {
+     "preenchido": 0
+    },
+    "conceder_desconto_login_regiao_manutencao": {
+     "preenchido": 100
+    },
+    "mostrar_checklist_analise_risco": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "i"
+     ]
+    },
+    "id_questionario_analise_risco": {
+     "preenchido": 0
+    },
+    "obrigar_preenchimento_canal_atendimento": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "obrigatorio_status_complementar": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "habilita_assinatura_cliente": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_feedback": {
+     "preenchido": 0
+    },
+    "prioridade_padrao": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "N"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "ativo": {
+     "preenchido": 100,
+     "codigos": [
+      "S"
+     ]
+    },
+    "assunto": {
+     "preenchido": 100
+    },
+    "su_oss_modelo_impressao": {
+     "preenchido": 0
+    },
+    "tipo": {
+     "preenchido": 100,
+     "codigos": [
+      "A",
+      "C"
+     ]
+    },
+    "meta_horas_abertura": {
+     "preenchido": 100,
+     "codigos": [
+      "24.0",
+      "72.0"
+     ]
+    },
+    "tipo_comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "F"
+     ]
+    },
+    "tipo_cobranca": {
+     "preenchido": 100
+    },
+    "valor_comissao": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "id_oss_kit": {
+     "preenchido": 0
+    },
+    "cor_marcador": {
+     "preenchido": 100
+    },
+    "layout_impressao": {
+     "preenchido": 97,
+     "codigos": [
+      "2",
+      "6",
+      "7",
+      "9"
+     ]
+    },
+    "id_tipo_doc_pedido": {
+     "preenchido": 13,
+     "codigos": [
+      "7"
+     ]
+    },
+    "id_tipo_doc_servico": {
+     "preenchido": 0
+    },
+    "id_tipo_doc_comodato": {
+     "preenchido": 5,
+     "codigos": [
+      "15",
+      "16"
+     ]
+    },
+    "finalidade": {
+     "preenchido": 100,
+     "codigos": [
+      "AM",
+      "AT",
+      "OS"
+     ]
+    },
+    "mostra_hotsite": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id_resposta_padrao": {
+     "preenchido": 0
+    },
+    "formato_endereco": {
+     "preenchido": 100
+    },
+    "permite_abrir_cliente_atraso": {
+     "preenchido": 100,
+     "codigos": [
+      "P"
+     ]
+    },
+    "endereco_padrao": {
+     "preenchido": 100,
+     "codigos": [
+      "C",
+      "L",
+      "M"
+     ]
+    },
+    "numero_de_vias": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "horario_tempo_assunto": {
+     "preenchido": 100
+    },
+    "fat_somente_finalizada": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "meta_horas_agendamento": {
+     "preenchido": 100,
+     "codigos": [
+      "72.0"
+     ]
+    },
+    "id_cond_pag_servico": {
+     "preenchido": 0
+    },
+    "id_cond_pag_produto": {
+     "preenchido": 10,
+     "codigos": [
+      "1"
+     ]
+    },
+    "sla_apenas_dias_uteis": {
+     "preenchido": 100,
+     "codigos": [
+      "P",
+      "S"
+     ]
+    },
+    "metas_horas_abertura_ticket": {
+     "preenchido": 100,
+     "codigos": [
+      "24.0",
+      "72.0"
+     ]
+    },
+    "quantidade_fotos_finalizacao_os": {
+     "preenchido": 98,
+     "codigos": [
+      "1",
+      "2"
+     ]
+    },
+    "exige_fotos_finalizacao_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "diagnostico_obrigatorio_finalizacao_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "wiz_servico": {
+     "preenchido": 100,
+     "codigos": [
+      "E",
+      "M"
+     ]
+    },
+    "card_data_reservada": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "id_cond_pag_patrimonio_venda": {
+     "preenchido": 0
+    },
+    "id_tipo_doc_patrimonio_venda": {
+     "preenchido": 0
+    },
+    "validar_choque_horarios_agendamento_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "ultima_atualizacao": {
+     "preenchido": 33
+    },
+    "msg_regiao_manutencao": {
+     "preenchido": 0
+    },
+    "id_vendedor_faturamento": {
+     "preenchido": 0
+    },
+    "setor_su_oss_chamado": {
+     "preenchido": 5,
+     "codigos": [
+      "1",
+      "11",
+      "7"
+     ]
+    },
+    "descricao": {
+     "preenchido": 0
+    },
+    "equipe_obrigatoria_finalizacao_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "habilitar_mini_projeto": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "wiz_assinatura_obrig": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "mesclar_mini_projetos_ao_finalizar_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "id_checklist": {
+     "preenchido": 0
+    },
+    "wiz_service_mobile_adicionais": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_service_mobile_onu": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_service_mobile_loc": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_service_mobile_anexos": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_service_mobile_checklist": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "wiz_service_mobile_enviar_sms_deslocamento": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "service_mobile_max_parc_adic_serv": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "integracao_assinatura_digital": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "wiz_service_mobile_config_dispositivo": {
+     "preenchido": 100,
+     "codigos": [
+      "M"
+     ]
+    },
+    "contrato_obrigatorio": {
+     "preenchido": 100,
+     "codigos": [
+      "N",
+      "S"
+     ]
+    },
+    "quantidade_equipamentos": {
+     "preenchido": 3,
+     "codigos": [
+      "1"
+     ]
+    },
+    "exige_comodato_finalizar_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "exige_produto_finalizar_os": {
+     "preenchido": 100,
+     "codigos": [
+      "N"
+     ]
+    },
+    "quantidade_produtos": {
+     "preenchido": 3,
+     "codigos": [
+      "1"
+     ]
+    }
+   }
+  },
+  "cliente_contrato_produtos": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso cliente_contrato_produtos não está disponível!"
+  },
+  "ftth_olt": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso ftth_olt não está disponível!"
+  },
+  "olt": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso olt não está disponível!"
+  },
+  "equipamento": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso equipamento não está disponível!"
+  },
+  "patrimonio": {
+   "responde": true,
+   "total": 109727,
+   "amostra": 60,
+   "campos": {
+    "estado": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "responsavel_id": {
+     "preenchido": 0
+    },
+    "valor_residual": {
+     "preenchido": 100,
+     "codigos": [
+      "0.00"
+     ]
+    },
+    "id": {
+     "preenchido": 100
+    },
+    "situacao": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_produto": {
+     "preenchido": 100,
+     "codigos": [
+      "710",
+      "766",
+      "813"
+     ]
+    },
+    "descricao": {
+     "preenchido": 100
+    },
+    "id_filial": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "id_almoxarifado": {
+     "preenchido": 100,
+     "codigos": [
+      "1"
+     ]
+    },
+    "serial_fornecedor": {
+     "preenchido": 0
+    },
+    "id_mac": {
+     "preenchido": 0
+    },
+    "serial": {
+     "preenchido": 100
+    },
+    "data_aquisicao": {
+     "preenchido": 100
+    },
+    "valor_bem": {
+     "preenchido": 100
+    },
+    "numero_nf": {
+     "preenchido": 97
+    },
+    "departamento_id": {
+     "preenchido": 0
+    },
+    "id_movimento_produto": {
+     "preenchido": 100
+    },
+    "id_fornecedor": {
+     "preenchido": 100,
+     "codigos": [
+      "107",
+      "113",
+      "7"
+     ]
+    },
+    "em_laboratorio": {
+     "preenchido": 100,
+     "codigos": [
+      "2"
+     ]
+    },
+    "aguardando_instalacao": {
+     "preenchido": 100,
+     "codigos": [
+      "2"
+     ]
+    },
+    "garantia_ate": {
+     "preenchido": 0
+    }
+   }
+  },
+  "su_oss_chamado_historico": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso su_oss_chamado_historico não está disponível!"
+  },
+  "radius_log": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radius_log não está disponível!"
+  },
+  "rad_log": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso rad_log não está disponível!"
+  },
+  "radpop_ssid": {
+   "responde": false,
+   "status": 200,
+   "motivo": "Recurso radpop_ssid não está disponível!"
+  }
+ }
+}

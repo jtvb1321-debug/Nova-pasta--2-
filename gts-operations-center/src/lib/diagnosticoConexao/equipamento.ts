@@ -118,6 +118,13 @@ async function lerSmartOlt(serial: string | null): Promise<OnuSmartOlt | null> {
   } catch { return null }
 }
 
+/** A partir do registro da aba Fibra ja lido (evita consultar o IXC duas vezes). */
+export async function equipamentoDeRegistro(reg: any | null, serialIxc: string | null): Promise<Disponibilidade<EquipamentoOnu>> {
+  const fibra = mapearFibra(reg)
+  const olt = await lerSmartOlt(fibra?.mac ?? serialIxc)
+  return montarEquipamento(fibra, olt)
+}
+
 /** Nunca derruba a consulta: o que nao vier fica "Nao disponivel". */
 export async function lerEquipamento(idLogin: string | null, serialIxc: string | null): Promise<Disponibilidade<EquipamentoOnu>> {
   const fibra = await lerFibra(idLogin)

@@ -45,6 +45,7 @@ export function resumoTecnico(d: DiagnosticoConexao): string[] {
     if (e.voltagemV != null) partes.push(`tensão ${e.voltagemV} V`)
     linhas.push(`ONU (leitura da OLT no IXC${e.leituraEm ? `, em ${e.leituraEm}` : ''}): ${partes.join(', ')}${e.causaUltimaQueda ? `. Causa da última queda: ${e.causaUltimaQueda}` : ''}. Sinal óptico não mede a velocidade nem a estabilidade da conexão.`)
   }
+  if (d.hipoteses.length) linhas.push(`Hipóteses técnicas (regras com dados do IXC, não conclusões): ${d.hipoteses.map(h => `${h.titulo} (confiança ${h.confianca === 'media' ? 'média' : h.confianca})`).join('; ')}.`)
   linhas.push('Não foram obtidos velocidade medida, latência, jitter, perda de pacotes nem estabilidade. O consumo registrado, isoladamente, não permite concluir que a conexão esteja estável ou normal.')
   return linhas
 }

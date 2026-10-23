@@ -123,6 +123,97 @@ export interface EquipamentoOnu {
   ultimaMudancaStatus: string | null
 }
 
+// ------------------------------------------------------------------ rede (tudo lido do IXC, somente leitura)
+export interface OltIxc {
+  id: string
+  nome: string | null
+  /** Como o IXC grava: HW = Huawei, VSOL = VSOL. Outro codigo aparece como esta. */
+  fabricante: string | null
+  modelo: string | null
+  firmware: string | null
+  ativa: boolean
+  pop: string | null
+  /** Uptime informado pelo IXC (texto) - so serve de referencia. */
+  uptime: string | null
+}
+
+export interface PosicaoOnu {
+  olt: OltIxc | null
+  /** Identificador da PON como o IXC grava (ex.: 0/1/14 = quadro/slot/porta). */
+  ponId: string | null
+  slot: string | null
+  pon: string | null
+  onuNumero: string | null
+  perfilId: string | null
+  modeloOnu: string | null
+  autenticacao: string | null
+  vlans: { rotulo: string; valor: string }[]
+  caixa: { id: string; nome: string | null; capacidade: number | null; porta: string | null } | null
+  /** Interface de transmissao (porta da OLT) como o IXC referencia. */
+  interfaceTransmissao: string | null
+  mtu: string | null
+}
+
+export interface LeituraOptica {
+  em: string
+  rxDbm: number | null
+  txDbm: number | null
+  temperaturaC: number | null
+  voltagemV: number | null
+}
+
+export interface HistoricoOptico {
+  /** Do mais antigo para o mais novo (pronto para o grafico). Leituras sem nenhum sinal ficam de fora e sao contadas em semSinal. */
+  leituras: LeituraOptica[]
+  semSinal: number
+  /** Quantas leituras foram lidas do IXC (as mais recentes, ate 120). */
+  lidas: number
+  ultimaValida: LeituraOptica | null
+  /** Intervalo tipico entre leituras, em horas (mediana), quando ha leituras suficientes. */
+  intervaloHoras: number | null
+}
+
+/** Vizinhos da caixa (sem o proprio cliente). indefinidos = estado que o IXC grava com outro codigo (nao e online nem offline). */
+export interface VizinhancaCaixa { total: number; online: number; offline: number; indefinidos: number; capacidade: number | null; caidosRecentes: number }
+export interface VizinhancaPon {
+  ponId: string
+  totalOnus: number
+  comLeitura: number
+  semLeitura: number
+  /** Leituras de RX abaixo do limite de atencao entre as ONUs com leitura. */
+  rxFraco: number
+  rxMedianoDbm: number | null
+  ultimaLeituraEm: string | null
+}
+
+export interface OrdemServicoIxc {
+  id: string
+  abertaEm: string | null
+  fechadaEm: string | null
+  status: string | null
+  statusRotulo: string | null
+  assunto: string | null
+  prioridade: string | null
+}
+
+export interface RedeIxc {
+  consultadoEm: string
+  posicao: Disponibilidade<PosicaoOnu>
+  historico: Disponibilidade<HistoricoOptico>
+  vizinhanca: Disponibilidade<{ caixa: VizinhancaCaixa | null; pon: VizinhancaPon | null }>
+  ordensServico: Disponibilidade<{ total: number; recentes: OrdemServicoIxc[] }>
+}
+
+export type Confianca = 'alta' | 'media' | 'baixa'
+export interface Hipotese {
+  id: string
+  titulo: string
+  severidade: 'info' | 'atencao' | 'critico'
+  confianca: Confianca
+  evidencias: { texto: string; em: string | null }[]
+  proximoTeste: string
+}
+
 export interface DiagnosticoConexao {
   fonte: FonteConectividade
   consultadoEm: string
@@ -132,6 +223,8 @@ export interface DiagnosticoConexao {
   sessoes: Disponibilidade<SessoesPeriodo>
   sessaoAtual: Disponibilidade<SessaoAtual>
   equipamento: Disponibilidade<EquipamentoOnu>
+  rede: RedeIxc
+  hipoteses: Hipotese[]
   naoMedidos: readonly string[]
   /** Avisos tecnicos sobre como ler os numeros (ex.: convencao de upload/download). */
   observacoes: string[]

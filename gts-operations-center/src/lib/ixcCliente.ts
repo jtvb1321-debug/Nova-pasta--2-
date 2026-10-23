@@ -35,6 +35,11 @@ export interface SessaoAtualIxc {
 export interface LoginIxc {
   /** Id do login no IXC (liga o login a aba Fibra). */
   id: string | null
+  /** Ids que ligam o login a OLT (id_transmissor), a caixa FTTH e a interface de transmissao. */
+  oltId: string | null
+  idCaixaFtth: string | null
+  interfaceTransmissao: string | null
+  mtu: string | null
   login: string
   online: boolean
   ativo: boolean
@@ -109,6 +114,10 @@ export function mapearLogin(reg: any, planos: Map<string, PlanoIxc | null>, caix
   const idCaixa = texto(reg.id_caixa_ftth)
   return {
     id: texto(reg.id),
+    oltId: texto(reg.id_transmissor),
+    idCaixaFtth: idCaixa,
+    interfaceTransmissao: texto(reg.interface_transmissao),
+    mtu: texto(reg.mtu),
     login: String(reg.login ?? ''),
     online: reg.online === 'S',
     ativo: reg.ativo === 'S',

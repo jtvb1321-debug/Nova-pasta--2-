@@ -183,6 +183,38 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
     }
     : { titulo: t('Equipamento do cliente (ONU)'), paragrafos: [`${NAO_DISPONIVEL}. ${eq.motivo}`] })
 
+  // Rede (tudo vindo do IXC): posicao da ONU, historico optico e hipoteses tecnicas.
+  const rd = d.rede
+  if (rd.posicao.disponivel) {
+    const p = rd.posicao
+    secoes.push({
+      titulo: t('Posição da ONU na rede'),
+      pares: [
+        ['OLT', ou(p.olt?.nome)], ['Fabricante e modelo da OLT', ou(p.olt ? [p.olt.fabricante, p.olt.modelo].filter(Boolean).join(' ') : null)], ['POP', ou(p.olt?.pop)],
+        ['PON (quadro/slot/porta)', ou(p.ponId)], ['Slot / placa', ou(p.slot)], ['Porta PON', ou(p.pon)], ['Nº da ONU na PON', ou(p.onuNumero)],
+        ['Modelo da ONU', ou(p.modeloOnu)], ['Perfil (código no IXC)', ou(p.perfilId)], ['VLANs', ou(p.vlans.length ? p.vlans.map(v => `${v.rotulo}: ${v.valor}`).join(' · ') : null)],
+        ['Caixa FTTH', ou(p.caixa ? `${p.caixa.nome ?? '#' + p.caixa.id}${p.caixa.porta ? ' (porta ' + p.caixa.porta + ')' : ''}` : null)],
+      ],
+      paragrafos: ['Cadastro da rede registrado no IXC. O GTS Center não consultou a OLT diretamente.'],
+    })
+  }
+  if (rd.historico.disponivel) {
+    const h = rd.historico
+    secoes.push({
+      titulo: t('Histórico de leituras ópticas (IXC)'),
+      paragrafos: [`${h.lidas} leitura(s) mais recentes lidas do IXC: ${h.leituras.length} com sinal e ${h.semSinal} sem sinal${h.intervaloHoras ? ', coletadas a cada ~' + h.intervaloHoras + ' h' : ''}. Leituras históricas registradas pelo IXC; não medem velocidade nem estabilidade.`],
+      tabela: h.leituras.length ? { colunas: ['Leitura em', 'RX (dBm)', 'TX (dBm)', 'Temp. (°C)', 'Tensão (V)'], linhas: [...h.leituras].reverse().slice(0, 10).map(l => [l.em.replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2/$1 $4'), String(l.rxDbm ?? '—'), String(l.txDbm ?? '—'), String(l.temperaturaC ?? '—'), String(l.voltagemV ?? '—')]) } : undefined,
+    })
+  }
+  if (d.hipoteses.length) {
+    const CONF = { alta: 'alta', media: 'média', baixa: 'baixa' } as const
+    secoes.push({
+      titulo: t('Hipóteses técnicas (regras fixas, dados do IXC)'),
+      paragrafos: ['São hipóteses, não conclusões: dependem apenas dos dados do IXC (sem consulta direta à OLT, sem medição de velocidade, latência ou perda).'],
+      lista: d.hipoteses.map(h => `${h.titulo} [confiança ${CONF[h.confianca]}]. Evidências: ${h.evidencias.map(e => e.texto + (e.em ? ' (' + e.em + ')' : '')).join(' | ')}. Próximo teste: ${h.proximoTeste}`),
+    })
+  }
+
   secoes.push({
     titulo: t('Indicadores não medidos'),
     paragrafos: ['Os indicadores abaixo não foram obtidos nesta consulta e não podem ser inferidos a partir do consumo:'],

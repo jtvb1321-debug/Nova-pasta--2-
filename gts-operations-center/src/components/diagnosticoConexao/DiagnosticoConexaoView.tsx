@@ -11,6 +11,7 @@ import { montarConteudoRelatorio, renderizarPdf, type EvidenciaManual } from '@/
 import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { NAO_DISPONIVEL, type ContratoConexao, type DiagnosticoConexao, type RespostaConsulta, type ResultadoBusca } from '@/lib/diagnosticoConexao/tipos'
 import { GraficoConsumo } from './GraficoConsumo'
+import { PainelFibra, PainelHipoteses, PainelOrdensServico, PainelVizinhanca } from './RedeAbas'
 
 // Diagnostico de Conexao: consulta o IXC (somente leitura) e gera o Relatorio Tecnico de Conectividade.
 // Quatro areas: 1 Identificacao, 2 Indicadores, 3 Historico, 4 Relatorio.
@@ -23,6 +24,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 type Periodo = '7d' | '30d' | 'custom'
+type AbaRede = 'geral' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os'
 const ORIGEM: Record<ResultadoBusca['origem'], string> = { nome: 'nome', codigo: 'código', contrato: 'contrato', login: 'login' }
 
 function Area({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
@@ -67,6 +69,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
   const [observacaoTecnico, setObservacaoTecnico] = useState('')
   const [finalidade, setFinalidade] = useState('')
   const [gerando, setGerando] = useState(false)
+  const [abaRede, setAbaRede] = useState<AbaRede>('geral')
   const iniciou = useRef(false)
 
   async function buscar(e?: React.FormEvent) {
@@ -104,7 +107,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
       if (lg) q.set('login', lg)
       if (per === 'custom') { q.set('dataInicio', dataInicio); q.set('dataFim', dataFim) } else q.set('periodo', per)
       const r = await api<RespostaConsulta>(`/api/diagnostico-conexao/consulta?${q}`)
-      if (r.tipo === 'ok') setDiag(r.diagnostico)
+      if (r.tipo === 'ok') { setDiag(r.diagnostico); setAbaRede('geral') }
       else if (r.tipo === 'sem-contrato') setErro('Este cliente não tem contrato no IXC.')
       else setErro(r.tipo === 'escolher-login' ? 'Este contrato tem mais de um login: escolha qual conexão analisar.' : 'O cliente tem mais de um contrato: escolha qual conexão analisar.')
     } catch (x: any) { setErro(x.message) } finally { setConsultando(false) }
@@ -284,6 +287,17 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
 
       {diag && ident && consumo && sa && eq && (
         <>
+          <div role="tablist" aria-label="Seções do diagnóstico" className="flex gap-1 overflow-x-auto border-b border-tema-linha">
+            {([['geral', 'Visão geral'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['os', 'Ordens de serviço']] as [AbaRede, string][]).map(([id, rotulo]) => (
+              <button key={id} role="tab" id={`dc-aba-${id}`} type="button" aria-selected={abaRede === id} aria-controls={`dc-painel-${id}`} onClick={() => setAbaRede(id)}
+                className={cn('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors', abaRede === id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta')}>{rotulo}</button>
+            ))}
+          </div>
+          {abaRede === 'hipoteses' && <div role="tabpanel" id="dc-painel-hipoteses" aria-labelledby="dc-aba-hipoteses"><Area numero={2} titulo="Hipóteses técnicas"><PainelHipoteses hipoteses={diag.hipoteses} /></Area></div>}
+          {abaRede === 'fibra' && <div role="tabpanel" id="dc-painel-fibra" aria-labelledby="dc-aba-fibra"><Area numero={2} titulo="ONU e fibra"><PainelFibra diag={diag} /></Area></div>}
+          {abaRede === 'vizinhanca' && <div role="tabpanel" id="dc-painel-vizinhanca" aria-labelledby="dc-aba-vizinhanca"><Area numero={2} titulo="Caixa e PON"><PainelVizinhanca diag={diag} /></Area></div>}
+          {abaRede === 'os' && <div role="tabpanel" id="dc-painel-os" aria-labelledby="dc-aba-os"><Area numero={2} titulo="Ordens de serviço (IXC)"><PainelOrdensServico diag={diag} /></Area></div>}
+          {abaRede === 'geral' && <>
           <Area numero={2} titulo="Indicadores">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Cartao rotulo="Download contratado" valor={ident.velocidade.downloadMbps != null ? formatarMbps(ident.velocidade.downloadMbps) : NAO_DISPONIVEL} indisponivel={ident.velocidade.downloadMbps == null} detalhe="Velocidade do plano, não medida" />
@@ -404,6 +418,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
               </button>
             </div>
           </Area>
+          </>}
         </>
       )}
     </div>

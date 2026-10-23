@@ -1,10 +1,12 @@
 import { listarIXC } from '@/lib/ixc'
 import { dadosIxcDoCliente, type DadosIxc, type LoginIxc } from '@/lib/ixcCliente'
 import { dataHoraIxc, dataIso, diaIxc, octetos, paraMbps } from './formato'
-import { lerEquipamento } from './equipamento'
+import { equipamentoDeRegistro } from './equipamento'
+import { gerarHipoteses } from './hipoteses'
+import { lerFibraRegistro, lerRede } from './rede'
 import {
   ErroDiagnostico, INDICADORES_NAO_MEDIDOS,
-  type ConsumoDia, type ConsumoPeriodo, type ContratoConexao, type Disponibilidade, type DiagnosticoConexao,
+  type ConsumoDia, type ConsumoPeriodo, type ContratoConexao, type Disponibilidade, type DiagnosticoConexao, type EquipamentoOnu,
   type PeriodoConsulta, type RespostaConsulta, type ResultadoBusca, type SessaoAtual, type SessaoConexao, type SessoesPeriodo,
 } from './tipos'
 
@@ -308,7 +310,13 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
   }
 
   const sessaoAtual = sessaoAtualDe(loginIxc)
-  const equipamento = await lerEquipamento(loginIxc?.id ?? null, loginIxc?.onuSerial ?? null)
+  // Aba Fibra lida UMA vez: alimenta o equipamento (ONU) e a rede (OLT, PON, historico, vizinhos, OS).
+  const fibra = await lerFibraRegistro(loginIxc?.id ?? null)
+  const equipamento: Disponibilidade<EquipamentoOnu> = fibra.tipo === 'ok'
+    ? await equipamentoDeRegistro(fibra.reg, loginIxc?.onuSerial ?? null)
+    : { disponivel: false, motivo: 'Falha ao consultar a aba Fibra no IXC. Tente de novo; isto NÃO indica que a ONU esteja fora do ar.' }
+  const rede = await lerRede(loginIxc ?? null, fibra, agora)
+  const hipoteses = gerarHipoteses({ identificacao, equipamento, rede, sessaoAtual }, agora)
   // So comenta a convencao do historico (RADIUS) quando existe historico; a sessao atual tem observacao propria.
   const observacoesFinais = consumo.disponivel ? observacoes : [OBSERVACOES_PADRAO[0]]
   if (sessaoAtual.disponivel) observacoesFinais.push(OBSERVACAO_SESSAO_ATUAL)
@@ -316,6 +324,6 @@ export async function consultarConexao(p: ParametrosConsulta, agora = new Date()
 
   return {
     tipo: 'ok',
-    diagnostico: { fonte: FONTE_ATIVA, consultadoEm: agora.toISOString(), periodo, identificacao, consumo, sessoes, sessaoAtual, equipamento, naoMedidos: INDICADORES_NAO_MEDIDOS, observacoes: observacoesFinais },
+    diagnostico: { fonte: FONTE_ATIVA, consultadoEm: agora.toISOString(), periodo, identificacao, consumo, sessoes, sessaoAtual, equipamento, rede, hipoteses, naoMedidos: INDICADORES_NAO_MEDIDOS, observacoes: observacoesFinais },
   }
 }
