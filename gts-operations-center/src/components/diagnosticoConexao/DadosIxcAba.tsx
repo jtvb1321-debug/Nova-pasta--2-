@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff, ExternalLink, Loader2, Lock } from 'lucide-react'
+import { useDadosIxc } from './AbasIxc'
 import { cn } from '@/lib/utils'
-import type { CredenciaisConexao, DadosCompletosIxc } from '@/lib/diagnosticoConexao/dadosIxc'
+import type { CredenciaisConexao } from '@/lib/diagnosticoConexao/dadosIxc'
 import { NAO_DISPONIVEL } from '@/lib/diagnosticoConexao/tipos'
 
 // Aba "Dados do IXC": todos os campos que o IXC tem (sem senhas e sem CPF/CNPJ), o acesso ao roteador do cliente e as senhas
@@ -17,23 +18,19 @@ async function chamar<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function DadosIxcAba({ cliente, contrato, login, chamadoId, podeVerSenhas }: { cliente: string; contrato: string; login: string | null; chamadoId: string | null; podeVerSenhas: boolean }) {
-  const [dados, setDados] = useState<DadosCompletosIxc | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
-  const [carregando, setCarregando] = useState(true)
+  const consulta = useDadosIxc({ cliente, contrato, login, chamadoId })
+  const dados = consulta.data ?? null
+  const erro = consulta.isError ? (consulta.error as Error).message : null
+  const carregando = consulta.isPending
   const [cred, setCred] = useState<CredenciaisConexao | null>(null)
   const [buscandoSenhas, setBuscandoSenhas] = useState(false)
   const [erroSenhas, setErroSenhas] = useState<string | null>(null)
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Trocou de cliente/contrato/login: as senhas somem da tela e o temporizador e' limpo.
   useEffect(() => {
-    let vivo = true
-    setCarregando(true); setErro(null); setDados(null); setCred(null)
-    const q = new URLSearchParams({ cliente, contrato })
-    if (login) q.set('login', login)
-    if (chamadoId) q.set('chamado', chamadoId)
-    chamar<DadosCompletosIxc>(`/api/diagnostico-conexao/dados-ixc?${q}`)
-      .then(d => { if (vivo) setDados(d) }).catch((e: Error) => { if (vivo) setErro(e.message) }).finally(() => { if (vivo) setCarregando(false) })
-    return () => { vivo = false; if (temporizador.current) clearTimeout(temporizador.current) }
+    setCred(null)
+    return () => { if (temporizador.current) clearTimeout(temporizador.current) }
   }, [cliente, contrato, login, chamadoId])
 
   async function mostrarSenhas() {

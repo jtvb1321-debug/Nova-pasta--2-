@@ -1,5 +1,7 @@
 import { listarIXC } from '@/lib/ixc'
 import { comCache } from '@/lib/inmapCache'
+import { formatarVelocidade } from '@/lib/ixcFormato'
+import { formatarBytes, formatarDuracao } from './formato'
 import { ErroDiagnostico } from './tipos'
 
 // "Dados do IXC": TODOS os campos que o IXC devolve para o cliente, o contrato, o login (PPPoE), a ONU (aba Fibra) e a caixa FTTH,
@@ -43,13 +45,28 @@ const ROTULOS: Record<string, string> = {
   data_ultima_alteracao: 'Última alteração', ultima_atualizacao: 'Última atualização', obs_cancelamento: 'Observação do cancelamento', motivo_cancelamento: 'Motivo do cancelamento', dia_vencimento: 'Dia de vencimento',
   login: 'Login PPPoE', online: 'Conectado agora', ip: 'IPv4', mac: 'MAC', pd_ipv6: 'IPv6 (prefixo)', concentrador: 'Concentrador', id_concentrador: 'Concentrador (código)', conexao: 'Interface de conexão', tipo_conexao: 'Tipo de conexão',
   interface_transmissao: 'Interface de transmissão (código)', id_transmissor: 'OLT (código)', id_caixa_ftth: 'Caixa FTTH (código)', ftth_porta: 'Porta na caixa', onu_mac: 'MAC/serial da ONU', mtu: 'MTU', id_grupo: 'Plano de velocidade (código)',
-  ultima_conexao_inicial: 'Última conexão iniciada', ultima_conexao_final: 'Última conexão encerrada', tempo_conectado: 'Tempo conectado (s)', download_atual: 'Download da sessão (bytes)', upload_atual: 'Upload da sessão (bytes)',
+  ultima_conexao_inicial: 'Última conexão iniciada', ultima_conexao_final: 'Última conexão encerrada', tempo_conectado: 'Tempo conectado', download_atual: 'Download da sessão atual', upload_atual: 'Upload da sessão atual',
   motivo_desconexao: 'Motivo da última desconexão', count_desconexao: 'Desconexões contadas', ip_aviso: 'IP de aviso', porta_http: 'Porta HTTP do roteador', porta_router2: 'Porta secundária do roteador', tipo_acesso: 'Tipo de acesso ao roteador',
   autenticacao: 'Autenticação', autenticacao_mac: 'Autenticação por MAC', tipo_conexao_mapa: 'Tecnologia', id_df_projeto: 'Projeto (código)', id_filial: 'Filial (código)',
   slotno: 'Slot / placa', ponno: 'Porta PON', ponid: 'PON (quadro/slot/porta)', onu_numero: 'Nº da ONU na PON', onu_tipo: 'Modelo da ONU', id_perfil: 'Perfil (código)', vlan: 'VLAN', vlan_pppoe: 'VLAN PPPoE', vlan_dhcp: 'VLAN DHCP',
-  vlan_tr69: 'VLAN TR-069', vlan_iptv: 'VLAN IPTV', vlan_voip: 'VLAN VoIP', vlan_outros: 'Outras VLANs', service_port: 'Service-port', tipo_autenticacao: 'Autenticação da ONU', data_sinal: 'Data da leitura de sinal', sinal_rx: 'Sinal RX (dBm)', sinal_tx: 'Sinal TX (dBm)',
-  temperatura: 'Temperatura (°C)', voltagem: 'Tensão (V)', distancia_onu: 'Distância da ONU', causa_ultima_queda: 'Causa da última queda', id_hardware: 'Hardware (código)', ip_gerencia: 'IP de gerência', versao: 'Versão',
+  vlan_tr69: 'VLAN TR-069', vlan_iptv: 'VLAN IPTV', vlan_voip: 'VLAN VoIP', vlan_outros: 'Outras VLANs', service_port: 'Service-port', tipo_autenticacao: 'Autenticação da ONU', data_sinal: 'Data da leitura de sinal', sinal_rx: 'Sinal RX', sinal_tx: 'Sinal TX',
+  temperatura: 'Temperatura', voltagem: 'Tensão', distancia_onu: 'Distância da ONU', porta_ftth: 'Porta na caixa', causa_ultima_queda: 'Causa da última queda', id_hardware: 'Hardware (código)', ip_gerencia: 'IP de gerência', versao: 'Versão',
   descricao: 'Descrição', capacidade: 'Capacidade', tipo: 'Tipo', obs: 'Observação', observacao: 'Observação', nome: 'Nome',
+  // contrato
+  data_assinatura: 'Data de assinatura', data_cadastro_sistema: 'Cadastrado no sistema em', data: 'Data do contrato', pago_ate_data: 'Pago até', nao_bloquear_ate: 'Não bloquear até', data_desistencia: 'Data de desistência',
+  data_inicial_suspensao: 'Início da suspensão', data_final_suspensao: 'Fim da suspensão', data_retomada_contrato: 'Retomada do contrato', dt_ult_bloq_auto: 'Último bloqueio automático', dt_ult_bloq_manual: 'Último bloqueio manual',
+  dt_ult_desbloq_auto: 'Último desbloqueio automático', dt_ult_desbloq_manual: 'Último desbloqueio manual', dt_ult_des_bloq_conf: 'Último desbloqueio de confiança', bloqueio_automatico: 'Bloqueio automático',
+  contrato_suspenso: 'Contrato suspenso', desbloqueio_confianca: 'Desbloqueio de confiança', desbloqueio_confianca_ativo: 'Desbloqueio de confiança ativo', restricao_auto_desbloqueio: 'Restrição ao desbloqueio automático',
+  liberacao_bloqueio_manual: 'Liberação de bloqueio manual', aplicar_desconto_tempo_bloqueio: 'Desconto pelo tempo de bloqueio', tempo_permanencia: 'Tempo de permanência (meses)', fidelidade: 'Fidelidade', renovacao_automatica: 'Renovação automática',
+  aviso_atraso: 'Aviso de atraso', isentar_contrato: 'Contrato isento', tipo_cobranca: 'Tipo de cobrança', id_vendedor: 'Vendedor (código)', id_vendedor_ativ: 'Vendedor da ativação (código)', id_carteira_cobranca: 'Carteira de cobrança (código)',
+  id_tipo_contrato: 'Tipo de contrato (código)', id_modelo: 'Modelo de contrato (código)', id_tipo_documento: 'Tipo de documento (código)', motivo_inclusao: 'Motivo da inclusão', origem_cancelamento: 'Origem do cancelamento',
+  situacao_financeira_contrato: 'Situação financeira', taxa_improdutiva: 'Taxa improdutiva', assinatura_digital: 'Assinatura digital', agrupar_financeiro_contrato: 'Agrupar financeiro',
+  // plano
+  valor_contrato: 'Valor do plano', valor_produto: 'Valor do produto', moeda: 'Moeda', logins_simultaneos: 'Logins simultâneos', limitar_n_logins: 'Limitar nº de logins', Ativo: 'Plano ativo', grupo: 'Plano de velocidade',
+  download: 'Download', upload: 'Upload', tipo_franquia: 'Tipo de franquia', prioridade: 'Prioridade', type_band_control: 'Controle de banda', sici_tecnologia: 'Tecnologia (SICI)', qos_ativo: 'QoS ativo', tipo_pessoa_plano: 'Tipo de pessoa',
+  // fibra, caixa e OLT
+  tipo_integracao_neutra: 'Integração rede neutra', onu_rede_neutra: 'ONU de rede neutra', radpop_estrutura: 'Estrutura (código)', id_radpop_radio_porta: 'Porta da OLT (código)', status_caixa: 'Situação da caixa',
+  fabricante_modelo: 'Fabricante e modelo', modelo: 'Modelo', fwversion: 'Versão de software', uptime: 'Tempo ligada', endereco_padrao_cliente: 'Usa o endereço do cliente',
 }
 const humanizar = (c: string) => { const s = c.replace(/^id_/, '').replace(/_/g, ' ').trim(); return s ? s[0].toUpperCase() + s.slice(1) : c }
 const rotuloDe = (c: string) => ROTULOS[c] ?? humanizar(c)
@@ -57,11 +74,39 @@ const rotuloDe = (c: string) => ROTULOS[c] ?? humanizar(c)
 const BRUTO_VAZIO = (v: unknown) => { const s = v == null ? '' : String(v).trim(); return s === '' || s === '0' || s.toLowerCase() === 'null' || /^0000-00-00/.test(s) || s === '0.00' }
 const SIM_NAO: Record<string, string> = { S: 'Sim', N: 'Não' }
 
+// Codigos que o IXC grava, com o texto que a tela do IXC mostra. Codigo desconhecido aparece como esta (sem inventar significado).
+export const CODIGOS: Record<string, Record<string, string>> = {
+  status: { P: 'Pré-contrato', A: 'Ativo', I: 'Inativo', N: 'Negativado', D: 'Desistiu', C: 'Cancelado' },
+  status_internet: { A: 'Ativa', D: 'Desativada', CM: 'Bloqueio manual', CA: 'Bloqueio automático', FA: 'Financeiro em atraso', AA: 'Aguardando assinatura' },
+  status_velocidade: { N: 'Normal', R: 'Reduzida' },
+  tipo_conexao_mapa: { F: 'Fibra' },
+  autenticacao: { L: 'PPPoE (login e senha)' },
+  tipo_pessoa: { F: 'Pessoa física', J: 'Pessoa jurídica', T: 'Todas' },
+  tipo: { I: 'Internet' },
+  tipo_cobranca: { P: 'Pós-pago', R: 'Pré-pago' },
+}
+const MOEDA = /^(valor_|taxa_|desconto|multa|juros)/
+const ISO = /^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/
+const CAMPO_DATA = /(^|_)(data|dt|ultima|ult|ate|em)(_|$)/
+
 export function formatarValor(campo: string, v: unknown): string {
   const s = String(v ?? '').trim()
-  if (/^(ativo|online|autenticacao_mac|usa_.*)$/.test(campo) && SIM_NAO[s.toUpperCase()]) return SIM_NAO[s.toUpperCase()]
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/)
-  if (m && /^(data|ultima|.*_em)$|data_|ultima_|_data/.test(campo)) return m[4] ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : `${m[3]}/${m[2]}/${m[1]}`
+  const codigos = CODIGOS[campo]
+  if (codigos) return codigos[s] ?? codigos[s.toUpperCase()] ?? s
+  if (/^[SN]$/i.test(s) && !/^(status|tipo)/.test(campo)) return SIM_NAO[s.toUpperCase()]
+  const m = s.match(ISO)
+  if (m && CAMPO_DATA.test(campo)) return m[4] ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : `${m[3]}/${m[2]}/${m[1]}`
+  const n = Number(s.replace(',', '.'))
+  if (s !== '' && Number.isFinite(n)) {
+    if (MOEDA.test(campo) || campo === 'valor_contrato') return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    if (campo === 'sinal_rx' || campo === 'sinal_tx') return `${n.toLocaleString('pt-BR')} dBm`
+    if (campo === 'temperatura') return `${n.toLocaleString('pt-BR')} °C`
+    if (campo === 'voltagem') return `${n.toLocaleString('pt-BR')} V`
+    if (campo === 'distancia_onu') return `${n.toLocaleString('pt-BR')} m`
+    if (campo === 'tempo_conectado') return formatarDuracao(n)
+    if (campo === 'download_atual' || campo === 'upload_atual') return formatarBytes(n)
+  }
+  if (/^(download|upload|dici_download)$/.test(campo)) return formatarVelocidade(s) ?? s
   return s.length > 300 ? `${s.slice(0, 300)}…` : s
 }
 

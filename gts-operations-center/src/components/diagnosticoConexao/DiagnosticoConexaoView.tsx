@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { FileDown, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -12,6 +13,7 @@ import { resumoTecnico } from '@/lib/diagnosticoConexao/resumo'
 import { NAO_DISPONIVEL, type ContratoConexao, type DiagnosticoConexao, type RespostaConsulta, type ResultadoBusca } from '@/lib/diagnosticoConexao/tipos'
 import { GraficoConsumo } from './GraficoConsumo'
 import { DadosIxcAba } from './DadosIxcAba'
+import { AbaDadosOrganizada, CabecalhoLogin } from './AbasIxc'
 import { PainelFibra, PainelHipoteses, PainelOrdensServico, PainelVizinhanca } from './RedeAbas'
 
 // Diagnostico de Conexao: consulta o IXC (somente leitura) e gera o Relatorio Tecnico de Conectividade.
@@ -25,7 +27,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 type Periodo = '7d' | '30d' | 'custom'
-type AbaRede = 'geral' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os' | 'dados'
+type AbaRede = 'geral' | 'contrato' | 'plano' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os' | 'dados'
 const ORIGEM: Record<ResultadoBusca['origem'], string> = { nome: 'nome', codigo: 'código', contrato: 'contrato', login: 'login' }
 
 function Area({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
@@ -49,6 +51,7 @@ function Cartao({ rotulo, valor, detalhe, indisponivel, alerta }: { rotulo: stri
 
 export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boolean }) {
   const params = useSearchParams()
+  const qc = useQueryClient()
   // Aberto pelo chamado: o cliente e' sempre o do chamado (o servidor ignora qualquer outro codigo).
   const chamadoParam = params.get('chamado')
   const chamadoId = chamadoParam && /^[A-Za-z0-9_-]{1,40}$/.test(chamadoParam) ? chamadoParam : null
@@ -270,34 +273,26 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
           </div>
         )}
 
-        {ident && diag && (
-          <dl className="mt-4 grid gap-x-6 gap-y-2 border-t border-tema-linha pt-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            {([
-              ['Cliente', ident.cliente.nome], ['Código no IXC', ident.cliente.codigo], ['Contrato', ident.contrato.id],
-              ['Plano contratado', ident.contrato.plano], ['Situação do contrato', ident.contrato.status], ['Situação da internet', ident.contrato.internet],
-              ['Login de conexão', ident.login?.login], ['Conectado agora', ident.login ? (ident.login.online ? 'Sim' : 'Não') : null], ['Última conexão', ident.login?.ultimaConexao],
-              ['Tecnologia', ident.login?.tecnologia], ['Tipo de autenticação', ident.login?.autenticacao], ['Concentrador', ident.login?.concentrador],
-              ['IPv4', ident.login?.ip], ['IPv6', ident.login?.ipv6], ['MAC', ident.login?.mac],
-              ['Interface de conexão', ident.login?.interfaceConexao], ['Tipo de conexão', ident.login?.tipoConexao],
-            ] as [string, string | null | undefined][]).map(([k, v]) => (
-              <div key={k}><dt className="text-xs text-tema-apagado">{k}</dt><dd className={cn('font-medium', v ? 'text-tema-tinta' : 'text-tema-apagado')}>{v || NAO_DISPONIVEL}</dd></div>
-            ))}
-          </dl>
-        )}
       </Area>
+
+      {diag && ident && (
+        <CabecalhoLogin diag={diag} atualizando={consultando} onAtualizar={() => { qc.invalidateQueries({ queryKey: ['dc-dados-ixc'] }); consultar() }} />
+      )}
 
       {diag && ident && consumo && sa && eq && (
         <>
           <div role="tablist" aria-label="Seções do diagnóstico" className="flex gap-1 overflow-x-auto border-b border-tema-linha">
-            {([['geral', 'Visão geral'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['os', 'Ordens de serviço'], ['dados', 'Dados do IXC']] as [AbaRede, string][]).map(([id, rotulo]) => (
+            {([['geral', 'Visão geral'], ['contrato', 'Contrato'], ['plano', 'Plano'], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['os', 'Ordens de serviço'], ['dados', 'Todos os dados']] as [AbaRede, string][]).map(([id, rotulo]) => (
               <button key={id} role="tab" id={`dc-aba-${id}`} type="button" aria-selected={abaRede === id} aria-controls={`dc-painel-${id}`} onClick={() => setAbaRede(id)}
                 className={cn('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors', abaRede === id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta')}>{rotulo}</button>
             ))}
           </div>
+          {abaRede === 'contrato' && <div role="tabpanel" id="dc-painel-contrato" aria-labelledby="dc-aba-contrato"><Area numero={2} titulo="Contrato"><AbaDadosOrganizada aba="contrato" parametros={{ cliente: ident.cliente.codigo, contrato: ident.contrato.id, login: ident.login?.login ?? null, chamadoId }} /></Area></div>}
+          {abaRede === 'plano' && <div role="tabpanel" id="dc-painel-plano" aria-labelledby="dc-aba-plano"><Area numero={2} titulo="Plano"><AbaDadosOrganizada aba="plano" parametros={{ cliente: ident.cliente.codigo, contrato: ident.contrato.id, login: ident.login?.login ?? null, chamadoId }} /></Area></div>}
           {abaRede === 'hipoteses' && <div role="tabpanel" id="dc-painel-hipoteses" aria-labelledby="dc-aba-hipoteses"><Area numero={2} titulo="Hipóteses técnicas"><PainelHipoteses hipoteses={diag.hipoteses} /></Area></div>}
-          {abaRede === 'fibra' && <div role="tabpanel" id="dc-painel-fibra" aria-labelledby="dc-aba-fibra"><Area numero={2} titulo="ONU e fibra"><PainelFibra diag={diag} /></Area></div>}
+          {abaRede === 'fibra' && <div role="tabpanel" id="dc-painel-fibra" aria-labelledby="dc-aba-fibra"><Area numero={2} titulo="ONU e fibra"><PainelFibra diag={diag} /><div className="mt-6 border-t border-tema-linha pt-4"><p className="mb-3 text-xs font-bold uppercase tracking-wide text-tema-suave">Cadastro da aba Fibra e da caixa no IXC</p><AbaDadosOrganizada aba="fibra" parametros={{ cliente: ident.cliente.codigo, contrato: ident.contrato.id, login: ident.login?.login ?? null, chamadoId }} /></div></Area></div>}
           {abaRede === 'vizinhanca' && <div role="tabpanel" id="dc-painel-vizinhanca" aria-labelledby="dc-aba-vizinhanca"><Area numero={2} titulo="Caixa e PON"><PainelVizinhanca diag={diag} /></Area></div>}
-          {abaRede === 'dados' && <div role="tabpanel" id="dc-painel-dados" aria-labelledby="dc-aba-dados"><Area numero={2} titulo="Dados do IXC (todos os campos)"><DadosIxcAba cliente={ident.cliente.codigo} contrato={ident.contrato.id} login={ident.login?.login ?? null} chamadoId={chamadoId} podeVerSenhas /></Area></div>}
+          {abaRede === 'dados' && <div role="tabpanel" id="dc-painel-dados" aria-labelledby="dc-aba-dados"><Area numero={2} titulo="Todos os dados do IXC (cliente, contrato, plano, login, ONU e caixa)"><DadosIxcAba cliente={ident.cliente.codigo} contrato={ident.contrato.id} login={ident.login?.login ?? null} chamadoId={chamadoId} podeVerSenhas /></Area></div>}
           {abaRede === 'os' && <div role="tabpanel" id="dc-painel-os" aria-labelledby="dc-aba-os"><Area numero={2} titulo="Ordens de serviço (IXC)"><PainelOrdensServico diag={diag} /></Area></div>}
           {abaRede === 'geral' && <>
           <Area numero={2} titulo="Indicadores">
@@ -320,6 +315,7 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
               <Cartao rotulo="Tensão da ONU" valor={eq.disponivel && eq.voltagemV != null ? `${eq.voltagemV.toLocaleString('pt-BR')} V` : eq.disponivel ? 'Sem leitura' : NAO_DISPONIVEL} indisponivel={!eq.disponivel || eq.voltagemV == null} detalhe="Leitura da OLT (aba Fibra do IXC)" />
             </div>
             <p className="mt-3 text-xs text-tema-apagado">Não obtidos pelo IXC nesta consulta: {diag.naoMedidos.join(', ').toLowerCase()}. Eles não são estimados a partir do consumo.</p>
+            <p className="mt-2 rounded-lg border border-tema-linha bg-tema-contraste/[0.03] px-3 py-2 text-xs text-tema-suave">Na tela do IXC existem também o gráfico de <b>tráfego em tempo real (5 minutos)</b> e o de <b>motivos de desconexão (7 dias)</b>. Esses dois o IXC calcula por dentro, direto no concentrador, e <b>não entrega pela API</b>; por isso não aparecem aqui e nunca são simulados. O que a API entrega (conexão atual, última queda e motivo, sinal da ONU e seu histórico) está nesta tela.</p>
           </Area>
 
           <Area numero={3} titulo="Histórico">
