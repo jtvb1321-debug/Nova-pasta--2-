@@ -196,12 +196,26 @@ export interface OrdemServicoIxc {
   prioridade: string | null
 }
 
+/** Evento do historico do contrato no IXC (desconexao, bloqueio, liberacao, reducao de velocidade...). Nao e' o log de sessoes da rede. */
+export type CategoriaEvento = 'desconexao' | 'bloqueio' | 'liberacao' | 'velocidade' | 'suspensao' | 'contrato'
+export interface EventoContratoIxc {
+  id: string
+  em: string
+  tipo: string
+  detalhe: string | null
+  categoria: CategoriaEvento
+  /** Desconexao pedida que o concentrador nao conseguiu executar. */
+  falha: boolean
+}
+
 export interface RedeIxc {
   consultadoEm: string
   posicao: Disponibilidade<PosicaoOnu>
   historico: Disponibilidade<HistoricoOptico>
   vizinhanca: Disponibilidade<{ caixa: VizinhancaCaixa | null; pon: VizinhancaPon | null }>
   ordensServico: Disponibilidade<{ total: number; recentes: OrdemServicoIxc[] }>
+  /** Historico do contrato no IXC nos ultimos 90 dias (so os eventos que ajudam a explicar quedas). */
+  eventosContrato: Disponibilidade<{ dias: number; eventos: EventoContratoIxc[]; desconexoes: number }>
 }
 
 export type Confianca = 'alta' | 'media' | 'baixa'

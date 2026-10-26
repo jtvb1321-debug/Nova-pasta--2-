@@ -92,7 +92,7 @@ const eqCom = (rx: number | null, em = '23/10/2026 11:00'): Disponibilidade<Equi
 const redeVazia = (o: Partial<RedeIxc> = {}): RedeIxc => ({
   consultadoEm: AGORA.toISOString(),
   posicao: { disponivel: true, olt: null, ponId: '0/1/14', slot: '1', pon: '14', onuNumero: '1', perfilId: null, modeloOnu: null, autenticacao: null, vlans: [], caixa: null, interfaceTransmissao: null, mtu: null },
-  historico: { disponivel: false, motivo: 'sem historico' }, vizinhanca: { disponivel: false, motivo: 'sem vizinhos' }, ordensServico: { disponivel: true, total: 0, recentes: [] }, ...o,
+  historico: { disponivel: false, motivo: 'sem historico' }, vizinhanca: { disponivel: false, motivo: 'sem vizinhos' }, ordensServico: { disponivel: true, total: 0, recentes: [] }, eventosContrato: { disponivel: false, motivo: 'sem eventos' }, ...o,
 })
 const diagDe = (online: boolean, eq: Disponibilidade<EquipamentoOnu>, rede: RedeIxc, internet = 'Ativa') => ({
   identificacao: { login: { online }, contrato: { id: '1', status: 'Ativo', internet } },

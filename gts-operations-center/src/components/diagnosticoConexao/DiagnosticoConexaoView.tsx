@@ -14,7 +14,7 @@ import { NAO_DISPONIVEL, type ContratoConexao, type DiagnosticoConexao, type Res
 import { GraficoConsumo } from './GraficoConsumo'
 import { DadosIxcAba } from './DadosIxcAba'
 import { AbaDadosOrganizada, CabecalhoLogin } from './AbasIxc'
-import { PainelFibra, PainelHipoteses, PainelOrdensServico, PainelVizinhanca } from './RedeAbas'
+import { PainelFibra, PainelHipoteses, PainelOrdensServico, PainelQuedas, PainelVizinhanca } from './RedeAbas'
 
 // Diagnostico de Conexao: consulta o IXC (somente leitura) e gera o Relatorio Tecnico de Conectividade.
 // Quatro areas: 1 Identificacao, 2 Indicadores, 3 Historico, 4 Relatorio.
@@ -27,7 +27,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 type Periodo = '7d' | '30d' | 'custom'
-type AbaRede = 'geral' | 'contrato' | 'plano' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os' | 'dados'
+type AbaRede = 'geral' | 'quedas' | 'contrato' | 'plano' | 'hipoteses' | 'fibra' | 'vizinhanca' | 'os' | 'dados'
 const ORIGEM: Record<ResultadoBusca['origem'], string> = { nome: 'nome', codigo: 'código', contrato: 'contrato', login: 'login' }
 
 function Area({ numero, titulo, children }: { numero: number; titulo: string; children: React.ReactNode }) {
@@ -282,11 +282,12 @@ export function DiagnosticoConexaoView({ podeBuscar = true }: { podeBuscar?: boo
       {diag && ident && consumo && sa && eq && (
         <>
           <div role="tablist" aria-label="Seções do diagnóstico" className="flex gap-1 overflow-x-auto border-b border-tema-linha">
-            {([['geral', 'Visão geral'], ['contrato', 'Contrato'], ['plano', 'Plano'], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['os', 'Ordens de serviço'], ['dados', 'Todos os dados']] as [AbaRede, string][]).map(([id, rotulo]) => (
+            {([['geral', 'Visão geral'], ['quedas', 'Quedas e logs'], ['contrato', 'Contrato'], ['plano', 'Plano'], ['fibra', 'ONU e fibra'], ['vizinhanca', 'Caixa e PON'], ['hipoteses', `Hipóteses (${diag.hipoteses.length})`], ['os', 'Ordens de serviço'], ['dados', 'Todos os dados']] as [AbaRede, string][]).map(([id, rotulo]) => (
               <button key={id} role="tab" id={`dc-aba-${id}`} type="button" aria-selected={abaRede === id} aria-controls={`dc-painel-${id}`} onClick={() => setAbaRede(id)}
                 className={cn('-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors', abaRede === id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta')}>{rotulo}</button>
             ))}
           </div>
+          {abaRede === 'quedas' && <div role="tabpanel" id="dc-painel-quedas" aria-labelledby="dc-aba-quedas"><Area numero={2} titulo="Quedas e logs"><PainelQuedas diag={diag} /></Area></div>}
           {abaRede === 'contrato' && <div role="tabpanel" id="dc-painel-contrato" aria-labelledby="dc-aba-contrato"><Area numero={2} titulo="Contrato"><AbaDadosOrganizada aba="contrato" parametros={{ cliente: ident.cliente.codigo, contrato: ident.contrato.id, login: ident.login?.login ?? null, chamadoId }} /></Area></div>}
           {abaRede === 'plano' && <div role="tabpanel" id="dc-painel-plano" aria-labelledby="dc-aba-plano"><Area numero={2} titulo="Plano"><AbaDadosOrganizada aba="plano" parametros={{ cliente: ident.cliente.codigo, contrato: ident.contrato.id, login: ident.login?.login ?? null, chamadoId }} /></Area></div>}
           {abaRede === 'hipoteses' && <div role="tabpanel" id="dc-painel-hipoteses" aria-labelledby="dc-aba-hipoteses"><Area numero={2} titulo="Hipóteses técnicas"><PainelHipoteses hipoteses={diag.hipoteses} /></Area></div>}

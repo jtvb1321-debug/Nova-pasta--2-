@@ -110,7 +110,18 @@ const su_oss_chamado = [
   { id: '3000', id_login: '2', id_cliente: '9002', id_assunto: '10', status: 'F', prioridade: 'N', data_abertura: h(400), data_fechamento: h(380), mensagem: 'TEXTO-DO-CLIENTE-NAO-DEVE-SAIR' },
 ]
 
-const TABELAS: Record<string, any[]> = { cliente, cliente_contrato, vd_contratos, radgrupos, radusuarios: [...radusuarios, ...vizinhos], radacct: sessoes(), cidade: [{ id: '1', nome: 'Cidade Teste' }], rad_caixa_ftth, radpop_radio, radpop, radpop_radio_cliente_fibra, radpop_radio_cliente_fibra_historico, su_oss_assunto, su_oss_chamado }
+// Historico do contrato (eventos que explicam quedas administrativas). Contrato 7002 = login 2 (teste.diag.dois.a).
+const cliente_contrato_historico = [
+  { id: '9100', id_cliente: '9002', id_contrato: '7002', data: h(30), tipo: 'Desconectou usuários', historico: 'Desconectou usuário 2 do contrato 7002.' },
+  { id: '9101', id_cliente: '9002', id_contrato: '7002', data: h(31), tipo: 'Bloqueio Manual', historico: 'Bloqueio manual contrato ID : 7002' },
+  { id: '9102', id_cliente: '9002', id_contrato: '7002', data: h(200), tipo: 'Ativa Internet', historico: 'Internet liberada contrato 7002' },
+  { id: '9103', id_cliente: '9002', id_contrato: '7002', data: h(201), tipo: 'Falha ao desconectar usuários', historico: 'Falha ao desconectar usuário 2 do contrato 7002.' },
+  { id: '9104', id_cliente: '9002', id_contrato: '7002', data: h(300), tipo: 'Envia Email', historico: 'Email: Aviso de pendência de pagamento contato@exemplo.invalid' },
+  { id: '9105', id_cliente: '9002', id_contrato: '7002', data: h(301), tipo: 'Atualiza data pago', historico: 'Atualizou data pago do contrato 7002. CRE 5' },
+  { id: '9106', id_cliente: '9002', id_contrato: '7002', data: h(24 * 120), tipo: 'Desconectou usuários', historico: 'Desconectou usuário 2 do contrato 7002 (muito antigo).' },
+]
+
+const TABELAS: Record<string, any[]> = { cliente, cliente_contrato, vd_contratos, radgrupos, radusuarios: [...radusuarios, ...vizinhos], radacct: sessoes(), cidade: [{ id: '1', nome: 'Cidade Teste' }], rad_caixa_ftth, radpop_radio, radpop, radpop_radio_cliente_fibra, radpop_radio_cliente_fibra_historico, su_oss_assunto, su_oss_chamado, cliente_contrato_historico }
 
 function filtrar(linhas: any[], qtype: string, query: string, oper: string) {
   if (!query && oper !== 'L') return linhas

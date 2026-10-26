@@ -1,11 +1,12 @@
 import { listarIXC } from '@/lib/ixc'
 import { comCache } from '@/lib/inmapCache'
 import type { LoginIxc } from '@/lib/ixcCliente'
+import { removerDadosPessoais } from '@/lib/ia/seguranca'
 import { leitura } from './equipamento'
 import { agoraNoRelogioDoIxc, horasEntre } from './horarioIxc'
 import { limitesRx, type LimitesRx } from './limites'
 import type {
-  Disponibilidade, HistoricoOptico, LeituraOptica, OltIxc, OrdemServicoIxc, PosicaoOnu, RedeIxc, VizinhancaCaixa, VizinhancaPon,
+  CategoriaEvento, Disponibilidade, EventoContratoIxc, HistoricoOptico, LeituraOptica, OltIxc, OrdemServicoIxc, PosicaoOnu, RedeIxc, VizinhancaCaixa, VizinhancaPon,
 } from './tipos'
 
 // Rede do assinante, tudo LIDO DO IXC (somente leitura): posicao da ONU (OLT, slot, PON, VLANs), historico das leituras opticas
@@ -19,6 +20,7 @@ import type {
 //   rad_caixa_ftth                        caixa: descricao, capacidade
 //   radusuarios                           vizinhos da caixa (SO CONTAGENS: nada de login/senha dos outros)
 //   su_oss_chamado / su_oss_assunto       ordens de servico do login (sem o texto da mensagem do cliente)
+//   cliente_contrato_historico            eventos do contrato (Desconectou usuario, Bloqueio Manual, Ativa Internet, Reducao de velocidade...)
 //
 // Nada aqui consulta a OLT diretamente: sao dados que o IXC ja coletou. "Leitura atual" = a ultima que o IXC registrou (veja a data).
 
@@ -36,6 +38,43 @@ const inteiro = (v: unknown): number | null => {
 const dataValida = (v: unknown): string | null => {
   const s = texto(v)
   return s && !s.startsWith('0000') ? s : null
+}
+
+// ------------------------------------------------------------------ eventos do contrato (explicam quedas administrativas)
+export const DIAS_EVENTOS = 90
+const MAX_EVENTOS = 40
+// Ruido que nao ajuda a explicar queda: cobranca por e-mail/SMS, baixa de parcela, data de pagamento.
+const RUIDO_EVENTO = /e-?mail|sms|data pago|contas? a receber|parcela|aviso de atraso/i
+
+/** Categoria do evento pelo tipo e pelo texto que o IXC registra. null = nao interessa a quedas. */
+export function categoriaDoEvento(tipo: string, detalhe: string | null): CategoriaEvento | null {
+  const t = `${tipo} ${detalhe ?? ''}`
+  if (RUIDO_EVENTO.test(tipo)) return null
+  if (/desconect/i.test(t)) return 'desconexao'
+  if (/bloqueio|bloquead/i.test(t)) return 'bloqueio'
+  if (/redu[cç][aã]o de velocidade|removido redu/i.test(t)) return 'velocidade'
+  if (/suspens/i.test(t)) return 'suspensao'
+  if (/ativa internet|internet liberada|desbloq|libera[cç][aã]o/i.test(t)) return 'liberacao'
+  if (/inativa[cç]|reativa|cancel|ativa[cç][aã]o do contrato/i.test(t)) return 'contrato'
+  return null
+}
+
+export function mapearEvento(reg: any): EventoContratoIxc | null {
+  const em = dataValida(reg?.data)
+  const tipo = texto(reg?.tipo)
+  if (!em || !tipo) return null
+  // O texto e' escrito pelo sistema/atendente: sem e-mail/telefone e curto.
+  const detalhe = texto(reg?.historico) ? removerDadosPessoais(String(reg.historico).replace(/\s+/g, ' ').trim()).slice(0, 180) : null
+  const categoria = categoriaDoEvento(tipo, detalhe)
+  if (!categoria) return null
+  return { id: String(reg.id ?? `${em}-${tipo}`), em, tipo, detalhe, categoria, falha: /falha/i.test(`${tipo} ${detalhe ?? ''}`) }
+}
+
+/** Eventos dos ultimos `dias` dias, do mais recente ao mais antigo (limitado). `agoraIxc` no formato do IXC (AAAA-MM-DD HH:MM:SS). Funcao pura. */
+export function resumirEventos(regs: any[], agoraIxc: string, dias = DIAS_EVENTOS): { dias: number; eventos: EventoContratoIxc[]; desconexoes: number } {
+  const limite = new Date(Date.parse(`${agoraIxc.slice(0, 10)}T00:00:00Z`) - dias * 86_400_000).toISOString().slice(0, 10)
+  const eventos = regs.map(mapearEvento).filter((e): e is EventoContratoIxc => !!e && e.em.slice(0, 10) >= limite).sort((a, b) => b.em.localeCompare(a.em)).slice(0, MAX_EVENTOS)
+  return { dias, eventos, desconexoes: eventos.filter(e => e.categoria === 'desconexao' && !e.falha).length }
 }
 
 export const FABRICANTES_OLT: Record<string, string> = { HW: 'Huawei', VSOL: 'VSOL' }
@@ -158,7 +197,7 @@ export async function lerFibraRegistro(idLogin: string | null): Promise<FibraLid
 export async function lerRede(login: LoginIxc | null, fibra: FibraLida, agora: Date): Promise<RedeIxc> {
   const consultadoEm = agora.toISOString()
   const semLogin = { disponivel: false as const, motivo: 'Este contrato não tem login de conexão cadastrado no IXC.' }
-  if (!login) return { consultadoEm, posicao: semLogin, historico: semLogin, vizinhanca: semLogin, ordensServico: semLogin }
+  if (!login) return { consultadoEm, posicao: semLogin, historico: semLogin, vizinhanca: semLogin, ordensServico: semLogin, eventosContrato: semLogin }
   const agoraIxc = agoraNoRelogioDoIxc(agora)
   const reg = fibra.tipo === 'ok' ? fibra.reg : null
   const oltId = texto(reg?.id_transmissor) ?? login.oltId
@@ -177,7 +216,7 @@ export async function lerRede(login: LoginIxc | null, fibra: FibraLida, agora: D
   }
   const limites = limitesRx(olt, texto(reg?.onu_tipo))
 
-  const [historico, vizinhanca, os] = await Promise.all([
+  const [historico, vizinhanca, os, eventosContrato] = await Promise.all([
     (async (): Promise<RedeIxc['historico']> => {
       if (fibra.tipo === 'erro') return falha('a aba Fibra')
       const idFibra = texto(reg?.id)
@@ -208,6 +247,13 @@ export async function lerRede(login: LoginIxc | null, fibra: FibraLida, agora: D
         return { disponivel: true, total: regs.length, recentes: regs.map(r => mapearOs(r, assuntos.get(texto(r.id_assunto) ?? '') ?? null)) }
       } catch { return falha('as ordens de serviço') }
     })(),
+    (async (): Promise<RedeIxc['eventosContrato']> => {
+      if (!login.idContrato || !/^\d+$/.test(login.idContrato)) return { disponivel: false, motivo: 'Login sem contrato identificado no IXC.' }
+      try {
+        const regs: any[] = await listarIXC('cliente_contrato_historico', { qtype: 'id_contrato', query: login.idContrato, oper: '=', rp: 200, sortname: 'id', sortorder: 'desc' })
+        return { disponivel: true, ...resumirEventos(regs, agoraIxc) }
+      } catch { return falha('o histórico do contrato') }
+    })(),
   ])
-  return { consultadoEm, posicao, historico, vizinhanca, ordensServico: os }
+  return { consultadoEm, posicao, historico, vizinhanca, ordensServico: os, eventosContrato }
 }

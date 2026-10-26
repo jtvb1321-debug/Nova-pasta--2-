@@ -206,6 +206,14 @@ export function montarConteudoRelatorio(d: DiagnosticoConexao, o: OpcoesRelatori
       tabela: h.leituras.length ? { colunas: ['Leitura em', 'RX (dBm)', 'TX (dBm)', 'Temp. (°C)', 'Tensão (V)'], linhas: [...h.leituras].reverse().slice(0, 10).map(l => [l.em.replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2/$1 $4'), String(l.rxDbm ?? '—'), String(l.txDbm ?? '—'), String(l.temperaturaC ?? '—'), String(l.voltagemV ?? '—')]) } : undefined,
     })
   }
+  if (rd.eventosContrato.disponivel && rd.eventosContrato.eventos.length) {
+    const e = rd.eventosContrato
+    secoes.push({
+      titulo: t(`Eventos do contrato no IXC (últimos ${e.dias} dias)`),
+      paragrafos: [`${e.desconexoes} desconexão(ões) provocada(s) pelo sistema ou por atendente. São eventos administrativos (desconexão, bloqueio, liberação, velocidade); queda de rede (fibra, energia, OLT) não aparece neste histórico.`],
+      tabela: { colunas: ['Quando', 'Evento', 'Detalhe'], linhas: e.eventos.slice(0, 15).map(x => [x.em.replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, '$3/$2/$1 $4'), x.falha ? 'Falha ao desconectar' : x.tipo, x.detalhe ?? '—']) },
+    })
+  }
   if (d.hipoteses.length) {
     const CONF = { alta: 'alta', media: 'média', baixa: 'baixa' } as const
     secoes.push({
