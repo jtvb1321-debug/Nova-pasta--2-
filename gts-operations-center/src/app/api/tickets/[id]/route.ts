@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { abaterTermos } from '@/lib/termoEstoque'
+import { registrarLog } from '@/lib/auditLog'
 import {
   notificarACaminho,
   notificarInicioAtendimento,
@@ -411,7 +412,15 @@ export async function PATCH(
           resultadoFinal: ultimoDiagnostico.resultadoFinal,
           resumoAnterior: ultimoDiagnostico.diagnosticoAnterior?.resumo as any,
         } : undefined,
-      }).catch(() => {})
+      }).then(r => {
+        if (!r.ok) {
+          console.error('[Telegram] finalizacao do chamado', id, 'nao foi enviada:', r.erro)
+          registrarLog({ usuarioId: (session.user as any)?.id, acao: 'TELEGRAM_FALHA', entidade: 'Chamado', entidadeId: id, detalhes: `Aviso de finalização não enviado ao Telegram: ${r.erro ?? 'motivo desconhecido'}`.slice(0, 300) }).catch(() => {})
+        }
+      }).catch(err => {
+        console.error('[Telegram] erro ao montar/enviar a finalizacao do chamado', id, String(err?.message ?? err).slice(0, 200))
+        registrarLog({ usuarioId: (session.user as any)?.id, acao: 'TELEGRAM_FALHA', entidade: 'Chamado', entidadeId: id, detalhes: `Erro ao enviar a finalização ao Telegram: ${String(err?.message ?? err)}`.slice(0, 300) }).catch(() => {})
+      })
     } catch (err) {
       console.error('Erro ao notificar finalizacao:', err)
     }

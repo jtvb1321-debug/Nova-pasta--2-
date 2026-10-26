@@ -1,5 +1,6 @@
 'use client'
 
+import { TelegramStatusCard } from './TelegramStatusCard'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -470,6 +471,8 @@ export function SettingsView({ session }: Props) {
                   ))}
                 </div>
               </div>
+
+              {isAdmin && <TelegramStatusCard />}
 
               <div className="card-orbia p-5">
                 <p className="text-sm font-semibold text-tema-tinta">Orbia</p>

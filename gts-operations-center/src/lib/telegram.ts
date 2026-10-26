@@ -12,21 +12,118 @@ import { gerarImagemAgenda } from './agendaImagem'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
 
-async function enviarMensagem(chatId: string, texto: string) {
-  if (!BOT_TOKEN || !chatId) return
-  try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: texto,
-        parse_mode: 'HTML',
-      }),
-    })
-  } catch (error) {
-    console.error('Erro Telegram:', error)
+export interface ResultadoEnvio { ok: boolean; erro?: string }
+
+const LIMITE_TEXTO = 4000 // o Telegram recusa mensagem acima de 4096 caracteres
+
+/** Mesmo texto sem as marcacoes HTML (usado quando o Telegram recusa o HTML, por exemplo por um "<" ou "&" digitado no relato). */
+export function textoSemHtml(texto: string): string {
+  return texto.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+}
+
+/** Divide em partes de ate LIMITE_TEXTO, preferindo quebrar em linha. */
+export function dividirTexto(texto: string, limite = LIMITE_TEXTO): string[] {
+  if (texto.length <= limite) return [texto]
+  const partes: string[] = []
+  let resto = texto
+  while (resto.length > limite) {
+    let corte = resto.lastIndexOf('\n', limite)
+    if (corte < limite / 2) corte = limite
+    partes.push(resto.slice(0, corte))
+    resto = resto.slice(corte).replace(/^\n+/, '')
   }
+  if (resto) partes.push(resto)
+  return partes
+}
+
+interface RespostaTelegram { ok: boolean; status: number; descricao: string; esperar: number | null; novoChat: string | null }
+async function chamarTelegram(metodo: string, corpo: Record<string, unknown>): Promise<RespostaTelegram> {
+  const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${metodo}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo), signal: AbortSignal.timeout(15_000),
+  })
+  const json: any = await r.json().catch(() => ({}))
+  return { ok: r.ok && json.ok !== false, status: r.status, descricao: String(json.description ?? ''), esperar: Number(json.parameters?.retry_after) || null, novoChat: json.parameters?.migrate_to_chat_id != null ? String(json.parameters.migrate_to_chat_id) : null }
+}
+
+async function enviarParte(chatId: string, texto: string): Promise<ResultadoEnvio> {
+  let r = await chamarTelegram('sendMessage', { chat_id: chatId, text: texto, parse_mode: 'HTML' })
+  // Limite de envios: espera o que o Telegram pediu (ate 10 s) e tenta de novo uma vez.
+  if (!r.ok && r.status === 429 && r.esperar && r.esperar <= 10) {
+    await new Promise(res => setTimeout(res, r.esperar! * 1000))
+    r = await chamarTelegram('sendMessage', { chat_id: chatId, text: texto, parse_mode: 'HTML' })
+  }
+  // HTML recusado (ex.: "<" ou "&" no relato): reenvia como texto simples, para a mensagem nunca se perder.
+  if (!r.ok && r.status === 400 && /parse entities/i.test(r.descricao)) {
+    console.error('[Telegram] HTML recusado, reenviando como texto simples:', r.descricao)
+    r = await chamarTelegram('sendMessage', { chat_id: chatId, text: textoSemHtml(texto) })
+  }
+  if (r.ok) return { ok: true }
+  const motivo = r.novoChat ? `o grupo virou supergrupo; novo id ${r.novoChat}` : `HTTP ${r.status}: ${r.descricao || 'sem descrição'}`
+  console.error('[Telegram] sendMessage falhou:', motivo)
+  return { ok: false, erro: motivo }
+}
+
+/** Envia texto ao Telegram. Nunca lanca: devolve o resultado e deixa a falha registrada no log do servidor. */
+export async function enviarMensagem(chatId: string, texto: string): Promise<ResultadoEnvio> {
+  if (!BOT_TOKEN) { console.error('[Telegram] TELEGRAM_BOT_TOKEN não configurado: mensagem não enviada.'); return { ok: false, erro: 'TELEGRAM_BOT_TOKEN não configurado' } }
+  if (!chatId) { console.error('[Telegram] TELEGRAM_GROUP_OS não configurado: mensagem não enviada.'); return { ok: false, erro: 'TELEGRAM_GROUP_OS não configurado' } }
+  try {
+    let ultimo: ResultadoEnvio = { ok: true }
+    for (const parte of dividirTexto(texto)) {
+      ultimo = await enviarParte(chatId, parte)
+      if (!ultimo.ok) return ultimo
+    }
+    return ultimo
+  } catch (error: any) {
+    const motivo = error?.name === 'TimeoutError' ? 'o Telegram não respondeu a tempo' : String(error?.message ?? error).slice(0, 160)
+    console.error('[Telegram] erro ao enviar:', motivo)
+    return { ok: false, erro: motivo }
+  }
+}
+
+export interface DiagnosticoTelegram {
+  tokenConfigurado: boolean
+  grupoConfigurado: boolean
+  bot: { ok: boolean; usuario?: string; erro?: string }
+  grupo: { ok: boolean; titulo?: string; tipo?: string; erro?: string }
+  botNoGrupo: { ok: boolean; situacao?: string; podeEnviar?: boolean; erro?: string }
+}
+
+async function consultarTelegram(metodo: string, corpo?: Record<string, unknown>): Promise<{ ok: boolean; resultado?: any; erro?: string }> {
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${metodo}`, corpo
+      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo), signal: AbortSignal.timeout(15_000) }
+      : { signal: AbortSignal.timeout(15_000) })
+    const json: any = await r.json().catch(() => ({}))
+    return json.ok ? { ok: true, resultado: json.result } : { ok: false, erro: `HTTP ${r.status}: ${json.description ?? 'sem descrição'}` }
+  } catch (e: any) {
+    return { ok: false, erro: e?.name === 'TimeoutError' ? 'o Telegram não respondeu a tempo' : 'sem conexão com o Telegram' }
+  }
+}
+
+/** Confere, SEM enviar nada, se o bot e o grupo de O.S. estao configurados e se o bot pode escrever no grupo. */
+export async function diagnosticarTelegram(): Promise<DiagnosticoTelegram> {
+  const d: DiagnosticoTelegram = { tokenConfigurado: !!BOT_TOKEN, grupoConfigurado: !!GROUP_OS, bot: { ok: false }, grupo: { ok: false }, botNoGrupo: { ok: false } }
+  if (!BOT_TOKEN) { d.bot.erro = 'TELEGRAM_BOT_TOKEN não configurado'; return d }
+  const me = await consultarTelegram('getMe')
+  d.bot = me.ok ? { ok: true, usuario: me.resultado?.username } : { ok: false, erro: me.erro }
+  if (!GROUP_OS) { d.grupo.erro = 'TELEGRAM_GROUP_OS não configurado'; return d }
+  const chat = await consultarTelegram('getChat', { chat_id: GROUP_OS })
+  d.grupo = chat.ok ? { ok: true, titulo: chat.resultado?.title, tipo: chat.resultado?.type } : { ok: false, erro: chat.erro }
+  if (me.ok && chat.ok) {
+    const m = await consultarTelegram('getChatMember', { chat_id: GROUP_OS, user_id: me.resultado?.id })
+    if (m.ok) {
+      const situacao = String(m.resultado?.status ?? '')
+      const podeEnviar = situacao === 'administrator' || situacao === 'creator' || (situacao === 'member' && m.resultado?.can_send_messages !== false)
+      d.botNoGrupo = { ok: podeEnviar, situacao, podeEnviar, ...(podeEnviar ? {} : { erro: situacao === 'restricted' ? 'o bot está restrito no grupo' : 'o bot não faz parte do grupo' }) }
+    } else d.botNoGrupo = { ok: false, erro: m.erro }
+  }
+  return d
+}
+
+/** Mensagem de teste, claramente marcada, ao grupo de O.S. (so a tela de Configuracoes, para ADMIN). */
+export async function enviarTesteTelegram(nomeUsuario: string): Promise<ResultadoEnvio> {
+  return enviarMensagem(GROUP_OS!, montarMensagem(['🧪 <b>[TESTE] Notificação do Orbia</b>', 'Mensagem de verificação enviada pelas Configurações do sistema. Pode ignorar.', `Enviado por: ${nomeUsuario.replace(/[<>&]/g, '')}`]))
 }
 
 function tipoLabel(tipo: string) {
@@ -45,8 +142,11 @@ function formatarDuracao(totalMinutos: number) {
   return h > 0 ? `${h}h ${m}min` : `${m}min`
 }
 
+/** Texto digitado por pessoas (cliente, relato, material) entra no HTML do Telegram: "<", ">" e "&" precisam ser escapados. */
+export const esc = (t: string | null | undefined) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 function campo(emoji: string, label: string, valor: string) {
-  return `${emoji} <b>${label}:</b> ${valor}`
+  return `${emoji} <b>${label}:</b> ${esc(valor)}`
 }
 
 // Junta blocos de linhas com exatamente uma linha em branco entre cada
@@ -225,7 +325,7 @@ export async function notificarAgendaDoDia(
   } catch (error) {
     console.error('Erro ao gerar imagem da agenda, enviando texto como fallback:', error)
     const itens = chamados.map((c, i) => [
-      `<b>${i + 1}. ${c.cliente}</b>`,
+      `<b>${i + 1}. ${esc(c.cliente)}</b>`,
       campo('👥', 'Equipe', c.equipe || 'A definir'),
       campo('🔧', 'Tipo', tipoLabel(c.tipo)),
       campo('🕐', 'Início', c.horaAgendada || '07:30'),
@@ -393,11 +493,11 @@ export async function notificarFinalizacao(chamado: {
   ].filter(Boolean) as string[]
 
   const blocoObservacao = chamado.relato
-    ? [`📝 <b>Observação:</b>`, chamado.relato]
+    ? [`📝 <b>Observação:</b>`, esc(chamado.relato)]
     : null
 
   const blocoMateriais = chamado.materiaisUtilizados && chamado.materiaisUtilizados.length > 0
-    ? [`📦 <b>Materiais utilizados:</b>`, ...chamado.materiaisUtilizados.map(m => `• ${m.descricao}: ${m.quantidade} ${m.unidade}`)]
+    ? [`📦 <b>Materiais utilizados:</b>`, ...chamado.materiaisUtilizados.map(m => `• ${esc(m.descricao)}: ${m.quantidade} ${esc(m.unidade)}`)]
     : null
 
   const blocoFotos = chamado.fotos && chamado.fotos.length > 0
@@ -415,7 +515,7 @@ export async function notificarFinalizacao(chamado: {
   ])
 
   // Enviar mensagem de texto primeiro
-  await enviarMensagem(GROUP_OS!, texto)
+  const resultado = await enviarMensagem(GROUP_OS!, texto)
 
   // Enviar fotos uma a uma
   if (chamado.fotos && chamado.fotos.length > 0) {
@@ -423,10 +523,11 @@ export async function notificarFinalizacao(chamado: {
       await enviarFoto(
         GROUP_OS!,
         chamado.fotos[i],
-        i === 0 ? `📸 Evidência ${i + 1}/${chamado.fotos.length} — ${chamado.cliente}` : `📸 Evidência ${i + 1}/${chamado.fotos.length}`
+        i === 0 ? `📸 Evidência ${i + 1}/${chamado.fotos.length} — ${esc(chamado.cliente)}` : `📸 Evidência ${i + 1}/${chamado.fotos.length}`
       )
       // Pequena pausa para nao sobrecarregar a API
       await new Promise(r => setTimeout(r, 500))
     }
   }
+  return resultado
 }
