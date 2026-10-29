@@ -108,3 +108,5 @@ export async function comprimirImagem(arquivo: File, ladoMaior = 1600, qualidade
     return blob && blob.size > 0 ? blob : arquivo
   } catch { return arquivo }
 }
+
+export const urlNota = (id: string) => `/api/frota/revisao-anexos/${id}`

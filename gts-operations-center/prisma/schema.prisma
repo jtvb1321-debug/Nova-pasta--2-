@@ -109,6 +109,7 @@ model Usuario {
   orcamentos          Orcamento[]
   veiculosResponsavel Veiculo[]          @relation("VeiculoResponsavel")
   vistoriasFrota      FrotaVistoria[]
+  revisoesFrota       FrotaRevisao[]
   escoposFrota        FrotaEscopo[]
 
   @@map("usuarios")
@@ -185,6 +186,7 @@ model Veiculo {
   responsavel    Usuario?                @relation("VeiculoResponsavel", fields: [responsavelId], references: [id])
   vistorias      FrotaVistoria[]
   fotosFrota     FrotaFoto[]
+  revisoes       FrotaRevisao[]
   abastecimentos Abastecimento[]
   registrosKm    RegistroKm[]
   manutencoes    SolicitacaoManutencao[]
@@ -1622,4 +1624,53 @@ model FrotaFoto {
   @@index([vistoriaId])
   @@index([veiculoId])
   @@map("frota_fotos")
+}
+
+// Revisoes e manutencoes feitas em cada viatura (troca de oleo, pneus, freios...), com a nota fiscal de cada servico.
+// Exclusao logica (excluidoEm): o historico e as notas ficam preservados. Valor em centavos (sem erro de ponto flutuante).
+model FrotaRevisao {
+  id            String    @id @default(cuid())
+  veiculoId     String
+  // Um dos tipos de src/lib/frota/revisoes.ts (TEXT para poder crescer sem migracao).
+  tipo          String
+  descricao     String?
+  data          DateTime
+  km            Int?
+  valorCentavos Int?
+  fornecedor    String?
+  notaNumero    String?
+  // Proxima revisao deste servico (por data e/ou por km): alimenta o alerta de "a vencer / vencida".
+  proximaEm     DateTime?
+  proximaEmKm   Int?
+  observacoes   String?
+  registradoPorId   String
+  registradoPorNome String
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+  excluidoEm    DateTime?
+
+  veiculo       Veiculo             @relation(fields: [veiculoId], references: [id])
+  registradoPor Usuario             @relation(fields: [registradoPorId], references: [id])
+  anexos        FrotaRevisaoAnexo[]
+
+  @@index([veiculoId, data])
+  @@index([tipo])
+  @@map("frota_revisoes")
+}
+
+// Nota fiscal (PDF ou foto) de um servico. O arquivo fica fora de public/ e so sai por /api/frota/revisao-anexos/[id].
+model FrotaRevisaoAnexo {
+  id           String   @id @default(cuid())
+  revisaoId    String
+  arquivo      String
+  nomeOriginal String
+  mime         String
+  tamanho      Int
+  enviadoPorId String
+  criadoEm     DateTime @default(now())
+
+  revisao FrotaRevisao @relation(fields: [revisaoId], references: [id], onDelete: Cascade)
+
+  @@index([revisaoId])
+  @@map("frota_revisao_anexos")
 }

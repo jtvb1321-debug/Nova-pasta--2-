@@ -13,6 +13,10 @@ export const CABECALHO_CSV = [
   'Vistoria', 'Data/hora', 'Tipo', 'Placa', 'Vistoriador', 'Km', 'Combustível', 'Categoria', 'Item', 'Quantidade exigida', 'Situação', 'Descrição', 'Foto da avaria', 'Observações',
 ]
 
+export function montarCsvDe(cabecalho: string[], linhas: unknown[][]): string {
+  return BOM + [cabecalho, ...linhas].map(l => l.map(celula).join(';')).join('\r\n') + '\r\n'
+}
+
 export function montarCsv(linhas: unknown[][]): string {
-  return BOM + [CABECALHO_CSV, ...linhas].map(l => l.map(celula).join(';')).join('\r\n') + '\r\n'
+  return montarCsvDe(CABECALHO_CSV, linhas)
 }

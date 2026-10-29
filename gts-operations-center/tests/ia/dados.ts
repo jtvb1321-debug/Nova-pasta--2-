@@ -42,6 +42,8 @@ export async function semear() {
   await prisma.localEstoque.deleteMany()
   await prisma.itemEstoque.deleteMany()
   // Frota: vistorias e fotos apontam para veiculos e usuarios.
+  await prisma.frotaRevisaoAnexo.deleteMany()
+  await prisma.frotaRevisao.deleteMany()
   await prisma.frotaFoto.deleteMany()
   await prisma.frotaVistoriaItem.deleteMany()
   await prisma.frotaVistoria.deleteMany()

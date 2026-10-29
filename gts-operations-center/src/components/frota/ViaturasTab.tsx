@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CalendarClock, ClipboardCheck, Copy, FileUp, History, MoreVertical, FileText, Pencil, Plus, Trash2, UserRound, MapPin, Gauge } from 'lucide-react'
+import { AlertTriangle, CalendarClock, ClipboardCheck, Copy, FileUp, History, Wrench, MoreVertical, FileText, Pencil, Plus, Trash2, UserRound, MapPin, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -34,7 +34,7 @@ function Licenciamento({ v }: { v: ViaturaFrota }) {
   )
 }
 
-export function ViaturasTab({ onHistorico }: { onHistorico: (veiculoId: string) => void }) {
+export function ViaturasTab({ onHistorico, onRevisoes }: { onHistorico: (veiculoId: string) => void; onRevisoes: (veiculoId: string) => void }) {
   const qc = useQueryClient()
   const [filtro, setFiltro] = useState<Filtro>('todas')
   const [uf, setUf] = useState('')
@@ -139,6 +139,7 @@ export function ViaturasTab({ onHistorico }: { onHistorico: (veiculoId: string) 
                     {menu === v.id && (
                       <div role="menu" className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-tema-linha bg-tema-superficie py-1 shadow-lg" onMouseLeave={() => setMenu(null)}>
                         <button role="menuitem" type="button" onClick={() => { setMenu(null); onHistorico(v.id) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-tema-texto hover:bg-tema-contraste/[0.04]"><History className="h-4 w-4" aria-hidden /> Histórico</button>
+                        <button role="menuitem" type="button" onClick={() => { setMenu(null); onRevisoes(v.id) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-tema-texto hover:bg-tema-contraste/[0.04]"><Wrench className="h-4 w-4" aria-hidden /> Revisões</button>
                         {d.podeAdministrar && <>
                           <button role="menuitem" type="button" onClick={() => { setMenu(null); setForm({ id: v.id }) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-tema-texto hover:bg-tema-contraste/[0.04]"><Pencil className="h-4 w-4" aria-hidden /> Editar</button>
                           <button role="menuitem" type="button" onClick={() => { setMenu(null); setExcluir(v) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-500/[0.06]"><Trash2 className="h-4 w-4" aria-hidden /> Excluir</button>
