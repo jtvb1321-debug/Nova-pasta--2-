@@ -1,7 +1,8 @@
 // Regras da Proposta de Bonificacao por Desempenho (GTS NET) - calculo puro, sem banco,
 // para poder ser testado e reaproveitado. Valores em CENTAVOS (sem erro de arredondamento).
 //
-// Creditos: chamado concluido R$4 | instalacao R$8 | retirada R$8 | SLA cumprido R$0,50/O.S.
+// Creditos: chamado concluido R$0,50 | instalacao R$5 | retirada R$2,50 | SLA cumprido R$0,50/O.S.
+//           (valores ajustados em 31/10/2026; antes: chamado R$4, instalacao R$8, retirada R$8)
 //           avaliacao 5 = +R$2 | 4 = +R$1 | 3 = neutro
 // Debitos:  avaliacao 2 = -R$5 | 1 = -R$8 (so depois da validacao do supervisor)
 //           rechamada procedente -R$4 | instalacao com retorno por erro tecnico -R$8
@@ -11,9 +12,9 @@
 // (fechadoAdmin) nao entra; a devolucao da retirada fica para o admin conferir na aprovacao.
 
 export const VALORES_CENTAVOS = {
-  CHAMADO_CONCLUIDO: 400,
-  INSTALACAO_CONCLUIDA: 800,
-  RETIRADA_CONCLUIDA: 800,
+  CHAMADO_CONCLUIDO: 50,
+  INSTALACAO_CONCLUIDA: 500,
+  RETIRADA_CONCLUIDA: 250,
   SLA_CUMPRIDO: 50,
   AVALIACAO_5: 200,
   AVALIACAO_4: 100,
