@@ -338,6 +338,11 @@ model Chamado {
   statusRechamada             StatusRechamada?
   rechamadaValidadaPor        String?
   rechamadaValidadaEm         DateTime?
+  // Conferencia da devolucao do equipamento (retirada), feita pelo admin na bonificacao: CONFIRMADA | RECUSADA | null (a conferir)
+  devolucaoStatus             String?
+  devolucaoMotivo             String?
+  devolucaoPor                String?
+  devolucaoEm                 DateTime?
   rechamadaMotivo             String?
   // Chamados EACE (escolas) - reaproveitam o mesmo fluxo de despacho/equipe/
   // status/Telegram; so ganham esse sinalizador e os campos proprios da

@@ -2,18 +2,18 @@
 
 import { Fragment, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle, ChevronDown, Info, Loader2, Medal, RotateCcw, Trophy } from 'lucide-react'
+import { AlertTriangle, CheckCircle, ChevronDown, Info, Loader2, Medal, RotateCcw, Trophy, XCircle } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { numeroOS } from '@/lib/ordemServico'
-import { ROTULO_EVENTO, VALORES_CENTAVOS, type TipoEvento } from '@/lib/bonificacaoRegras'
+import { ROTULO_EVENTO, VALORES_CENTAVOS, type StatusDevolucao, type TipoEvento } from '@/lib/bonificacaoRegras'
 import { ChamadoCompletoModal } from './SlaDesempenho'
 import type { FiltrosTela, Periodo } from './DesempenhoView'
 
 // Sub-aba Ranking e bonificacao (so ADMIN): o sistema calcula creditos e debitos de cada
 // equipe pelos chamados fechados e avaliacoes; no fechamento do mes o admin confere e aprova.
 
-interface Item { chamadoId: string; cliente: string; evento: TipoEvento; centavos: number; data: string; aviso?: string }
+interface Item { chamadoId: string; cliente: string; evento: TipoEvento; centavos: number; data: string; aviso?: string; devolucao?: StatusDevolucao }
 interface Pendencia { chamadoId: string; cliente: string; motivo: string; centavosSeAprovada: number }
 interface LinhaEquipe {
   equipeId: string; equipe: string; tecnicos: string[]; posicao: number
@@ -52,7 +52,7 @@ function Posicao({ n }: { n: number }) {
 const TABELA: { evento: TipoEvento; obs?: string }[] = [
   { evento: 'CHAMADO_CONCLUIDO', obs: 'suporte, manutenção, rompimento e EACE' },
   { evento: 'INSTALACAO_CONCLUIDA' },
-  { evento: 'RETIRADA_CONCLUIDA', obs: 'o admin confere a devolução na aprovação' },
+  { evento: 'RETIRADA_CONCLUIDA', obs: 'o admin confere a devolução (Aprovar ou Reprovar); reprovada fica sem crédito' },
   { evento: 'SLA_CUMPRIDO', obs: 'por O.S.' },
   { evento: 'AVALIACAO_5' },
   { evento: 'AVALIACAO_4' },
@@ -68,6 +68,8 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
   const [aberta, setAberta] = useState<string | null>(null)
   const [verRegras, setVerRegras] = useState(false)
   const [chamadoAberto, setChamadoAberto] = useState<string | null>(null)
+  const [reprovando, setReprovando] = useState<string | null>(null)   // chamado cuja devolucao esta sendo reprovada
+  const [motivoReprova, setMotivoReprova] = useState('')
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['desempenho-bonificacao', filtros],
@@ -85,6 +87,24 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
     },
     onSuccess: r => {
       toast({ title: `${r.aprovadas} fechamento(s) aprovado(s)${r.ignoradas ? ` · ${r.ignoradas} já estava(m) aprovado(s)` : ''}`, variant: 'success' })
+      queryClient.invalidateQueries({ queryKey: ['desempenho-bonificacao'] })
+    },
+    onError: (e: any) => toast({ title: e.message, variant: 'destructive' }),
+  })
+
+  // Conferencia da devolucao do equipamento (retirada): aprovar, reprovar (com motivo) ou desfazer.
+  const conferir = useMutation({
+    mutationFn: async (v: { chamadoId: string; decisao: 'CONFIRMADA' | 'RECUSADA' | 'DESFAZER'; motivo?: string }) => {
+      const res = await fetch('/api/desempenho/bonificacao/devolucao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v),
+      })
+      const corpo = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(corpo.error || 'Não foi possível registrar a conferência')
+      return v.decisao
+    },
+    onSuccess: decisao => {
+      toast({ title: decisao === 'CONFIRMADA' ? 'Devolução aprovada' : decisao === 'RECUSADA' ? 'Devolução reprovada: a retirada fica sem crédito' : 'Conferência desfeita', variant: 'success' })
+      setReprovando(null); setMotivoReprova('')
       queryClient.invalidateQueries({ queryKey: ['desempenho-bonificacao'] })
     },
     onError: (e: any) => toast({ title: e.message, variant: 'destructive' }),
@@ -308,7 +328,64 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
                                     <td className="py-1.5 text-tema-texto max-w-[220px] truncate">{it.cliente}</td>
                                     <td className="py-1.5 text-tema-texto">
                                       {ROTULO_EVENTO[it.evento]}
-                                      {it.aviso && <span className="text-amber-700"> · {it.aviso}</span>}
+                                      {it.aviso && <span className={cn(it.devolucao === 'CONFIRMADA' ? 'text-emerald-700' : it.devolucao === 'RECUSADA' ? 'text-red-700' : 'text-amber-700')}> · {it.aviso}</span>}
+                                      {it.devolucao && (
+                                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                          {it.devolucao === 'PENDENTE' && reprovando !== it.chamadoId && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => conferir.mutate({ chamadoId: it.chamadoId, decisao: 'CONFIRMADA' })}
+                                                disabled={conferir.isPending}
+                                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 font-bold disabled:opacity-50"
+                                              >
+                                                <CheckCircle className="w-3 h-3" aria-hidden /> Aprovar devolução
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => { setReprovando(it.chamadoId); setMotivoReprova('') }}
+                                                disabled={conferir.isPending}
+                                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-500/10 border border-red-500/25 text-red-700 font-bold disabled:opacity-50"
+                                              >
+                                                <XCircle className="w-3 h-3" aria-hidden /> Reprovar
+                                              </button>
+                                            </>
+                                          )}
+                                          {it.devolucao !== 'PENDENTE' && (
+                                            <button
+                                              type="button"
+                                              onClick={() => conferir.mutate({ chamadoId: it.chamadoId, decisao: 'DESFAZER' })}
+                                              disabled={conferir.isPending}
+                                              className="inline-flex items-center gap-1 px-2 py-1 rounded border border-tema-linha text-tema-suave font-semibold hover:text-tema-texto disabled:opacity-50"
+                                            >
+                                              <RotateCcw className="w-3 h-3" aria-hidden /> Desfazer
+                                            </button>
+                                          )}
+                                          {reprovando === it.chamadoId && (
+                                            <>
+                                              <label htmlFor={`motivo-devolucao-${it.chamadoId}`} className="sr-only">Motivo da reprovação</label>
+                                              <input
+                                                id={`motivo-devolucao-${it.chamadoId}`}
+                                                value={motivoReprova}
+                                                onChange={ev => setMotivoReprova(ev.target.value)}
+                                                maxLength={300}
+                                                placeholder="Motivo (ex.: equipamento não devolvido)"
+                                                className="gts-input !py-1 !text-xs w-64 max-w-full"
+                                                autoFocus
+                                              />
+                                              <button
+                                                type="button"
+                                                onClick={() => conferir.mutate({ chamadoId: it.chamadoId, decisao: 'RECUSADA', motivo: motivoReprova })}
+                                                disabled={conferir.isPending || motivoReprova.trim().length < 3}
+                                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-500/10 border border-red-500/25 text-red-700 font-bold disabled:opacity-50"
+                                              >
+                                                {conferir.isPending ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden /> : <XCircle className="w-3 h-3" aria-hidden />} Confirmar reprovação
+                                              </button>
+                                              <button type="button" onClick={() => { setReprovando(null); setMotivoReprova('') }} className="px-2 py-1 rounded border border-tema-linha text-tema-suave font-semibold">Cancelar</button>
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
                                     </td>
                                     <td className={cn('py-1.5 text-right tabular-nums font-semibold', it.centavos < 0 ? 'text-red-700' : 'text-emerald-700')}>{sinal(it.centavos)}</td>
                                   </tr>

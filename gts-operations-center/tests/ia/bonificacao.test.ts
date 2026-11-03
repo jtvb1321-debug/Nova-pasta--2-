@@ -7,6 +7,25 @@ const base = (n: number, tipo: string, extra: Partial<ChamadoFechado> = {}): Cha
   id: `c${n}`, cliente: `Cliente ${n}`, tipo, equipeId: 'eq1', dataFim: new Date(2026, 9, 20), qtdFotos: 2, dentroSlaResposta: null, dentroSlaResolucao: null, avaliacao: null, ...extra,
 })
 
+describe('bonificacao: conferencia da devolucao da retirada', () => {
+  const ret = (devolucao?: { status: string | null; motivo: string | null; por: string | null }) => calcularBonusEquipes([base(1, 'RETIRADA', { devolucao })], []).get('eq1')!
+  it('a conferir (sem decisao): credito entra com aviso para conferir', () => {
+    const r = ret(); assert.equal(r.saldo, 250); assert.equal(r.itens[0].devolucao, 'PENDENTE'); assert.match(r.itens[0].aviso!, /Confira a devolução/)
+    assert.equal(ret({ status: null, motivo: null, por: null }).itens[0].devolucao, 'PENDENTE')
+  })
+  it('aprovada: credito mantido e aviso mostra quem confirmou', () => {
+    const r = ret({ status: 'CONFIRMADA', motivo: null, por: 'Admin' }); assert.equal(r.saldo, 250); assert.equal(r.itens[0].devolucao, 'CONFIRMADA'); assert.match(r.itens[0].aviso!, /confirmada por Admin/)
+  })
+  it('reprovada: retirada fica sem credito (R$ 0,00) com o motivo, mas continua contando como concluida', () => {
+    const r = ret({ status: 'RECUSADA', motivo: 'equipamento nao devolvido', por: 'Admin' })
+    assert.equal(r.saldo, 0); assert.equal(r.creditos, 0); assert.equal(r.itens[0].centavos, 0); assert.equal(r.itens[0].devolucao, 'RECUSADA'); assert.match(r.itens[0].aviso!, /reprovada: equipamento nao devolvido · sem crédito/); assert.equal(r.concluidos, 1)
+  })
+  it('so a retirada tem conferencia: instalacao e chamado nao trazem devolucao', () => {
+    const r = calcularBonusEquipes([base(1, 'INSTALACAO'), base(2, 'SUPORTE')], []).get('eq1')!
+    assert.ok(r.itens.every(i => i.devolucao === undefined))
+  })
+})
+
 describe('bonificacao: valores vigentes (ajuste de 31/10/2026)', () => {
   it('creditos: chamado R$0,50, retirada R$2,50, instalacao R$5,00; SLA continua R$0,50', () => {
     assert.equal(VALORES_CENTAVOS.CHAMADO_CONCLUIDO, 50); assert.equal(VALORES_CENTAVOS.RETIRADA_CONCLUIDA, 250); assert.equal(VALORES_CENTAVOS.INSTALACAO_CONCLUIDA, 500); assert.equal(VALORES_CENTAVOS.SLA_CUMPRIDO, 50)

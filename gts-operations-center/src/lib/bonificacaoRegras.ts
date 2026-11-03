@@ -9,7 +9,8 @@
 //           O.S. sem evidencias -R$4
 // Fora do calculo automatico (nao ha dado no sistema): rota criada/concluida e negociacao.
 // "Retirada sem devolucao / O.S. incorreta = sem credito": O.S. encerrada pela gestao
-// (fechadoAdmin) nao entra; a devolucao da retirada fica para o admin conferir na aprovacao.
+// (fechadoAdmin) nao entra; a devolucao da retirada o admin confere na tela (Aprovar / Reprovar):
+// a conferir = credito entra com aviso | confirmada = credito entra | reprovada = sem credito (R$ 0,00).
 
 export const VALORES_CENTAVOS = {
   CHAMADO_CONCLUIDO: 50,
@@ -51,6 +52,8 @@ export interface ChamadoFechado {
   dentroSlaResposta: boolean | null
   dentroSlaResolucao: boolean | null
   avaliacao: { nota: number | null; statusAnalise: 'PENDENTE' | 'APROVADA' | 'INVALIDADA'; respondida: boolean } | null
+  // Conferencia da devolucao (so retirada): status null = ainda nao conferida
+  devolucao?: { status: string | null; motivo: string | null; por: string | null } | null
 }
 
 export interface RechamadaConfirmada {
@@ -66,7 +69,10 @@ export interface ItemBonus {
   centavos: number
   data: Date
   aviso?: string             // ex.: conferir devolucao da retirada
+  devolucao?: StatusDevolucao // so na retirada
 }
+
+export type StatusDevolucao = 'PENDENTE' | 'CONFIRMADA' | 'RECUSADA'
 
 export interface Pendencia {
   chamadoId: string
@@ -121,7 +127,14 @@ export function calcularBonusEquipes(chamados: ChamadoFechado[], rechamadas: Rec
     e.concluidos++
 
     if (c.tipo === 'INSTALACAO') lancar(e, { ...base, evento: 'INSTALACAO_CONCLUIDA' })
-    else if (c.tipo === 'RETIRADA') lancar(e, { ...base, evento: 'RETIRADA_CONCLUIDA', aviso: 'Confira a devolução do equipamento' })
+    else if (c.tipo === 'RETIRADA') {
+      const dv = c.devolucao
+      const devolucao: StatusDevolucao = dv?.status === 'CONFIRMADA' ? 'CONFIRMADA' : dv?.status === 'RECUSADA' ? 'RECUSADA' : 'PENDENTE'
+      const aviso = devolucao === 'CONFIRMADA' ? `Devolução confirmada${dv?.por ? ` por ${dv.por}` : ''}`
+        : devolucao === 'RECUSADA' ? `Devolução reprovada${dv?.motivo ? `: ${dv.motivo}` : ''} · sem crédito`
+        : 'Confira a devolução do equipamento'
+      lancar(e, { ...base, evento: 'RETIRADA_CONCLUIDA', aviso, devolucao, centavos: devolucao === 'RECUSADA' ? 0 : undefined })
+    }
     else lancar(e, { ...base, evento: 'CHAMADO_CONCLUIDO' })
 
     if (c.dentroSlaResolucao === true && c.dentroSlaResposta !== false) {
