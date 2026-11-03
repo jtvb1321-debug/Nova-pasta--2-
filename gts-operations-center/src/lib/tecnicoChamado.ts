@@ -204,6 +204,17 @@ export function ordenarChamados<T extends { status?: string; dataACaminho?: any;
   })
 }
 
+// Secoes da tela do tecnico, sempre pelo status real salvo: "Em andamento" (atendimento primeiro, depois
+// deslocamento; cartao completo) e "Proximos chamados" (aguardando; linha compacta). A ordem dentro de cada
+// grupo e' a de ordenarChamados. Quando o status muda, o chamado muda de secao sozinho.
+export function separarChamados<T extends { status?: string; dataACaminho?: any; observacao?: string | null; inicioSla?: any; dataAbertura?: any; createdAt?: any; eace?: boolean | null; dataInicio?: any }>(lista: T[]): { emAndamento: T[]; aguardando: T[] } {
+  const ordenados = ordenarChamados(lista)
+  return {
+    emAndamento: ordenados.filter(c => { const e = etapaDoChamado(c); return e === 'ATENDIMENTO' || e === 'DESLOCAMENTO' }),
+    aguardando: ordenados.filter(c => etapaDoChamado(c) === 'AGUARDANDO'),
+  }
+}
+
 // Atualiza um chamado dentro de uma lista com a resposta do servidor (mantem os
 // relacionamentos que a resposta do PATCH nao traz: equipe, materiais...).
 export function mesclarChamadoNaLista<T extends { id: string }>(lista: T[], id: string, parcial: Partial<T>): T[] {

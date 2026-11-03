@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { acaoPrincipal, acrescentarFrase, frasesDeRelato, MOTIVOS_CLIENTE_AUSENTE, pendenciasFinalizacao } from '@/lib/tecnicoChamado'
+import { acaoPrincipal, acrescentarFrase, etapaDoChamado, frasesDeRelato, MOTIVOS_CLIENTE_AUSENTE, pendenciasFinalizacao, separarChamados } from '@/lib/tecnicoChamado'
 
 const base = { relato: '', fotosValidas: 0, enviandoFotos: false, equipamentoPendente: false }
 
@@ -58,4 +58,35 @@ describe('fluxo do tecnico: textos das acoes', () => {
     assert.equal(acaoPrincipal('CONCLUIDO'), null)
   })
   it('motivos de cliente ausente', () => assert.equal(MOTIVOS_CLIENTE_AUSENTE.length, 4))
+})
+
+describe('chamados do tecnico: secoes pelo status real', () => {
+  const mk = (id: string, status: string, extra: any = {}) => ({ id, status, dataAbertura: new Date(2026, 10, 3, 8, Number(id.replace(/\D/g, '')) || 0), observacao: null, ...extra })
+  const lista = [
+    mk('a1', 'ABERTO'),
+    mk('d1', 'ABERTO', { dataACaminho: new Date() }),
+    mk('t1', 'EM_ANDAMENTO'),
+    mk('a2', 'ABERTO', { observacao: '[URGENTE] - x' }),
+    mk('d2', 'ABERTO', { dataACaminho: new Date() }),
+    mk('t2', 'EM_ANDAMENTO'),
+  ]
+  it('em andamento: atendimento primeiro, depois deslocamento; aguardando separado e sem concluidos', () => {
+    const { emAndamento, aguardando } = separarChamados([...lista, mk('f1', 'FINALIZADO')])
+    assert.deepEqual(emAndamento.map(c => c.id), ['t1', 't2', 'd1', 'd2'])
+    assert.deepEqual(aguardando.map(c => c.id), ['a2', 'a1']) // urgente antes; demais por antiguidade
+  })
+  it('iniciar deslocamento move o chamado de Proximos para Em andamento (status real)', () => {
+    const antes = separarChamados(lista)
+    assert.ok(antes.aguardando.some(c => c.id === 'a1'))
+    const depois = separarChamados(lista.map(c => (c.id === 'a1' ? { ...c, dataACaminho: new Date() } : c)))
+    assert.ok(!depois.aguardando.some(c => c.id === 'a1'))
+    assert.deepEqual(depois.emAndamento.slice(0, 2).map(c => c.id), ['t1', 't2']) // atendimento continua na frente
+    assert.deepEqual(depois.emAndamento.slice(2).map(c => c.id).sort(), ['a1', 'd1', 'd2'])
+  })
+  it('apenas visualizar nao altera nada: separar nao muda a lista original nem o status', () => {
+    const copia = JSON.stringify(lista)
+    separarChamados(lista)
+    assert.equal(JSON.stringify(lista), copia)
+    assert.equal(etapaDoChamado(lista[0]), 'AGUARDANDO')
+  })
 })

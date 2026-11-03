@@ -1,11 +1,14 @@
 // src/app/mapa-inmap/page.tsx
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/AppShell'
 import { MapaInmapView } from '@/components/mapa/MapaInmapView'
+import { TecnicoShell } from '@/components/tecnico/TecnicoShell'
 
 export const metadata: Metadata = { title: 'Mapa Inmap / Rede' }
+// viewport-fit=cover: deixa a barra inferior do tecnico respeitar a area segura do celular.
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default async function MapaInmapPage() {
   const session = await auth()
@@ -13,10 +16,14 @@ export default async function MapaInmapPage() {
 
   const role = (session.user as any)?.role
 
-  // Tecnico ve o mapa sem o AppShell padrao (tela cheia, estilo mobile) -
-  // por isso nao precisa reservar espaco pro cabecalho que nao existe aqui.
+  // Tecnico ve o mapa em tela cheia dentro da moldura do aplicativo (cabecalho + barra inferior),
+  // para poder voltar aos chamados, historico e carro sem sair pelo navegador.
   if (role === 'TECNICO') {
-    return <MapaInmapView telaCheia />
+    return (
+      <TecnicoShell session={session} ativo="mapa" telaCheia>
+        <MapaInmapView telaCheia />
+      </TecnicoShell>
+    )
   }
 
   return (

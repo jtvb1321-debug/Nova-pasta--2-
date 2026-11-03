@@ -135,14 +135,14 @@ export function MeuCarroView({ session }: Props) {
     <TecnicoShell session={session} ativo="carro">
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Meu carro</h1>
+          <h1 className="text-xl font-bold tracking-tight text-tema-tinta">Meu carro</h1>
           <p className="text-sm text-tema-suave flex items-center gap-1.5 mt-0.5">
             <Truck className="w-4 h-4" aria-hidden />
             {veiculo.modelo} · <span className="font-mono">{veiculo.placa}</span> · {veiculoData.equipeNome}
           </p>
         </div>
 
-        <div role="tablist" aria-label="Seções do veículo" className="flex overflow-x-auto gap-1 border-b border-tema-linha">
+        <div role="tablist" aria-label="Seções do veículo" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {abas.map(a => {
             const Icon = a.icon
             return (
@@ -153,11 +153,11 @@ export function MeuCarroView({ session }: Props) {
                 aria-selected={aba === a.id}
                 onClick={() => setAba(a.id)}
                 className={cn(
-                  '-mb-px flex items-center gap-1.5 px-4 min-h-[48px] text-sm font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500/40',
-                  aba === a.id ? 'border-orange-500 text-orange-700' : 'border-transparent text-tema-suave hover:text-tema-tinta'
+                  'flex flex-col items-center justify-center gap-1 px-1 py-2 min-h-[56px] rounded-xl border text-xs font-semibold text-center leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50',
+                  aba === a.id ? 'border-orange-500 bg-orange-500/10 text-orange-700' : 'border-tema-linha bg-tema-superficie text-tema-suave hover:text-tema-tinta'
                 )}
               >
-                <Icon className="w-4 h-4" aria-hidden />
+                <Icon className="w-[18px] h-[18px]" aria-hidden />
                 {a.label}
               </button>
             )
@@ -566,10 +566,10 @@ function AbaDespesas({ veiculoId, queryClient }: { veiculoId: string; queryClien
                 key={valor_tipo}
                 onClick={() => setTipo(valor_tipo)}
                 className={cn(
-                  'py-2 rounded-lg text-xs font-medium border transition-colors',
+                  'min-h-[44px] px-2 rounded-xl text-sm font-medium border transition-colors',
                   tipo === valor_tipo
-                    ? 'bg-orange-500/15 text-orange-700 border-orange-500/30'
-                    : 'bg-tema-contraste/[0.03] text-tema-suave border-transparent hover:text-tema-tinta'
+                    ? 'bg-orange-500/15 text-orange-700 border-orange-500/40'
+                    : 'bg-tema-superficie text-tema-suave border-tema-linha-forte hover:text-tema-tinta'
                 )}
               >
                 {label}

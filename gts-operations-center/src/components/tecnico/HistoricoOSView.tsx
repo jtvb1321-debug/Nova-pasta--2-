@@ -56,14 +56,14 @@ function CardOS({ o }: { o: Linha }) {
   const av = o.avaliacao
 
   return (
-    <article className="rounded-2xl border border-tema-linha bg-tema-superficie p-4" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+    <article className="rounded-xl border border-tema-linha bg-tema-superficie p-3.5" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-base font-bold text-tema-tinta break-words">{o.cliente}</h3>
           <p className="mt-1 flex items-center gap-1.5 flex-wrap text-xs">
             <span className="px-2 py-0.5 rounded-full bg-tema-contraste/[0.06] text-tema-suave font-medium">{TIPO_CHAMADO_LABELS[o.tipo as TipoChamado] ?? o.tipo}</span>
             {o.eace && <span className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-700 font-semibold">EACE</span>}
-            <span className="font-mono text-tema-apagado">{numeroOS(o.id)}</span>
+            <span className="font-mono font-semibold text-tema-suave">{numeroOS(o.id)}</span>
           </p>
         </div>
         <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 flex-shrink-0">
@@ -91,7 +91,7 @@ function CardOS({ o }: { o: Linha }) {
 
       {(o.relato || fotos.length > 0) && (
         <>
-          <button type="button" onClick={() => setAberto(a => !a)} aria-expanded={aberto} className="mt-3 min-h-[40px] inline-flex items-center gap-1 text-sm font-semibold text-orange-700">
+          <button type="button" onClick={() => setAberto(a => !a)} aria-expanded={aberto} className="mt-3 min-h-[44px] inline-flex items-center gap-1 text-sm font-semibold text-orange-700">
             {aberto ? 'Ocultar' : 'Ver'} relato e fotos <ChevronDown className={cn('w-4 h-4 transition-transform', aberto && 'rotate-180')} aria-hidden />
           </button>
           {aberto && (
@@ -147,19 +147,19 @@ export function HistoricoOSView({ session }: { session: Session }) {
   return (
     <TecnicoShell session={session} ativo="historico">
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Histórico de O.S.</h1>
+        <h1 className="text-xl font-bold tracking-tight text-tema-tinta">Histórico de O.S.</h1>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {tiles.map(t => (
-            <div key={t.rotulo} className="rounded-2xl border border-tema-linha bg-tema-superficie p-3 min-h-[72px]" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
-              <p className="text-2xl font-bold tabular-nums text-tema-tinta">{isError ? '—' : t.valor ?? '·'}</p>
+            <div key={t.rotulo} className="rounded-xl border border-tema-linha bg-tema-superficie px-3 py-2.5 min-h-[64px]" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+              <p className="text-xl font-bold leading-tight tabular-nums text-tema-tinta">{isError ? '—' : t.valor ?? '·'}</p>
               <p className="text-xs text-tema-suave mt-1">{t.rotulo}</p>
             </div>
           ))}
         </div>
         <p className="text-xs text-tema-apagado -mt-2">Concluídas e avaliações da sua equipe no período. Só avaliações aprovadas pela gestão entram na média.</p>
 
-        <div className="rounded-2xl border border-tema-linha bg-tema-superficie p-3 space-y-3" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
+        <div className="rounded-xl border border-tema-linha bg-tema-superficie p-3 space-y-3" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Período">
             {PERIODOS.map(p => (
               <button
@@ -190,7 +190,7 @@ export function HistoricoOSView({ session }: { session: Session }) {
         </div>
 
         {isLoading ? (
-          <div className="space-y-3" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 skeleton rounded-2xl" />)}</div>
+          <div className="space-y-3" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-40 skeleton rounded-xl" />)}</div>
         ) : isError ? (
           <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
             <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />

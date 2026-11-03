@@ -1,7 +1,8 @@
 'use client'
 
-import { Brain, CalendarClock, ChevronRight, Loader2, MapPin, MessageCircle, Navigation, Phone, Truck, Zap, CheckCircle } from 'lucide-react'
+import { Brain, CalendarClock, ChevronRight, Clock, Loader2, MapPin, MessageCircle, Navigation, Phone, Truck, Zap, CheckCircle } from 'lucide-react'
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
+import { numeroOS } from '@/lib/ordemServico'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { CLASSIFICACAO_LABEL } from '@/lib/diagnosticoEngine'
 import { ResumoIxc } from './InfoIxc'
@@ -9,13 +10,15 @@ import { acaoPrincipal, etapaDoChamado, prioridadeDe, rotuloDaEtapa, situacaoDeT
 
 const ETAPA_BADGE: Record<Etapa, string> = {
   AGUARDANDO: 'bg-tema-contraste/[0.07] text-tema-suave',
-  DESLOCAMENTO: 'bg-blue-500/10 text-blue-700',
-  ATENDIMENTO: 'bg-orange-500/10 text-orange-700',
+  DESLOCAMENTO: 'bg-amber-400/25 text-amber-800 border border-amber-500/40',
+  ATENDIMENTO: 'bg-green-500/15 text-green-800 border border-green-600/30',
   CONCLUIDO: 'bg-emerald-500/10 text-emerald-700',
   OUTRO: 'bg-tema-contraste/[0.07] text-tema-suave',
 }
 
 const ICONE_ACAO: Record<string, React.ElementType> = { ABERTO: Truck, EM_ANDAMENTO: Zap, FINALIZADO: CheckCircle }
+// Icone junto do texto do status: a etapa nunca depende so da cor.
+const ICONE_ETAPA: Partial<Record<Etapa, React.ElementType>> = { AGUARDANDO: Clock, DESLOCAMENTO: Truck, ATENDIMENTO: Zap, CONCLUIDO: CheckCircle }
 
 function limparObservacao(obs: string) {
   return obs?.replace(/\[(CRITICO|URGENTE|NORMAL)\]\s?-?\s?/g, '').replace(/Bairro:.*$/i, '').trim() || ''
@@ -51,6 +54,7 @@ export function CardChamadoTecnico({ chamado, agora, destaque = false, enviando,
   const digitos = (chamado.telefone ?? '').replace(/\D/g, '')
   const Icone = acao ? ICONE_ACAO[acao.proximoStatus] : null
   const diag = chamado.diagnosticos?.[0]
+  const IconeEtapa = ICONE_ETAPA[etapa]
 
   function clicarAcao(e: React.MouseEvent) {
     e.stopPropagation()
@@ -60,7 +64,7 @@ export function CardChamadoTecnico({ chamado, agora, destaque = false, enviando,
     else onAvancar(acao.proximoStatus)
   }
 
-  const secundario = 'flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 rounded-xl border border-tema-linha bg-tema-superficie text-sm font-semibold text-tema-suave hover:bg-tema-contraste/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+  const secundario = 'flex-1 min-w-0 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 rounded-xl border border-tema-linha-forte bg-tema-superficie text-sm font-semibold text-tema-texto hover:bg-tema-contraste/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50'
 
   return (
     <article
@@ -70,19 +74,24 @@ export function CardChamadoTecnico({ chamado, agora, destaque = false, enviando,
       tabIndex={0}
       aria-label={`${chamado.cliente}, ${rotuloDaEtapa(etapa)}. Abrir detalhes`}
       className={cn(
-        'rounded-2xl border bg-tema-superficie p-4 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50',
-        destaque ? 'border-orange-500/60 ring-1 ring-orange-500/25' : prioridade === 'CRITICO' ? 'border-red-500/40' : 'border-tema-linha hover:border-tema-linha-forte',
+        'rounded-xl border bg-tema-superficie p-3.5 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50',
+        destaque ? (etapa === 'DESLOCAMENTO' ? 'border-amber-500/60 ring-1 ring-amber-500/25' : 'border-green-600/50 ring-1 ring-green-600/20') : prioridade === 'CRITICO' ? 'border-red-500/40' : 'border-tema-linha hover:border-tema-linha-forte',
       )}
       style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-xs font-semibold text-tema-suave">{numeroOS(chamado.id)}</span>
+        <span className={cn('inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-semibold', ETAPA_BADGE[etapa])}>
+          {IconeEtapa && <IconeEtapa className="w-3.5 h-3.5" aria-hidden />}{rotuloDaEtapa(etapa)}
+        </span>
+      </div>
+      <div className="mt-1.5 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-tema-tinta break-words">{chamado.cliente}</h3>
+          <h3 className="text-base font-bold leading-snug text-tema-tinta break-words">{chamado.cliente}</h3>
           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-tema-contraste/[0.06] text-tema-suave font-medium">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-tema-contraste/[0.06] text-tema-texto font-medium">
               {TIPO_CHAMADO_LABELS[chamado.tipo as TipoChamado]}
             </span>
-            <span className={cn('text-xs px-2.5 py-0.5 rounded-full font-semibold', ETAPA_BADGE[etapa])}>{rotuloDaEtapa(etapa)}</span>
             {prioridade !== 'NORMAL' && (
               <span className={cn('text-xs px-2 py-0.5 rounded-full border font-semibold', prioridade === 'CRITICO' ? 'text-red-700 bg-red-500/10 border-red-500/30' : 'text-amber-800 bg-amber-500/10 border-amber-500/30')}>
                 {prioridade === 'CRITICO' ? 'Crítico' : 'Urgente'}
@@ -145,19 +154,21 @@ export function CardChamadoTecnico({ chamado, agora, destaque = false, enviando,
             type="button"
             onClick={clicarAcao}
             disabled={bloqueado}
-            className="w-full min-h-[52px] inline-flex items-center justify-center gap-2 px-4 rounded-xl text-base font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
+            className="w-full min-h-[52px] inline-flex items-center justify-center gap-2 px-4 rounded-xl text-base font-bold text-white bg-[#D4520A] hover:bg-[#B84508] transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
           >
             {enviando ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden /> : <Icone className="w-5 h-5" aria-hidden />}
             {enviando ? 'Enviando...' : acao.rotulo}
           </button>
         )}
         <div className="flex gap-2">
-          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`} target="_blank" rel="noopener noreferrer" className={secundario}>
-            <Navigation className="w-4 h-4" aria-hidden /> Ver rota
-          </a>
+          {endereco && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`} target="_blank" rel="noopener noreferrer" className={secundario}>
+              <Navigation className="w-4 h-4 flex-shrink-0" aria-hidden /> Ver rota
+            </a>
+          )}
           {digitos.length >= 10 && (
             <a href={`https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`} target="_blank" rel="noopener noreferrer" className={secundario}>
-              <MessageCircle className="w-4 h-4" aria-hidden /> Contatar cliente
+              <MessageCircle className="w-4 h-4 flex-shrink-0" aria-hidden /> Contatar cliente
             </a>
           )}
         </div>

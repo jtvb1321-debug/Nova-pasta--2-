@@ -380,3 +380,35 @@ html:not(.dark) .dash-orbia {
 }
 .tec-etapa { animation: tec-subir 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @media (prefers-reduced-motion: reduce) { .tec-etapa { animation: none; } }
+
+/* ===== Area do tecnico (campo) =====
+   Isolado em .app-tecnico: fundo cinza-claro, cinzas azulados de alto contraste para uso ao ar livre,
+   e as medidas que o conteudo reserva para o cabecalho e a barra inferior (celular). */
+.app-tecnico {
+  --tec-topo: calc(3.5rem + env(safe-area-inset-top, 0px));
+  --tec-nav: calc(3.8125rem + env(safe-area-inset-bottom, 0px));
+}
+html:not(.dark) .app-tecnico {
+  --c-tinta: 15 30 54;
+  --c-texto: 38 50 70;
+  --c-suave: 71 85 105;
+  --c-apagado: 100 116 139;
+  --c-linha: 226 231 238;
+  --c-linha-forte: 203 211 222;
+  --c-fundo: 241 244 248;
+  --c-fundo-2: 247 249 252;
+}
+.app-tecnico .tec-conteudo { padding-bottom: calc(var(--tec-nav) + 1rem); }
+.app-tecnico .tec-mapa { padding: 0; height: calc(100dvh - var(--tec-topo) - var(--tec-nav)); }
+@media (min-width: 1024px) {
+  .app-tecnico { --tec-topo: 0px; --tec-nav: 0px; }
+  .app-tecnico .tec-conteudo { padding-bottom: 1.5rem; }
+  .app-tecnico .tec-mapa { padding: 0; height: 100dvh; }
+}
+/* Campos confortaveis no toque: altura minima de 44px e fonte de 16px (o iOS nao da zoom ao focar). */
+.app-tecnico .gts-input,
+.app-tecnico select,
+.app-tecnico textarea { min-height: 44px; font-size: 1rem; }
+.app-tecnico input[type="file"] { min-height: 44px; padding: 0.375rem; border: 1px dashed rgb(var(--c-linha-forte)); border-radius: 0.75rem; }
+.app-tecnico input[type="file"]::file-selector-button { min-height: 32px; margin-right: 0.75rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; font-weight: 600; color: rgb(var(--c-tinta)); background: rgb(var(--c-contraste) / 0.06); }
+@media (min-width: 640px) { .app-tecnico .gts-input, .app-tecnico select, .app-tecnico textarea { font-size: 0.875rem; } }

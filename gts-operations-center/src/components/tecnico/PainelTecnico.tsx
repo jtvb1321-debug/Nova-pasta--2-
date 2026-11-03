@@ -1,17 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle, Bell, Calendar, CheckCircle, ClipboardList, Clock, History, Map, MapPin, RefreshCw, Truck, X, Zap,
+  AlertTriangle, Bell, Calendar, CheckCircle, ChevronRight, ClipboardList, Clock, MapPin, RefreshCw, Truck, X, Zap,
 } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { cn, formatarEnderecoCompleto } from '@/lib/utils'
 import { TIPO_CHAMADO_LABELS, type TipoChamado } from '@/types'
 import { toast } from '@/hooks/use-toast'
 import { useAgora } from '@/hooks/useAgora'
-import { etapaDoChamado, mesclarChamadoNaLista, ordenarChamados, type Etapa } from '@/lib/tecnicoChamado'
+import { etapaDoChamado, mesclarChamadoNaLista, ordenarChamados, separarChamados, type Etapa } from '@/lib/tecnicoChamado'
 import { TecnicoShell } from './TecnicoShell'
 import { CardChamadoTecnico } from './CardChamadoTecnico'
 import { ModalAtendimento, type AvancarChamado } from './ModalAtendimento'
@@ -110,9 +109,8 @@ export function PainelTecnico({ session }: { session: Session }) {
     if (e in contagem) contagem[e as keyof typeof contagem]++
   }
   const exibidos = filtro ? ativos.filter(c => etapaDoChamado(c) === filtro) : ativos
-  const primeiraEtapa = exibidos[0] ? etapaDoChamado(exibidos[0]) : null
-  const destaque = primeiraEtapa === 'ATENDIMENTO' || primeiraEtapa === 'DESLOCAMENTO' ? exibidos[0] : null
-  const demais = destaque ? exibidos.slice(1) : exibidos
+  // Em andamento (cartao completo) no topo; aguardando em linhas compactas logo abaixo.
+  const { emAndamento, aguardando: proximos } = separarChamados(exibidos)
 
   // Detalhes e cards leem do MESMO cache: nao ha como divergirem.
   const selecionado = selecao ? (todos.find(c => c.id === selecao.id) ?? selecao.reserva) : null
@@ -201,11 +199,10 @@ export function PainelTecnico({ session }: { session: Session }) {
 
   const tiles: { chave: Exclude<FiltroEtapa, ''>; rotulo: string; icone: React.ElementType; cor: string }[] = [
     { chave: 'AGUARDANDO', rotulo: 'Aguardando', icone: Clock, cor: 'bg-tema-contraste/[0.07] text-tema-suave' },
-    { chave: 'DESLOCAMENTO', rotulo: 'Em deslocamento', icone: Truck, cor: 'bg-blue-500/10 text-blue-600' },
-    { chave: 'ATENDIMENTO', rotulo: 'Em atendimento', icone: Zap, cor: 'bg-orange-500/10 text-orange-600' },
+    { chave: 'DESLOCAMENTO', rotulo: 'Em deslocamento', icone: Truck, cor: 'bg-amber-500/15 text-amber-700' },
+    { chave: 'ATENDIMENTO', rotulo: 'Em atendimento', icone: Zap, cor: 'bg-green-500/15 text-green-700' },
   ]
-  const atalhoMobileEscondido = 'hidden sm:inline-flex w-11 h-11 items-center justify-center rounded-xl border border-tema-linha bg-tema-superficie text-tema-suave hover:text-orange-700 hover:bg-orange-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40' // no celular a barra de cima ja tem esses links
-  const atalho = 'w-11 h-11 inline-flex items-center justify-center rounded-xl border border-tema-linha bg-tema-superficie text-tema-suave hover:text-orange-700 hover:bg-orange-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40'
+  const atualizadoAs = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : null
 
   const renderCard = (c: any, destacar = false) => (
     <CardChamadoTecnico
@@ -223,26 +220,17 @@ export function PainelTecnico({ session }: { session: Session }) {
   return (
     <TecnicoShell session={session} ativo="chamados">
       <div className="space-y-4">
-        {/* Titulo + atalhos compactos */}
+        {/* Titulo + atualizar */}
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-tema-tinta">Meus chamados</h1>
-            {dataUpdatedAt > 0 && (
-              <p className="text-xs text-tema-apagado">Atualizado às {new Date(dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/historico-os" className={atalhoMobileEscondido} title="Histórico de O.S." aria-label="Histórico de O.S."><History className="w-5 h-5" aria-hidden /></Link>
-            <Link href="/meu-carro" className={atalhoMobileEscondido} title="Meu carro" aria-label="Meu carro"><Truck className="w-5 h-5" aria-hidden /></Link>
-            <Link href="/mapa-inmap" className={atalhoMobileEscondido} title="Mapa e rotas" aria-label="Mapa e rotas"><Map className="w-5 h-5" aria-hidden /></Link>
-            <button type="button" onClick={() => refetch()} disabled={isFetching} className={atalho} title="Atualizar" aria-label="Atualizar chamados">
-              <RefreshCw className={cn('w-5 h-5', isFetching && 'animate-spin')} aria-hidden />
-            </button>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-tema-tinta">Meus chamados</h1>
+          <button type="button" onClick={() => refetch()} disabled={isFetching} className="min-h-[44px] px-3.5 inline-flex items-center justify-center gap-2 rounded-xl border border-tema-linha-forte bg-tema-superficie text-sm font-semibold text-tema-tinta hover:bg-tema-contraste/[0.04] transition-colors disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50" aria-label="Atualizar chamados">
+            <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} aria-hidden />
+            Atualizar
+          </button>
         </div>
 
         {/* Resumo por status (os tres primeiros filtram a lista) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {tiles.map(t => {
             const Icone = t.icone
             const ativo = filtro === t.chave
@@ -253,27 +241,32 @@ export function PainelTecnico({ session }: { session: Session }) {
                 onClick={() => setFiltro(f => (f === t.chave ? '' : t.chave))}
                 aria-pressed={ativo}
                 className={cn(
-                  'text-left rounded-2xl border bg-tema-superficie p-3 min-h-[76px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40',
-                  ativo ? 'border-orange-500' : 'border-tema-linha hover:border-tema-linha-forte'
+                  'text-left rounded-xl border bg-tema-superficie px-3 py-2.5 min-h-[64px] flex items-center gap-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50',
+                  ativo ? 'border-orange-500 bg-orange-500/[0.06]' : 'border-tema-linha hover:border-tema-linha-forte'
                 )}
                 style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
               >
-                <span className="flex items-center gap-2">
-                  <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', t.cor)}><Icone className="w-4 h-4" aria-hidden /></span>
-                  <span className="text-2xl font-bold tabular-nums text-tema-tinta">{isLoading ? '·' : isError && !data ? '—' : contagem[t.chave]}</span>
+                <span className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', t.cor)}><Icone className="w-[18px] h-[18px]" aria-hidden /></span>
+                <span className="min-w-0">
+                  <span className="block text-xl font-bold leading-tight tabular-nums text-tema-tinta">{isLoading ? '·' : isError && !data ? '—' : contagem[t.chave]}</span>
+                  <span className="block text-xs leading-tight text-tema-suave">{t.rotulo}</span>
                 </span>
-                <span className="block text-xs text-tema-suave mt-1.5">{t.rotulo}</span>
               </button>
             )
           })}
-          <div className="rounded-2xl border border-tema-linha bg-tema-superficie p-3 min-h-[76px]" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }} title="Chamados que você concluiu hoje">
-            <span className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-500/10 text-emerald-600"><CheckCircle className="w-4 h-4" aria-hidden /></span>
-              <span className="text-2xl font-bold tabular-nums text-tema-tinta">{resumo ? resumo.concluidosHoje : erroResumo ? '—' : '·'}</span>
+          <div className="rounded-xl border border-tema-linha bg-tema-superficie px-3 py-2.5 min-h-[64px] flex items-center gap-2.5" style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }} title="Chamados que você concluiu hoje">
+            <span className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-500/10 text-emerald-700"><CheckCircle className="w-[18px] h-[18px]" aria-hidden /></span>
+            <span className="min-w-0">
+              <span className="block text-xl font-bold leading-tight tabular-nums text-tema-tinta">{resumo ? resumo.concluidosHoje : erroResumo ? '—' : '·'}</span>
+              <span className="block text-xs leading-tight text-tema-suave">Concluídos hoje</span>
             </span>
-            <span className="block text-xs text-tema-suave mt-1.5">Concluídos hoje</span>
           </div>
         </div>
+
+        {/* Lista de chamados: a hora da ultima atualizacao fica junto dela */}
+        {atualizadoAs && (
+          <p className="text-xs text-tema-suave flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" aria-hidden />Atualizado às {atualizadoAs}</p>
+        )}
 
         {novoChamado && (
           <div role="status" className="flex items-center gap-3 rounded-2xl bg-tema-tinta text-tema-superficie px-4 py-3">
@@ -295,7 +288,7 @@ export function PainelTecnico({ session }: { session: Session }) {
         )}
 
         {isLoading ? (
-          <div className="space-y-3" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-48 skeleton rounded-2xl" />)}</div>
+          <div className="space-y-3" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 skeleton rounded-xl" />)}</div>
         ) : isError && !data ? (
           <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
             <AlertTriangle className="w-9 h-9 text-red-600/70 mx-auto mb-3" aria-hidden />
@@ -303,23 +296,39 @@ export function PainelTecnico({ session }: { session: Session }) {
             <button type="button" onClick={() => refetch()} className="mt-4 min-h-[44px] px-5 rounded-xl border border-tema-linha text-sm font-semibold text-tema-tinta hover:bg-tema-contraste/[0.04]">Tentar novamente</button>
           </div>
         ) : exibidos.length === 0 ? (
-          <div className="rounded-2xl border border-tema-linha bg-tema-superficie text-center py-12 px-4">
-            <CheckCircle className="w-10 h-10 text-emerald-600/50 mx-auto mb-3" aria-hidden />
-            <p className="font-semibold text-tema-tinta">{filtro ? 'Nenhum chamado nessa etapa' : 'Nenhum chamado em aberto'}</p>
-            <p className="text-sm text-tema-suave mt-1">{filtro ? 'Toque no filtro de novo para ver todos.' : 'Sua agenda está livre.'}</p>
+          <div className="rounded-xl border border-tema-linha bg-tema-superficie text-center py-5 px-4">
+            <CheckCircle className="w-7 h-7 text-emerald-600/60 mx-auto mb-1.5" aria-hidden />
+            <p className="text-sm font-semibold text-tema-tinta">{filtro ? 'Nenhum chamado nessa etapa' : 'Nenhum chamado em aberto'}</p>
+            <p className="text-sm text-tema-suave">{filtro ? 'Toque no filtro de novo para ver todos.' : 'Sua agenda está livre'}</p>
           </div>
         ) : (
           <>
-            {destaque && (
-              <section aria-label="Chamado em andamento" className="space-y-2">
-                <h2 className="text-xs font-bold uppercase tracking-wide text-orange-700">Em andamento</h2>
-                {renderCard(destaque, true)}
+            {emAndamento.length > 0 && (
+              <section aria-label="Em andamento" className="space-y-2">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-tema-tinta">Em andamento ({emAndamento.length})</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">{emAndamento.map(c => renderCard(c, true))}</div>
               </section>
             )}
-            {demais.length > 0 && (
-              <section aria-label="Demais chamados" className="space-y-2">
-                {destaque && <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave">Próximos</h2>}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">{demais.map(c => renderCard(c))}</div>
+            {proximos.length > 0 && (
+              <section aria-label="Próximos chamados" className="space-y-2">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-tema-suave">Próximos chamados ({proximos.length})</h2>
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                  {proximos.map(c => (
+                    <li key={c.id}>
+                      {/* So abre os detalhes: nao muda o status. Iniciar deslocamento fica nos detalhes. */}
+                      <button
+                        type="button"
+                        onClick={() => setSelecao({ id: c.id, reserva: c })}
+                        className="w-full min-h-[48px] flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border border-tema-linha bg-tema-superficie text-left hover:border-tema-linha-forte transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50"
+                        style={{ boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)' }}
+                        aria-label={`${c.cliente}. Abrir detalhes`}
+                      >
+                        <span className="text-base font-semibold text-tema-tinta break-words min-w-0">{c.cliente}</span>
+                        <ChevronRight className="w-5 h-5 text-tema-apagado flex-shrink-0" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
           </>
