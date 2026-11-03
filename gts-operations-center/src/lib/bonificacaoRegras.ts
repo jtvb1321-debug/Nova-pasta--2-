@@ -53,7 +53,7 @@ export interface ChamadoFechado {
   dentroSlaResolucao: boolean | null
   avaliacao: { nota: number | null; statusAnalise: 'PENDENTE' | 'APROVADA' | 'INVALIDADA'; respondida: boolean } | null
   // Conferencia da devolucao (so retirada): status null = ainda nao conferida
-  devolucao?: { status: string | null; motivo: string | null; por: string | null } | null
+  devolucao?: { status: string | null; motivo: string | null; por: string | null; em?: Date | null } | null
 }
 
 export interface RechamadaConfirmada {
@@ -70,6 +70,9 @@ export interface ItemBonus {
   data: Date
   aviso?: string             // ex.: conferir devolucao da retirada
   devolucao?: StatusDevolucao // so na retirada
+  conferidoPor?: string | null
+  conferidoEm?: Date | null
+  conferidoMotivo?: string | null
 }
 
 export type StatusDevolucao = 'PENDENTE' | 'CONFIRMADA' | 'RECUSADA'
@@ -133,7 +136,7 @@ export function calcularBonusEquipes(chamados: ChamadoFechado[], rechamadas: Rec
       const aviso = devolucao === 'CONFIRMADA' ? `Devolução confirmada${dv?.por ? ` por ${dv.por}` : ''}`
         : devolucao === 'RECUSADA' ? `Devolução reprovada${dv?.motivo ? `: ${dv.motivo}` : ''} · sem crédito`
         : 'Confira a devolução do equipamento'
-      lancar(e, { ...base, evento: 'RETIRADA_CONCLUIDA', aviso, devolucao, centavos: devolucao === 'RECUSADA' ? 0 : undefined })
+      lancar(e, { ...base, evento: 'RETIRADA_CONCLUIDA', aviso, devolucao, conferidoPor: dv?.por ?? null, conferidoEm: dv?.em ?? null, conferidoMotivo: dv?.motivo ?? null, centavos: devolucao === 'RECUSADA' ? 0 : undefined })
     }
     else lancar(e, { ...base, evento: 'CHAMADO_CONCLUIDO' })
 

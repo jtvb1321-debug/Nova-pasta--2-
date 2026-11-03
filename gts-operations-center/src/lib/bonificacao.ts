@@ -31,7 +31,7 @@ export async function calcularBonificacao(f: FiltrosDesempenho) {
       select: {
         id: true, cliente: true, tipo: true, equipeId: true, dataFim: true, fotos: true,
         dentroSlaResposta: true, dentroSlaResolucao: true,
-        devolucaoStatus: true, devolucaoMotivo: true, devolucaoPor: true,
+        devolucaoStatus: true, devolucaoMotivo: true, devolucaoPor: true, devolucaoEm: true,
         avaliacao: { select: { nota: true, statusAnalise: true, respondidoEm: true } },
       },
     }),
@@ -60,7 +60,7 @@ export async function calcularBonificacao(f: FiltrosDesempenho) {
     qtdFotos: contarFotos(c.fotos),
     dentroSlaResposta: c.dentroSlaResposta,
     dentroSlaResolucao: c.dentroSlaResolucao,
-    devolucao: c.tipo === 'RETIRADA' ? { status: c.devolucaoStatus, motivo: c.devolucaoMotivo, por: c.devolucaoPor } : null,
+    devolucao: c.tipo === 'RETIRADA' ? { status: c.devolucaoStatus, motivo: c.devolucaoMotivo, por: c.devolucaoPor, em: c.devolucaoEm } : null,
     avaliacao: c.avaliacao ? { nota: c.avaliacao.nota, statusAnalise: c.avaliacao.statusAnalise, respondida: !!c.avaliacao.respondidoEm } : null,
   }))
   const confirmadas: RechamadaConfirmada[] = rechamadas

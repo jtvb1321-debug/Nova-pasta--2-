@@ -2,7 +2,8 @@
 
 import { Fragment, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle, ChevronDown, Info, Loader2, Medal, RotateCcw, Trophy, XCircle } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { AlertTriangle, CheckCircle, ChevronDown, Info, Loader2, FileText, Medal, RotateCcw, Trophy, XCircle } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { numeroOS } from '@/lib/ordemServico'
@@ -13,7 +14,7 @@ import type { FiltrosTela, Periodo } from './DesempenhoView'
 // Sub-aba Ranking e bonificacao (so ADMIN): o sistema calcula creditos e debitos de cada
 // equipe pelos chamados fechados e avaliacoes; no fechamento do mes o admin confere e aprova.
 
-interface Item { chamadoId: string; cliente: string; evento: TipoEvento; centavos: number; data: string; aviso?: string; devolucao?: StatusDevolucao }
+interface Item { chamadoId: string; cliente: string; evento: TipoEvento; centavos: number; data: string; aviso?: string; devolucao?: StatusDevolucao; conferidoPor?: string | null; conferidoEm?: string | null; conferidoMotivo?: string | null }
 interface Pendencia { chamadoId: string; cliente: string; motivo: string; centavosSeAprovada: number }
 interface LinhaEquipe {
   equipeId: string; equipe: string; tecnicos: string[]; posicao: number
@@ -68,6 +69,8 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
   const [aberta, setAberta] = useState<string | null>(null)
   const [verRegras, setVerRegras] = useState(false)
   const [chamadoAberto, setChamadoAberto] = useState<string | null>(null)
+  const { data: sessao } = useSession()
+  const [gerandoPdf, setGerandoPdf] = useState(false)
   const [reprovando, setReprovando] = useState<string | null>(null)   // chamado cuja devolucao esta sendo reprovada
   const [motivoReprova, setMotivoReprova] = useState('')
 
@@ -135,6 +138,23 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
     )
   }
 
+  // Comprovante em PDF: como o valor a receber foi calculado (uma equipe ou todas as que estao na tela).
+  async function baixarComprovante(lista: LinhaEquipe[]) {
+    if (!data || lista.length === 0) return
+    setGerandoPdf(true)
+    try {
+      const [{ montarConteudoBonificacao }, { renderizarPdf }] = await Promise.all([import('@/lib/bonificacaoPdf'), import('@/lib/diagnosticoConexao/relatorio')])
+      const quem = (sessao?.user as any)?.name || (sessao?.user as any)?.email || 'Administrador'
+      await renderizarPdf(montarConteudoBonificacao({ periodo: data.periodo, equipes: lista }, quem))
+      toast({ title: 'Comprovante gerado', variant: 'success' })
+    } catch (e) {
+      console.error(e)
+      toast({ title: 'Não foi possível gerar o comprovante', variant: 'destructive' })
+    } finally {
+      setGerandoPdf(false)
+    }
+  }
+
   const pendentesAprovacao = data.equipes.filter(e => !e.fechamento)
   const aprovadas = data.equipes.length - pendentesAprovacao.length
 
@@ -195,9 +215,19 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
       <div className="card-orbia overflow-hidden">
         <div className="px-5 pt-4 pb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-sm font-bold text-tema-tinta">Ranking das equipes</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => baixarComprovante(data.equipes)}
+              disabled={gerandoPdf || data.equipes.length === 0}
+              className="text-xs font-semibold text-tema-suave hover:text-orange-700 inline-flex items-center gap-1 disabled:opacity-50"
+            >
+              {gerandoPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden /> : <FileText className="w-3.5 h-3.5" aria-hidden />} Comprovante de todas (PDF)
+            </button>
           <button type="button" onClick={() => setVerRegras(v => !v)} className="text-xs font-semibold text-tema-suave hover:text-orange-700 inline-flex items-center gap-1" aria-expanded={verRegras}>
             Tabela de valores <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', verRegras && 'rotate-180')} aria-hidden />
           </button>
+          </div>
         </div>
 
         {verRegras && (
@@ -282,7 +312,17 @@ export function BonificacaoDesempenho({ filtros, onMudarPeriodo }: { filtros: Fi
                             </div>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-right">
+                        <td className="px-5 py-3 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => baixarComprovante([e])}
+                            disabled={gerandoPdf}
+                            aria-label={`Baixar comprovante em PDF de ${e.equipe}`}
+                            title="Comprovante em PDF"
+                            className="p-1.5 rounded-lg text-tema-suave hover:text-orange-700 hover:bg-orange-500/10 disabled:opacity-50"
+                          >
+                            <FileText className="w-4 h-4" aria-hidden />
+                          </button>
                           <button
                             type="button"
                             onClick={() => setAberta(expandida ? null : e.equipeId)}
