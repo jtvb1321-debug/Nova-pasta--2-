@@ -13,6 +13,7 @@ import { enviarWhatsApp } from '@/lib/whatsapp'
 import { calcularSlaResposta, calcularSlaResolucao, calcularInicioSla, inicioSlaEfetivo } from '@/lib/sla'
 import { garantirAvaliacao } from '@/lib/avaliacao'
 import { getClientIp } from '@/lib/getClientIp'
+import { ACAO_EVIDENCIAS, detalheEvidencias } from '@/lib/relatorioEace'
 
 // Aceita o JSON (string) ou o array de URLs das evidencias.
 function listaDeFotos(valor: unknown): string[] {
@@ -413,6 +414,10 @@ export async function PATCH(
           resumoAnterior: ultimoDiagnostico.diagnosticoAnterior?.resumo as any,
         } : undefined,
       }).then(r => {
+        // Resultado das fotos de evidencia no grupo: e' o que o relatorio EACE usa para dizer "enviadas".
+        if (r.evidencias) {
+          registrarLog({ usuarioId: (session.user as any)?.id, acao: ACAO_EVIDENCIAS, entidade: 'Chamado', entidadeId: id, detalhes: detalheEvidencias(r.evidencias.enviadas, r.evidencias.total) }).catch(() => {})
+        }
         if (!r.ok) {
           console.error('[Telegram] finalizacao do chamado', id, 'nao foi enviada:', r.erro)
           registrarLog({ usuarioId: (session.user as any)?.id, acao: 'TELEGRAM_FALHA', entidade: 'Chamado', entidadeId: id, detalhes: `Aviso de finalização não enviado ao Telegram: ${r.erro ?? 'motivo desconhecido'}`.slice(0, 300) }).catch(() => {})

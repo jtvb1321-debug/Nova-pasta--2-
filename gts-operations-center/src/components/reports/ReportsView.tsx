@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3, FileText, Download, Calendar,
   Users, Package, ClipboardList, TrendingUp,
-  Loader2, CheckCircle, CalendarDays, RefreshCw, UserX, UserMinus
+  Loader2, CheckCircle, CalendarDays, RefreshCw, UserX, UserMinus, GraduationCap
 } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
@@ -14,8 +14,10 @@ import { calcularDesempenhoEquipes, totalDesempenho, type LinhaEquipe } from './
 import { IndiceAvaliacao } from './IndiceAvaliacao'
 import { CanceladosNaoAtivosPreview } from './CanceladosNaoAtivosPreview'
 import type { DadosRelatorioNaoAtivo } from '@/lib/cancelamentoNaoAtivoPdf'
+import { RelatorioEacePreview, type DadosEacePreview } from './RelatorioEacePreview'
+import { filtrarEace, type FiltroEnvio } from '@/lib/relatorioEace'
 
-type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados' | 'cancelados_nao_ativos'
+type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados' | 'cancelados_nao_ativos' | 'eace_finalizados'
 
 const RELATORIOS = [
   { id: 'chamados_qualidade' as TipoRelatorio, title: 'Chamados & Qualidade', description: 'Historico de atendimentos, reincidencia e conformidade de SLA no mesmo periodo', icon: ClipboardList, cor: 'text-blue-700 bg-blue-500/10' },
@@ -24,6 +26,7 @@ const RELATORIOS = [
   { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-700 bg-orange-500/10' },
   { id: 'cancelados'    as TipoRelatorio, title: 'Cancelados (IXC)', description: 'Clientes cancelados no mes, consultado direto na API do IXC', icon: UserX, cor: 'text-red-700 bg-red-500/10' },
   { id: 'cancelados_nao_ativos' as TipoRelatorio, title: 'Cancelamento de não ativo', description: 'Cancelados que já estavam suspensos ou bloqueados, direto do IXC', icon: UserMinus, cor: 'text-amber-700 bg-amber-500/10' },
+  { id: 'eace_finalizados' as TipoRelatorio, title: 'EACE — Finalizados', description: 'Chamados das escolas finalizados, com as evidências enviadas ao grupo do Telegram', icon: GraduationCap, cor: 'text-emerald-700 bg-emerald-500/10' },
 ]
 
 async function fetchEquipes() {
@@ -39,6 +42,10 @@ function hojeISO() {
 function mesAtualISO() {
   const hoje = new Date()
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+}
+
+function primeiroDiaDoMesISO() {
+  return `${mesAtualISO()}-01`
 }
 
 // Recalcula total/porMotivo/porCidade a partir da lista de cancelados atual
@@ -87,6 +94,14 @@ export function ReportsView() {
   const [dadosNaoAtivos, setDadosNaoAtivos] = useState<(DadosRelatorioNaoAtivo & { geradoPor?: string }) | null>(null)
   const [carregandoNaoAtivos, setCarregandoNaoAtivos] = useState(false)
 
+  const [inicioEace, setInicioEace] = useState(primeiroDiaDoMesISO())
+  const [fimEace, setFimEace] = useState(hojeISO())
+  const [filtroEace, setFiltroEace] = useState<FiltroEnvio>('enviadas')
+  const [fotosNoPdfEace, setFotosNoPdfEace] = useState(true)
+  const [progressoEace, setProgressoEace] = useState('')
+  const [dadosEace, setDadosEace] = useState<(DadosEacePreview & { geradoPor?: string }) | null>(null)
+  const [carregandoEace, setCarregandoEace] = useState(false)
+
   const [dadosCancelados, setDadosCancelados] = useState<any>(null)
   const [carregandoCancelados, setCarregandoCancelados] = useState(false)
 
@@ -133,6 +148,20 @@ export function ReportsView() {
       toast({ title: err.message || 'Erro ao carregar cancelamentos do IXC', variant: 'destructive' })
     } finally {
       setCarregandoCancelados(false)
+    }
+  }
+
+  async function carregarEace() {
+    setCarregandoEace(true)
+    try {
+      const res = await fetch(`/api/reports/eace-finalizados?inicio=${inicioEace}&fim=${fimEace}`)
+      const corpo = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(corpo?.error || 'Erro ao carregar o relatório EACE')
+      setDadosEace(corpo)
+    } catch (err: any) {
+      toast({ title: err.message || 'Erro ao carregar o relatório EACE', variant: 'destructive' })
+    } finally {
+      setCarregandoEace(false)
     }
   }
 
@@ -219,6 +248,7 @@ export function ReportsView() {
     tipo === 'comercial'          ? dadosComercial :
     tipo === 'diario'             ? dadosDiario :
     tipo === 'cancelados_nao_ativos' ? dadosNaoAtivos :
+    tipo === 'eace_finalizados' ? dadosEace :
     dadosCancelados
 
   const carregando =
@@ -227,6 +257,7 @@ export function ReportsView() {
     tipo === 'comercial'          ? carregandoComercial :
     tipo === 'diario'             ? carregandoDiario :
     tipo === 'cancelados_nao_ativos' ? carregandoNaoAtivos :
+    tipo === 'eace_finalizados' ? carregandoEace :
     carregandoCancelados
 
   function carregar() {
@@ -235,6 +266,7 @@ export function ReportsView() {
     if (tipo === 'comercial')          return carregarComercial()
     if (tipo === 'diario')             return carregarDiario()
     if (tipo === 'cancelados_nao_ativos') return carregarNaoAtivos()
+    if (tipo === 'eace_finalizados')   return carregarEace()
     return carregarCancelados()
   }
 
@@ -270,6 +302,16 @@ export function ReportsView() {
         const { montarConteudoNaoAtivo } = await import('@/lib/cancelamentoNaoAtivoPdf')
         const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio')
         await renderizarPdf(montarConteudoNaoAtivo(dadosNaoAtivos, dadosNaoAtivos.geradoPor ?? 'Usuário'))
+      } else if (tipo === 'eace_finalizados' && dadosEace) {
+        const linhas = filtrarEace(dadosEace.linhas, filtroEace)
+        const { montarConteudoEace } = await import('@/lib/relatorioEacePdf')
+        const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio')
+        let imagens: Record<string, string | null> | undefined
+        if (fotosNoPdfEace && linhas.length) {
+          const { carregarImagensParaPdf } = await import('@/lib/relatorioEaceImagens')
+          imagens = await carregarImagensParaPdf(linhas.flatMap(l => l.fotos.map(f => f.url)), (feitas, total) => setProgressoEace(`Preparando fotos ${feitas}/${total}...`))
+        }
+        await renderizarPdf(montarConteudoEace({ inicio: dadosEace.inicio, fim: dadosEace.fim, filtro: filtroEace, linhas, resumo: dadosEace.resumo }, dadosEace.geradoPor ?? 'Usuário', imagens))
       } else if (tipo === 'cancelados' && dadosCancelados) {
         const mesLabel = new Date(mesCancelados + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
         const agregados = recomputarAgregadosCancelados(dadosCancelados.cancelados)
@@ -282,6 +324,7 @@ export function ReportsView() {
       toast({ title: 'Erro ao gerar PDF', variant: 'destructive' })
     } finally {
       setGerando(false)
+      setProgressoEace('')
     }
   }
 
@@ -394,6 +437,26 @@ export function ReportsView() {
                   <p className="text-xs text-tema-apagado mt-1.5">O contrato precisa estar suspenso ou bloqueado há pelo menos esses dias antes do cancelamento. Consulta direto no IXC.</p>
                 </div>
               </div>
+            ) : tipo === 'eace_finalizados' ? (
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="eace-inicio" className="block text-xs font-medium text-tema-suave mb-1.5">Data inicial</label>
+                  <input id="eace-inicio" type="date" value={inicioEace} max={fimEace} onChange={e => { if (e.target.value) { setInicioEace(e.target.value); setDadosEace(null) } }} className="w-full gts-input" />
+                </div>
+                <div>
+                  <label htmlFor="eace-fim" className="block text-xs font-medium text-tema-suave mb-1.5">Data final</label>
+                  <input id="eace-fim" type="date" value={fimEace} min={inicioEace} max={hojeISO()} onChange={e => { if (e.target.value) { setFimEace(e.target.value); setDadosEace(null) } }} className="w-full gts-input" />
+                  <p className="text-xs text-tema-apagado mt-1.5">Vale a data em que o chamado foi finalizado.</p>
+                </div>
+                <label htmlFor="eace-fotos" className="flex items-start gap-2 text-xs text-tema-suave cursor-pointer">
+                  <input id="eace-fotos" type="checkbox" checked={fotosNoPdfEace} onChange={e => setFotosNoPdfEace(e.target.checked)} className="mt-0.5" />
+                  <span>
+                    Incluir o detalhe e as fotos de cada chamado no PDF
+                    <span className="block text-tema-apagado">O PDF fica maior e leva mais tempo para gerar.</span>
+                  </span>
+                </label>
+                {gerando && progressoEace && <p role="status" className="text-xs text-tema-suave">{progressoEace}</p>}
+              </div>
             ) : tipo === 'cancelados' ? (
               <div>
                 <label className="block text-xs font-medium text-tema-suave mb-1.5">Mes</label>
@@ -499,7 +562,11 @@ export function ReportsView() {
               <div className="text-center py-16">
                 <relatorioAtual.icon className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
                 <p className="text-tema-suave font-medium">Carregue os dados para revisar</p>
-                <p className="text-tema-apagado text-sm mt-1">Clique em &quot;Carregar Dados&quot; ao lado. Voce podera corrigir textos, numeros e remover linhas antes de gerar o PDF.</p>
+                <p className="text-tema-apagado text-sm mt-1">
+                  {tipo === 'eace_finalizados' || tipo === 'cancelados_nao_ativos'
+                    ? 'Escolha o período e clique em "Carregar Dados" ao lado para ver o relatório antes de baixar o PDF.'
+                    : 'Clique em "Carregar Dados" ao lado. Voce podera corrigir textos, numeros e remover linhas antes de gerar o PDF.'}
+                </p>
               </div>
             ) : tipo === 'chamados_qualidade' && dadosChamadosQualidade ? (
               <div className="space-y-6">
@@ -1058,6 +1125,8 @@ export function ReportsView() {
               </div>
             ) : tipo === 'cancelados_nao_ativos' && dadosNaoAtivos ? (
               <CanceladosNaoAtivosPreview dados={dadosNaoAtivos} />
+            ) : tipo === 'eace_finalizados' && dadosEace ? (
+              <RelatorioEacePreview dados={dadosEace} filtro={filtroEace} onFiltro={setFiltroEace} />
             ) : tipo === 'cancelados' && dadosCancelados ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -1120,9 +1189,14 @@ export function ReportsView() {
               </div>
             ) : null}
 
-            {dadosCarregados && tipo !== 'cancelados_nao_ativos' && (
+            {dadosCarregados && tipo !== 'cancelados_nao_ativos' && tipo !== 'eace_finalizados' && (
               <p className="text-xs text-tema-apagado text-center mt-4">
                 Corrija o que precisar acima e clique em <strong className="text-tema-tinta">Gerar e Baixar PDF</strong>. As correcoes valem so para este PDF.
+              </p>
+            )}
+            {dadosCarregados && tipo === 'eace_finalizados' && (
+              <p className="text-xs text-tema-apagado text-center mt-4">
+                O PDF segue o filtro de envio escolhido na lista. A busca por texto vale só para o CSV.
               </p>
             )}
             {dadosCarregados && tipo === 'cancelados_nao_ativos' && (

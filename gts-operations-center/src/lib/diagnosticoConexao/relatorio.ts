@@ -27,6 +27,8 @@ export interface SecaoRelatorio {
   pares?: [string, string][]
   tabela?: TabelaRelatorio
   lista?: string[]
+  /** Fotos em grade (3 por linha). dataUrl null = arquivo indisponivel (aparece uma moldura avisando). */
+  galeria?: { dataUrl: string | null; legenda: string }[]
 }
 export interface ConteudoRelatorio {
   titulo: string
@@ -342,6 +344,37 @@ export async function montarPdf(c: ConteudoRelatorio, logo: string | null, logoO
         doc.text(linhas, margem + 2, y); y += linhas.length * 4.6 + 1
       }
       y += 2
+    }
+    if (s.galeria && s.galeria.length) {
+      const colunas = 3, vao = 4
+      const larg = (util - vao * (colunas - 1)) / colunas
+      const altImg = 46
+      for (let i = 0; i < s.galeria.length; i += colunas) {
+        garantir(altImg + 12)
+        s.galeria.slice(i, i + colunas).forEach((f, j) => {
+          const x = margem + j * (larg + vao)
+          doc.setDrawColor(150); doc.setLineWidth(0.2); doc.rect(x, y, larg, altImg)
+          let desenhou = false
+          if (f.dataUrl) {
+            try {
+              const p = doc.getImageProperties(f.dataUrl)
+              const escala = Math.min((larg - 2) / p.width, (altImg - 2) / p.height)
+              const w = p.width * escala, h = p.height * escala
+              doc.addImage(f.dataUrl, p.fileType, x + (larg - w) / 2, y + (altImg - h) / 2, w, h)
+              desenhou = true
+            } catch { /* cai na moldura de foto indisponivel */ }
+          }
+          if (!desenhou) {
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(90)
+            doc.text('Foto indisponível', x + larg / 2, y + altImg / 2, { align: 'center' })
+            doc.setTextColor(0)
+          }
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(0)
+          const legenda = (doc.splitTextToSize(f.legenda, larg) as string[]).slice(0, 2)
+          doc.text(legenda, x, y + altImg + 4)
+        })
+        y += altImg + 11
+      }
     }
     y += 3
   }

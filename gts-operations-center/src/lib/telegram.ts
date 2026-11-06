@@ -12,7 +12,12 @@ import { gerarImagemAgenda } from './agendaImagem'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const GROUP_OS  = process.env.TELEGRAM_GROUP_OS
 
-export interface ResultadoEnvio { ok: boolean; erro?: string }
+export interface ResultadoEnvio {
+  ok: boolean
+  erro?: string
+  /** Aviso de finalizacao: quantas fotos de evidencia chegaram ao grupo (de quantas deveriam). Alimenta o relatorio EACE. */
+  evidencias?: { total: number; enviadas: number }
+}
 
 const LIMITE_TEXTO = 4000 // o Telegram recusa mensagem acima de 4096 caracteres
 
@@ -168,8 +173,9 @@ function montarMensagem(blocos: Array<string | string[] | null | undefined | fal
   return linhas.join('\n')
 }
 
-async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
-  if (!BOT_TOKEN || !chatId) return
+/** Devolve true so quando o Telegram aceitou a foto (arquivo ausente no servidor, token/grupo vazio ou recusa contam como falha). */
+async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string): Promise<boolean> {
+  if (!BOT_TOKEN || !chatId) return false
   try {
     const caminhoRelativo = fotoUrl.startsWith('/') ? fotoUrl.slice(1) : fotoUrl
     const caminhoArquivo = join(process.cwd(), 'public', caminhoRelativo)
@@ -190,9 +196,12 @@ async function enviarFoto(chatId: string, fotoUrl: string, legenda?: string) {
     if (!res.ok) {
       const erro = await res.text()
       console.error('Telegram sendPhoto falhou:', res.status, erro)
+      return false
     }
+    return true
   } catch (error) {
     console.error('Erro ao enviar foto Telegram:', error)
+    return false
   }
 }
 
@@ -519,15 +528,18 @@ export async function notificarFinalizacao(chamado: {
 
   // Enviar fotos uma a uma
   if (chamado.fotos && chamado.fotos.length > 0) {
+    let enviadas = 0
     for (let i = 0; i < chamado.fotos.length; i++) {
-      await enviarFoto(
+      const ok = await enviarFoto(
         GROUP_OS!,
         chamado.fotos[i],
         i === 0 ? `📸 Evidência ${i + 1}/${chamado.fotos.length} — ${esc(chamado.cliente)}` : `📸 Evidência ${i + 1}/${chamado.fotos.length}`
       )
+      if (ok) enviadas++
       // Pequena pausa para nao sobrecarregar a API
       await new Promise(r => setTimeout(r, 500))
     }
+    return { ...resultado, evidencias: { total: chamado.fotos.length, enviadas } }
   }
   return resultado
 }

@@ -110,3 +110,34 @@ describe('telegram: diagnostico da configuracao (sem enviar nada)', () => {
     assert.match((await tg.diagnosticarTelegram()).grupo.erro!, /chat not found/)
   })
 })
+
+describe('telegram: resultado das fotos de evidencia (alimenta o relatorio EACE)', () => {
+  it('conta so as fotos que o Telegram aceitou: recusada e arquivo ausente nao contam', async () => {
+    const { writeFile, mkdir, rm } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+    const dir = join(process.cwd(), 'public', 'uploads', 'evidencias')
+    await mkdir(dir, { recursive: true })
+    const a = '_teste_eace_a.jpg', b = '_teste_eace_b.jpg'
+    await writeFile(join(dir, a), Buffer.from('a')); await writeFile(join(dir, b), Buffer.from('b'))
+    try {
+      let fotos = 0
+      globalThis.fetch = (async (url: any) => {
+        if (String(url).endsWith('/sendPhoto')) { fotos++; return new Response(JSON.stringify({ ok: fotos === 1 }), { status: fotos === 1 ? 200 : 400 }) }
+        return new Response(JSON.stringify({ ok: true, result: {} }), { status: 200 })
+      }) as typeof fetch
+      const r = await tg.notificarFinalizacao({
+        cliente: 'EMEF Teste', cidade: 'Castanhal', tipo: 'SUPORTE', equipe: 'Equipe 01',
+        fotos: [`/uploads/evidencias/${a}`, `/uploads/evidencias/${b}`, '/uploads/evidencias/_teste_eace_ausente.jpg'],
+      })
+      assert.equal(r.ok, true)
+      assert.deepEqual(r.evidencias, { total: 3, enviadas: 1 })
+    } finally {
+      await rm(join(dir, a), { force: true }); await rm(join(dir, b), { force: true })
+    }
+  })
+  it('sem fotos nao ha contagem de evidencias', async () => {
+    simular([OK])
+    const r = await tg.notificarFinalizacao({ cliente: 'X', cidade: 'Y', tipo: 'SUPORTE', equipe: 'Equipe', fotos: [] })
+    assert.equal(r.evidencias, undefined)
+  })
+})
