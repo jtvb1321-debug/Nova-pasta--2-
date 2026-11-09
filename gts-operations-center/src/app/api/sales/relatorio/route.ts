@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { diaDeBrasilia, limitesDoPeriodo } from '@/lib/periodoBrasilia'
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -15,21 +16,12 @@ export async function GET(request: NextRequest) {
   const dataInicioStr = searchParams.get('dataInicio')
   const dataFimStr    = searchParams.get('dataFim')
 
-  let dataInicio: Date
-  let dataFim: Date
-
-  if (dataInicioStr && dataFimStr) {
-    dataInicio = new Date(dataInicioStr)
-    dataInicio.setHours(0, 0, 0, 0)
-    dataFim = new Date(dataFimStr)
-    dataFim.setHours(23, 59, 59, 999)
-  } else {
-    // Padrao: hoje
-    dataInicio = new Date()
-    dataInicio.setHours(0, 0, 0, 0)
-    dataFim = new Date()
-    dataFim.setHours(23, 59, 59, 999)
-  }
+  // Dia de Brasilia (00:00 a 23:59:59), nao o do fuso do servidor. Sem datas: hoje.
+  const hoje = diaDeBrasilia()
+  const limites = limitesDoPeriodo(dataInicioStr ?? hoje, dataFimStr ?? hoje)
+  if (!limites) return NextResponse.json({ error: 'Periodo invalido: informe dataInicio e dataFim (AAAA-MM-DD), com o inicio antes do fim.' }, { status: 400 })
+  const dataInicio = limites.de
+  const dataFim = limites.ate
 
   // Buscar todas as vendas no periodo
   const vendas = await prisma.venda.findMany({

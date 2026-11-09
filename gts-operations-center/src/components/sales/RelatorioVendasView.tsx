@@ -11,15 +11,20 @@ import {
 import { cn, formatCurrency, formatDateTime } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { MetricCard } from '@/components/ui/MetricCard'
+import { diaDeBrasilia } from '@/lib/periodoBrasilia'
 
+// Dia de Brasilia (nao o de UTC): depois das 21h o "hoje" em UTC ja e' o dia seguinte.
 function hojeISO() {
-  return new Date().toISOString().split('T')[0]
+  return diaDeBrasilia()
 }
+
+const DIA_MS = 86_400_000
 
 async function fetchRelatorio(dataInicio: string, dataFim: string) {
   const q = new URLSearchParams({ dataInicio, dataFim })
   const res = await fetch(`/api/sales/relatorio?${q}`)
-  if (!res.ok) return null
+  // Antes um erro virava "null" e a tela mostrava tudo zerado, como se nao houvesse vendas.
+  if (!res.ok) throw new Error(res.status === 403 ? 'Sem permissão para ver este relatório.' : 'Não foi possível carregar o relatório agora.')
   return res.json()
 }
 
@@ -36,32 +41,30 @@ export function RelatorioVendasView() {
   const [expandido, setExpandido] = useState<string | null>(null)
   const [gerandoPDF, setGerandoPDF] = useState(false)
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['relatorio-vendas', dataInicio, dataFim],
     queryFn: () => fetchRelatorio(dataInicio, dataFim),
+    retry: 1,
   })
 
   function aplicarPeriodoRapido(tipo: string) {
     setPeriodoRapido(tipo)
-    const hoje = new Date()
+    const agora = Date.now()
+    const hoje = hojeISO()
 
     if (tipo === 'hoje') {
-      setDataInicio(hojeISO())
-      setDataFim(hojeISO())
+      setDataInicio(hoje)
+      setDataFim(hoje)
     } else if (tipo === 'ontem') {
-      const ontem = new Date(hoje)
-      ontem.setDate(hoje.getDate() - 1)
-      setDataInicio(ontem.toISOString().split('T')[0])
-      setDataFim(ontem.toISOString().split('T')[0])
+      const ontem = diaDeBrasilia(agora - DIA_MS)
+      setDataInicio(ontem)
+      setDataFim(ontem)
     } else if (tipo === 'semana') {
-      const inicio = new Date(hoje)
-      inicio.setDate(hoje.getDate() - 7)
-      setDataInicio(inicio.toISOString().split('T')[0])
-      setDataFim(hojeISO())
+      setDataInicio(diaDeBrasilia(agora - 7 * DIA_MS))
+      setDataFim(hoje)
     } else if (tipo === 'mes') {
-      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-      setDataInicio(inicio.toISOString().split('T')[0])
-      setDataFim(hojeISO())
+      setDataInicio(`${hoje.slice(0, 8)}01`)
+      setDataFim(hoje)
     }
   }
 
@@ -157,6 +160,12 @@ export function RelatorioVendasView() {
           </div>
         </div>
       </div>
+
+      {isError && (
+        <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
+          {(error as Error)?.message || 'Não foi possível carregar o relatório agora.'} Os valores abaixo não são reais: use o botão de atualizar para tentar de novo.
+        </div>
+      )}
 
       {/* KPIs gerais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -201,12 +201,5 @@ export function resumirEace(linhas: LinhaEace[]): ResumoEace {
   }
 }
 
-/** Limites do periodo em horario de Brasilia (o servidor pode estar em UTC): dia inicial 00:00 ate o dia final 23:59:59. */
-export function limitesDoPeriodo(inicio: string, fim: string): { de: Date; ate: Date } | null {
-  const ok = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
-  if (!ok(inicio) || !ok(fim)) return null
-  const de = new Date(`${inicio}T00:00:00-03:00`)
-  const ate = new Date(`${fim}T23:59:59.999-03:00`)
-  if (Number.isNaN(de.getTime()) || Number.isNaN(ate.getTime()) || de > ate) return null
-  return { de, ate }
-}
+// Mantido aqui por compatibilidade: a implementacao fica em periodoBrasilia.ts (usada tambem pelos relatorios de vendas).
+export { limitesDoPeriodo } from './periodoBrasilia'
