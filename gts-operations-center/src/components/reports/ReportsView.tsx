@@ -16,8 +16,10 @@ import { CanceladosNaoAtivosPreview } from './CanceladosNaoAtivosPreview'
 import type { DadosRelatorioNaoAtivo } from '@/lib/cancelamentoNaoAtivoPdf'
 import { RelatorioEacePreview, type DadosEacePreview } from './RelatorioEacePreview'
 import { filtrarEace, type FiltroEnvio } from '@/lib/relatorioEace'
+import { RelatorioVendasMensalPreview } from './RelatorioVendasMensalPreview'
+import type { DadosVendasMensal } from '@/lib/relatorioVendasMensalPdf'
 
-type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados' | 'cancelados_nao_ativos' | 'eace_finalizados'
+type TipoRelatorio = 'chamados_qualidade' | 'estoque' | 'comercial' | 'diario' | 'cancelados' | 'cancelados_nao_ativos' | 'eace_finalizados' | 'vendas_mensal'
 
 const RELATORIOS = [
   { id: 'chamados_qualidade' as TipoRelatorio, title: 'Chamados & Qualidade', description: 'Historico de atendimentos, reincidencia e conformidade de SLA no mesmo periodo', icon: ClipboardList, cor: 'text-blue-700 bg-blue-500/10' },
@@ -26,6 +28,7 @@ const RELATORIOS = [
   { id: 'diario'        as TipoRelatorio, title: 'Diario',        description: 'Chamados, instalacoes, vendas, atendimento e ponto por equipe no dia', icon: CalendarDays, cor: 'text-orange-700 bg-orange-500/10' },
   { id: 'cancelados'    as TipoRelatorio, title: 'Cancelados (IXC)', description: 'Clientes cancelados no mes, consultado direto na API do IXC', icon: UserX, cor: 'text-red-700 bg-red-500/10' },
   { id: 'cancelados_nao_ativos' as TipoRelatorio, title: 'Cancelamento de não ativo', description: 'Cancelados que já estavam suspensos ou bloqueados, direto do IXC', icon: UserMinus, cor: 'text-amber-700 bg-amber-500/10' },
+  { id: 'vendas_mensal' as TipoRelatorio, title: 'Vendas por mês', description: 'Total de cada mês e total geral do período escolhido (ex.: agosto a outubro)', icon: BarChart3, cor: 'text-emerald-700 bg-emerald-500/10' },
   { id: 'eace_finalizados' as TipoRelatorio, title: 'EACE — Finalizados', description: 'Chamados das escolas finalizados, com as evidências enviadas ao grupo do Telegram', icon: GraduationCap, cor: 'text-emerald-700 bg-emerald-500/10' },
 ]
 
@@ -46,6 +49,14 @@ function mesAtualISO() {
 
 function primeiroDiaDoMesISO() {
   return `${mesAtualISO()}-01`
+}
+
+/** AAAA-MM de `n` meses antes do mes atual. */
+function mesAntesISO(n: number) {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() - n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 // Recalcula total/porMotivo/porCidade a partir da lista de cancelados atual
@@ -93,6 +104,11 @@ export function ReportsView() {
   const [minDiasNaoAtivos, setMinDiasNaoAtivos] = useState('2')
   const [dadosNaoAtivos, setDadosNaoAtivos] = useState<(DadosRelatorioNaoAtivo & { geradoPor?: string }) | null>(null)
   const [carregandoNaoAtivos, setCarregandoNaoAtivos] = useState(false)
+
+  const [inicioVendas, setInicioVendas] = useState(mesAntesISO(2))
+  const [fimVendas, setFimVendas] = useState(mesAtualISO())
+  const [dadosVendas, setDadosVendas] = useState<(DadosVendasMensal & { geradoPor?: string }) | null>(null)
+  const [carregandoVendas, setCarregandoVendas] = useState(false)
 
   const [inicioEace, setInicioEace] = useState(primeiroDiaDoMesISO())
   const [fimEace, setFimEace] = useState(hojeISO())
@@ -148,6 +164,20 @@ export function ReportsView() {
       toast({ title: err.message || 'Erro ao carregar cancelamentos do IXC', variant: 'destructive' })
     } finally {
       setCarregandoCancelados(false)
+    }
+  }
+
+  async function carregarVendas() {
+    setCarregandoVendas(true)
+    try {
+      const res = await fetch(`/api/reports/vendas-mensal?inicio=${inicioVendas}&fim=${fimVendas}`)
+      const corpo = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(res.status === 403 ? 'Este relatório é só para Administrador e Gestor.' : corpo?.error || 'Erro ao carregar as vendas')
+      setDadosVendas(corpo)
+    } catch (err: any) {
+      toast({ title: err.message || 'Erro ao carregar as vendas', variant: 'destructive' })
+    } finally {
+      setCarregandoVendas(false)
     }
   }
 
@@ -249,6 +279,7 @@ export function ReportsView() {
     tipo === 'diario'             ? dadosDiario :
     tipo === 'cancelados_nao_ativos' ? dadosNaoAtivos :
     tipo === 'eace_finalizados' ? dadosEace :
+    tipo === 'vendas_mensal' ? dadosVendas :
     dadosCancelados
 
   const carregando =
@@ -258,6 +289,7 @@ export function ReportsView() {
     tipo === 'diario'             ? carregandoDiario :
     tipo === 'cancelados_nao_ativos' ? carregandoNaoAtivos :
     tipo === 'eace_finalizados' ? carregandoEace :
+    tipo === 'vendas_mensal' ? carregandoVendas :
     carregandoCancelados
 
   function carregar() {
@@ -267,6 +299,7 @@ export function ReportsView() {
     if (tipo === 'diario')             return carregarDiario()
     if (tipo === 'cancelados_nao_ativos') return carregarNaoAtivos()
     if (tipo === 'eace_finalizados')   return carregarEace()
+    if (tipo === 'vendas_mensal')      return carregarVendas()
     return carregarCancelados()
   }
 
@@ -302,6 +335,10 @@ export function ReportsView() {
         const { montarConteudoNaoAtivo } = await import('@/lib/cancelamentoNaoAtivoPdf')
         const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio')
         await renderizarPdf(montarConteudoNaoAtivo(dadosNaoAtivos, dadosNaoAtivos.geradoPor ?? 'Usuário'))
+      } else if (tipo === 'vendas_mensal' && dadosVendas) {
+        const { montarConteudoVendasMensal } = await import('@/lib/relatorioVendasMensalPdf')
+        const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio')
+        await renderizarPdf(montarConteudoVendasMensal(dadosVendas, dadosVendas.geradoPor ?? 'Usuário'))
       } else if (tipo === 'eace_finalizados' && dadosEace) {
         const linhas = filtrarEace(dadosEace.linhas, filtroEace)
         const { montarConteudoEace } = await import('@/lib/relatorioEacePdf')
@@ -437,6 +474,18 @@ export function ReportsView() {
                   <p className="text-xs text-tema-apagado mt-1.5">O contrato precisa estar suspenso ou bloqueado há pelo menos esses dias antes do cancelamento. Consulta direto no IXC.</p>
                 </div>
               </div>
+            ) : tipo === 'vendas_mensal' ? (
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="vendas-inicio" className="block text-xs font-medium text-tema-suave mb-1.5">Mês inicial</label>
+                  <input id="vendas-inicio" type="month" value={inicioVendas} max={fimVendas} onChange={e => { if (e.target.value) { setInicioVendas(e.target.value); setDadosVendas(null) } }} className="w-full gts-input" />
+                </div>
+                <div>
+                  <label htmlFor="vendas-fim" className="block text-xs font-medium text-tema-suave mb-1.5">Mês final</label>
+                  <input id="vendas-fim" type="month" value={fimVendas} min={inicioVendas} max={mesAtualISO()} onChange={e => { if (e.target.value) { setFimVendas(e.target.value); setDadosVendas(null) } }} className="w-full gts-input" />
+                  <p className="text-xs text-tema-apagado mt-1.5">Mostra o total de cada mês entre os dois (inclusive) e o total geral. Só Administrador e Gestor.</p>
+                </div>
+              </div>
             ) : tipo === 'eace_finalizados' ? (
               <div className="space-y-3">
                 <div>
@@ -563,7 +612,7 @@ export function ReportsView() {
                 <relatorioAtual.icon className="w-10 h-10 text-tema-apagado mx-auto mb-3" />
                 <p className="text-tema-suave font-medium">Carregue os dados para revisar</p>
                 <p className="text-tema-apagado text-sm mt-1">
-                  {tipo === 'eace_finalizados' || tipo === 'cancelados_nao_ativos'
+                  {tipo === 'eace_finalizados' || tipo === 'cancelados_nao_ativos' || tipo === 'vendas_mensal'
                     ? 'Escolha o período e clique em "Carregar Dados" ao lado para ver o relatório antes de baixar o PDF.'
                     : 'Clique em "Carregar Dados" ao lado. Voce podera corrigir textos, numeros e remover linhas antes de gerar o PDF.'}
                 </p>
@@ -1125,6 +1174,8 @@ export function ReportsView() {
               </div>
             ) : tipo === 'cancelados_nao_ativos' && dadosNaoAtivos ? (
               <CanceladosNaoAtivosPreview dados={dadosNaoAtivos} />
+            ) : tipo === 'vendas_mensal' && dadosVendas ? (
+              <RelatorioVendasMensalPreview dados={dadosVendas} />
             ) : tipo === 'eace_finalizados' && dadosEace ? (
               <RelatorioEacePreview dados={dadosEace} filtro={filtroEace} onFiltro={setFiltroEace} />
             ) : tipo === 'cancelados' && dadosCancelados ? (
@@ -1189,7 +1240,7 @@ export function ReportsView() {
               </div>
             ) : null}
 
-            {dadosCarregados && tipo !== 'cancelados_nao_ativos' && tipo !== 'eace_finalizados' && (
+            {dadosCarregados && tipo !== 'cancelados_nao_ativos' && tipo !== 'eace_finalizados' && tipo !== 'vendas_mensal' && (
               <p className="text-xs text-tema-apagado text-center mt-4">
                 Corrija o que precisar acima e clique em <strong className="text-tema-tinta">Gerar e Baixar PDF</strong>. As correcoes valem so para este PDF.
               </p>
