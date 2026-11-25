@@ -13,5 +13,8 @@ export async function register() {
 
     const { iniciarFeedbackAutomatico } = await import('./lib/feedbackAutomaticoJob')
     iniciarFeedbackAutomatico()
+
+    const { iniciarGestaoDesempenho } = await import("./lib/gestaoDesempenho/job")
+    iniciarGestaoDesempenho()
   }
 }

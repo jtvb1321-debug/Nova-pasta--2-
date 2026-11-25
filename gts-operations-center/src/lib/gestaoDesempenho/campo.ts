@@ -74,11 +74,15 @@ const soma = (m: Media, v: number) => { m.soma += v; m.n++ }
  * Contadores de UM dia para a unidade.
  * @param equipes equipes (ids) que alimentam a unidade neste dia
  * @param excluir chamados a ignorar na qualidade/pontualidade (indicador AJUSTADO; o oficial nao passa nada aqui)
+ * @param ids (opcional) recebe, por indicador, os ids dos chamados que compoem o numero: a lista do clique no indicador
+ *            sai do MESMO calculo e por isso sempre bate com o valor exibido
  */
-export function contadoresDoDia(dia: DiaISO, chamados: ChamadoBruto[], equipes: Set<string>, excluir: Set<string> = new Set()): ContadoresCampo {
+export function contadoresDoDia(dia: DiaISO, chamados: ChamadoBruto[], equipes: Set<string>, excluir: Set<string> = new Set(), ids?: Map<string, string[]>): ContadoresCampo {
   const { de, ate } = limitesDia(dia)
   const noDia = (d: Date | null) => !!d && d >= de && d <= ate
   const c = contadoresVazios()
+  const marca = (chave: string, id: string) => { if (ids) { const l = ids.get(chave) ?? []; l.push(id); ids.set(chave, l) } }
+  const CHAVE_TIPO: Record<string, string> = { INSTALACAO: 'instalacoes', MANUTENCAO: 'manutencoes', RETIRADA: 'retiradas', SUPORTE: 'suportes' }
 
   for (const ch of chamados) {
     const daEquipe = !!ch.equipeId && equipes.has(ch.equipeId)
@@ -89,23 +93,26 @@ export function contadoresDoDia(dia: DiaISO, chamados: ChamadoBruto[], equipes: 
       // O.S. recebidas e populacao do SLA: abertas no dia (regra atual do SLA: abertura, sem canceladas e sem encerradas pela gestao)
       if (noDia(ch.dataAbertura)) {
         c.recebidas++
+        marca('os_recebidas', ch.id)
         if (!ignorar) {
-          if (ch.dentroSlaResolucao !== null) { c.slaResolucao.avaliados++; if (ch.dentroSlaResolucao) c.slaResolucao.dentro++ }
+          if (ch.dentroSlaResolucao !== null) { c.slaResolucao.avaliados++; if (ch.dentroSlaResolucao) c.slaResolucao.dentro++; marca(ch.dentroSlaResolucao ? 'sla_dentro' : 'sla_fora', ch.id) }
           if (ch.dentroSlaResposta !== null) { c.slaResposta.avaliados++; if (ch.dentroSlaResposta) c.slaResposta.dentro++ }
         }
       }
       if (ch.status === 'FINALIZADO' && noDia(ch.dataFim)) {
         c.concluidas++
+        marca('os_concluidas', ch.id)
+        if (CHAVE_TIPO[ch.tipo]) marca(CHAVE_TIPO[ch.tipo], ch.id)
         if ((TIPOS_SERVICO as readonly string[]).includes(ch.tipo)) c.concluidasPorTipo[ch.tipo as TipoServico]++
         if (!ignorar) {
           if (TIPOS_TECNICOS.includes(ch.tipo)) c.baseQualidade++
-          if (ch.dataInicio && ch.dataFim) soma(c.tempos.execucao, minutos(ch.dataInicio, ch.dataFim))
-          if (ch.slaResolucaoMinutos !== null) soma(c.tempos.resolucao, ch.slaResolucaoMinutos)
-          if (ch.avaliacaoNota !== null) soma(c.satisfacao, ch.avaliacaoNota)
+          if (ch.dataInicio && ch.dataFim) { soma(c.tempos.execucao, minutos(ch.dataInicio, ch.dataFim)); marca('tempo_execucao', ch.id) }
+          if (ch.slaResolucaoMinutos !== null) { soma(c.tempos.resolucao, ch.slaResolucaoMinutos); marca('tempo_resolucao', ch.id) }
+          if (ch.avaliacaoNota !== null) { soma(c.satisfacao, ch.avaliacaoNota); marca('satisfacao', ch.id) }
         }
       }
-      if (!ignorar && ch.dataACaminho && ch.dataInicio && noDia(ch.dataInicio)) soma(c.tempos.deslocamento, minutos(ch.dataACaminho, ch.dataInicio))
-      if (ch.clienteAusente && noDia(ch.dataACaminho ?? ch.dataInicio)) c.visitasImprodutivas++
+      if (!ignorar && ch.dataACaminho && ch.dataInicio && noDia(ch.dataInicio)) { soma(c.tempos.deslocamento, minutos(ch.dataACaminho, ch.dataInicio)); marca('tempo_deslocamento', ch.id) }
+      if (ch.clienteAusente && noDia(ch.dataACaminho ?? ch.dataInicio)) { c.visitasImprodutivas++; marca('visitas_improdutivas', ch.id) }
 
       // Pendencia = posicao no fim do dia (aberta ate o fim do dia e ainda nao finalizada naquele momento).
       if (ch.dataAbertura <= ate && (ch.dataFim === null || ch.dataFim > ate)) {
@@ -117,16 +124,17 @@ export function contadoresDoDia(dia: DiaISO, chamados: ChamadoBruto[], equipes: 
           : ch.dataACaminho && ch.dataACaminho <= ate ? 'EM_DESLOCAMENTO'
           : 'AGUARDANDO_INICIO'
         c.pendenciasPorMotivo[motivo] = (c.pendenciasPorMotivo[motivo] ?? 0) + 1
-        if (!futuro) c.pendentes++
+        if (!futuro) { c.pendentes++; marca('os_pendentes', ch.id) }
       }
     } else if (ch.fechadoAdmin && ch.status === 'FINALIZADO' && daEquipe && noDia(ch.dataFim)) {
       c.encerradasGestao++
+      marca('encerradas_gestao', ch.id)
     }
 
     // Rechamada: conta para a equipe do atendimento de ORIGEM, no dia em que o chamado novo foi aberto.
     if (!ignorar && !cancelado && !ch.fechadoAdmin && ch.origemEquipeId && equipes.has(ch.origemEquipeId) && noDia(ch.dataAbertura)) {
-      if (ch.statusRechamada === 'CONFIRMADA') c.rechamadasConfirmadas++
-      else if (ch.statusRechamada === 'POSSIVEL' || (ch.statusRechamada === null && ch.reincidente)) c.rechamadasPossiveis++
+      if (ch.statusRechamada === 'CONFIRMADA') { c.rechamadasConfirmadas++; marca('rechamadas', ch.id) }
+      else if (ch.statusRechamada === 'POSSIVEL' || (ch.statusRechamada === null && ch.reincidente)) { c.rechamadasPossiveis++; marca('rechamadas_possiveis', ch.id) }
     }
   }
   return c
@@ -177,4 +185,13 @@ export function indicadoresDeContadores(c: ContadoresCampo): Record<string, Valo
   }
   for (const def of INDICADORES_CAMPO) if (!def.disponivel) r[def.chave] = indisponivel(def)
   return r
+}
+
+/** Soma contadores de UNIDADES diferentes (cada uma ja com a pendencia do seu fechamento): aqui as pendencias se somam. */
+export function somarUnidades(unidades: ContadoresCampo[]): ContadoresCampo {
+  const t = somarContadores(unidades)
+  t.pendentes = unidades.reduce((s, u) => s + u.pendentes, 0)
+  t.pendenciasPorMotivo = {}
+  for (const u of unidades) for (const [k, v] of Object.entries(u.pendenciasPorMotivo)) t.pendenciasPorMotivo[k] = (t.pendenciasPorMotivo[k] ?? 0) + v
+  return t
 }

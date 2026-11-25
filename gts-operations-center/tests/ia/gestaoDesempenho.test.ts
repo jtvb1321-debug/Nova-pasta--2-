@@ -195,7 +195,7 @@ describe('gestao de desempenho: metas, dias trabalhados e semaforo', () => {
   it('semaforo: maior melhor e menor melhor, com a faixa de atencao', () => {
     const maior = { meta: 10, metaId: 'x', sentido: 'MAIOR_MELHOR' as const, faixaAtencaoPct: 10, descricao: '' }
     const menor = { meta: 5, metaId: 'x', sentido: 'MENOR_MELHOR' as const, faixaAtencaoPct: 10, descricao: '' }
-    const cor = (v: number, m: typeof maior) => avaliarMeta(comValor(v), m, 'x').semaforo
+    const cor = (v: number, m: typeof maior | typeof menor) => avaliarMeta(comValor(v), m, 'x').semaforo
     assert.deepEqual([10, 11, 9, 8].map(v => cor(v, maior)), ['VERDE', 'VERDE', 'AMARELO', 'VERMELHO'])
     assert.deepEqual([4, 5, 5.5, 6].map(v => cor(v, menor)), ['VERDE', 'VERDE', 'AMARELO', 'VERMELHO'])
     assert.equal(avaliarMeta(comValor(8), maior, 'x').cumprimentoPct, 80)

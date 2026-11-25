@@ -43,10 +43,25 @@ export interface Permission {
   verFrota: boolean
   vistoriarFrota: boolean
   administrarFrota: boolean
+  /** Gestao de Desempenho (modulo novo): so ADMIN e GESTOR; integracoes (segredos) so ADMIN. */
+  gdVerIndicadores: boolean
+  gdVerRelatoriosIndividuais: boolean
+  gdGerarRelatorios: boolean
+  gdConfigurarMetas: boolean
+  gdConfigurarIntegracoes: boolean
+  gdAdicionarObservacoes: boolean
+  gdFecharRelatorios: boolean
+  gdRevisarRelatorios: boolean
+  gdExportar: boolean
 }
+
+const GD_NENHUM = { gdVerIndicadores: false, gdVerRelatoriosIndividuais: false, gdGerarRelatorios: false, gdConfigurarMetas: false, gdConfigurarIntegracoes: false, gdAdicionarObservacoes: false, gdFecharRelatorios: false, gdRevisarRelatorios: false, gdExportar: false }
+const GD_GESTOR = { ...GD_NENHUM, gdVerIndicadores: true, gdVerRelatoriosIndividuais: true, gdGerarRelatorios: true, gdConfigurarMetas: true, gdAdicionarObservacoes: true, gdFecharRelatorios: true, gdRevisarRelatorios: true, gdExportar: true }
+const GD_ADMIN = { ...GD_GESTOR, gdConfigurarIntegracoes: true }
 
 const PERMISSIONS_MAP: Record<Role, Permission> = {
   ADMIN: {
+    ...GD_ADMIN,
     verDashboard:      true,
     verChamados:       true,
     verEquipes:        true,
@@ -87,6 +102,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     administrarFrota: true,
   },
   GESTOR: {
+    ...GD_GESTOR,
     verDashboard:      true,
     verChamados:       true,
     verEquipes:        true,
@@ -127,6 +143,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     administrarFrota: false,
   },
   OPERADOR: {
+    ...GD_NENHUM,
     verDashboard:      true,
     verChamados:       true,
     verEquipes:        true,
@@ -167,6 +184,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     administrarFrota: false,
   },
   COMERCIAL: {
+    ...GD_NENHUM,
     verDashboard:      true,
     verChamados:       true,
     verEquipes:        true,
@@ -207,6 +225,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     administrarFrota: false,
   },
   TECNICO: {
+    ...GD_NENHUM,
     verDashboard:      false,
     verChamados:       true,
     verEquipes:        true,
@@ -247,6 +266,7 @@ const PERMISSIONS_MAP: Record<Role, Permission> = {
     administrarFrota: false,
   },
   VENDEDOR: {
+    ...GD_NENHUM,
     verDashboard:      true,
     verChamados:       false,
     verEquipes:        false,

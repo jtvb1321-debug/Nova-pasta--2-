@@ -29,6 +29,17 @@ export interface SecaoRelatorio {
   lista?: string[]
   /** Fotos em grade (3 por linha). dataUrl null = arquivo indisponivel (aparece uma moldura avisando). */
   galeria?: { dataUrl: string | null; legenda: string }[]
+  /** Grafico de barras agrupadas (laranja/cinza), desenhado direto no PDF. */
+  grafico?: GraficoRelatorio
+}
+
+export interface GraficoRelatorio {
+  titulo: string
+  categorias: string[]
+  /** valor null = sem dado (a barra e omitida; nunca vira zero). */
+  series: { nome: string; valores: (number | null)[] }[]
+  /** Sufixo dos rotulos do eixo (ex.: "%", "min"). */
+  unidade?: string
 }
 export interface ConteudoRelatorio {
   titulo: string
@@ -277,6 +288,49 @@ async function carregarLogo(): Promise<string | null> {
   } catch { return null }
 }
 
+const COR_SERIES: [number, number, number][] = [[234, 88, 12], [107, 114, 128], [251, 146, 60], [55, 65, 81]]
+
+/** Grafico de barras agrupadas. Escala unica para marcas, grade e rotulos. Devolve o novo y. */
+function desenharGrafico(doc: import('jspdf').jsPDF, g: GraficoRelatorio, x: number, y: number, largura: number): number {
+  const alturaArea = 48
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0)
+  doc.text(g.titulo, x, y + 1); y += 5
+  let lx = x
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+  g.series.forEach((s, i) => {
+    doc.setFillColor(...COR_SERIES[i % COR_SERIES.length]); doc.rect(lx, y - 2.4, 3, 3, 'F')
+    doc.setTextColor(0); doc.text(s.nome, lx + 4.5, y); lx += 8 + doc.getTextWidth(s.nome)
+  })
+  y += 4
+  const valores = g.series.flatMap(s => s.valores).filter((v): v is number => v !== null)
+  const maxBruto = Math.max(1, ...valores)
+  const passo = Math.pow(10, Math.floor(Math.log10(maxBruto)))
+  const teto = Math.ceil(maxBruto / passo) * passo
+  const esq = x + 11, larg = largura - 13, topo = y, base = y + alturaArea
+  doc.setDrawColor(210); doc.setLineWidth(0.15)
+  for (let t = 0; t <= 4; t++) {
+    const yy = base - (alturaArea * t) / 4
+    doc.line(esq, yy, esq + larg, yy)
+    doc.setFontSize(7); doc.setTextColor(90)
+    doc.text(`${Math.round(((teto * t) / 4) * 10) / 10}${g.unidade ?? ''}`, esq - 1.5, yy + 1, { align: 'right' })
+  }
+  const nCat = Math.max(1, g.categorias.length), nSer = Math.max(1, g.series.length)
+  const faixa = larg / nCat, barra = Math.min(8, (faixa * 0.8) / nSer)
+  g.categorias.forEach((cat, ci) => {
+    const x0 = esq + ci * faixa + (faixa - barra * nSer) / 2
+    g.series.forEach((s, si) => {
+      const v = s.valores[ci]
+      if (v === null || v === undefined) return
+      const h = Math.max(0.2, (v / teto) * alturaArea)
+      doc.setFillColor(...COR_SERIES[si % COR_SERIES.length]); doc.rect(x0 + si * barra, base - h, barra - 0.6, h, 'F')
+    })
+    doc.setFontSize(7); doc.setTextColor(60); doc.text(cat, esq + ci * faixa + faixa / 2, base + 4, { align: 'center' })
+  })
+  doc.setDrawColor(120); doc.setLineWidth(0.25); doc.line(esq, base, esq + larg, base); doc.line(esq, topo, esq, base)
+  doc.setTextColor(0)
+  return base + 8
+}
+
 /** Desenha o PDF (A4) e devolve o documento. Separado do download para poder ser testado/gerado fora do navegador. */
 export async function montarPdf(c: ConteudoRelatorio, logo: string | null, logoOrbia: string | null = null): Promise<import('jspdf').jsPDF> {
   const { default: jsPDF } = await import('jspdf')
@@ -375,6 +429,10 @@ export async function montarPdf(c: ConteudoRelatorio, logo: string | null, logoO
         })
         y += altImg + 11
       }
+    }
+    if (s.grafico) {
+      garantir(48 + 22)
+      y = desenharGrafico(doc, s.grafico, margem, y, util)
     }
     y += 3
   }
