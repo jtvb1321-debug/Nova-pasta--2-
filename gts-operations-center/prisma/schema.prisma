@@ -1679,3 +1679,385 @@ model FrotaRevisaoAnexo {
   @@index([revisaoId])
   @@map("frota_revisao_anexos")
 }
+
+// =====================================================================
+// GESTAO DE DESEMPENHO (modulo novo, tabelas gd_*)
+// Referencias a Equipe/Usuario/Funcionario/Chamado sao so por id (sem
+// relation do Prisma): nenhum modelo existente e alterado. Ver
+// docs/gestao-desempenho/.
+// =====================================================================
+
+enum GdTipoColaborador {
+  RECEPCAO
+  CAMPO
+}
+
+enum GdTipoUnidade {
+  RECEPCAO_INDIVIDUAL
+  EQUIPE_CAMPO
+}
+
+enum GdTipoOcorrencia {
+  FERIAS
+  FOLGA
+  ATESTADO
+  PLANTAO
+  TREINAMENTO
+  ADMINISTRATIVO
+  SEM_META
+  FALHA_REDE
+  DDOS
+  FALTA_MATERIAL
+  INFRAESTRUTURA
+  CLIENTE_INDISPONIVEL
+  OUTRA
+}
+
+enum GdPeriodicidade {
+  DIARIA
+  SEMANAL
+  MENSAL
+}
+
+enum GdSentidoMeta {
+  MAIOR_MELHOR
+  MENOR_MELHOR
+}
+
+enum GdTipoRelatorio {
+  DIARIO_UNIDADE
+  DIARIO_CONSOLIDADO
+  SEMANAL
+}
+
+enum GdStatusRelatorio {
+  EM_ANDAMENTO
+  AGUARDANDO_SINCRONIZACAO
+  AGUARDANDO_REVISAO
+  FECHADO
+  REVISADO
+}
+
+enum GdStatusSync {
+  SUCESSO
+  PARCIAL
+  FALHA
+}
+
+enum GdStatusVinculo {
+  SUGERIDO
+  CONFIRMADO
+  REJEITADO
+}
+
+enum GdStatusAjuste {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum GdSeveridade {
+  INFO
+  ATENCAO
+  CRITICA
+}
+
+/// Pessoa avaliada (recepcao ou campo). Vinculos opcionais com o cadastro existente e com o atendente do OPA.
+model GdColaborador {
+  id             String            @id @default(cuid())
+  nome           String
+  tipo           GdTipoColaborador
+  ativo          Boolean           @default(true)
+  usuarioId      String?
+  funcionarioId  String?
+  opaAtendenteId String?
+  observacao     String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  composicoes GdComposicao[]
+
+  @@index([tipo, ativo])
+  @@index([opaAtendenteId])
+  @@map("gd_colaboradores")
+}
+
+/// Unidade avaliada: uma colaboradora da recepcao ou uma equipe de campo.
+model GdUnidade {
+  id        String        @id @default(cuid())
+  nome      String
+  tipo      GdTipoUnidade
+  ordem     Int           @default(0)
+  ativo     Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  composicoes GdComposicao[]
+  equipes     GdUnidadeEquipe[]
+  snapshots   GdSnapshotDia[]
+
+  @@map("gd_unidades")
+}
+
+/// Quem compoe a unidade em cada periodo (a composicao muda sem reescrever o passado).
+model GdComposicao {
+  id            String    @id @default(cuid())
+  unidadeId     String
+  colaboradorId String
+  inicio        DateTime  @db.Date
+  fim           DateTime? @db.Date
+  papel         String?
+  createdAt     DateTime  @default(now())
+
+  unidade     GdUnidade     @relation(fields: [unidadeId], references: [id])
+  colaborador GdColaborador @relation(fields: [colaboradorId], references: [id])
+
+  @@index([unidadeId, inicio])
+  @@index([colaboradorId])
+  @@map("gd_composicoes")
+}
+
+/// Quais equipes do GTSCenter (equipes.id) alimentam a unidade de campo, por vigencia.
+model GdUnidadeEquipe {
+  id        String    @id @default(cuid())
+  unidadeId String
+  equipeId  String
+  inicio    DateTime  @db.Date
+  fim       DateTime? @db.Date
+  createdAt DateTime  @default(now())
+
+  unidade GdUnidade @relation(fields: [unidadeId], references: [id])
+
+  @@index([unidadeId, inicio])
+  @@index([equipeId])
+  @@map("gd_unidade_equipes")
+}
+
+/// Ferias, folgas, atestados, plantoes e ocorrencias externas (rede, DDoS, material...). Nunca apagam chamados.
+model GdOcorrencia {
+  id               String           @id @default(cuid())
+  tipo             GdTipoOcorrencia
+  unidadeId        String?
+  colaboradorId    String?
+  inicio           DateTime         @db.Date
+  fim              DateTime         @db.Date
+  justificativa    String
+  /// true = o dia nao conta como trabalhado (ferias, folga, atestado) e a meta do dia nao se aplica.
+  diaNaoTrabalhado Boolean          @default(false)
+  criadoPor        String
+  aprovadoPor      String?
+  aprovadoEm       DateTime?
+  createdAt        DateTime         @default(now())
+
+  ajustes GdAjusteChamado[]
+
+  @@index([unidadeId, inicio])
+  @@index([colaboradorId, inicio])
+  @@map("gd_ocorrencias")
+}
+
+/// Pedido de excluir um chamado do indicador AJUSTADO (o oficial nao muda). Exige ocorrencia e aprovacao do gestor.
+model GdAjusteChamado {
+  id            String         @id @default(cuid())
+  chamadoId     String
+  ocorrenciaId  String
+  motivo        String
+  status        GdStatusAjuste @default(PENDENTE)
+  solicitadoPor String
+  decididoPor   String?
+  decididoEm    DateTime?
+  createdAt     DateTime       @default(now())
+
+  ocorrencia GdOcorrencia @relation(fields: [ocorrenciaId], references: [id])
+
+  @@unique([chamadoId, ocorrenciaId])
+  @@index([chamadoId])
+  @@map("gd_ajustes_chamado")
+}
+
+/// Metas configuraveis (nada fixo no codigo).
+model GdMeta {
+  id              String          @id @default(cuid())
+  indicador       String
+  unidadeId       String?
+  colaboradorId   String?
+  tipoServico     String?
+  periodicidade   GdPeriodicidade
+  valor           Float
+  sentido         GdSentidoMeta   @default(MAIOR_MELHOR)
+  /// Faixa "atencao" (amarelo): ate X% da meta, no lado ruim.
+  faixaAtencaoPct Float           @default(10)
+  vigenciaInicio  DateTime        @db.Date
+  vigenciaFim     DateTime?       @db.Date
+  ativo           Boolean         @default(true)
+  criadoPor       String
+  createdAt       DateTime        @default(now())
+
+  @@index([indicador, ativo])
+  @@index([unidadeId])
+  @@map("gd_metas")
+}
+
+/// Configuracoes do modulo (inicio da semana, horario de fechamento, pontuacao, notificacoes...).
+model GdConfiguracao {
+  chave     String   @id
+  valor     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("gd_configuracoes")
+}
+
+/// Fotografia diaria dos contadores (numeradores/denominadores, nao so percentuais) por unidade. Idempotente por (unidade, dia).
+model GdSnapshotDia {
+  id          String   @id @default(cuid())
+  unidadeId   String
+  data        DateTime @db.Date
+  dados       Json
+  origem      String
+  calculadoEm DateTime @default(now())
+
+  unidade GdUnidade @relation(fields: [unidadeId], references: [id])
+
+  @@unique([unidadeId, data])
+  @@index([data])
+  @@map("gd_snapshots_dia")
+}
+
+/// Preenchimento manual de indicador sem fonte confiavel (sempre identificado como manual).
+model GdIndicadorManual {
+  id            String   @id @default(cuid())
+  unidadeId     String
+  data          DateTime @db.Date
+  indicador     String
+  valor         Float
+  justificativa String?
+  usuario       String
+  createdAt     DateTime @default(now())
+
+  @@unique([unidadeId, data, indicador])
+  @@map("gd_indicadores_manuais")
+}
+
+/// Relatorio gerado. Fechado nao e alterado: correcao gera nova revisao (mesma chave, revisao + 1).
+model GdRelatorio {
+  id                  String            @id @default(cuid())
+  chave               String
+  tipo                GdTipoRelatorio
+  unidadeId           String?
+  periodoInicio       DateTime          @db.Date
+  periodoFim          DateTime          @db.Date
+  revisao             Int               @default(1)
+  status              GdStatusRelatorio @default(EM_ANDAMENTO)
+  /// Versao congelada: indicadores, metas e composicao da equipe no momento do fechamento.
+  dados               Json
+  observacaoGestor    String?
+  planoAcao           String?
+  ultimaSincronizacao DateTime?
+  geradoEm            DateTime          @default(now())
+  fechadoPor          String?
+  fechadoEm           DateTime?
+  revisadoPor         String?
+  revisadoEm          DateTime?
+
+  eventos GdRelatorioEvento[]
+
+  @@unique([chave, revisao])
+  @@index([tipo, periodoInicio])
+  @@map("gd_relatorios")
+}
+
+model GdRelatorioEvento {
+  id          String   @id @default(cuid())
+  relatorioId String
+  revisao     Int
+  acao        String
+  usuario     String
+  detalhe     String?
+  em          DateTime @default(now())
+
+  relatorio GdRelatorio @relation(fields: [relatorioId], references: [id])
+
+  @@index([relatorioId, em])
+  @@map("gd_relatorio_eventos")
+}
+
+/// Observacoes do gestor por unidade/dia (aparecem nos relatorios do dia).
+model GdObservacao {
+  id        String   @id @default(cuid())
+  unidadeId String
+  data      DateTime @db.Date
+  texto     String
+  autor     String
+  createdAt DateTime @default(now())
+
+  @@index([unidadeId, data])
+  @@map("gd_observacoes")
+}
+
+/// Cada rodada de sincronizacao (sem dados sensiveis).
+model GdSyncLog {
+  id         String       @id @default(cuid())
+  fonte      String
+  modo       String
+  periodoDe  DateTime?    @db.Date
+  periodoAte DateTime?    @db.Date
+  status     GdStatusSync
+  registros  Int          @default(0)
+  mensagem   String?
+  iniciadoEm DateTime     @default(now())
+  fimEm      DateTime?
+
+  @@index([fonte, iniciadoEm])
+  @@map("gd_sync_logs")
+}
+
+/// Copia normalizada dos atendimentos do OPA (so campos necessarios). Estrutura provisoria ate a documentacao real.
+model GdOpaAtendimento {
+  id             String    @id @default(cuid())
+  opaId          String    @unique
+  atendenteOpaId String?
+  status         String?
+  criadoEm       DateTime?
+  atualizadoEm   DateTime?
+  payload        Json
+  sincronizadoEm DateTime  @default(now())
+
+  @@index([atendenteOpaId, criadoEm])
+  @@map("gd_opa_atendimentos")
+}
+
+/// Ligacao atendimento (OPA) <-> chamado (GTSCenter). Nunca automatica quando ha duvida: so SUGERIDO ate o gestor confirmar.
+model GdVinculoOpaChamado {
+  id            String          @id @default(cuid())
+  opaId         String
+  chamadoId     String
+  status        GdStatusVinculo @default(SUGERIDO)
+  metodo        String
+  confirmadoPor String?
+  confirmadoEm  DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@unique([opaId, chamadoId])
+  @@index([chamadoId])
+  @@map("gd_vinculos_opa_chamado")
+}
+
+/// Notificacoes internas do modulo, com chave de deduplicacao (uma ocorrencia = uma notificacao).
+model GdNotificacao {
+  id         String       @id @default(cuid())
+  tipo       String
+  chave      String       @unique
+  titulo     String
+  mensagem   String
+  severidade GdSeveridade @default(INFO)
+  unidadeId  String?
+  dados      Json?
+  lida       Boolean      @default(false)
+  resolvida  Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  lidaEm     DateTime?
+
+  @@index([lida, createdAt])
+  @@map("gd_notificacoes")
+}
