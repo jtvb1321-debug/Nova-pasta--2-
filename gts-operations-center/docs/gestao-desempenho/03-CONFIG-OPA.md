@@ -1,51 +1,62 @@
-# Integração com o OPA Atendimento — como configurar
+# Integração com o OPA Suite — como configurar
 
-**Situação:** a lista de endpoints recebida usa domínio de exemplo (`meudominio.com.br`) e IDs de amostra, e **não traz** a documentação de autenticação, de parâmetros nem do formato das respostas. Por isso **nenhum nome de campo, parâmetro ou método de autenticação foi inventado**: tudo é configurado a partir da documentação oficial do OPA. Enquanto não estiver configurado, a recepção mostra **Não disponível**.
+**Fonte:** documentação pública da API (coleção Postman publicada em `api.opasuite.com.br`). O mapeamento padrão (`opa/presetOpaSuite.ts`) segue exatamente o que ela descreve. A integração é **somente leitura (GET)**: nada é gravado no OPA.
 
-A integração é **somente leitura (GET)**. Nada é gravado no OPA.
+## O que a documentação do OPA diz (e o módulo usa)
 
-## 1. Segredos (somente no servidor)
-
-Variáveis de ambiente do app (painel da Discloud), **nunca** no código, no banco, no navegador, nos logs ou no Git:
-
-| Variável | Conteúdo |
+| Tema | Conforme a documentação |
 |---|---|
-| `OPA_API_URL` | URL base da API do cliente (ex.: `https://SEU-DOMINIO.opasuite.com.br`) |
-| `OPA_API_TOKEN` | token de acesso (permissão de **leitura**) |
+| Autenticação | Cabeçalho `Authorization: Bearer <token>`. O token é gerado **no próprio OPA**, no cadastro de usuários, criando antes um **perfil de permissões do tipo API** |
+| Endereço | O domínio da **sua** instalação do OPA (a documentação usa `meudominio.com.br` como exemplo) |
+| Listagem | `GET /api/v1/atendimento` com **corpo JSON** `{ "filter": {...}, "options": { "limit": N, "skip": N } }` |
+| Filtros | `protocolo`, `dataInicialAbertura`, `dataFinalAbertura`, `dataInicialEncerramento`, `dataFinalEncerramento` (AAAA-MM-DD, intervalo máximo de **1 ano**), `id_atendente`, `status`, `canal_id`, `setor`, `id_cliente`, `motivos.idMotivo`, avaliações. Sem filtro de data = últimos 365 dias |
+| Resposta | `{ "status": "success", "code": 200, "data": [ ... ] }` |
+| Atendimento | `_id`, `id_atendente`, `protocolo`, `date` (criação), `fim` (encerramento), `status` (`F` finalizado, `EA` em atendimento), `canal`, `setor`, `tags`, `avaliacoes`, `id_motivo_atendimento` |
+| Usuários | `GET /api/v1/usuario/` com filtro obrigatório (ex.: `nome`) → `_id`, `nome`, `status` |
 
-O token não é exibido nem retornado por nenhuma tela ou API. Erros e logs de sincronização não contêm URL, cabeçalhos nem token.
+## O que isso permite medir na recepção
 
-## 2. Mapeamento (Gestão de Desempenho › Configurações › Sincronização e OPA — só ADMIN)
+| Indicador | Situação com a API de listagem |
+|---|---|
+| Atendimentos recebidos | ✅ (`date`) |
+| Finalizados | ✅ (`status = F` + `fim`) |
+| Pendentes | ✅ (`status = EA`, inclusive abertos antes do período) |
+| Tempo médio de resolução | ✅ (`date` → `fim`) |
+| Por atendente | ✅ (`id_atendente`) |
+| Abandonados | ❌ a documentação não define o código de situação |
+| Primeira resposta, espera, tempo de atendimento | ❌ a listagem não traz o horário em que foi assumido nem da 1ª resposta |
+| Transferidos, SLA, resolvidos remotamente | ❌ não há campo na listagem |
+| Satisfação | ❌ existe `avaliacoes`, mas os exemplos não mostram a estrutura. Com um atendimento avaliado de verdade, mapeia-se em minutos |
 
-Preencha **exatamente como está na documentação do OPA**:
+Esses indicadores seguem **Não disponível** (nunca zero). Alguns podem ser viabilizados depois (ex.: horários pelas mensagens do atendimento, `GET /api/v1/atendimento/mensagem` filtrando por `id_rota`) — pedem uma análise à parte.
 
-1. **Caminho da lista de atendimentos por período** (a lista informada sugere `/api/v1/atendimento` e `/api/v1/atendimento/periodo`; confirme qual usar e como filtrar o período).
-2. **Autenticação:** nome do cabeçalho e prefixo do valor (ex.: `Authorization` + `Bearer `).
-3. **Parâmetros:** data inicial, data final, página e tamanho da página (e o formato da data: ISO com hora ou só a data).
-4. **Onde está a lista na resposta** (ex.: `data.items`; vazio se a resposta já é a lista).
-5. **Campos do atendimento** (caminho no JSON, como `atendente.id`): id, atendente, protocolo, criação, assumido, primeira resposta, finalização, situação, transferido, dentro do SLA, resolvido remotamente, nota.
-6. **Valores da situação** que significam *finalizado*, *abandonado*, *em atendimento* e *aberto*.
+## Passo a passo para ligar
 
-Só vira indicador o que for mapeado: sem "primeira resposta" mapeada, "tempo de primeira resposta" fica **Não disponível**. Situação fora dos valores informados vira *desconhecida* (não conta como pendente nem como finalizado, e é avisada na sincronização).
+1. **No OPA:** criar um perfil de permissões do tipo **API** e um usuário integrador, e gerar o **token** (só leitura).
+2. **Na Discloud** (variáveis de ambiente do app, nunca no código nem no chat):
+   - `OPA_API_URL` = endereço do seu OPA (ex.: `https://seudominio.opasuite.com.br`)
+   - `OPA_API_TOKEN` = o token gerado
+3. **No Orbia** (ADMIN): Gestão de Desempenho › Configurações › *Sincronização e OPA*:
+   1. clique **Usar o mapeamento padrão do OPA Suite** e depois **Salvar mapeamento**;
+   2. use **Localizar o identificador de uma atendente** (digite "Talita", "Grazzi") e copie o `_id`;
+   3. em *Unidades e equipes*, crie/edite os colaboradores informando esse identificador;
+   4. clique **Atualizar agora** e confira a tabela de sincronizações;
+   5. marque **Sincronizar com o OPA nas rodadas automáticas**.
+4. Para a sincronização automática (a cada 15 min, fechamento diário e semanal), defina `GESTAO_DESEMPENHO_ATIVO=true`.
 
-## 3. Vincular as colaboradoras
+## Como a sincronização consulta
 
-Em *Unidades e equipes › Novo colaborador*, informe o **identificador do atendente no OPA** (como a API o devolve). Sem ele, a sincronização avisa "colaboradora sem atendente do OPA vinculado" e não atribui atendimentos.
+Para cada período, três buscas, unidas sem duplicar: atendimentos **abertos** no período, **encerrados** no período (abertos antes) e os que **seguem em andamento**. Páginas de 100 (`skip`/`limit`), timeout de 20 s, até 3 tentativas com espera crescente, pausa entre páginas. Se o OPA cair: mantém o último dado válido, registra a falha (sem URL, cabeçalho nem token), notifica **uma vez** e tenta de novo; as equipes de campo não são afetadas.
 
-## 4. Ligar a sincronização
+Limitação: o GET com corpo JSON exige o módulo `https` do Node (o `fetch` padrão recusa); o código já faz isso e há teste contra um servidor HTTP local.
 
-1. Salve o mapeamento e confira o estado ("mapeamento completo", URL e token "configurados").
-2. Clique **Atualizar agora** e veja o resultado na tabela de sincronizações.
-3. Marque **Sincronizar com o OPA nas rodadas automáticas**.
+## Segurança e LGPD
 
-Comportamento: a cada 15 min (configurável), reprocessa os últimos N dias (padrão 7; SLA e avaliações chegam depois). Timeout de 20 s, até 3 tentativas com espera crescente, paginação, pausa entre páginas. Se o OPA cair: preserva o último dado válido, registra a falha (sem dado sensível), notifica **uma vez** e tenta de novo na próxima rodada; as equipes de campo não são afetadas.
+- Token e URL só em variáveis de ambiente: nunca exibidos, gravados no banco, em logs, erros ou no navegador.
+- A cópia local dos atendimentos guarda só ids, protocolo, situação e datas — **sem nome, CPF, telefone nem conteúdo de conversa**.
+- Não há associação automática entre atendimento do OPA e chamado do GTSCenter: com dúvida, nada é associado (a tabela `gd_vinculos_opa_chamado` só recebe sugestões confirmadas pelo gestor).
 
-## 5. Pontos a confirmar com a documentação real
+## Pontos a confirmar na prática (com dados reais)
 
-- O filtro de período da API é por **data de criação**? Atendimentos criados antes da janela e finalizados dentro dela só entram se a API os devolver — ajuste a janela de reprocessamento ou o endpoint.
-- A resposta traz o atendente como id estável? Qual o campo?
-- Existe indicador de SLA, transferência, resolução remota e nota na resposta? Se não, ficam indisponíveis.
-
-## 6. Cruzamento OPA × chamados (LGPD)
-
-Não há associação automática: com dúvida, nada é associado. A tabela `gd_vinculos_opa_chamado` existe para sugestões (protocolo/ID do cliente) **que só valem após confirmação do gestor**. A cópia local dos atendimentos guarda apenas ids, situação e datas — sem nome, telefone nem conteúdo de conversa.
+- Quais códigos de `status` existem além de `F` e `EA` (fila, abandonado…): ao aparecer um código desconhecido, a sincronização avisa e o atendimento não entra como pendente nem finalizado até o mapeamento ser ajustado.
+- Se `id_atendente` traz o atendente que **finalizou** ou o atual (para transferências).

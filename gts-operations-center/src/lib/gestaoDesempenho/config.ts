@@ -58,6 +58,18 @@ const opa = z.object({
   paramPagina: z.string().trim().max(40).nullable().default(null),
   paramLimite: z.string().trim().max(40).nullable().default(null),
   tamanhoPagina: z.number().int().min(10).max(500).default(100),
+  /** Onde seguem os filtros: na URL (QUERY) ou num corpo JSON { filter, options } (CORPO), como faz o OPA Suite. */
+  estilo: z.enum(['QUERY', 'CORPO']).default('QUERY'),
+  /** Paginacao: numero da pagina (PAGINA) ou deslocamento de registros (SKIP, ex.: options.skip do OPA Suite). */
+  paginacao: z.enum(['PAGINA', 'SKIP']).default('PAGINA'),
+  /** 2o par de datas: atendimentos ENCERRADOS no periodo (abertos antes). Resultado e' unido ao 1o sem duplicar. */
+  paramInicioAlt: z.string().trim().max(40).nullable().default(null),
+  paramFimAlt: z.string().trim().max(40).nullable().default(null),
+  /** Filtro de situacao; com "buscarEmAberto" tambem traz o que segue em andamento (abertos antes do periodo). */
+  paramStatus: z.string().trim().max(40).nullable().default(null),
+  buscarEmAberto: z.boolean().default(false),
+  /** Caminho da lista de usuarios/atendentes (so para localizar o identificador de cada atendente). */
+  caminhoUsuarios: z.string().trim().max(200).nullable().default(null),
   /** Formato das datas no parametro de periodo: ISO completo ou so a data. */
   formatoParamData: z.enum(['ISO', 'DATA']).default('ISO'),
   /** Onde fica a lista dentro da resposta (ex.: data.items). Vazio = a propria resposta e' a lista. */

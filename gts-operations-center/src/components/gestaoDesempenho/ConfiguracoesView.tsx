@@ -8,7 +8,7 @@ import { ROTULO_NOTIFICACAO, TIPOS_NOTIFICACAO } from '@/lib/gestaoDesempenho/ti
 import { ROTULO_OCORRENCIA } from '@/lib/gestaoDesempenho/destaques'
 import { dataHoraFortaleza, rotuloDia } from '@/lib/gestaoDesempenho/formato'
 import { diaDe, somarDias } from '@/lib/gestaoDesempenho/periodos'
-import { Aviso, Esqueleto, enviarJson, useGd } from './comum'
+import { Aviso, Esqueleto, buscarJson, enviarJson, useGd } from './comum'
 
 type Aba = 'unidades' | 'metas' | 'ajustes' | 'integracao' | 'operacao'
 const ABAS: { id: Aba; rotulo: string; so?: 'integracoes' }[] = [
@@ -202,6 +202,9 @@ function Integracao({ executar }: { executar: Exec }) {
   const [rep, setRep] = useState({ inicio: somarDias(diaDe(), -7), fim: diaDe() })
   const [form, setForm] = useState<any | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [busca, setBusca] = useState('')
+  const [achados, setAchados] = useState<{ id: string; nome: string; status: string | null }[] | null>(null)
   if (cfg.isLoading || !cfg.data) return <Esqueleto />
   const v = form ?? cfg.data.valor
   const set = (k: string, val: unknown) => setForm({ ...v, [k]: val })
@@ -220,11 +223,18 @@ function Integracao({ executar }: { executar: Exec }) {
       </Cartao>
 
       <Cartao titulo="Mapeamento da API do OPA">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" className="gts-btn-secondary text-xs" onClick={async () => { try { const r = await buscarJson<{ preset: any }>('/api/gestao-desempenho/opa'); setForm(r.preset); setAviso('Mapeamento padrão do OPA Suite carregado (documentação oficial). Revise e clique em Salvar.') } catch (e) { setAviso((e as Error).message) } }}>Usar o mapeamento padrão do OPA Suite</button>
+          {aviso && <span className="text-[11px] text-tema-suave">{aviso}</span>}
+        </div>
         <form className="space-y-3" onSubmit={e => { e.preventDefault(); executar(() => enviarJson('/api/gestao-desempenho/config/opa', 'PUT', v), 'Mapeamento salvo.').then(ok => ok && setForm(null)) }}>
           <div className="grid gap-2 sm:grid-cols-3">
-            {[['caminhoLista', 'Caminho da lista (ex.: /api/v1/atendimento)'], ['cabecalhoAuth', 'Cabeçalho de autenticação'], ['prefixoAuth', 'Prefixo do valor (ex.: "Bearer ")'], ['paramInicio', 'Parâmetro: data inicial'], ['paramFim', 'Parâmetro: data final'], ['paramPagina', 'Parâmetro: página'], ['paramLimite', 'Parâmetro: tamanho da página'], ['caminhoItens', 'Onde está a lista na resposta (ex.: data.items)']].map(([k, r]) => <Rotulo key={k} t={r}><input value={texto(k)} onChange={e => set(k, k === 'prefixoAuth' ? e.target.value : e.target.value.trim() || null)} className={inp} /></Rotulo>)}
+            {[['caminhoLista', 'Caminho da lista (ex.: /api/v1/atendimento)'], ['cabecalhoAuth', 'Cabeçalho de autenticação'], ['prefixoAuth', 'Prefixo do valor (ex.: "Bearer ")'], ['paramInicio', 'Parâmetro: data inicial'], ['paramFim', 'Parâmetro: data final'], ['paramPagina', 'Parâmetro: página'], ['paramLimite', 'Parâmetro: tamanho da página'], ['paramInicioAlt', 'Parâmetro: data inicial de ENCERRAMENTO (opcional)'], ['paramFimAlt', 'Parâmetro: data final de ENCERRAMENTO (opcional)'], ['paramStatus', 'Parâmetro: situação (para buscar os em andamento)'], ['caminhoUsuarios', 'Caminho da lista de usuários (achar o id do atendente)'], ['caminhoItens', 'Onde está a lista na resposta (ex.: data)']].map(([k, r]) => <Rotulo key={k} t={r}><input value={texto(k)} onChange={e => set(k, k === 'prefixoAuth' ? e.target.value : e.target.value.trim() || null)} className={inp} /></Rotulo>)}
             <Rotulo t="Itens por página"><input type="number" min={10} max={500} value={v.tamanhoPagina} onChange={e => set('tamanhoPagina', Number(e.target.value) || 100)} className={inp} /></Rotulo>
             <Rotulo t="Formato da data no parâmetro"><select value={v.formatoParamData} onChange={e => set('formatoParamData', e.target.value)} className={inp}><option value="ISO">ISO completo (com hora)</option><option value="DATA">Somente a data</option></select></Rotulo>
+            <Rotulo t="Onde seguem os filtros"><select value={v.estilo ?? 'QUERY'} onChange={e => set('estilo', e.target.value)} className={inp}><option value="QUERY">Na URL (parâmetros)</option><option value="CORPO">Em corpo JSON (filter/options) — OPA Suite</option></select></Rotulo>
+            <Rotulo t="Paginação"><select value={v.paginacao ?? 'PAGINA'} onChange={e => set('paginacao', e.target.value)} className={inp}><option value="PAGINA">Número da página</option><option value="SKIP">Deslocamento (skip) — OPA Suite</option></select></Rotulo>
+            <label className="flex items-center gap-2 text-[11px] text-tema-suave sm:col-span-3"><input type="checkbox" checked={!!v.buscarEmAberto} onChange={e => set('buscarEmAberto', e.target.checked)} />Buscar também os atendimentos que seguem em andamento (abertos antes do período), para as pendências</label>
           </div>
           <p className="text-xs font-semibold text-tema-tinta">Campos do atendimento (caminho no JSON, ex.: <code>atendente.id</code>)</p>
           <div className="grid gap-2 sm:grid-cols-3">{CAMPOS_OPA.map(([k, r]) => <Rotulo key={k} t={r}><input value={v.campos?.[k] ?? ''} onChange={e => setCampo(k, e.target.value)} className={inp} /></Rotulo>)}</div>
@@ -232,6 +242,15 @@ function Integracao({ executar }: { executar: Exec }) {
           <div className="grid gap-2 sm:grid-cols-4">{[['finalizado', 'Finalizado'], ['abandonado', 'Abandonado'], ['emAtendimento', 'Em atendimento'], ['aberto', 'Aberto / na fila']].map(([k, r]) => <Rotulo key={k} t={r}><input value={(v.situacoes?.[k] ?? []).join(', ')} onChange={e => setSit(k, e.target.value)} className={inp} /></Rotulo>)}</div>
           <button type="submit" className="gts-btn-primary text-xs">Salvar mapeamento</button>
         </form>
+      </Cartao>
+
+      <Cartao titulo="Localizar o identificador de uma atendente no OPA">
+        <p className="text-[11px] text-tema-apagado">Digite o nome (ex.: Talita) para ver o identificador que o OPA usa. Copie-o em Unidades e equipes › colaborador › “Identificador do atendente no OPA”. Exige URL, token e o caminho da lista de usuários configurados.</p>
+        <form className="flex flex-wrap items-end gap-2" onSubmit={async e => { e.preventDefault(); setAchados(null); try { const r = await buscarJson<{ usuarios: any[] }>(`/api/gestao-desempenho/opa?usuarios=${encodeURIComponent(busca)}`); setAchados(r.usuarios); setAviso(null) } catch (err) { setAviso((err as Error).message) } }}>
+          <Rotulo t="Nome"><input value={busca} onChange={e => setBusca(e.target.value)} className="gts-input py-1.5 text-xs" /></Rotulo>
+          <button type="submit" disabled={busca.trim().length < 2} className="gts-btn-secondary text-xs disabled:opacity-40">Buscar no OPA</button>
+        </form>
+        {achados && (achados.length === 0 ? <p className="text-xs text-tema-suave">Nenhum usuário encontrado.</p> : <ul className="space-y-1 text-xs">{achados.map(u => <li key={u.id}><strong>{u.nome}</strong> — <code className="rounded bg-tema-contraste/[0.06] px-1">{u.id}</code>{u.status && u.status !== 'A' ? ` (situação ${u.status})` : ''}</li>)}</ul>)}
       </Cartao>
 
       <Cartao titulo="Sincronização">
