@@ -197,7 +197,7 @@ function aplicarManuais(ind: Record<string, Valor>, ctx: Contexto, periodo: Peri
 }
 
 export async function calcularUnidade(unidadeId: string, periodo: Periodo): Promise<ResultadoUnidade | null> {
-  const anterior = periodoAnterior(periodo)
+  const anterior = periodoAnterior(periodo, (await lerConfig('operacao')).inicioSemana)
   const ctx = await carregarContexto(unidadeId, { inicio: anterior.inicio, fim: periodo.fim })
   if (!ctx) return null
   const ocorrencias = ctx.ocorrencias
@@ -266,11 +266,14 @@ export interface VisaoGeral {
 export async function calcularVisaoGeral(periodo: Periodo): Promise<VisaoGeral> {
   const lista = await prisma.gdUnidade.findMany({ where: { ativo: true }, orderBy: [{ ordem: 'asc' }, { nome: 'asc' }], select: { id: true } })
   const unidades = (await Promise.all(lista.map(u => calcularUnidade(u.id, periodo)))).filter((u): u is ResultadoUnidade => !!u)
-  const anterior = periodoAnterior(periodo)
 
+  // Havendo unidades do tipo mas nenhum dado (sem equipe vinculada / sem OPA), os indicadores aparecem como "nao disponivel": nunca somem nem viram zero.
+  const temCampo = unidades.some(u => u.unidade.tipo === 'EQUIPE_CAMPO')
+  const temRecepcao = unidades.some(u => u.unidade.tipo === 'RECEPCAO_INDIVIDUAL')
+  const semDado = (defs: typeof INDICADORES_CAMPO) => Object.fromEntries(defs.map(d => [d.chave, indisponivel(d)]))
   const geral = (campoCont: ContadoresCampo[], recCont: ContadoresRecepcao[]) => ({
-    ...(campoCont.length ? indicadoresDeContadores(somarUnidades(campoCont)) : {}),
-    ...(recCont.length ? indicadoresRecepcao(somarUnidadesRecepcao(recCont), {}) : {}),
+    ...(campoCont.length ? indicadoresDeContadores(somarUnidades(campoCont)) : temCampo ? semDado(INDICADORES_CAMPO) : {}),
+    ...(recCont.length ? indicadoresRecepcao(somarUnidadesRecepcao(recCont), {}) : temRecepcao ? semDado(INDICADORES_RECEPCAO) : {}),
   })
   const atualInd = geral(unidades.flatMap(u => (u.contadoresCampo ? [u.contadoresCampo] : [])), unidades.flatMap(u => (u.contadoresRecepcao ? [u.contadoresRecepcao] : [])))
   const ant = geral(unidades.flatMap(u => (u.anterior.contadoresCampo ? [u.anterior.contadoresCampo] : [])), unidades.flatMap(u => (u.anterior.contadoresRecepcao ? [u.anterior.contadoresRecepcao] : [])))

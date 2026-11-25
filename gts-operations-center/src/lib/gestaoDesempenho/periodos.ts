@@ -90,9 +90,20 @@ export function resolverPeriodo(preset: PresetPeriodo, opcoes: { agora?: Date; i
   }
 }
 
-/** Periodo de comparacao: mesma quantidade de dias, imediatamente antes do periodo atual. */
-export function periodoAnterior(p: Periodo): Periodo {
+/**
+ * Periodo de comparacao. Alinhado ao calendario quando o periodo comeca no inicio de uma semana ou de um mes
+ * (semana em andamento seg-qua x seg-qua da semana anterior; dia 1-25 do mes x dia 1-25 do mes anterior), para nao
+ * comparar dias uteis com fim de semana. Nos demais casos: mesma quantidade de dias imediatamente antes.
+ */
+export function periodoAnterior(p: Periodo, inicioSemana = 1): Periodo {
   const dias = listarDias(p.inicio, p.fim).length
+  if (p.inicio === primeiroDiaDoMes(p.inicio) && p.fim.slice(0, 7) === p.inicio.slice(0, 7)) {
+    const mesAnt = somarDias(p.inicio, -1) // ultimo dia do mes anterior
+    const ini = primeiroDiaDoMes(mesAnt)
+    const alvo = `${ini.slice(0, 7)}-${p.fim.slice(8, 10)}`
+    return { inicio: ini, fim: alvo > mesAnt ? mesAnt : alvo }
+  }
+  if (dias <= 7 && p.inicio === inicioDaSemana(p.inicio, inicioSemana)) return { inicio: somarDias(p.inicio, -7), fim: somarDias(p.fim, -7) }
   return { inicio: somarDias(p.inicio, -dias), fim: somarDias(p.inicio, -1) }
 }
 

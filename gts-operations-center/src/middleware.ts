@@ -40,6 +40,8 @@ const ROTAS_VENDEDOR = [
 ]
 
 const ROTAS_BLOQUEADAS_OPERADOR = [
+  '/gestao-desempenho',
+  '/api/gestao-desempenho',
   '/inteligencia-operacional',
   '/api/ia',
   '/users',

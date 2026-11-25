@@ -45,6 +45,12 @@ describe('gestao de desempenho: periodos em Fortaleza', () => {
     assert.equal(inicioDaSemana('2026-11-11', 0), '2026-11-08') // quarta -> domingo
     assert.equal(resolverPeriodo('semana_atual', { agora: new Date('2026-11-11T15:00:00Z'), inicioSemana: 0 })!.inicio, '2026-11-08')
     assert.deepEqual(periodoAnterior({ inicio: '2026-11-03', fim: '2026-11-09' }), { inicio: '2026-10-27', fim: '2026-11-02' })
+    // alinhado ao calendario: semana em andamento x mesmos dias da semana anterior; mes em andamento x mesmos dias do mes anterior
+    assert.deepEqual(periodoAnterior({ inicio: '2026-11-23', fim: '2026-11-25' }), { inicio: '2026-11-16', fim: '2026-11-18' })
+    assert.deepEqual(periodoAnterior({ inicio: '2026-11-02', fim: '2026-11-08' }), { inicio: '2026-10-26', fim: '2026-11-01' })
+    assert.deepEqual(periodoAnterior({ inicio: '2026-11-01', fim: '2026-11-25' }), { inicio: '2026-10-01', fim: '2026-10-25' })
+    assert.deepEqual(periodoAnterior({ inicio: '2026-03-01', fim: '2026-03-31' }), { inicio: '2026-02-01', fim: '2026-02-28' }, 'fevereiro tem menos dias')
+    assert.deepEqual(periodoAnterior({ inicio: '2026-11-22', fim: '2026-11-25' }), { inicio: '2026-11-18', fim: '2026-11-21' }, 'sem alinhamento: mesma quantidade de dias')
     assert.equal(listarDias('2026-11-01', '2026-11-30').length, 30)
     assert.equal(somarDias('2026-12-31', 1), '2027-01-01')
   })
@@ -246,5 +252,15 @@ describe('gestao de desempenho: pontuacao opcional e comparativo', () => {
     assert.deepEqual([c.variacao, c.variacaoPct], [5, 50])
     assert.equal(compararValores(comValor(5), comValor(0), 'MAIOR_MELHOR').variacaoPct, null)
     assert.equal(compararValores(comValor(5), indisponivel(INDICADOR_POR_CHAVE.reinstalacoes), 'MAIOR_MELHOR').tendencia, null)
+  })
+})
+
+describe('gestao de desempenho: controle de acesso (modulo restrito)', () => {
+  const GD = ['gdVerIndicadores', 'gdVerRelatoriosIndividuais', 'gdGerarRelatorios', 'gdConfigurarMetas', 'gdConfigurarIntegracoes', 'gdAdicionarObservacoes', 'gdFecharRelatorios', 'gdRevisarRelatorios', 'gdExportar'] as const
+  it('admin tem tudo; gestor tudo menos integracoes (segredos); os demais perfis nada', async () => {
+    const { temPermissao } = await import('@/lib/permissions')
+    for (const p of GD) assert.equal(temPermissao('ADMIN', p), true, `ADMIN ${p}`)
+    for (const p of GD) assert.equal(temPermissao('GESTOR', p), p !== 'gdConfigurarIntegracoes', `GESTOR ${p}`)
+    for (const role of ['OPERADOR', 'TECNICO', 'VENDEDOR', 'COMERCIAL', 'DESCONHECIDO']) for (const p of GD) assert.equal(temPermissao(role, p), false, `${role} ${p}`)
   })
 })

@@ -361,7 +361,7 @@ export async function montarPdf(c: ConteudoRelatorio, logo: string | null, logoO
 
   for (const s of c.secoes) {
     // Titulo + texto + inicio da tabela ficam juntos (sem titulo orfao no rodape da pagina).
-    garantir(s.pares || s.tabela ? 55 : 14)
+    garantir(s.pares || s.tabela ? 55 : s.grafico ? 75 : 14)
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(0)
     doc.text(s.titulo, margem, y); y += 2
     doc.setDrawColor(120); doc.setLineWidth(0.2); doc.line(margem, y, largura - margem, y); y += 5
