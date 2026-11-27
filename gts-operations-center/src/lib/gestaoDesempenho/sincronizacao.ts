@@ -34,7 +34,7 @@ async function registrarSync(fonte: 'CAMPO' | 'OPA', modo: ModoSync, p: Periodo,
   })
 }
 
-async function gravarSnapshot(unidadeId: string, dia: string, parte: Record<string, unknown>, origem: string) {
+export async function gravarSnapshot(unidadeId: string, dia: string, parte: Record<string, unknown>, origem: string) {
   const data = new Date(`${dia}T00:00:00Z`)
   const atual = await prisma.gdSnapshotDia.findUnique({ where: { unidadeId_data: { unidadeId, data } } })
   const dados = { ...((atual?.dados as Record<string, unknown> | null) ?? {}), ...parte }

@@ -38,7 +38,7 @@ async function textoDoPdf(bytes: Uint8Array): Promise<string> {
 }
 
 /** Aceita o zip do OPA ou um unico PDF. Erros esperados viram ArquivoInvalido (mensagem segura para a tela). */
-export async function lerArquivoHistoricos(dados: Uint8Array, nome: string): Promise<ResultadoLeitura> {
+export async function lerArquivoHistoricos(dados: Uint8Array, nome: string, opcoes: { permitirVazio?: boolean } = {}): Promise<ResultadoLeitura> {
   if (dados.byteLength === 0) throw new ArquivoInvalido('O arquivo está vazio.')
   if (dados.byteLength > LIMITES_HISTORICOS.arquivoBytes) throw new ArquivoInvalido('O arquivo é grande demais. Envie por períodos menores (até uns 60 MB).')
 
@@ -88,6 +88,6 @@ export async function lerArquivoHistoricos(dados: Uint8Array, nome: string): Pro
       ignorados++ // PDF corrompido/protegido: segue com os demais, sem expor o motivo tecnico
     }
   }
-  if (historicos.length === 0) throw new ArquivoInvalido('Nenhum atendimento do OPA foi reconhecido nos arquivos enviados.')
+  if (historicos.length === 0 && !opcoes.permitirVazio) throw new ArquivoInvalido('Nenhum atendimento do OPA foi reconhecido nos arquivos enviados.')
   return { historicos, lidos, ignorados, repetidos }
 }

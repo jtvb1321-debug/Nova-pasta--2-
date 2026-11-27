@@ -37,6 +37,8 @@ export interface HistoricoAtendimento {
   atendente: string | null
   /** Departamento escolhido no robo (Suporte, Financeiro...). */
   departamento: string | null
+  /** Hora da primeira fala do atendente (sem os eventos do sistema e sem a despedida automatica). */
+  primeiraRespostaEm: Date | null
   /** Transferencias feitas por atendentes (a do robo para a fila nao conta). */
   transferenciasEntreAtendentes: number
   /** Do envio a fila (ou da abertura, se nao houver) ate o atendente iniciar. */
@@ -110,6 +112,7 @@ export function lerHistorico(textoBruto: string): HistoricoAtendimento | null {
     fim,
     atendente,
     departamento,
+    primeiraRespostaEm: falasAtendente[0]?.t ?? null,
     transferenciasEntreAtendentes: transferencias,
     esperaMin: inicio ? Math.max(0, minutos(transfRobo?.t ?? abertura, inicio) ?? 0) : null,
     tempoRespostaMedioMin: respostas.length ? Math.round((respostas.reduce((s, x) => s + x, 0) / respostas.length) * 10) / 10 : null,

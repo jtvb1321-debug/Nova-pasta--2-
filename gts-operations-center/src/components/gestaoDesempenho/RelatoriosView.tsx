@@ -10,6 +10,7 @@ import { montarConteudoRelatorio, ROTULO_STATUS_RELATORIO, ROTULO_TIPO_RELATORIO
 import { dataHoraFortaleza, rotuloDia } from '@/lib/gestaoDesempenho/formato'
 import { diaDe, inicioDaSemana, somarDias } from '@/lib/gestaoDesempenho/periodos'
 import { Aviso, Esqueleto, enviarJson, useGd } from './comum'
+import { ImportarHistoricosOpa } from './ImportarHistoricosOpa'
 
 interface LinhaRel { id: string; tipo: TipoRelatorioGd; unidade: string | null; periodoInicio: string; periodoFim: string; revisao: number; status: string; geradoEm: string; fechadoPor: string | null; fechadoEm: string | null }
 interface Detalhe extends LinhaRel { dados: DadosRelatorio; observacaoGestor: string | null; planoAcao: string | null; chave: string; eventos: { id: string; acao: string; usuario: string; detalhe: string | null; em: string; revisao: number }[]; revisoes: { id: string; revisao: number; status: string }[] }
@@ -101,6 +102,8 @@ export function RelatoriosView({ usuarioNome, pode }: { usuarioNome: string; pod
     <div className="space-y-4">
       <style>{`@media print { body * { visibility: hidden } #gd-previa, #gd-previa * { visibility: visible } #gd-previa { position: absolute; left: 0; top: 0; width: 100% } }`}</style>
       {msg && <Aviso tipo={msg.tipo === 'erro' ? 'erro' : 'info'}>{msg.texto}</Aviso>}
+
+      {pode.gerar && <ImportarHistoricosOpa />}
 
       {pode.gerar && (
         <section className="card-orbia space-y-3 p-4" aria-label="Gerar relatório">
