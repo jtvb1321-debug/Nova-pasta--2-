@@ -4,7 +4,7 @@ import { temPermissao } from '@/lib/permissions'
 import { calcularSlaDesempenho, type Periodo } from '@/lib/desempenho'
 
 const PERIODOS: Periodo[] = ['hoje', 'semana', 'mes', 'mes_anterior', 'personalizado']
-const TIPOS = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'ROMPIMENTO_MASSIVO']
+const TIPOS = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA', 'ROMPIMENTO_MASSIVO']
 const DATA = /^\d{4}-\d{2}-\d{2}$/
 
 export async function GET(request: NextRequest) {

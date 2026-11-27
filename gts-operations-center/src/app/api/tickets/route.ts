@@ -12,7 +12,7 @@ const createSchema = z.object({
   endereco:   z.string().min(1),
   cidade:     z.string().min(1),
   telefone:   z.string().optional(),
-  tipo:       z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
+  tipo:       z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA']),
   observacao: z.string().optional(),
   equipeId:   z.string().optional(),
   subCategoria: z.string().optional(),

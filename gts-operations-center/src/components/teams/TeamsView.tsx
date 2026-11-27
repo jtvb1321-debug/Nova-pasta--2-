@@ -31,6 +31,7 @@ const TIPO_COR: Record<string, string> = {
   MANUTENCAO: 'bg-amber-500/10 text-amber-700',
   RETIRADA:   'bg-red-500/10 text-red-700',
   SUPORTE:    'bg-purple-500/10 text-purple-700',
+  COBRANCA:   'bg-teal-500/10 text-teal-700',
 }
 
 function normalizar(t: string | null | undefined) {

@@ -10,7 +10,7 @@ import { nomesEquipes } from './operacoes'
 // modelo usa rotulos ("Cliente 1"). O sistema registra a equipe do chamado, nao o tecnico.
 
 export const ROTULO_TIPO: Record<string, string> = {
-  RETIRADA: 'Retirada (recolhimento)', INSTALACAO: 'Instalação', MANUTENCAO: 'Manutenção', ROMPIMENTO_MASSIVO: 'Rompimento massivo', SUPORTE: 'Suporte',
+  RETIRADA: 'Retirada (recolhimento)', INSTALACAO: 'Instalação', MANUTENCAO: 'Manutenção', ROMPIMENTO_MASSIVO: 'Rompimento massivo', SUPORTE: 'Suporte', COBRANCA: 'Cobrança',
 }
 const MIN_CHAMADOS_RANKING = 5
 

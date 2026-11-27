@@ -27,7 +27,7 @@ const STATUS_COR: Record<string, string> = {
   CANCELADO:    'bg-tema-apagado',
 }
 
-const TIPOS_LISTA: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'ROMPIMENTO_MASSIVO']
+const TIPOS_LISTA: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA', 'ROMPIMENTO_MASSIVO']
 
 // Timeline da visao Dia: 07:00 as 19:00, de 30 em 30 min.
 const SLOT_INICIO_MIN = 7 * 60

@@ -151,7 +151,7 @@ export function AgendaView() {
           className="gts-input py-1.5 text-sm w-auto"
         >
           <option value="">Todos os tipos</option>
-          {['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'].map(t => (
+          {['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA'].map(t => (
             <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t as TipoChamado]}</option>
           ))}
         </select>

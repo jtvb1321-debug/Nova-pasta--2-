@@ -39,6 +39,7 @@ export const TIPO_COR: Record<TipoChamado, string> = {
   MANUTENCAO: 'text-amber-700',
   RETIRADA:   'text-red-700',
   SUPORTE:    'text-purple-700',
+  COBRANCA:   'text-teal-700',
   ROMPIMENTO_MASSIVO: 'text-red-800',
 }
 
@@ -252,7 +253,7 @@ function MenuAcoes({ p, onAbrir, onTrocarEquipe, onReagendar, onAberto }: {
                 <ListChecks className="w-3.5 h-3.5 text-tema-apagado" /> Alterar tipo
                 <span className="ml-auto text-tema-apagado">{tipos ? '-' : '+'}</span>
               </button>
-              {tipos && (['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => (
+              {tipos && (['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA'] as TipoChamado[]).map(t => (
                 <button key={t} role="menuitemradio" aria-checked={c.tipo === t} onClick={fazer(() => { if (c.tipo !== t) p.onAlterarTipo!(c.id, t) })} className={cn(item, 'pl-9')}>
                   {TIPO_CHAMADO_LABELS[t]}
                   {c.tipo === t && <Check className="w-3.5 h-3.5 ml-auto text-orange-600" />}
@@ -673,7 +674,7 @@ export function DetalhesChamado(p: AcoesChamadoProps) {
               Tipo
               <select value={chamado.tipo} onChange={(e) => p.onAlterarTipo!(chamado.id, e.target.value)}
                 className="gts-input py-1.5 text-xs w-auto" title="Alterar tipo do chamado (antes da equipe iniciar)">
-                {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as TipoChamado[]).map(t => <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>)}
+                {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA'] as TipoChamado[]).map(t => <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>)}
               </select>
             </label>
           )}

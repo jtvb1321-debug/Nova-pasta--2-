@@ -14,7 +14,7 @@ const schema = z.object({
   endereco: z.string().min(1, 'Obrigatorio'),
   cidade: z.string().min(1, 'Obrigatorio'),
   telefone: z.string().optional(),
-  tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
+  tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA']),
   observacao: z.string().optional(),
   equipeId: z.string().optional(),
   subCategoria: z.string().optional(),
@@ -127,7 +127,7 @@ export function NewTicketModal({ onClose, onSuccess, initialData }: Props) {
           <div>
             <label className="block text-sm font-medium text-tema-suave mb-2">Tipo de Chamado</label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(tipo => (
+              {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA'] as const).map(tipo => (
                 <label key={tipo} className="cursor-pointer">
                   <input {...register('tipo')} type="radio" value={tipo} className="sr-only peer" />
                   <div className="px-3 py-2 text-xs text-center font-medium border border-tema-linha rounded-lg

@@ -13,6 +13,7 @@ const TIPO_COR_HEX: Record<string, string> = {
   MANUTENCAO: '#facc15',
   RETIRADA: '#f87171',
   SUPORTE: '#c084fc',
+  COBRANCA: '#2dd4bf',
   ROMPIMENTO_MASSIVO: '#ef4444',
 }
 

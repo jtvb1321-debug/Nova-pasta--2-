@@ -21,7 +21,7 @@ const createSchema = z.object({
   bairro:       z.string().min(1),
   cidade:       z.string().min(1),
   uf:           z.string().optional(),
-  tipo:         z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
+  tipo:         z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA']),
   observacao:   z.string().optional(),
   subCategoria: z.string().optional(),
   equipeId:     z.string().min(1, 'Equipe obrigatoria'),
@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
   const { reincidente, chamadoOrigemReincidenciaId, statusRechamada } = await detectarReincidencia({
     cliente: chamadoData.cliente,
     telefone: chamadoData.telefone,
+    tipo: chamadoData.tipo,
     dataAbertura,
   })
 

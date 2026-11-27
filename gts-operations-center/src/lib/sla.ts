@@ -71,7 +71,9 @@ export function calcularProgressoSlaEmAndamento(inicioSla: Date | null, tipo: st
 // cuja data de finalizacao caiu dentro da janela de reincidencia, antes da
 // abertura do chamado novo. Chamados antigos que nunca foram finalizados
 // (cancelados, ainda em aberto) nao contam para essa deteccao.
-export async function detectarReincidencia(dados: { cliente: string; telefone?: string | null; dataAbertura: Date }) {
+export async function detectarReincidencia(dados: { cliente: string; telefone?: string | null; dataAbertura: Date; tipo?: string }) {
+  // Cobranca nao e atendimento tecnico: nao vira rechamada, e uma cobranca anterior tambem nao torna o suporte seguinte reincidente.
+  if (dados.tipo === 'COBRANCA') return { reincidente: false, chamadoOrigemReincidenciaId: null, statusRechamada: null }
   const limiteInferior = new Date(dados.dataAbertura.getTime() - JANELA_REINCIDENCIA_DIAS * 24 * 60 * 60 * 1000)
 
   const where = dados.telefone
@@ -82,6 +84,7 @@ export async function detectarReincidencia(dados: { cliente: string; telefone?: 
     where: {
       ...where,
       status: 'FINALIZADO',
+      tipo: { not: 'COBRANCA' },
       dataFim: { gte: limiteInferior, lt: dados.dataAbertura },
     },
     orderBy: { dataFim: 'desc' },

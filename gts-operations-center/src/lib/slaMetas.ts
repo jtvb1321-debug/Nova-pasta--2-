@@ -8,5 +8,6 @@ export const META_SLA_RESOLUCAO_MINUTOS: Record<string, number> = {
   MANUTENCAO: 24 * 60,
   INSTALACAO: 48 * 60,
   RETIRADA: 48 * 60,
+  COBRANCA: 24 * 60,
   ROMPIMENTO_MASSIVO: 24 * 60,
 }

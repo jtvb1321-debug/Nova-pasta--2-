@@ -197,6 +197,7 @@ export const TIPO_CHAMADO_LABELS: Record<TipoChamado, string> = {
   MANUTENCAO: 'Manutenção',
   RETIRADA: 'Retirada',
   SUPORTE: 'Suporte',
+  COBRANCA: 'Cobrança',
   ROMPIMENTO_MASSIVO: 'Rompimento Massivo',
 }
 

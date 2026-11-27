@@ -31,6 +31,7 @@ const TIPO_COR: Record<TipoChamado, string> = {
   MANUTENCAO: 'text-amber-700',
   RETIRADA:   'text-red-700',
   SUPORTE:    'text-purple-700',
+  COBRANCA:   'text-teal-700',
   ROMPIMENTO_MASSIVO: 'text-red-800',
 }
 

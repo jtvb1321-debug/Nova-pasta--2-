@@ -45,6 +45,7 @@ enum TipoChamado {
   RETIRADA
   ROMPIMENTO_MASSIVO
   SUPORTE
+  COBRANCA
 }
 
 enum StatusChamado {

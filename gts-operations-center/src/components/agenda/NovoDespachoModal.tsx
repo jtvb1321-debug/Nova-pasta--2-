@@ -39,7 +39,7 @@ const schema = z.object({
   // So na tela: vao para o texto do chamado (observacao) que a equipe recebe.
   referenciaEace: z.string().optional(),
   falha: z.string().optional(),
-  tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']),
+  tipo: z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA']),
   prioridade: z.enum(['NORMAL', 'URGENTE', 'CRITICO']),
   equipeId: z.string().min(1, 'Selecione uma equipe'),
   subCategoria: z.string().optional(),
@@ -512,7 +512,7 @@ export function NovoDespachoModal({ onClose, onSuccess, initialData }: Props) {
               {!eace && (
                 <Campo rotulo="Tipo de atividade *">
                   <select {...register('tipo')} className="w-full gts-input">
-                    {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE'] as const).map(t => (
+                    {(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA'] as const).map(t => (
                       <option key={t} value={t}>{TIPO_CHAMADO_LABELS[t]}</option>
                     ))}
                   </select>

@@ -25,7 +25,7 @@ export interface FerramentaIA {
 const idSeguro = z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'id inválido')
 const equipeId = idSeguro.optional().describe('Id da equipe (opcional). Veja a lista de equipes nos resultados.')
 const textoCurto = (descricao: string) => z.string().trim().min(1).max(60).optional().describe(descricao)
-const tipoChamado = z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'ROMPIMENTO_MASSIVO', 'SUPORTE'])
+const tipoChamado = z.enum(['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'ROMPIMENTO_MASSIVO', 'SUPORTE', 'COBRANCA'])
 const categoria = z.enum(['GTSNET', 'EACE', 'FERRAMENTAS', 'LIMPEZA', 'MANINFO']).optional().describe('Categoria do estoque.')
 const objeto = <T extends z.ZodRawShape>(forma: T) => z.object(forma).strict()
 

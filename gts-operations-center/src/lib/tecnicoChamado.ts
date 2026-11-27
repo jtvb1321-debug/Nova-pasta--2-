@@ -95,6 +95,7 @@ const FRASES_RELATO: Record<string, string[]> = {
   SUPORTE: ['Problema resolvido', 'Equipamento reiniciado', 'Sinal normalizado', 'Cliente orientado', 'Cliente testou a internet'],
   RETIRADA: ['Equipamento recolhido', 'Cabo recolhido', 'Cliente informado', 'Local organizado'],
   ROMPIMENTO_MASSIVO: ['Fibra emendada', 'Sinal restabelecido', 'Teste de potência ok', 'Local sinalizado'],
+  COBRANCA: ['Cliente informado', 'Cliente orientado', 'Serviço concluído'],
 }
 
 export function frasesDeRelato(tipo?: string | null): string[] {

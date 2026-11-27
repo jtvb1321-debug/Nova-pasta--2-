@@ -38,7 +38,7 @@ const STATUS_OPCOES = [
   { valor: 'CANCELADO', rotulo: 'Cancelados' },
 ]
 
-const TIPOS: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE']
+const TIPOS: TipoChamado[] = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'SUPORTE', 'COBRANCA']
 
 interface Filtros {
   busca: string

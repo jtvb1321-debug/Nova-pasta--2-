@@ -2,7 +2,7 @@
 // a lista (/api/tickets) e os indicadores (/api/tickets/resumo) para que os
 // totais sempre sigam exatamente os mesmos criterios da lista.
 
-const TIPOS = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'ROMPIMENTO_MASSIVO', 'SUPORTE']
+const TIPOS = ['INSTALACAO', 'MANUTENCAO', 'RETIRADA', 'ROMPIMENTO_MASSIVO', 'SUPORTE', 'COBRANCA']
 
 // Aplica no `where` os filtros: eace (true/false), tipo, cidade e busca.
 // Nao mexe em status/equipe/periodo (cada rota trata a sua).
