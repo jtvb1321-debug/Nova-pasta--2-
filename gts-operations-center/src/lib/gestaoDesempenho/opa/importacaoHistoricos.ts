@@ -13,8 +13,19 @@ import { gravarSnapshot } from '../sincronizacao'
 import type { HistoricoAtendimento } from './historicoPdf'
 
 export const FONTE_PDF = 'PDF'
-/** O que o historico do OPA realmente informa. Nota, SLA e resolucao remota nao existem nele: ficam "Nao disponivel". */
-export const CAPACIDADES_PDF: ReadonlySet<CapacidadeOpa> = new Set<CapacidadeOpa>(['ASSUMIDO', 'FINALIZADO', 'TRANSFERIDO', 'PRIMEIRA_RESPOSTA'])
+/**
+ * SLA da recepcao calculado a partir do tempo de atendimento (o historico do OPA nao traz SLA pronto): o atendimento finalizado
+ * fica DENTRO do SLA quando durou ate este limite (definido pelo gestor: 30 minutos). Mede-se o tempo ATIVO (do inicio ate a ultima
+ * mensagem real), porque atendimento esquecido aberto e encerrado em lote no fim do dia nao deve contar como demora.
+ */
+export const LIMITE_SLA_ATENDIMENTO_MIN = 30
+export function dentroDoSlaAtendimento(finalizado: boolean, duracaoAtivaMin: number | null | undefined, duracaoRegistradaMin: number | null | undefined): boolean | null {
+  if (!finalizado) return null
+  const t = typeof duracaoAtivaMin === 'number' ? duracaoAtivaMin : typeof duracaoRegistradaMin === 'number' ? duracaoRegistradaMin : null
+  return t === null ? null : t <= LIMITE_SLA_ATENDIMENTO_MIN
+}
+/** O que o historico do OPA realmente informa. Nota e resolucao remota nao existem nele: ficam "Nao disponivel". O SLA e' calculado aqui (ver acima). */
+export const CAPACIDADES_PDF: ReadonlySet<CapacidadeOpa> = new Set<CapacidadeOpa>(['ASSUMIDO', 'FINALIZADO', 'TRANSFERIDO', 'PRIMEIRA_RESPOSTA', 'SLA'])
 const MAX_DIAS = 400
 
 export class ErroImportacao extends Error {}
@@ -52,6 +63,7 @@ export function normalizarHistorico(h: HistoricoAtendimento): AtendimentoNormali
   return {
     id: h.protocolo, atendenteId: h.atendente, protocolo: h.protocolo, criadoEm: h.abertura, assumidoEm: h.inicio,
     primeiraRespostaEm: h.primeiraRespostaEm, finalizadoEm: h.fim, situacao: situacaoDe(h), transferido: h.transferenciasEntreAtendentes > 0,
+    dentroSla: dentroDoSlaAtendimento(!!h.fim, h.duracaoAtivaMin, h.duracaoRegistradaMin),
   }
 }
 
@@ -72,6 +84,7 @@ function doRegistro(r: { opaId: string; atendenteOpaId: string | null; criadoEm:
     id: r.opaId, atendenteId: r.atendenteOpaId, protocolo: typeof p.protocolo === 'string' ? p.protocolo : null, criadoEm: r.criadoEm,
     assumidoEm: d(p.assumidoEm), primeiraRespostaEm: d(p.primeiraRespostaEm), finalizadoEm: d(p.finalizadoEm),
     situacao: (p.situacao as AtendimentoNormalizado['situacao']) ?? 'DESCONHECIDA', transferido: p.transferido === true,
+    dentroSla: dentroDoSlaAtendimento(p.situacao === 'FINALIZADO', typeof p.duracaoAtivaMin === 'number' ? p.duracaoAtivaMin : null, typeof p.duracaoRegistradaMin === 'number' ? p.duracaoRegistradaMin : null),
   }
 }
 

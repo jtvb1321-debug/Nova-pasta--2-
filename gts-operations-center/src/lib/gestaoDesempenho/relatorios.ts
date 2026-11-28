@@ -121,12 +121,11 @@ async function buscar(id: string) {
   return r
 }
 
-/** Observacoes e plano de acao: so enquanto nao fechado (fechado nao muda; a correcao e' uma nova revisao). */
+/** Observacoes e plano de acao: texto livre do gestor, editavel tambem depois do fechamento (os NUMEROS continuam congelados; cada edicao fica no historico). */
 export async function atualizarTextos(id: string, usuario: string, t: { observacaoGestor?: string | null; planoAcao?: string | null }) {
   const r = await buscar(id)
-  if (!relatorioEditavel(r.status)) throw new ErroRelatorio('Relatório fechado não pode ser alterado. Gere uma nova revisão.', 'ESTADO_INVALIDO')
   const atualizado = await prisma.gdRelatorio.update({ where: { id }, data: { observacaoGestor: t.observacaoGestor ?? r.observacaoGestor, planoAcao: t.planoAcao ?? r.planoAcao } })
-  await evento(id, r.revisao, 'TEXTOS', usuario, 'Observação/plano de ação atualizados')
+  await evento(id, r.revisao, 'TEXTOS', usuario, relatorioEditavel(r.status) ? 'Observação/plano de ação atualizados' : 'Observação/plano de ação atualizados após o fechamento (números não mudam)')
   return atualizado
 }
 

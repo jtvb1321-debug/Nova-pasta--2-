@@ -153,8 +153,9 @@ export function RelatoriosView({ usuarioNome, pode }: { usuarioNome: string; pod
                 </div>
                 <p className="text-[11px] text-tema-apagado">Dados do GTSCenter: {dataHoraFortaleza(r.dados.sincronizacao.campo ?? r.dados.geradoEm)} · OPA: {r.dados.sincronizacao.opa ? dataHoraFortaleza(r.dados.sincronizacao.opa) : 'sem sincronização'}. {editavel ? 'Enquanto não fechado, os números se atualizam a cada sincronização.' : 'Os números estão congelados no fechamento.'}</p>
 
-                {editavel && pode.observar && (
+                {pode.observar && (
                   <div className="grid gap-2 md:grid-cols-2">
+                    {!editavel && <p className="text-[11px] text-tema-apagado md:col-span-2">Os números estão congelados, mas a observação do gestor{r.tipo === 'SEMANAL' ? ' e o plano de ação' : ''} pode ser editada; cada alteração fica no histórico.</p>}
                     <label className="text-[11px] text-tema-suave">Observações do gestor<textarea value={textos?.obs ?? r.observacaoGestor ?? ''} onChange={e => setTextos({ obs: e.target.value, plano: textos?.plano ?? r.planoAcao ?? '' })} rows={3} maxLength={2000} className="gts-input mt-0.5 w-full text-xs" /></label>
                     {r.tipo === 'SEMANAL' && <label className="text-[11px] text-tema-suave">Plano de ação para a próxima semana<textarea value={textos?.plano ?? r.planoAcao ?? ''} onChange={e => setTextos({ obs: textos?.obs ?? r.observacaoGestor ?? '', plano: e.target.value })} rows={3} maxLength={2000} className="gts-input mt-0.5 w-full text-xs" /></label>}
                     {textos && <div><button type="button" onClick={() => executar(() => enviarJson(`/api/gestao-desempenho/relatorios/${r.id}`, 'PATCH', { observacaoGestor: textos.obs, planoAcao: textos.plano }), 'Observações salvas.').then(() => setTextos(null))} disabled={ocupado} className="gts-btn-secondary text-xs">Salvar observações</button></div>}

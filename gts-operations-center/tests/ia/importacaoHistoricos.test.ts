@@ -4,7 +4,8 @@ import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { prisma } from '@/lib/prisma'
 import { lerHistorico, type HistoricoAtendimento } from '@/lib/gestaoDesempenho/opa/historicoPdf'
-import { analisarHistoricos, chaveNome, ErroImportacao, importarHistoricos, lotesEntrada, paraHistoricos, sugerirColaborador } from '@/lib/gestaoDesempenho/opa/importacaoHistoricos'
+import { contadoresRecepcaoDoDia, indicadoresRecepcao } from '@/lib/gestaoDesempenho/recepcao'
+import { analisarHistoricos, CAPACIDADES_PDF, chaveNome, dentroDoSlaAtendimento, LIMITE_SLA_ATENDIMENTO_MIN, normalizarHistorico, ErroImportacao, importarHistoricos, lotesEntrada, paraHistoricos, sugerirColaborador } from '@/lib/gestaoDesempenho/opa/importacaoHistoricos'
 import { calcularUnidade, ultimaSincronizacaoOpa } from '@/lib/gestaoDesempenho/consolidacao'
 import { gerarRelatorio } from '@/lib/gestaoDesempenho/relatorios'
 import { montarConteudoRelatorio, type DadosRelatorio } from '@/lib/gestaoDesempenho/relatorioConteudo'
@@ -97,7 +98,9 @@ describe('importacao dos historicos do OPA', () => {
     assert.equal(t.tempo_resolucao_recepcao.valor, 32.5, '(40 + 25) / 2')
     assert.equal(t.tempo_atendimento.valor, 28.5, '(37 + 20) / 2')
     assert.equal(t.atend_transferidos.valor, 0)
-    for (const k of ['satisfacao_recepcao', 'sla_recepcao_pct', 'taxa_resolucao_remota']) assert.equal(t[k].disponivel, false, `${k} nao existe no historico: "Nao disponivel", nunca zero`)
+    assert.equal(t.sla_recepcao_pct.valor, 100, 'SLA calculado pelo tempo de atendimento (limite de 30 min): os 2 finalizados ficaram dentro')
+    assert.equal(t.atend_fora_sla.valor, 0)
+    for (const k of ['satisfacao_recepcao', 'taxa_resolucao_remota']) assert.equal(t[k].disponivel, false, `${k} nao existe no historico: "Nao disponivel", nunca zero`)
 
     const g = (await calcularUnidade(U_G, P))!.indicadores
     assert.equal(g.atend_recebidos.valor, 1)
@@ -149,7 +152,29 @@ describe('relatorio da recepcao depois da importacao', () => {
     const conteudo = montarConteudoRelatorio({ dados: rel.dados as unknown as DadosRelatorio, status: rel.status, revisao: rel.revisao, observacaoGestor: null, planoAcao: null, fechadoPor: null, fechadoEm: null }, 'completo', 'Gestor')
     const texto = JSON.stringify(conteudo)
     assert.match(texto, /Atendimentos finalizados/i)
-    assert.match(texto, /Não disponível/i, 'satisfacao e SLA nao existem no historico')
+    assert.match(texto, /Não disponível/i, 'a satisfacao nao existe no historico')
     assert.ok(!/Cliente Ficticio|5586000000000/.test(texto))
+  })
+})
+
+describe('SLA da recepcao pelo tempo de atendimento (limite de 30 minutos)', () => {
+  it('finalizado ate 30 min = dentro; acima = fora; em aberto nao entra; usa o tempo ativo e cai no registrado se faltar', () => {
+    assert.equal(LIMITE_SLA_ATENDIMENTO_MIN, 30)
+    assert.equal(dentroDoSlaAtendimento(true, 30, 200), true, 'o limite e inclusivo; o tempo ativo vale mais que o registrado (atendimento esquecido aberto)')
+    assert.equal(dentroDoSlaAtendimento(true, 31, 5), false)
+    assert.equal(dentroDoSlaAtendimento(true, null, 20), true)
+    assert.equal(dentroDoSlaAtendimento(true, null, 45), false)
+    assert.equal(dentroDoSlaAtendimento(true, null, null), null, 'sem tempo nao ha como avaliar')
+    assert.equal(dentroDoSlaAtendimento(false, 5, 5), null, 'em aberto nao entra no SLA')
+  })
+  it('os contadores somam dentro/fora e o percentual considera so os avaliados', () => {
+    const mk = (ativa: number | null): HistoricoAtendimento => ({ ...h({ proto: `S${ativa}`, ab: '10:00', ini: '10:01', fim: '11:30', quem: 'Thalita' }), duracaoAtivaMin: ativa, duracaoRegistradaMin: 89 })
+    const dia = '2026-03-10'
+    const atendimentos = [mk(10), mk(25), mk(30), mk(45), mk(120)].map(normalizarHistorico)
+    const c = contadoresRecepcaoDoDia(dia as any, atendimentos.map(a => ({ ...a, criadoEm: new Date(`${dia}T13:00:00Z`), assumidoEm: new Date(`${dia}T13:01:00Z`), finalizadoEm: new Date(`${dia}T14:00:00Z`) })), new Set(CAPACIDADES_PDF))
+    assert.deepEqual(c.sla, { avaliados: 5, dentro: 3 })
+    const ind = indicadoresRecepcao(c)
+    assert.equal(ind.sla_recepcao_pct.valor, 60)
+    assert.equal(ind.atend_fora_sla.valor, 2)
   })
 })

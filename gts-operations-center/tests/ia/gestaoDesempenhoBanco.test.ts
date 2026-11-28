@@ -230,7 +230,10 @@ describe('desempenho (banco): ciclo de vida dos relatorios', () => {
     const reabre = await gerarRelatorio({ tipo: 'DIARIO_UNIDADE', periodo: P, unidadeId: U1, usuario: 'Sistema' })
     assert.equal(reabre.id, id)
     assert.equal(((reabre.dados as any).unidades[0].indicadores.sla_resolucao_pct.valor), 50, 'fechado continua com o numero do fechamento')
-    await assert.rejects(atualizarTextos(id, 'Gestor', { observacaoGestor: 'x' }), (e: any) => e.codigo === 'ESTADO_INVALIDO')
+    const editado = await atualizarTextos(id, 'Gestor', { observacaoGestor: 'Ajustada depois do fechamento.' }) // texto livre pode ser editado; numeros seguem congelados
+    assert.equal(editado.observacaoGestor, 'Ajustada depois do fechamento.')
+    assert.equal(((await prisma.gdRelatorio.findUnique({ where: { id } }))!.dados as any).unidades[0].indicadores.sla_resolucao_pct.valor, 50)
+    assert.ok(await prisma.gdRelatorioEvento.findFirst({ where: { relatorioId: id, acao: 'TEXTOS', detalhe: { contains: 'após o fechamento' } } }))
     await assert.rejects(fecharRelatorio(id, 'Gestor'), (e: any) => e.codigo === 'ESTADO_INVALIDO')
   })
 
@@ -240,14 +243,14 @@ describe('desempenho (banco): ciclo de vida dos relatorios', () => {
     assert.equal(rev2.revisao, 2)
     assert.equal(rev2.status, 'AGUARDANDO_REVISAO')
     assert.equal(((rev2.dados as any).unidades[0].indicadores.sla_resolucao_pct.valor), 100)
-    assert.equal(rev2.observacaoGestor, 'Equipe com dia difícil.', 'a observacao acompanha')
+    assert.equal(rev2.observacaoGestor, 'Ajustada depois do fechamento.', 'a observacao (ja editada apos o fechamento) acompanha')
     assert.equal((await prisma.gdRelatorio.findUnique({ where: { id } }))!.status, 'FECHADO', 'a rev 1 ainda e a fechada ate a 2 fechar')
     await fecharRelatorio(rev2.id, 'Gestor')
     const rev1 = (await prisma.gdRelatorio.findUnique({ where: { id } }))!
     assert.equal(rev1.status, 'REVISADO')
     assert.equal(((rev1.dados as any).unidades[0].indicadores.sla_resolucao_pct.valor), 50, 'a versao anterior mantem seus numeros')
     const acoes = (await prisma.gdRelatorioEvento.findMany({ where: { relatorioId: { in: [id, rev2.id] } }, orderBy: { em: 'asc' } })).map(e => e.acao)
-    assert.deepEqual(acoes.filter(a => a !== 'STATUS'), ['GERADO', 'TEXTOS', 'FECHADO', 'NOVA_REVISAO', 'FECHADO'])
+    assert.deepEqual(acoes.filter(a => a !== 'STATUS'), ['GERADO', 'TEXTOS', 'FECHADO', 'TEXTOS', 'NOVA_REVISAO', 'FECHADO'])
     await assert.rejects(novaRevisao(id, 'Gestor', 'motivo valido aqui'), (e: any) => e.codigo === 'ESTADO_INVALIDO', 'so a mais recente fechada ganha revisao')
   })
 
