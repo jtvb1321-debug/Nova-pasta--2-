@@ -158,6 +158,17 @@ export function RelatoriosView({ usuarioNome, pode }: { usuarioNome: string; pod
     try { const { renderizarPdf } = await import('@/lib/diagnosticoConexao/relatorio'); await renderizarPdf(limparEdicao(conteudoFinal)); setMsg({ tipo: 'info', texto: 'PDF gerado.' }) } catch { setMsg({ tipo: 'erro', texto: 'Não foi possível gerar o PDF.' }) } finally { setOcupado(false) }
   }
 
+  const baixarExecutivo = async () => {
+    if (!r) return
+    setOcupado(true)
+    try {
+      const { montarModeloExecutivo } = await import('@/lib/gestaoDesempenho/relatorioExecutivo')
+      const { renderizarPdfExecutivo } = await import('@/lib/gestaoDesempenho/relatorioExecutivoPdf')
+      await renderizarPdfExecutivo(montarModeloExecutivo({ dados: r.dados, observacaoGestor: textos?.obs ?? r.observacaoGestor, revisao: r.revisao }, usuarioNome))
+      setMsg({ tipo: 'info', texto: 'Relatório executivo gerado.' })
+    } catch { setMsg({ tipo: 'erro', texto: 'Não foi possível gerar o relatório executivo.' }) } finally { setOcupado(false) }
+  }
+
   return (
     <div className="space-y-4">
       <style>{`@media print { body * { visibility: hidden } #gd-previa, #gd-previa * { visibility: visible } #gd-previa { position: absolute; left: 0; top: 0; width: 100% } }`}</style>
@@ -208,6 +219,7 @@ export function RelatoriosView({ usuarioNome, pode }: { usuarioNome: string; pod
                     <select id="gd-modelo" value={modelo} onChange={e => setModelo(e.target.value as any)} className="gts-input py-1.5 text-xs"><option value="resumido">Modelo resumido (diário)</option><option value="completo">Modelo completo (diretoria)</option></select>
                     {pode.exportar && <button type="button" onClick={editando ? () => setEditando(false) : iniciarEdicao} className={cn('text-xs', editando ? 'gts-btn-primary' : 'gts-btn-secondary')}><Pencil className="h-3.5 w-3.5" aria-hidden />{editando ? 'Concluir edição' : 'Editar relatório'}</button>}
                     {pode.exportar && <button type="button" onClick={baixarPdf} disabled={ocupado} className="gts-btn-primary text-xs"><Download className="h-3.5 w-3.5" aria-hidden />PDF</button>}
+                    {pode.exportar && r.dados.tipo !== 'DIARIO_UNIDADE' && <button type="button" onClick={baixarExecutivo} disabled={ocupado} className="gts-btn-primary text-xs"><Download className="h-3.5 w-3.5" aria-hidden />Executivo</button>}
                     {pode.exportar && <a href={`/api/gestao-desempenho/relatorios/${r.id}/exportar`} className="gts-btn-secondary text-xs"><FileSpreadsheet className="h-3.5 w-3.5" aria-hidden />Excel</a>}
                     <button type="button" onClick={() => window.print()} className="gts-btn-secondary text-xs"><Printer className="h-3.5 w-3.5" aria-hidden />Imprimir</button>
                   </div>
