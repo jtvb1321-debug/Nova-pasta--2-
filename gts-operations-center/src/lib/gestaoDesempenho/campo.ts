@@ -188,6 +188,7 @@ export function indicadoresDeContadores(c: ContadoresCampo): Record<string, Valo
     retiradas_sem_comprovacao: comValor(c.retiradasSemComprovacao ?? 0),
     visitas_improdutivas: comValor(c.visitasImprodutivas),
     rechamadas: comValor(c.rechamadasConfirmadas),
+    rechamadas_validacao: comValor(c.rechamadasPossiveis),
     taxa_rechamadas: pct(c.rechamadasConfirmadas, c.baseQualidade),
     tempo_deslocamento: mediaDe(c.tempos.deslocamento),
     tempo_execucao: mediaDe(c.tempos.execucao),

@@ -53,6 +53,7 @@ export const INDICADORES_CAMPO: DefIndicador[] = [
   campo({ chave: 'mudancas_endereco', rotulo: 'Mudanças de endereço', tipo: 'CONTAGEM', sentido: 'MAIOR_MELHOR', disponivel: false, fonte: 'MANUAL', nota: NAO_CLASSIFICA }),
   campo({ chave: 'visitas_improdutivas', rotulo: 'Visitas improdutivas', tipo: 'CONTAGEM', sentido: 'MENOR_MELHOR', nota: 'Chamados com "cliente ausente"; o dia é o do deslocamento/início. Aproximado: o sistema não guarda a data do aviso.' }),
   campo({ chave: 'rechamadas', rotulo: 'Rechamadas confirmadas', tipo: 'CONTAGEM', sentido: 'MENOR_MELHOR', pontuavel: true, nota: 'Só as validadas pelo supervisor, atribuídas à equipe do atendimento de origem.' }),
+  campo({ chave: 'rechamadas_validacao', rotulo: 'Rechamadas em validação', tipo: 'CONTAGEM', sentido: 'MENOR_MELHOR', nota: 'Possíveis rechamadas ainda não validadas pelo supervisor: não entram na taxa.' }),
   campo({ chave: 'taxa_rechamadas', rotulo: 'Taxa de rechamadas', tipo: 'PERCENTUAL', sentido: 'MENOR_MELHOR', nota: 'Rechamadas confirmadas ÷ serviços técnicos concluídos (sem retiradas) × 100.' }),
   campo({ chave: 'retencoes_campo', rotulo: 'Retenções em campo', tipo: 'CONTAGEM', sentido: 'MAIOR_MELHOR', disponivel: false, fonte: 'MANUAL', nota: 'O GTSCenter não registra retenção feita em campo.' }),
   campo({ chave: 'tempo_deslocamento', rotulo: 'Tempo médio de deslocamento', tipo: 'MINUTOS', sentido: 'MENOR_MELHOR', nota: 'A caminho → início do atendimento.' }),
