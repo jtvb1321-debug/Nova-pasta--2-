@@ -45,6 +45,14 @@ export const ROTULO_STATUS_RELATORIO: Record<string, string> = {
 }
 export const ROTULO_SEMAFORO = { VERDE: 'Atingida', AMARELO: 'Atenção', VERMELHO: 'Abaixo da meta', CINZA: 'Sem meta' } as const
 
+/**
+ * Relatorio enxuto: so o que a diretoria precisa ler, e sempre o que foi FECHADO/entregue (nao o que foi aberto/recebido).
+ * O Excel continua com todos os indicadores. Indicador fora desta lista so entra se tiver meta configurada.
+ */
+const NUCLEO_CAMPO = ['os_concluidas', 'instalacoes', 'manutencoes', 'suportes', 'retiradas', 'os_pendentes', 'sla_resolucao_pct', 'taxa_rechamadas', 'tempo_execucao', 'satisfacao']
+const NUCLEO_RECEPCAO = ['atend_finalizados', 'atend_pendentes', 'sla_recepcao_pct', 'tempo_primeira_resposta', 'tempo_espera', 'tempo_atendimento', 'taxa_resolucao_remota', 'vendas', 'satisfacao_recepcao']
+const noRelatorio = (chave: string, v: Valor | undefined) => (NUCLEO_CAMPO.includes(chave) || NUCLEO_RECEPCAO.includes(chave) || (chave === 'retiradas_sem_comprovacao' && (v?.valor ?? 0) > 0))
+
 const f = (v: Valor | undefined, tipo: Parameters<typeof formatarValor>[1]) => (v ? formatarValor(v, tipo) : 'Não disponível')
 const pctTxt = (c: Comparativo | undefined) => (!c || c.variacaoPct === null ? '—' : `${c.variacaoPct > 0 ? '+' : ''}${c.variacaoPct.toLocaleString('pt-BR')}%`)
 
@@ -55,7 +63,7 @@ export function montarDestaques(unidades: ResultadoUnidade[]): Record<string, De
 function tabelaIndicadores(u: ResultadoUnidade, modelo: ModeloRelatorio): SecaoRelatorio['tabela'] {
   const defs = u.unidade.tipo === 'EQUIPE_CAMPO' ? INDICADORES_CAMPO : INDICADORES_RECEPCAO
   const linhas = defs
-    .filter(d => modelo === 'completo' || u.indicadores[d.chave]?.disponivel || u.metas[d.chave]?.meta != null)
+    .filter(d => u.metas[d.chave]?.meta != null || (noRelatorio(d.chave, u.indicadores[d.chave]) && (modelo === 'completo' || u.indicadores[d.chave]?.disponivel)))
     .map(d => {
       const v = u.indicadores[d.chave]
       const m = u.metas[d.chave]
@@ -74,8 +82,6 @@ function secoesUnidade(u: ResultadoUnidade, d: Destaques, modelo: ModeloRelatori
       [u.unidade.tipo === 'EQUIPE_CAMPO' ? 'Equipe' : 'Colaboradora', `${u.unidade.nome}${u.unidade.tipo === 'EQUIPE_CAMPO' ? ` (${nomes})` : ''}`],
       ['Período', u.periodoRotulo],
       ['Dias efetivamente trabalhados', u.diasTrabalhados.toLocaleString('pt-BR')],
-      ['Origem dos dados', u.fontes.join(' · ')],
-      ...(u.opa ? [['Última sincronização com o OPA', u.opa.ultimaSincronizacao ? dataHoraFortaleza(u.opa.ultimaSincronizacao) : 'Nunca sincronizado'] as [string, string]] : []),
       ...(u.metasResumo.pct !== null ? [['Metas atingidas', `${u.metasResumo.atingidas} de ${u.metasResumo.avaliadas} (${u.metasResumo.pct.toLocaleString('pt-BR')}%)`] as [string, string]] : []),
       ...(u.pontuacao.pontuacao !== null ? [['Pontuação (critérios aprovados pelo gestor)', u.pontuacao.pontuacao.toLocaleString('pt-BR')] as [string, string]] : []),
     ],
@@ -89,11 +95,12 @@ function secoesUnidade(u: ResultadoUnidade, d: Destaques, modelo: ModeloRelatori
   if (modelo === 'completo' && Object.keys(u.pendenciasPorMotivo).length) {
     s.push({ titulo: `${prefixo}Pendências no fechamento (por motivo)`, tabela: { colunas: ['Motivo', 'Quantidade'], linhas: Object.entries(u.pendenciasPorMotivo).map(([k, n]) => [k.replace(/_/g, ' ').toLowerCase().replace(/^./, c => c.toUpperCase()), String(n)]) } })
   }
-  s.push({ titulo: `${prefixo}Pontos positivos`, lista: d.positivos.length ? d.positivos : ['Nenhum destaque positivo automático no período.'] })
-  s.push({ titulo: `${prefixo}Pontos de atenção`, lista: d.atencao.length ? d.atencao : ['Nenhum ponto de atenção automático no período.'] })
-  s.push({ titulo: `${prefixo}Ocorrências atípicas`, lista: d.atipicos.length ? d.atipicos : ['Nenhuma ocorrência atípica registrada.'] })
+  // Bloco sem conteudo nao sai no relatorio (nada de "nenhum destaque" repetido por unidade).
+  if (d.positivos.length) s.push({ titulo: `${prefixo}Pontos positivos`, lista: d.positivos })
+  if (d.atencao.length) s.push({ titulo: `${prefixo}Pontos de atenção`, lista: d.atencao })
+  if (d.atipicos.length) s.push({ titulo: `${prefixo}Ocorrências atípicas`, lista: d.atipicos })
   const obs = [...u.observacoes.map(o => `${o.data.split('-').reverse().join('/')} — ${o.texto} (${o.autor})`), ...(obsGestor ? [obsGestor] : [])]
-  s.push({ titulo: `${prefixo}Observações do gestor`, paragrafos: obs.length ? obs : ['Sem observações do gestor.'] })
+  if (obs.length) s.push({ titulo: `${prefixo}Observações da unidade`, paragrafos: obs })
   return s
 }
 
@@ -104,12 +111,13 @@ function resumoExecutivo(d: DadosRelatorio): string[] {
   const campoOk = d.unidades.some(u => u.unidade.tipo === 'EQUIPE_CAMPO')
   const conc = g.indicadores.os_concluidas
   if (campoOk && conc?.disponivel) {
-    linhas.push(`As equipes de campo concluíram ${f(conc, 'CONTAGEM')} O.S. no período (${pctTxt(g.comparativo.os_concluidas)} em relação ao período anterior), sendo ${f(g.indicadores.instalacoes, 'CONTAGEM')} instalações, ${f(g.indicadores.manutencoes, 'CONTAGEM')} manutenções e ${f(g.indicadores.retiradas, 'CONTAGEM')} retiradas.`)
+    const semProva = g.indicadores.retiradas_sem_comprovacao?.valor ?? 0
+    linhas.push(`As equipes de campo finalizaram ${f(conc, 'CONTAGEM')} O.S. no período (${pctTxt(g.comparativo.os_concluidas)} em relação ao período anterior): ${f(g.indicadores.instalacoes, 'CONTAGEM')} instalações, ${f(g.indicadores.manutencoes, 'CONTAGEM')} manutenções, ${f(g.indicadores.suportes, 'CONTAGEM')} suportes e ${f(g.indicadores.retiradas, 'CONTAGEM')} retiradas concluídas e comprovadas (contam só as finalizadas pela equipe, com foto; não as abertas).${semProva > 0 ? ` Outras ${semProva.toLocaleString('pt-BR')} retirada(s) foram finalizadas sem comprovação (sem foto ou devolução reprovada) e não entram na contagem.` : ''}`)
     linhas.push(`SLA de resolução das equipes: ${f(g.indicadores.sla_resolucao_pct, 'PERCENTUAL')}; taxa de rechamadas confirmadas: ${f(g.indicadores.taxa_rechamadas, 'PERCENTUAL')}; O.S. pendentes no fechamento: ${f(g.indicadores.os_pendentes, 'CONTAGEM')}.`)
   }
   const rec = g.indicadores.atend_finalizados
   linhas.push(rec?.disponivel
-    ? `A recepção finalizou ${f(rec, 'CONTAGEM')} atendimentos, com SLA de ${f(g.indicadores.sla_recepcao_pct, 'PERCENTUAL')} e taxa de resolução remota de ${f(g.indicadores.taxa_resolucao_remota, 'PERCENTUAL')}.`
+    ? `A recepção finalizou ${f(rec, 'CONTAGEM')} atendimentos (só os concluídos, não os recebidos), com SLA de ${f(g.indicadores.sla_recepcao_pct, 'PERCENTUAL')} e taxa de resolução remota de ${f(g.indicadores.taxa_resolucao_remota, 'PERCENTUAL')}.`
     : 'Os indicadores da recepção (OPA Atendimento) não estão disponíveis neste período: integração não configurada ou sem sincronização.')
   const atingidas = d.unidades.filter(u => u.metasResumo.pct !== null)
   if (atingidas.length) linhas.push(`Cumprimento de metas: ${atingidas.map(u => `${u.unidade.nome} ${u.metasResumo.pct!.toLocaleString('pt-BR')}%`).join('; ')}.`)
@@ -139,8 +147,8 @@ export function montarConteudoRelatorio(r: RelatorioParaConteudo, modelo: Modelo
   if (d.tipo === 'SEMANAL' || d.tipo === 'DIARIO_CONSOLIDADO') {
     secoes.push({ titulo: `${t('')}Resumo executivo`, paragrafos: resumoExecutivo(d) })
     if (d.geral) {
-      const campoDefs = INDICADORES_CAMPO.filter(i => d.geral!.indicadores[i.chave]?.disponivel)
-      const recDefs = INDICADORES_RECEPCAO.filter(i => d.geral!.indicadores[i.chave]?.disponivel)
+      const campoDefs = INDICADORES_CAMPO.filter(i => d.geral!.indicadores[i.chave]?.disponivel && noRelatorio(i.chave, d.geral!.indicadores[i.chave]))
+      const recDefs = INDICADORES_RECEPCAO.filter(i => d.geral!.indicadores[i.chave]?.disponivel && noRelatorio(i.chave, d.geral!.indicadores[i.chave]))
       secoes.push({
         titulo: `${t('')}Indicadores gerais e comparativo com o período anterior`,
         tabela: { colunas: ['Indicador', 'Realizado', 'Variação vs. anterior', 'Tendência'], linhas: [...campoDefs, ...recDefs].map(i => [i.rotulo, f(d.geral!.indicadores[i.chave], i.tipo), pctTxt(d.geral!.comparativo[i.chave]), d.geral!.comparativo[i.chave]?.tendencia === 'MELHOROU' ? 'Melhorou' : d.geral!.comparativo[i.chave]?.tendencia === 'PIOROU' ? 'Piorou' : d.geral!.comparativo[i.chave]?.tendencia === 'IGUAL' ? 'Igual' : '—']) },
@@ -160,9 +168,6 @@ export function montarConteudoRelatorio(r: RelatorioParaConteudo, modelo: Modelo
       },
     })
     for (const u of unidades) secoes.push(...secoesUnidade(u, d.destaques[u.unidade.id] ?? gerarDestaques(u), d.tipo === 'SEMANAL' ? 'completo' : modelo, `${t('')}${u.unidade.nome} — `, null))
-    const todos = Object.values(d.destaques)
-    secoes.push({ titulo: `${t('')}Pontos positivos (geral)`, lista: todos.flatMap(x => x.positivos).slice(0, 8) })
-    secoes.push({ titulo: `${t('')}Pontos de melhoria (geral)`, lista: todos.flatMap(x => x.atencao).slice(0, 10) })
   } else {
     for (const u of unidades) secoes.push(...secoesUnidade(u, d.destaques[u.unidade.id] ?? gerarDestaques(u), modelo, `${t('')}`, null))
   }

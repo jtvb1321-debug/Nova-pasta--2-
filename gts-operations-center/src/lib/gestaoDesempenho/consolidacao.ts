@@ -15,6 +15,7 @@ import { avaliarMetas, capacidadePorDia, percentualMetasAtingidas, DIAS_OPERACAO
 import { calcularPontuacao, compararValores, type Comparativo, type ResultadoPontuacao } from './pontuacao'
 import { INDICADORES_CAMPO, INDICADORES_RECEPCAO, indisponivel, type Valor } from './indicadores'
 import { lerConfig, lerPontuacao } from './config'
+import { contarFotos } from '@/lib/bonificacao'
 
 const diaDeDate = (d: Date): DiaISO => d.toISOString().slice(0, 10) // colunas @db.Date chegam como meia-noite UTC
 const dateDeDia = (d: DiaISO) => new Date(`${d}T00:00:00Z`)
@@ -81,6 +82,7 @@ async function carregarChamados(equipeIds: string[], periodo: Periodo): Promise<
       dentroSlaResposta: true, dentroSlaResolucao: true, slaRespostaMinutos: true, slaResolucaoMinutos: true,
       statusRechamada: true, reincidente: true, chamadoOrigemReincidenciaId: true,
       avaliacao: { select: { nota: true, statusAnalise: true } },
+      fotos: true, devolucaoStatus: true,
     },
   })
   const origemIds = [...new Set(linhas.map(l => l.chamadoOrigemReincidenciaId).filter((x): x is string => !!x))]
@@ -93,6 +95,7 @@ async function carregarChamados(equipeIds: string[], periodo: Periodo): Promise<
     slaRespostaMinutos: l.slaRespostaMinutos, slaResolucaoMinutos: l.slaResolucaoMinutos, statusRechamada: l.statusRechamada, reincidente: l.reincidente,
     origemEquipeId: l.chamadoOrigemReincidenciaId ? (equipeDaOrigem.get(l.chamadoOrigemReincidenciaId) ?? null) : null,
     avaliacaoNota: l.avaliacao && l.avaliacao.statusAnalise === 'APROVADA' ? l.avaliacao.nota : null,
+    qtdFotos: contarFotos(l.fotos), devolucaoStatus: l.devolucaoStatus,
   }))
 }
 

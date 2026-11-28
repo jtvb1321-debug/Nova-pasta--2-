@@ -36,7 +36,14 @@ export interface ChamadoBruto {
   origemEquipeId: string | null
   /** Nota da avaliacao APROVADA (as demais nao contam). */
   avaliacaoNota: number | null
+  /** Fotos de evidencia anexadas ao chamado (comprovacao do servico feito pela equipe). */
+  qtdFotos: number
+  /** Conferencia da devolucao do equipamento numa RETIRADA: CONFIRMADA | RECUSADA | null (a conferir). */
+  devolucaoStatus: string | null
 }
+
+/** Retirada so entra na contagem quando foi fechada pela equipe E comprovada: com foto e sem devolucao reprovada. */
+export const retiradaComprovada = (c: Pick<ChamadoBruto, 'qtdFotos' | 'devolucaoStatus'>) => c.qtdFotos >= 1 && c.devolucaoStatus !== 'RECUSADA'
 
 export interface Media { soma: number; n: number }
 export interface ContadoresCampo {
@@ -47,6 +54,8 @@ export interface ContadoresCampo {
   pendentes: number
   concluidasPorTipo: Record<TipoServico, number>
   visitasImprodutivas: number
+  /** Retiradas finalizadas pela equipe mas SEM comprovacao (sem foto ou devolucao reprovada): ficam fora de "retiradas". */
+  retiradasSemComprovacao: number
   rechamadasConfirmadas: number
   rechamadasPossiveis: number
   baseQualidade: number
@@ -61,7 +70,7 @@ const media = (): Media => ({ soma: 0, n: 0 })
 export const contadoresVazios = (): ContadoresCampo => ({
   recebidas: 0, concluidas: 0, encerradasGestao: 0, pendentes: 0,
   concluidasPorTipo: { INSTALACAO: 0, MANUTENCAO: 0, RETIRADA: 0, SUPORTE: 0, ROMPIMENTO_MASSIVO: 0 },
-  visitasImprodutivas: 0, rechamadasConfirmadas: 0, rechamadasPossiveis: 0, baseQualidade: 0,
+  visitasImprodutivas: 0, retiradasSemComprovacao: 0, rechamadasConfirmadas: 0, rechamadasPossiveis: 0, baseQualidade: 0,
   slaResolucao: { avaliados: 0, dentro: 0 }, slaResposta: { avaliados: 0, dentro: 0 },
   tempos: { deslocamento: media(), execucao: media(), resolucao: media() },
   satisfacao: media(), pendenciasPorMotivo: {},
@@ -102,8 +111,12 @@ export function contadoresDoDia(dia: DiaISO, chamados: ChamadoBruto[], equipes: 
       if (ch.status === 'FINALIZADO' && noDia(ch.dataFim)) {
         c.concluidas++
         marca('os_concluidas', ch.id)
-        if (CHAVE_TIPO[ch.tipo]) marca(CHAVE_TIPO[ch.tipo], ch.id)
-        if ((TIPOS_SERVICO as readonly string[]).includes(ch.tipo)) c.concluidasPorTipo[ch.tipo as TipoServico]++
+        const semProva = ch.tipo === 'RETIRADA' && !retiradaComprovada(ch)
+        if (semProva) { c.retiradasSemComprovacao++; marca('retiradas_sem_comprovacao', ch.id) }
+        else {
+          if (CHAVE_TIPO[ch.tipo]) marca(CHAVE_TIPO[ch.tipo], ch.id)
+          if ((TIPOS_SERVICO as readonly string[]).includes(ch.tipo)) c.concluidasPorTipo[ch.tipo as TipoServico]++
+        }
         if (!ignorar) {
           if (TIPOS_TECNICOS.includes(ch.tipo)) c.baseQualidade++
           if (ch.dataInicio && ch.dataFim) { soma(c.tempos.execucao, minutos(ch.dataInicio, ch.dataFim)); marca('tempo_execucao', ch.id) }
@@ -147,6 +160,7 @@ export function somarContadores(dias: ContadoresCampo[]): ContadoresCampo {
     t.recebidas += d.recebidas; t.concluidas += d.concluidas; t.encerradasGestao += d.encerradasGestao
     for (const k of TIPOS_SERVICO) t.concluidasPorTipo[k] += d.concluidasPorTipo[k] ?? 0
     t.visitasImprodutivas += d.visitasImprodutivas
+    t.retiradasSemComprovacao += d.retiradasSemComprovacao ?? 0
     t.rechamadasConfirmadas += d.rechamadasConfirmadas; t.rechamadasPossiveis += d.rechamadasPossiveis; t.baseQualidade += d.baseQualidade
     for (const k of ['slaResolucao', 'slaResposta'] as const) { t[k].avaliados += d[k].avaliados; t[k].dentro += d[k].dentro }
     for (const k of ['deslocamento', 'execucao', 'resolucao'] as const) { t.tempos[k].soma += d.tempos[k].soma; t.tempos[k].n += d.tempos[k].n }
@@ -171,6 +185,7 @@ export function indicadoresDeContadores(c: ContadoresCampo): Record<string, Valo
     manutencoes: comValor(c.concluidasPorTipo.MANUTENCAO),
     suportes: comValor(c.concluidasPorTipo.SUPORTE),
     retiradas: comValor(c.concluidasPorTipo.RETIRADA),
+    retiradas_sem_comprovacao: comValor(c.retiradasSemComprovacao ?? 0),
     visitas_improdutivas: comValor(c.visitasImprodutivas),
     rechamadas: comValor(c.rechamadasConfirmadas),
     taxa_rechamadas: pct(c.rechamadasConfirmadas, c.baseQualidade),

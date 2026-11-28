@@ -5,7 +5,7 @@ import { calcularBonusEquipes, ordenarRanking, type ChamadoFechado, type Rechama
 // Bonificacao por equipe no periodo: le os chamados fechados, as avaliacoes e as rechamadas
 // confirmadas, aplica as regras (./bonificacaoRegras) e junta com os fechamentos ja aprovados.
 
-function contarFotos(fotos: string | null): number {
+export function contarFotos(fotos: string | null): number {
   if (!fotos) return 0
   try {
     const v = JSON.parse(fotos)

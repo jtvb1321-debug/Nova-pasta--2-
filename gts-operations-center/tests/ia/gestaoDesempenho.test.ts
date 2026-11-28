@@ -14,7 +14,7 @@ const ch = (o: Partial<ChamadoBruto> = {}): ChamadoBruto => ({
   id: `c${++seq}`, tipo: 'MANUTENCAO', status: 'FINALIZADO', equipeId: E1, fechadoAdmin: false, clienteAusente: false,
   dataAbertura: t('2026-11-04T08:00:00'), dataAgendada: null, dataACaminho: null, dataInicio: null, dataFim: null,
   dentroSlaResposta: null, dentroSlaResolucao: null, slaRespostaMinutos: null, slaResolucaoMinutos: null,
-  statusRechamada: null, reincidente: false, origemEquipeId: null, avaliacaoNota: null, ...o,
+  statusRechamada: null, reincidente: false, origemEquipeId: null, avaliacaoNota: null, qtdFotos: 1, devolucaoStatus: null, ...o,
 })
 
 describe('gestao de desempenho: periodos em Fortaleza', () => {
@@ -106,6 +106,33 @@ describe('gestao de desempenho: contadores do dia (equipes de campo)', () => {
     const c = contadoresDoDia(dia, [r1, r2, r3], eq)
     assert.equal(c.rechamadasConfirmadas, 1)
     assert.equal(c.rechamadasPossiveis, 1)
+  })
+
+  it('retirada so conta quando fechada pela equipe E comprovada: aberta, sem foto e devolucao reprovada ficam de fora', () => {
+    const fim = t('2026-11-04T11:00:00')
+    const lista = [
+      ch({ tipo: 'RETIRADA', dataFim: fim }),                                              // fechada, com foto: conta
+      ch({ tipo: 'RETIRADA', dataFim: fim, devolucaoStatus: 'CONFIRMADA' }),               // devolucao confirmada: conta
+      ch({ tipo: 'RETIRADA', dataFim: fim, devolucaoStatus: null, qtdFotos: 2 }),          // devolucao a conferir: ainda conta
+      ch({ tipo: 'RETIRADA', dataFim: fim, qtdFotos: 0 }),                                 // finalizada sem foto: nao comprova
+      ch({ tipo: 'RETIRADA', dataFim: fim, devolucaoStatus: 'RECUSADA' }),                 // devolucao reprovada: nao comprova
+      ch({ tipo: 'RETIRADA', status: 'ABERTO' }),                                          // so aberta: nao e retirada feita
+      ch({ tipo: 'RETIRADA', status: 'EM_ANDAMENTO' }),
+      ch({ tipo: 'RETIRADA', dataFim: fim, fechadoAdmin: true }),                          // encerrada pela gestao: nao conta
+    ]
+    const ids = new Map<string, string[]>()
+    const c = contadoresDoDia(dia, lista, eq, new Set(), ids)
+    assert.equal(c.concluidasPorTipo.RETIRADA, 3)
+    assert.equal(c.retiradasSemComprovacao, 2)
+    assert.equal(c.concluidas, 5, 'as 5 finalizadas pela equipe continuam como O.S. concluidas')
+    assert.equal(c.recebidas, 7, 'abertas no dia (sem a encerrada pela gestao) seguem em O.S. recebidas, mas nao viram retirada')
+    assert.equal(ids.get('retiradas')?.length, 3)
+    assert.equal(ids.get('retiradas_sem_comprovacao')?.length, 2)
+    const ind = indicadoresDeContadores(c)
+    assert.equal(ind.retiradas.valor, 3)
+    assert.equal(ind.retiradas_sem_comprovacao.valor, 2)
+    assert.equal(somarContadores([c, c]).retiradasSemComprovacao, 4)
+    assert.equal(somarContadores([c, { ...c, retiradasSemComprovacao: undefined as any }]).retiradasSemComprovacao, 2, 'snapshot antigo sem o campo nao quebra a soma')
   })
 
   it('visita improdutiva (cliente ausente) e tempos: deslocamento, execucao e resolucao', () => {
